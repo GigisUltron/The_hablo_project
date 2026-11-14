@@ -1013,6 +1013,35 @@
       tr("glossShow", "show translation") + "</button>";
   }
 
+  /* Why the card means what it means: the frame for a connector, the person for
+   * a verb, the sentence for a word. Shown on request, same quiet weight. */
+  function explainHTML(it) {
+    var bits = [];
+    if (it.kind === "basic") {
+      bits.push(it.of ? ("verb " + it.of + ", " + (it.person || "") ) : "pronoun");
+      if (it.sub) bits.push(it.sub);
+    } else if (it.kind === "term") {
+      if (it.frame) bits.push(it.frame.replace("____", it.text));
+      var twin = it.contrast && termById[it.contrast];
+      if (twin) bits.push("opposite: " + twin.text);
+    } else if (it.sub) {
+      bits.push(it.sub);
+    }
+    if (!bits.length) return "";
+    return '<button class="explain-btn" type="button" data-why="' + esc(bits.join(" · ")) + '">' +
+      tr("explain", "why?") + "</button>";
+  }
+
+  function wireExplain() {
+    Array.prototype.forEach.call(document.querySelectorAll(".explain-btn"), function (btn) {
+      btn.addEventListener("click", function () {
+        var on = btn.getAttribute("data-on") === "1";
+        btn.setAttribute("data-on", on ? "0" : "1");
+        btn.textContent = on ? tr("explain", "why?") : btn.getAttribute("data-why");
+      });
+    });
+  }
+
   function wireGloss() {
     Array.prototype.forEach.call(document.querySelectorAll(".gloss-btn"), function (btn) {
       btn.addEventListener("click", function () {
@@ -1617,9 +1646,10 @@
       tile.setAttribute("aria-label", "Play the audio");
       tile.addEventListener("click", function () { sayItem(it); });
     }
-    $("actions").innerHTML = glossHTML(id) +
+    $("actions").innerHTML = glossHTML(id) + explainHTML(itemOf(id)) +
       '<button class="btn btn-primary" id="gotit">' + tr("gotit", "Got it") + '</button>';
     wireGloss();
+    wireExplain();
     $("gotit").addEventListener("click", function () {
       session.firstCorrect += 1;   // it was taught and acknowledged, not guessed
       S.review(state, id, 2, Date.now());
