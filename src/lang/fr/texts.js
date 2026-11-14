@@ -5,7 +5,7 @@ var SEMA_TEXTS = {
     {
       id: "tx-fr-cafe",
       title: "Le café du coin",
-      level: 2,
+      level: 1,
       band: "A1",
       body: "Le café du coin ouvre à sept heures. La patronne, Mme Rocher, connaît tous ses clients par leur prénom. Le matin, les ouvriers prennent un café debout au comptoir ; l'après-midi, les étudiants s'installent près de la fenêtre pour travailler. Depuis janvier, le café propose aussi des tartines le midi. Ça marche bien : à midi, il n'y a plus de place. Le soir, les habitués reviennent pour un verre, et ils parlent du quartier jusqu’à la fermeture. Le quartier a changé, mais le café reste le même.",
       questions: [
