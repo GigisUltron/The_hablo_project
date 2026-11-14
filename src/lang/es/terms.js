@@ -47,8 +47,16 @@ var SEMA_TERMS = {
       frame: "Es barato y, ____, está cerca.", contrast: "t-sin-embargo" },
 
     { id: "t-por-eso", text: "por eso", gloss: "that's why", schema: "chain",
-      frame: "No dormí; ____ estoy cansado.", contrast: "t-aunque" }
-  ]
+      frame: "No dormí; ____ estoy cansado.", contrast: "t-aunque" },
+    { id: "t-quiero-que", text: "quiero que", gloss: "I want that…", schema: "chain", frame: "____ vengas mañana.", contrast: null },
+    { id: "t-cuando-llegue", text: "cuando llegue", gloss: "when I arrive", schema: "clock", frame: "____, te llamo.", contrast: null },
+    { id: "t-si-tuviera", text: "si tuviera", gloss: "if I had", schema: "fork", frame: "____ dinero, viajaría.", contrast: null },
+    { id: "t-me-parece", text: "me parece que", gloss: "it seems to me that", schema: "question", frame: "____ es tarde.", contrast: null },
+    { id: "t-a-mi-paracer", text: "a mi parecer", gloss: "in my opinion", schema: "balance", frame: "____, es mejor esperar.", contrast: null },
+    { id: "t-es-posible", text: "es posible que", gloss: "it is possible that", schema: "question", frame: "____ llueva.", contrast: null },
+    { id: "t-puesto-que", text: "puesto que", gloss: "since, given that", schema: "chain", frame: "No voy, ____ llueve.", contrast: null },
+    { id: "t-aunque-sea", text: "aunque sea", gloss: "even if it is", schema: "fork", frame: "Voy, ____ tarde.", contrast: null },
+]
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TERMS;

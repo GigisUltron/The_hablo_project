@@ -132,7 +132,15 @@ var SEMA_GLOSSES = {
   "t-mientras": "while",
   "t-quiza": "maybe",
   "t-ademas": "moreover",
-  "t-por-eso": "that's why"
+  "t-por-eso": "that's why",
+  "t-quiero-que": "I want that…",
+  "t-cuando-llegue": "when I arrive",
+  "t-si-tuviera": "if I had",
+  "t-me-parece": "it seems to me that",
+  "t-a-mi-paracer": "in my opinion",
+  "t-es-posible": "it is possible that",
+  "t-puesto-que": "since, given that",
+  "t-aunque-sea": "even if it is",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

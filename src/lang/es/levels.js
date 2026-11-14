@@ -1,8 +1,4 @@
-/* CEFR level per item, generated from the decks.
- *
- * A1 greetings, pronouns, ser/estar and concrete nouns; A2 the phrase deck
- * beyond the first ten; B1 connectors and abstract terms.
- */
+/* CEFR level per item, generated from the decks. */
 var SEMA_LEVELS = {
   "b-yo": "A1",
   "b-tu": "A1",
@@ -141,7 +137,15 @@ var SEMA_LEVELS = {
   "t-mientras": "B1",
   "t-quiza": "B1",
   "t-ademas": "B1",
-  "t-por-eso": "B1"
+  "t-por-eso": "B1",
+  "t-quiero-que": "B1",
+  "t-cuando-llegue": "B1",
+  "t-si-tuviera": "B1",
+  "t-me-parece": "B1",
+  "t-a-mi-paracer": "B1",
+  "t-es-posible": "B1",
+  "t-puesto-que": "B1",
+  "t-aunque-sea": "B1"
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
