@@ -1355,3 +1355,16 @@ h1 em {
   color: var(--ink-soft);
   margin: 18px 0 4px;
 }
+
+/* one motion system: two durations, one curve, nothing bounces */
+:root { --t-fast: 120ms; --t-mid: 240ms; --ease-out: cubic-bezier(0.22, 1, 0.36, 1); }
+.step, .option, .option-word, .btn, .grade, .speak-btn, .size, .mode, .field, .pstep {
+  transition: transform var(--t-fast) var(--ease-out),
+              background var(--t-fast) var(--ease-out),
+              box-shadow var(--t-fast) var(--ease-out),
+              color var(--t-fast) var(--ease-out);
+}
+.view.is-active { animation-duration: var(--t-mid); }
+
+/* at 1280 the whole column hugged the left edge, leaving half the page empty */
+.solo { margin: 0 auto; }
