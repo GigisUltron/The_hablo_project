@@ -1287,3 +1287,36 @@ h1 em {
 }
 .reader-card .stage { align-items: flex-start; }
 .reader-card .card-actions { justify-content: flex-start; margin-top: 18px; }
+
+/* --------------------------------------------------- track as a path */
+.track {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  max-width: 420px;
+}
+.step {
+  flex: none;
+  min-height: 56px;
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 12px 8px 8px;
+}
+.step .step-n {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: var(--rule-thin);
+  background: var(--paper);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.step .step-t { font-size: 14px; }
+.step.now { box-shadow: 5px 5px 0 var(--ink); }
+.step.now .step-n { background: var(--ink); color: var(--paper); }
+.step.locked .step-n { border-style: dashed; }
