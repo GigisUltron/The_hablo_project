@@ -1584,11 +1584,15 @@
 
     feedback(ok ? "got it" : "it comes back at the end", ok ? "good" : "bad");
 
-    $("actions").innerHTML = '<button class="btn btn-primary" id="next">Continue →</button>';
-    $("next").addEventListener("click", function () {
-      session.qi += 1;
-      renderQuiz();
-    });
+    var advance = function () { session.qi += 1; renderQuiz(); };
+    if (ok) {
+      /* correct: no confirmation tap. It moves on by itself. */
+      $("actions").innerHTML = "";
+      setTimeout(advance, 650);
+    } else {
+      $("actions").innerHTML = '<button class="btn btn-primary" id="next">Continue →</button>';
+      $("next").addEventListener("click", advance);
+    }
   }
 
   function finishSession() {
