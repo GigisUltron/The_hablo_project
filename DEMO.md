@@ -14,14 +14,24 @@ map of the semantic web. No dependencies, no build step, no backend.
 
 ## Run it
 
-Open `index.html` directly, or serve the folder:
+One command, standard library only:
 
 ```sh
-python3 -m http.server 8080   # then http://localhost:8080
+python3 serve.py
 ```
 
-Use `localhost` (not `file://`) if you want the microphone: browsers gate speech
-recognition behind a secure context.
+That serves the folder on the first free port from 8080, prints the URL, opens your
+browser, and sends no-cache headers so edits show up on reload.
+
+```sh
+python3 serve.py --port 9000     # pin a port
+python3 serve.py --no-open       # don't launch a browser
+make serve                       # same thing, if you prefer make
+```
+
+Use the printed `http://localhost:…` URL rather than opening `index.html` from the
+filesystem: browsers gate microphone access behind a secure context, and `file://`
+doesn't qualify. Any other static server works too — there is no build step.
 
 Shareable deep links: `#map`, `#stats`, `#practice` (jumps straight into a drill).
 
@@ -57,7 +67,8 @@ browser; there is no analytics and no network call after the page loads.
 ## Verify it
 
 ```sh
-node --test tests/
+make check          # syntax gate + full suite
+node --test tests/  # the tests on their own
 ```
 
 24 tests, standard library only. They cover scheduling arithmetic, the similarity matcher,
@@ -69,12 +80,22 @@ of breakage a no-build front end otherwise surfaces only in the browser.
 
 ```
 index.html          shell, four views
-assets/styles.css   design system, no external fonts or images
+serve.py            local preview server (stdlib only)
+Makefile            make serve / make test / make check
+assets/styles.css   the whole visual system: riso-poster, no external assets
 src/data.js         42 concepts + semantic relations
 src/srs.js          scheduling + matching (pure, testable)
 src/app.js          views, drills, speech, map, stats
 tests/              node:test suites
 ```
+
+## The look
+
+Warm paper, near-black ink, chili/paprika/saffron accents, 3px rules and hard offset
+shadows — a printed-poster feel rather than a dashboard. Texture is a single inline SVG
+noise filter plus a halftone dot pattern, and the tape on top of the drill card is a
+pseudo-element. No fonts, icons or images are downloaded, so the page still works with
+the network switched off.
 
 ## Honest limits
 

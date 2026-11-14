@@ -1,2 +1,6 @@
 # Local render artifacts produced while screenshotting the demo.
 .preview/
+
+# Python bytecode from serve.py / py_compile
+__pycache__/
+*.pyc

@@ -12,16 +12,16 @@ var SEMA_DATA = {
   language: { code: "es", name: "Spanish", locale: "es-ES" },
 
   categories: {
-    home: { label: "Home", hue: "#8b5cf6" },
-    food: { label: "Food", hue: "#fbbf24" },
-    nature: { label: "Nature", hue: "#22d3ee" },
-    animals: { label: "Animals", hue: "#34d399" },
-    body: { label: "Body", hue: "#fb7185" },
-    city: { label: "City", hue: "#a78bfa" },
-    time: { label: "Time", hue: "#60a5fa" },
-    emotion: { label: "Emotion", hue: "#f472b6" },
-    action: { label: "Action", hue: "#f59e0b" },
-    abstract: { label: "Abstract", hue: "#94a3b8" }
+    home: { label: "Home", hue: "#d93a1c" },
+    food: { label: "Food", hue: "#f2b705" },
+    nature: { label: "Nature", hue: "#5f7f24" },
+    animals: { label: "Animals", hue: "#c9721c" },
+    body: { label: "Body", hue: "#7a2e57" },
+    city: { label: "City", hue: "#ef5a2c" },
+    time: { label: "Time", hue: "#2f6f8f" },
+    emotion: { label: "Emotion", hue: "#c2185b" },
+    action: { label: "Action", hue: "#8d5a2b" },
+    abstract: { label: "Abstract", hue: "#6b5a49" }
   },
 
   relationTypes: {

@@ -455,7 +455,7 @@
 
   function layout() {
     var cats = Object.keys(D.categories);
-    var cx = 450, cy = 320, rx = 330, ry = 248;
+    var cx = 450, cy = 345, rx = 332, ry = 226;
     var byCat = {};
     cats.forEach(function (c) { byCat[c] = []; });
     D.concepts.forEach(function (c) {
@@ -467,7 +467,7 @@
       var gx = cx + Math.cos(angle) * rx;
       var gy = cy + Math.sin(angle) * ry;
       var ids = byCat[cat] || [];
-      var spread = ids.length > 1 ? 30 + ids.length * 6 : 0;
+      var spread = ids.length > 1 ? 40 + ids.length * 7 : 0;
 
       ids.forEach(function (id, i) {
         var a = (i / Math.max(ids.length, 1)) * Math.PI * 2 - Math.PI / 2;
@@ -475,7 +475,9 @@
         positions[id] = {
           x: gx + Math.cos(a) * r,
           y: gy + Math.sin(a) * r,
-          cat: cat
+          cat: cat,
+          cx: gx,
+          cy: gy
         };
       });
     });
@@ -518,7 +520,7 @@
       halo.setAttribute("class", "halo");
       halo.setAttribute("cx", p.x);
       halo.setAttribute("cy", p.y);
-      halo.setAttribute("r", 23);
+      halo.setAttribute("r", 21);
       g.appendChild(halo);
 
       var glyph = document.createElementNS(svgNS, "text");
@@ -528,12 +530,20 @@
       glyph.textContent = c.emoji;
       g.appendChild(glyph);
 
+      // Labels are pushed away from the centre of the drawing, not from the
+      // cluster: that always aims them at the empty margin instead of at the
+      // neighbouring nodes inside the same cluster.
+      var dx = p.x - 450;
+      var dy = p.y - 345;
+      var len = Math.sqrt(dx * dx + dy * dy);
+      var ox = len > 12 ? (dx / len) * 32 : 0;
+      var oy = len > 12 ? (dy / len) * 32 : 34;
+
       var label = document.createElementNS(svgNS, "text");
-      label.setAttribute("x", p.x);
-      label.setAttribute("y", p.y + 38);
+      label.setAttribute("class", "node-word");
+      label.setAttribute("x", p.x + ox);
+      label.setAttribute("y", p.y + oy + 3);
       label.setAttribute("text-anchor", "middle");
-      label.setAttribute("font-size", "9.5");
-      label.setAttribute("fill", "rgba(255,255,255,0.42)");
       label.textContent = c.word;
       g.appendChild(label);
 
@@ -558,14 +568,13 @@
       var learned = card && card.reps > 0;
       g.classList.toggle("learned", !!learned);
       var halo = g.querySelector(".halo");
-      var hue = (D.categories[conceptById[id].cat] || {}).hue || "#8b5cf6";
+      var hue = (D.categories[conceptById[id].cat] || {}).hue || "#d93a1c";
       if (learned) {
-        halo.setAttribute("fill", hue + "33");
-        halo.setAttribute("stroke", hue);
+        halo.setAttribute("fill", hue);
+        halo.setAttribute("fill-opacity", "0.78");
       } else {
         halo.removeAttribute("fill");
-        halo.setAttribute("fill", "rgba(255,255,255,0.03)");
-        halo.setAttribute("stroke", "rgba(255,255,255,0.14)");
+        halo.removeAttribute("fill-opacity");
       }
     });
   }
@@ -608,7 +617,7 @@
       var hue = D.categories[r.cat].hue;
       return '<div class="bar-row">' +
         '<span class="label">' + esc(D.categories[r.cat].label) + "</span>" +
-        '<span class="track" style="background:' + hue + '1f"><span class="fill" style="width:' + r.pct + "%;background:" + hue + '"></span></span>' +
+        '<span class="track" style="background:' + hue + '33"><span class="fill" style="width:' + r.pct + "%;background:" + hue + '"></span></span>' +
         '<span class="n">' + r.learned + "/" + r.total + "</span>" +
       "</div>";
     }).join("");
