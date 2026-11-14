@@ -13,7 +13,7 @@ test("every item in the spanish deck has a level", () => {
 });
 
 test("levels are valid CEFR bands", () => {
-  for (const [id, lv] of Object.entries(L)) assert.ok(["A1", "A2", "B1", "B2"].includes(lv), id);
+  for (const [id, lv] of Object.entries(L)) assert.ok(["A1", "A2", "B1", "B2", "C1"].includes(lv), id);
 });
 
 test("grammar and concrete nouns come before phrases", () => {

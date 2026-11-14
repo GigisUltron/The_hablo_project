@@ -38,8 +38,9 @@
     return correct / Math.max(1, answered) >= 0.85;
   }
 
-  /* CEFR gating: an A1 learner should never be shown B1 material. */
-  var CEFR = ["A1", "A2", "B1", "B2"];
+  /* CEFR gating: an A1 learner should never be shown B1 material. Ordered
+   * easiest first; C1 is the top band the decks are graded against. */
+  var CEFR = ["A1", "A2", "B1", "B2", "C1"];
 
   function within(itemLevel, profileLevel) {
     var i = CEFR.indexOf(itemLevel);

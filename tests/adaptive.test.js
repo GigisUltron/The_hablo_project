@@ -50,6 +50,14 @@ test("cefr gating keeps harder items out of an easier session", () => {
   assert.equal(A.within(undefined, "A1"), true);   // ungraded is allowed
 });
 
+test("the bands run A1 to C1, easiest first", () => {
+  assert.deepEqual(A.CEFR, ["A1", "A2", "B1", "B2", "C1"]);
+  assert.equal(A.within("C1", "C1"), true);
+  assert.equal(A.within("C1", "B2"), false);       // C1 is above B2
+  assert.equal(A.within("B2", "C1"), true);
+  assert.equal(A.within("A1", "C1"), true);
+});
+
 test("the session can open on the pair you actually confuse", () => {
   const conf = { "ph-a|ph-b": 5, "ph-c|ph-d": 9 };
   const pool = ["ph-a", "ph-b", "ph-c"];
