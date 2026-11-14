@@ -1222,3 +1222,17 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 /* Visibility must never depend on an animation completing: headless and
    reduced-motion both caught this skin mid-fade, leaving the page unreadable. */
 .view, .view.is-active { opacity: 1 !important; animation: none !important; }
+
+/* the aid controls should read as quiet text under the card, not as buttons */
+.gloss-btn, .explain-btn {
+  border: 0;
+  background: none;
+  padding: 2px 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink-faint, #7a6a5c);
+  border-bottom: 1px solid currentColor;
+  cursor: pointer;
+}
+.gloss-btn:hover, .explain-btn:hover { color: var(--ink, #171009); }
+.gloss-text, .explain-text { display: block; font-size: 14px; color: var(--ink-soft, #4a3b2c); margin-top: 4px; }
