@@ -128,6 +128,20 @@
     load: load,
     list: list,
     has: has,
+    /* Keep the legacy globals pointing at the live pack. Some renderers read
+     * them directly (texts, glosses), and older tools expect the Spanish
+     * globals to exist under their original names. */
+    bind: function (pack) {
+      if (!pack) return;
+      root.SEMA_DATA = pack.concepts;
+      root.SEMA_PHRASES = pack.phrases;
+      root.SEMA_TERMS = pack.terms;
+      root.SEMA_GLOSSES = pack.glosses;
+      root.SEMA_ALPHABET = pack.alphabet;
+      root.SEMA_TEXTS = pack.texts;
+      root.SemaConv = pack.conv;
+      root.SEMA_AUDIO = pack.audio;
+    },
     defaultCode: "es",
     packs: packs
   };

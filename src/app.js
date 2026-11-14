@@ -9,57 +9,102 @@
 (function () {
   "use strict";
 
-  var D = window.SEMA_DATA;
+  var LANGS = window.SemaLangs;
   var S = window.SemaSRS;
   var MEM = window.SemaMemory;
   var TRACK = window.SemaTrack;
   var ADAPT = window.SemaAdaptive;
   var CORRECT = window.SemaCorrect;
-  var CONV = window.SemaConv;
   var STORE_KEY = "sema.v1";
-  var LANG = D.language;
+
+  /* The live pack. Everything below reads it through these bindings; switching
+   * a language swaps the bindings and rebuilds the indexes, so no other part of
+   * the app needs to know which language is active. */
+  var ACTIVE = null;
+  var D = null;
+  var LANG = null;
+  var TERMS = null;
+  var P = null;
+  var CONV = null;
+  var bundled = null;
 
   var conceptById = {};
   var allIds = [];
   var neighbours = {};   // id -> [id]   (ordered by relation weight)
   var weights = {};      // "a|b" -> type
-
-  D.concepts.forEach(function (c) {
-    conceptById[c.id] = c;
-    allIds.push(c.id);
-    neighbours[c.id] = [];
-  });
-
-  D.edges.forEach(function (e) {
-    if (!conceptById[e.a] || !conceptById[e.b]) return;
-    var w = (D.relationTypes[e.type] && D.relationTypes[e.type].weight) || 1;
-    neighbours[e.a].push({ id: e.b, w: w, type: e.type });
-    neighbours[e.b].push({ id: e.a, w: w, type: e.type });
-    weights[e.a + "|" + e.b] = e.type;
-    weights[e.b + "|" + e.a] = e.type;
-  });
-
-  Object.keys(neighbours).forEach(function (id) {
-    neighbours[id].sort(function (a, b) { return b.w - a.w; });
-  });
-
-  /* term deck: vocabulary that cannot be drawn (see src/terms.js) */
-  var TERMS = window.SEMA_TERMS || { terms: [] };
   var termById = {};
   var termIds = [];
-  TERMS.terms.forEach(function (t) {
-    termById[t.id] = t;
-    termIds.push(t.id);
-  });
-
-  /* phrase deck: same shape as a concept once itemOf() normalises it */
-  var P = window.SEMA_PHRASES || { phrases: [] };
   var phraseById = {};
   var phraseIds = [];
-  P.phrases.forEach(function (p) {
-    phraseById[p.id] = p;
-    phraseIds.push(p.id);
-  });
+
+  function deckIds() {
+    return allIds.concat(phraseIds, termIds);
+  }
+
+  function rebuildIndexes() {
+    conceptById = {};
+    allIds = [];
+    neighbours = {};
+    weights = {};
+
+    D.concepts.forEach(function (c) {
+      conceptById[c.id] = c;
+      allIds.push(c.id);
+      neighbours[c.id] = [];
+    });
+
+    D.edges.forEach(function (e) {
+      if (!conceptById[e.a] || !conceptById[e.b]) return;
+      var w = (D.relationTypes[e.type] && D.relationTypes[e.type].weight) || 1;
+      neighbours[e.a].push({ id: e.b, w: w, type: e.type });
+      neighbours[e.b].push({ id: e.a, w: w, type: e.type });
+      weights[e.a + "|" + e.b] = e.type;
+      weights[e.b + "|" + e.a] = e.type;
+    });
+
+    Object.keys(neighbours).forEach(function (id) {
+      neighbours[id].sort(function (a, b) { return b.w - a.w; });
+    });
+
+    termById = {};
+    termIds = [];
+    (TERMS.terms || []).forEach(function (t) {
+      termById[t.id] = t;
+      termIds.push(t.id);
+    });
+
+    phraseById = {};
+    phraseIds = [];
+    (P.phrases || []).forEach(function (p) {
+      phraseById[p.id] = p;
+      phraseIds.push(p.id);
+    });
+  }
+
+  function activatePack(code) {
+    var pack = LANGS && LANGS.load(code);
+    if (!pack && LANGS) pack = LANGS.load(LANGS.defaultCode || "es");
+    if (!pack) throw new Error("sema: no language pack available");
+
+    ACTIVE = pack;
+    D = pack.concepts;
+    LANG = D.language || { code: pack.code, name: pack.name, locale: pack.locale };
+    TERMS = pack.terms;
+    P = pack.phrases;
+    CONV = pack.conv;
+    bundled = pack.audio && Object.keys(pack.audio).length ? pack.audio : null;
+
+    /* A few renderers read the pack globals directly (texts, glosses). Point
+     * them at the live pack rather than whichever script loaded last. */
+    LANGS.bind(pack);
+
+    rebuildIndexes();
+    voice = null;
+    warnedNoVoice = false;
+    if (hasTTS) pickVoice();
+    updateAudioChip();
+    return pack;
+  }
 
   /* ------------------------------------------------------------ utilities */
 
@@ -85,43 +130,199 @@
 
   /* ----------------------------------------------------------- persistence */
 
-  var state = load();
-  /* a fresh browser has no saved settings; every screen reads them */
-  if (!state.settings) {
-    state.settings = { fields: Object.keys(D.categories), size: 8, mode: "words", translations: "on" };
-  }
-  if (!state.memory) state.memory = MEM.empty();
+  var state = boot();
+  renderLangPickers();
+  updateSetupCopy();
 
-  function load() {
-    var base = S.newState(allIds.concat(phraseIds, termIds), Date.now());
-    base.memory = MEM.empty();
+  /* Progress is per language. `state.cards` and friends are the live deck for
+   * the active language; `state.profile.byLang[code]` is its archive, so a
+   * switch never discards what was learned in the other language. */
+  function boot() {
+    var saved = loadSaved();
+    var code = saved && saved.profile && saved.profile.lang;
+    if (!code || !LANGS || !LANGS.has(code)) code = (LANGS && LANGS.defaultCode) || "es";
+    activatePack(code);
+
+    var s = saved || emptyLive();
+    s.version = 1;
+    s.cards = s.cards || {};
+    s.confusions = s.confusions || {};
+    s.reviews = s.reviews || { good: 0, again: 0 };
+    s.sessions = s.sessions || 0;
+    if (!s.memory || !Array.isArray(s.memory.sentences)) s.memory = MEM.empty();
+
+    if (s.profile) {
+      s.profile.lang = code;
+      s.profile.byLang = s.profile.byLang || {};
+      /* Older saves kept one deck at the top level. Adopt it as that pack's
+       * archive instead of throwing it away. */
+      if (!s.profile.byLang[code]) s.profile.byLang[code] = bucketOf(s);
+      else loadBucket(s, s.profile.byLang[code]);
+    }
+
+    s.settings = s.settings || {};
+    if (!Array.isArray(s.settings.fields) || !s.settings.fields.length) {
+      s.settings.fields = Object.keys(D.categories);
+    } else {
+      s.settings.fields = s.settings.fields.filter(function (f) { return D.categories[f]; });
+      if (!s.settings.fields.length) s.settings.fields = Object.keys(D.categories);
+    }
+    if (!s.settings.size) s.settings.size = 8;
+    if (["words", "phrases", "terms"].indexOf(s.settings.mode) === -1) s.settings.mode = "words";
+    if (s.settings.translations !== "off") s.settings.translations = "on";
+
+    seedDeck(s);
+    return s;
+  }
+
+  function loadSaved() {
     try {
       var raw = localStorage.getItem(STORE_KEY);
-      if (!raw) return base;
+      if (!raw) return null;
       var saved = JSON.parse(raw);
-      if (!saved || saved.version !== 1) return base;
-      saved.cards = saved.cards || {};
-      saved.confusions = saved.confusions || {};
-      saved.reviews = saved.reviews || { good: 0, again: 0 };
-      if (!saved.memory || !Array.isArray(saved.memory.sentences)) saved.memory = MEM.empty();
-      saved.settings = saved.settings || {};
-      if (!Array.isArray(saved.settings.fields) || !saved.settings.fields.length) {
-        saved.settings.fields = Object.keys(D.categories);
-      }
-      if (!saved.settings.size) saved.settings.size = 8;
-      if (["words", "phrases", "terms"].indexOf(saved.settings.mode) === -1) saved.settings.mode = "words";
-      if (saved.settings.translations !== "off") saved.settings.translations = "on";
-      allIds.concat(phraseIds, termIds).forEach(function (id) {
-        if (!saved.cards[id]) saved.cards[id] = S.newCard(id, Date.now());
-      });
+      if (!saved || saved.version !== 1) return null;
       return saved;
     } catch (err) {
-      return base;
+      return null;
     }
   }
 
+  function emptyLive() {
+    var s = S.newState(deckIds(), Date.now());
+    s.memory = MEM.empty();
+    s.profile = null;
+    return s;
+  }
+
+  function resetLive() {
+    var fresh = emptyLive();
+    state.cards = fresh.cards;
+    state.confusions = fresh.confusions;
+    state.reviews = fresh.reviews;
+    state.sessions = fresh.sessions;
+    state.lastSession = null;
+    state.placement = null;
+    state.memory = fresh.memory;
+  }
+
+  function bucketOf(s) {
+    return {
+      cards: s.cards || {},
+      confusions: s.confusions || {},
+      reviews: s.reviews || { good: 0, again: 0 },
+      sessions: s.sessions || 0,
+      lastSession: s.lastSession || null,
+      placement: s.placement || null,
+      memory: s.memory || MEM.empty()
+    };
+  }
+
+  function loadBucket(s, bucket) {
+    s.cards = bucket.cards || {};
+    s.confusions = bucket.confusions || {};
+    s.reviews = bucket.reviews || { good: 0, again: 0 };
+    s.sessions = bucket.sessions || 0;
+    s.lastSession = bucket.lastSession || null;
+    s.placement = bucket.placement || null;
+    s.memory = bucket.memory && Array.isArray(bucket.memory.sentences) ? bucket.memory : MEM.empty();
+  }
+
+  function seedDeck(s) {
+    var now = Date.now();
+    deckIds().forEach(function (id) {
+      if (!s.cards[id]) s.cards[id] = S.newCard(id, now);
+    });
+  }
+
   function save() {
+    if (state && state.profile && state.profile.byLang) {
+      state.profile.byLang[state.profile.lang] = bucketOf(state);
+    }
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (err) { /* private mode */ }
+  }
+
+  /* --------------------------------------------------------------- language */
+
+  function packList() {
+    var list = (LANGS && LANGS.list()) || [];
+    if (!list.length) list = [{ code: "es", name: "Spanish", locale: "es-ES" }];
+    return list;
+  }
+
+  function renderLangPickers() {
+    var list = packList();
+    var current = state.profile ? state.profile.lang : (ACTIVE && ACTIVE.code);
+    ["setup-lang", "settings-lang"].forEach(function (id) {
+      var sel = $(id);
+      if (!sel) return;
+      sel.innerHTML = list.map(function (p) {
+        return '<option value="' + esc(p.code) + '">' + esc(p.name) + "</option>";
+      }).join("");
+      if (list.some(function (p) { return p.code === current; })) sel.value = current;
+    });
+
+    var note = document.querySelector("#view-setup .builder-note");
+    if (note) {
+      note.textContent = list.length > 1
+        ? "Each language keeps its own deck, progress and audio."
+        : "More languages need their own deck and audio — Spanish is the only pack so far.";
+    }
+  }
+
+  function updateSetupCopy() {
+    var q = document.querySelector("#view-setup .setup-q");
+    if (!q || !ACTIVE) return;
+    q.textContent = "Have you studied " + ACTIVE.name + " before?";
+  }
+
+  function switchLang(code) {
+    if (!code || !LANGS || !LANGS.has(code)) return false;
+    if (ACTIVE && ACTIVE.code === code) {
+      if (state.profile) state.profile.lang = code;
+      return false;
+    }
+
+    if (state.profile) state.profile.byLang[state.profile.lang] = bucketOf(state);
+    activatePack(code);
+
+    if (state.profile) {
+      state.profile.lang = code;
+      var bucket = state.profile.byLang[code];
+      if (bucket) {
+        loadBucket(state, bucket);
+      } else {
+        resetLive();
+      }
+      state.settings.fields = Object.keys(D.categories);
+      state.profile.byLang[code] = bucketOf(state);
+    } else {
+      /* Before the first profile exists there is nothing to keep, but the live
+       * deck must still contain only the chosen pack's ids. */
+      resetLive();
+      state.settings.fields = Object.keys(D.categories);
+    }
+
+    seedDeck(state);
+    session = null;
+    reader = null;
+    conv = null;
+    placement = null;
+    mapBuilt = false;
+    save();
+    renderLangPickers();
+    updateSetupCopy();
+    renderToday();
+    if (currentView === "map") buildMap();
+    if (currentView === "stats") renderStats();
+    return true;
+  }
+
+  function beginProfile(level) {
+    var code = (ACTIVE && ACTIVE.code) || "es";
+    var byLang = (state.profile && state.profile.byLang) || {};
+    byLang[code] = bucketOf(state);
+    state.profile = { level: level, lang: code, byLang: byLang };
+    save();
   }
 
   /* -------------------------------------------------------------- speech */
@@ -129,26 +330,29 @@
   var voice = null;
   var hasTTS = "speechSynthesis" in window;
 
-  function esVoices() {
+  function langVoices() {
     if (!hasTTS) return [];
     var voices = window.speechSynthesis.getVoices() || [];
+    var want = String((LANG && LANG.code) || "").toLowerCase();
+    var name = String((LANG && LANG.name) || "").toLowerCase();
     return voices.filter(function (v) {
       var lang = String(v.lang || "").toLowerCase();
-      return lang.indexOf(LANG.code) === 0 || /spanish|español|espanol/i.test(v.name || "");
+      return lang.indexOf(want) === 0 || (name && String(v.name || "").toLowerCase().indexOf(name) !== -1);
     });
   }
 
   function pickVoice() {
     if (!hasTTS) return;
-    var voices = esVoices();
+    var voices = langVoices();
     voice = voices[0] || null;
     updateAudioChip();
   setTimeout(updateAudioChip, 1600);
   setTimeout(updateAudioChip, 4000);
   }
 
-  /* Audio is a bonus, not a dependency: if the device has no Spanish voice the
-   * whole app still works, and it says so instead of failing silently. */
+  /* Audio is a bonus, not a dependency: if the device has no voice for the
+   * active language the whole app still works, and it says so instead of
+   * failing silently. */
   var audioCheckedAt = Date.now();
 
   /* Some platforms expose the API with an empty voice list and never populate
@@ -162,9 +366,9 @@
       if (Date.now() - audioCheckedAt < 1500) return { state: "idle", text: "checking audio" };
       return { state: "none", text: "no voice on this device" };
     }
-    var es = esVoices();
-    if (es.length) return { state: "ok", text: es.length + " Spanish voice" + (es.length > 1 ? "s" : "") };
-    return { state: "no-es", text: "no Spanish voice" };
+    var voices = langVoices();
+    if (voices.length) return { state: "ok", text: voices.length + " " + LANG.name + " voice" + (voices.length > 1 ? "s" : "") };
+    return { state: "no-" + LANG.code, text: "no " + LANG.name + " voice" };
   }
 
   function updateAudioChip() {
@@ -186,7 +390,6 @@
     try { window.speechSynthesis.addEventListener("voiceschanged", pickVoice); } catch (err) { /* older engines */ }
   }
 
-  var bundled = window.SEMA_AUDIO || null;
   var audioCache = {};
   var speakTimer = null;
 
@@ -222,7 +425,7 @@
     var synth = window.speechSynthesis;
     try {
       if (!voice) pickVoice();
-      if (!hasBundled() && !esVoices().length && !synth.speaking && !warnedNoVoice && audioStatus().state === "none") {
+      if (!hasBundled() && !langVoices().length && !synth.speaking && !warnedNoVoice && audioStatus().state === "none") {
         warnedNoVoice = true;
         toast("No speech voice on this device — everything else still works.");
       }
@@ -496,6 +699,7 @@
   var conv = null;
 
   function startConversation() {
+    if (!CONV || !CONV.dialogues.length) { toast("No conversations in this pack yet."); return; }
     var pick = CONV.dialogues[Math.floor(Math.random() * CONV.dialogues.length)];
     conv = CONV.start(pick.id);
     show("conv");
@@ -1685,18 +1889,22 @@
   $("settings-btn").addEventListener("click", function () { show("settings"); });
   $("conv-btn").addEventListener("click", startConversation);
   $("setup-new").addEventListener("click", function () {
-    state.profile = { level: "A1", lang: "es" };
-    save();
+    beginProfile("A1");
     show("today");
   });
   $("setup-test").addEventListener("click", function () {
-    state.profile = { level: "?", lang: "es" };
-    save();
+    beginProfile("?");
     startPlacement();
+  });
+  $("setup-lang").addEventListener("change", function () {
+    if (switchLang(this.value)) toast(ACTIVE.name + " deck loaded. Progress stays with each language.");
+  });
+  $("settings-lang").addEventListener("change", function () {
+    if (switchLang(this.value)) toast(ACTIVE.name + " deck loaded. Progress stays with each language.");
   });
   $("home-conv").addEventListener("click", startConversation);
   $("reset-btn").addEventListener("click", function () {
-    if (!window.confirm("Clear all progress on this device?")) return;
+    if (!window.confirm("Clear all progress in every language on this device?")) return;
     try { localStorage.removeItem(STORE_KEY); } catch (err) { /* ignore */ }
     window.location.reload();
   });
@@ -1755,7 +1963,7 @@
     sayItem(itemOf("noche"));
     toast(audioStatus().state === "ok"
       ? "That was the synthesized voice — if you heard nothing, check the system volume."
-      : "No Spanish voice on this device; everything still works without audio.");
+      : "No " + LANG.name + " voice on this device; everything still works without audio.");
   });
   updateAudioChip();
 
