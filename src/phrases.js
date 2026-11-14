@@ -9,7 +9,7 @@ var SEMA_PHRASES = {
   phrases: [
     { id: "ph-que-pasa",   emoji: "🤙", text: "¿Qué pasa?",                     sub: "Entre amigos.",                  cat: "phrase" },
     { id: "ph-tu-nombre",   emoji: "🙋", text: "¿Cómo te llamas?",                sub: "Al conocer a alguien.",          cat: "phrase" },
-    { id: "ph-de-donde",    emoji: "🌍", text: "¿De dónde eres?",                  sub: "Preguntando por su país.",       cat: "phrase" },
+    { id: "ph-de-donde",    emoji: "🗺️", text: "¿De dónde eres?",                  sub: "Preguntando por su país.",       cat: "phrase" },
     { id: "ph-color",       emoji: "🎨", text: "¿Cuál es tu color favorito?",     sub: "Hablando de gustos.",            cat: "phrase" },
     { id: "ph-trabajo",     emoji: "💼", text: "¿A qué te dedicas?",               sub: "Preguntando por el trabajo.",    cat: "phrase" },
     { id: "ph-como-se-dice", emoji: "❓", text: "¿Cómo se dice esto?",             sub: "Cuando falta una palabra.",      cat: "phrase" },
