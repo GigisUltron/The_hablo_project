@@ -79,7 +79,7 @@ with `profile.uiLang`), while session summaries, toasts and reader copy are stil
 ## How it teaches
 
 1. **Meet the pair.** Picture, word, article, sentence and sound together — that is where the
-   association forms. No translation at any point.
+   association forms. The English meaning is one tap away, and on by default.
 2. **Get quizzed.** One half is hidden: word from picture, picture from word, or say it aloud.
 3. **Miss and repeat.** A wrong answer is pushed to the back of the same quiz, and scheduled
    ten minutes out rather than tomorrow.
@@ -125,8 +125,8 @@ DEMO.md               design notes, decisions and honest limits
 
 ## Design notes
 
-- **No gloss field exists in the data** — not hidden, absent. The app cannot show a
-  translation, and a test fails if one is added.
+- **Glosses exist and are shown on request.** Every item carries one, the card offers it,
+  and Settings can turn it off — a test fails if an item ships without a gloss.
 - **Audio is pre-rendered.** Browser speech synthesis needs a voice installed by the OS, and
   many machines have none, which is silence with no error. The WAVs remove that dependency;
   synthesis is only a fallback.
