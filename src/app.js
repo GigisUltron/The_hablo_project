@@ -410,12 +410,8 @@
     $("stat-streak").textContent = currentStreak();
     $("stat-mastered").textContent = mastered;
 
-    $("start-label").textContent = due > 0 ? "Start lesson · " + due + " due" : "Start lesson";
-    var scene = sessionMode() === "phrases" && nextScene();
-    $("start-sub").textContent = scene
-      ? "60 seconds · " + scene.emoji + " " + scene.title
-      : "60 seconds · " + lessonSize() + " cards";
-    renderNextStack();
+    var caption = renderNextStack();
+    $("start-sub").textContent = (caption ? caption + " · " : "") + "about a minute";
   }
 
   /* --------------------------------------------------------------- streak */
@@ -539,14 +535,15 @@
     return { pool: pool, due: due, fresh: planned.fresh };
   }
 
+  /* The start card shows the pictures the next lesson opens with, and
+   * returns a line saying what is in it. */
   function renderNextStack() {
     var box = $("next-stack");
-    if (!box) return;
     var ids, caption;
     var scene = sessionMode() === "phrases" && nextScene();
     if (scene) {
       ids = scene.lines;
-      caption = scene.emoji + " " + esc(scene.title);
+      caption = scene.title;
     } else {
       var plan = lessonPlan(sessionMode(), lessonSize(), Date.now());
       /* new cards are always taught; reviews can be trimmed to the lesson size */
@@ -554,17 +551,12 @@
       caption = [plan.fresh.length ? plan.fresh.length + " new" : "",
         plan.due.length ? plan.due.length + " to review" : ""].filter(Boolean).join(" · ");
     }
-    ids = ids.slice(0, 3);
-    if (!ids.length) { box.innerHTML = ""; return; }
-
-    /* back to front, so the first card of the lesson sits on top */
-    box.innerHTML = ids.slice().reverse().map(function (id, i, all) {
-      var top = i === all.length - 1;
-      return '<div class="peek' + (top ? " top" : "") + '" style="--i:' + (all.length - 1 - i) + '">' +
-        '<span class="peek-tile">' + itemOf(id).emoji + "</span>" +
-        (top ? '<span class="peek-cap">In this lesson</span><span class="peek-sub">' + caption + "</span>" : "") +
-      "</div>";
-    }).join("");
+    if (box) {
+      box.innerHTML = ids.slice(0, 3).map(function (id) {
+        return '<span class="pic">' + itemOf(id).emoji + "</span>";
+      }).join("");
+    }
+    return caption;
   }
 
   function startSession(opts) {
