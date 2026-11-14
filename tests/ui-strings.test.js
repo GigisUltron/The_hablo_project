@@ -17,7 +17,7 @@ test("no string is left in english inside the spanish table", () => {
 });
 
 test("an unknown language falls back to english, not to a blank", () => {
-  assert.equal(U.t("de", "start"), U.en.start);
+  assert.equal(U.t("xx", "start"), U.en.start);
   assert.equal(U.t("es", "start"), U.es.start);
   assert.equal(U.t("es", "nonexistent"), "nonexistent");
 });

@@ -3267,11 +3267,14 @@
     ev.preventDefault();
     sendChatTurn();
   });
-  $("chat-attach").addEventListener("click", function () {
+  /* the attachment controls are optional: a build without them must still boot */
+  var attachBtn = $("chat-attach");
+  var imageInput = $("chat-image");
+  if (attachBtn) attachBtn.addEventListener("click", function () {
     var file = $("chat-image");
     if (file) file.click();
   });
-  $("chat-image").addEventListener("change", chatImageChange);
+  if (imageInput) imageInput.addEventListener("change", chatImageChange);
   $("chat-listen").addEventListener("click", listenChat);
   $("chat-endpoint").addEventListener("change", function () {
     state.settings.chatEndpoint = cleanEndpoint(this.value);
@@ -3287,7 +3290,7 @@
   });
   $("chat-check").addEventListener("click", refreshChatEngine);
   if (SR) $("chat-listen").hidden = false;
-  if (typeof FileReader === "undefined") $("chat-attach").hidden = true;
+  if (attachBtn && typeof FileReader === "undefined") attachBtn.hidden = true;
   renderChatSettings();
   $("settings-back").addEventListener("click", function () { show("today"); });
   $("reader-back").addEventListener("click", function () { reader = null; show("today"); });
