@@ -868,7 +868,9 @@
       toast("Nothing due here — free practice.");
     }
 
-    session = newSession(mode, fresh, quiz);
+    /* one card per item: the study step is gone, so a new item is taught by
+     * being asked, and the answer is shown the moment it is missed. */
+    session = newSession(mode, [], quiz);
     session.plan = plan;
 
     /* your own sentence, if one is old enough to be worth re-reading */
