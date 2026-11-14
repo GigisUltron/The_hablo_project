@@ -1373,3 +1373,6 @@ h1 em {
 @media (max-width: 900px) {
   .kbd-hint { display: none; }
 }
+
+/* the tab for the page you are already on is a control that does nothing */
+.topbar .tabs { gap: 8px; }
