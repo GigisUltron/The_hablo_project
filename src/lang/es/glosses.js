@@ -120,6 +120,24 @@ var SEMA_GLOSSES = {
   "ph-disculpa": "excuse me, may I get past?",
   "ph-sentarme": "may I sit here?",
 
+  /* grammar */
+  "b-yo": "I",
+  "b-tu": "you (informal)",
+  "b-el": "he",
+  "b-ella": "she",
+  "b-nosotros": "we",
+  "b-ellos": "they",
+  "b-soy": "I am",
+  "b-eres": "you are",
+  "b-es": "he / she is",
+  "b-somos": "we are",
+  "b-son": "they are",
+  "b-estoy": "I am (right now)",
+  "b-estas": "you are (right now)",
+  "b-esta": "he / she is (right now)",
+  "b-estamos": "we are (right now)",
+  "b-estan": "they are (right now)",
+
   /* terms — vocabulary a picture cannot carry */
   "t-ya": "already",
   "t-todavia": "still / not yet",

@@ -118,6 +118,24 @@ var SEMA_GLOSSES = {
   "ph-excusez-moi": "excuse me, may I get past?",
   "ph-m-asseoir": "may I sit here?",
 
+  /* grammar */
+  "b-fr-je": "I",
+  "b-fr-tu": "you (informal)",
+  "b-fr-il": "he",
+  "b-fr-elle": "she",
+  "b-fr-nous": "we",
+  "b-fr-ils": "they",
+  "b-fr-suis": "I am",
+  "b-fr-es": "you are",
+  "b-fr-est": "he / she is",
+  "b-fr-sommes": "we are",
+  "b-fr-sont": "they are",
+  "b-fr-ai": "I have",
+  "b-fr-as": "you have",
+  "b-fr-a": "he / she has",
+  "b-fr-avons": "we have",
+  "b-fr-ont": "they have",
+
   /* terms — vocabulary a picture cannot carry */
   "t-deja": "already",
   "t-pas-encore": "not yet",
