@@ -990,6 +990,51 @@ h1 em {
 .word.long { font-size: clamp(22px, 4vw, 32px); line-height: 1.15; max-width: 18ch; }
 .option-word.long { font-size: 14px; line-height: 1.25; font-weight: 700; padding: 14px 8px; }
 
+/* phrase scene: the thread of one exchange, above the card */
+.scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.scene-title {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.scene-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.scene-steps li {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: var(--rule-thin);
+  border-radius: 50%;
+  background: var(--card);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+/* the dash that links one line of the exchange to the next */
+.scene-steps li + li::before {
+  content: "";
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  width: 18px;
+  border-top: var(--rule-thin);
+}
+.scene-steps li.done { background: var(--paper-2); }
+.scene-steps li.now { background: var(--saffron); box-shadow: 2px 2px 0 var(--ink); }
+
 /* lesson summary: meant to be read from across a room */
 .card.is-summary { max-width: 880px; }
 .sum-big {

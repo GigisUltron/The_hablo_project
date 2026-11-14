@@ -47,6 +47,19 @@
     phraseIds.push(p.id);
   });
 
+  /* Scenes: a phrase lesson is one short exchange from one situation, in the
+   * order it happens, instead of a shuffled deck. The grouping lives here
+   * until the phrase file carries a scene field of its own. */
+  var SCENES = [
+    { emoji: "☕", title: "En el café", lines: ["ph-cafe", "ph-agua", "ph-rico", "ph-cuenta"] },
+    { emoji: "👋", title: "Saludar", lines: ["ph-dias", "ph-hola", "ph-gusto", "ph-adios"] },
+    { emoji: "🚉", title: "En la estación", lines: ["ph-estacion", "ph-hora", "ph-tarda", "ph-precio"] },
+    { emoji: "🔁", title: "Si no entiendes", lines: ["ph-perdon", "ph-repetir", "ph-despacio"] }
+  ].map(function (s) {
+    s.lines = s.lines.filter(function (id) { return phraseById[id]; });
+    return s;
+  }).filter(function (s) { return s.lines.length >= 2; });
+
   /* ------------------------------------------------------------ utilities */
 
   function $(id) { return document.getElementById(id); }
@@ -355,6 +368,9 @@
       b.setAttribute("aria-pressed", String(on));
     });
     box.style.display = mode === "phrases" ? "none" : "flex";
+    /* a scene sets its own length */
+    var sizes = document.querySelector(".size-pick");
+    if (sizes) sizes.style.visibility = mode === "phrases" && SCENES.length ? "hidden" : "";
 
     var pool = mode === "phrases" ? phraseIds : allIds.filter(function (id) {
       return inFields(id, fields);
@@ -364,7 +380,11 @@
     }).length;
 
     var note = $("builder-note");
-    if (note) {
+    var scene = mode === "phrases" && nextScene();
+    if (note && scene) {
+      note.textContent = "next: " + scene.emoji + " " + scene.title + " · " +
+        scene.lines.length + " lines · " + due + " due";
+    } else if (note) {
       note.textContent = lessonSize() + " cards · " + pool.length +
         (mode === "phrases" ? " phrases" : " concepts") + " · " + due + " due";
     }
@@ -386,6 +406,10 @@
     $("stat-mastered").textContent = mastered;
 
     $("start-label").textContent = due > 0 ? "Start lesson · " + due + " due" : "Start lesson";
+    var scene = sessionMode() === "phrases" && nextScene();
+    $("start-sub").textContent = scene
+      ? "60 seconds · " + scene.emoji + " " + scene.title
+      : "60 seconds · " + lessonSize() + " cards";
   }
 
   /* --------------------------------------------------------------- streak */
@@ -487,6 +511,8 @@
     var fields = selectedFields();
     var now = Date.now();
 
+    if (mode === "phrases" && SCENES.length) { startScene(nextScene()); return; }
+
     var pool = mode === "phrases"
       ? phraseIds.slice()
       : allIds.filter(function (id) { return inFields(id, fields); });
@@ -511,6 +537,63 @@
     show("session");
     if (session.study.length) renderStudy();
     else renderQuiz();
+  }
+
+  /* Reviews first, as in a word lesson: the scene with the most lines due,
+   * then the first scene still holding a new line, then whichever is due soonest. */
+  function nextScene() {
+    var now = Date.now();
+    var best = null, bestDue = 0;
+    SCENES.forEach(function (s) {
+      var due = s.lines.filter(function (id) {
+        var c = state.cards[id];
+        return c.last !== null && c.due <= now;
+      }).length;
+      if (due > bestDue) { best = s; bestDue = due; }
+    });
+    if (best) return best;
+    var fresh = SCENES.filter(function (s) {
+      return s.lines.some(function (id) { return state.cards[id].last === null; });
+    })[0];
+    if (fresh) return fresh;
+    return SCENES.slice().sort(function (a, b) { return soonestDue(a) - soonestDue(b); })[0];
+  }
+
+  function soonestDue(scene) {
+    return Math.min.apply(null, scene.lines.map(function (id) { return state.cards[id].due; }));
+  }
+
+  function startScene(scene) {
+    var fresh = scene.lines.filter(function (id) { return state.cards[id].last === null; });
+    session = newSession("phrases", fresh, scene.lines.slice());
+    session.scene = scene;
+    show("session");
+    if (fresh.length) renderStudy();
+    else renderQuiz();
+  }
+
+  /* The thread of the exchange above the card. Lines already through show
+   * their scene emoji; the current one shows it only when the card does,
+   * so the strip never gives away a "find the picture" answer. */
+  function sceneHTML(id, reveal) {
+    var s = session && session.scene;
+    if (!s) return "";
+    var at = s.lines.indexOf(id);
+    var steps = s.lines.map(function (lid, i) {
+      var done = session.phase === "study" ? i < at : !!session.answered[lid] && lid !== id;
+      var now = i === at;
+      var face = done || (now && reveal) ? itemOf(lid).emoji : now ? "?" : "";
+      return '<li class="' + (done ? "done" : now ? "now" : "") + '">' + face + "</li>";
+    }).join("");
+    return '<div class="scene">' +
+      '<span class="scene-title">' + s.emoji + " " + esc(s.title) + "</span>" +
+      '<ol class="scene-steps" aria-label="line ' + (at + 1) + " of " + s.lines.length + '">' + steps + "</ol>" +
+    "</div>";
+  }
+
+  function markScene(id, reveal) {
+    var html = sceneHTML(id, reveal);
+    if (html) $("stage").insertAdjacentHTML("afterbegin", html);
   }
 
   function startDemo() {
@@ -560,6 +643,7 @@
       quiz: quiz,
       qi: 0,
       types: null,
+      scene: null,
       startedAt: Date.now(),
       requeued: {},
       missed: {},
@@ -612,6 +696,7 @@
       wordsHTML(it) +
       contextHTML(it) +
       '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>';
+    markScene(it.id, true);
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
@@ -651,6 +736,7 @@
     if (type === "pick-word") renderPickWord(id);
     else if (type === "say") renderSay(id);
     else renderPickPicture(id);
+    markScene(id, type !== "pick-picture");
   }
 
   function optionHTML(id) {
@@ -790,6 +876,7 @@
       wordsHTML(it) +
       contextHTML(it) +
       '<button class="speak-btn" id="hear-btn">🔊 Hear it again</button>';
+    markScene(it.id, true);
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
@@ -832,7 +919,8 @@
 
     $("card").classList.add("is-summary");
     $("stage").innerHTML =
-      '<p class="prompt">Lesson done</p>' +
+      '<p class="prompt">' + (session.scene ? session.scene.emoji + " " + esc(session.scene.title) + " · " : "") +
+        "Lesson done</p>" +
       '<p class="sum-big">' + total + "</p>" +
       '<p class="sum-line">' + noun + (total === 1 ? "" : "s") + " in " + took + "</p>" +
       '<div class="sum-cols">' +
@@ -1117,7 +1205,7 @@
     b.addEventListener("click", function () {
       state.settings.mode = b.getAttribute("data-mode");
       save();
-      renderBuilder();
+      renderToday();
     });
   });
 
@@ -1125,7 +1213,7 @@
     b.addEventListener("click", function () {
       state.settings.size = Number(b.getAttribute("data-size"));
       save();
-      renderBuilder();
+      renderToday();
     });
   });
   $("quit-btn").addEventListener("click", function () { session = null; show("today"); });
