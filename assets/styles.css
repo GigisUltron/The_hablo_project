@@ -1304,3 +1304,6 @@ h1 em {
   .map-panel { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .map-svg { min-width: 660px; }
 }
+
+/* the summary has no feedback line; don't leave its gap */
+.card.is-summary .feedback { display: none; }
