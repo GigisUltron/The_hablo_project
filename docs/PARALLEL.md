@@ -8,6 +8,24 @@ between them so nobody has to guess.
 Read this before touching anything. If a change requires crossing an ownership line, it goes
 through the integration checkpoint instead of straight into `main`.
 
+## Who is who
+
+The assistant that built this repo (DSH) is **not one of the three** — it has been playing
+all three roles serially, and it is the natural owner of the **interface & flows** lane,
+because that lane holds the contracts everything else assembles against.
+
+What is worth handing out:
+
+| Hand this to | Why it is separate | What they need from you |
+|---|---|---|
+| **Audio & speech** | Self-contained tool plus generated files; quality work benefits from someone who can listen | The item list, and a decision on whether a neural voice is allowed |
+| **Curriculum & content** | Pure data plus tests; the highest-value lane if the goal is real fluency | A frequency list or a target corpus, and someone who speaks the language |
+| **Interface & flows** | The contract holder; conflicts here hurt most | Nothing — but it should not be split between two agents |
+
+If you are assigning to three others, give them the three lanes above and keep the
+integration checkpoint (merge order + `make check`) for yourself. Do not hand the interface
+lane to two agents at once; that is the one split the plan does not survive.
+
 ## Workstreams
 
 | # | Agent | Owns | Delivers |

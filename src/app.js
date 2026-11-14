@@ -364,32 +364,51 @@
 
   function renderToday() {
     renderBuilder();
+
     var due = S.dueList(state, Date.now()).filter(function (id) {
-      return state.cards[id].last !== null;
+      return state.cards[id] && state.cards[id].last !== null;
     }).length;
-    var young = allIds.filter(function (id) { return state.cards[id].last === null; }).length;
-    var ret = S.retention(state);
+    var known = allIds.filter(function (id) { return state.cards[id].reps > 0; }).length;
+    var mastered = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
 
     $("stat-due").textContent = due;
-    $("stat-learned").textContent = S.learnedCount(state);
+    $("stat-learned").textContent = known;
     $("stat-total").textContent = allIds.length;
-    $("retention-num").textContent = ret === null ? "—" : Math.round(ret * 100) + "%";
+    $("stat-streak").textContent = currentStreak();
+    $("stat-mastered").textContent = mastered;
 
-    var pct = ret === null ? 0 : ret;
-    var len = 477.5;
-    $("ring-value").setAttribute("stroke-dashoffset", String(len - len * pct));
+    $("start-label").textContent = due > 0 ? "Start lesson · " + due + " due" : "Start lesson";
+  }
 
-    $("ring-caption").textContent = ret === null
-      ? "Your first session sets the baseline."
-      : Math.round(ret * 100) + "% of recalls needed no retry, across " +
-        S.learnedCount(state) + " of " + allIds.length + " concepts.";
+  /* --------------------------------------------------------------- streak */
 
-    $("start-label").textContent = due > 0 ? "Start session · " + due + " due" : "Start session";
-    $("start-btn").setAttribute("aria-label",
-      due > 0 ? "Start a session, " + due + " cards due" : "Start a new session");
-    if (young === 0 && due === 0) {
-      $("start-label").textContent = "Quiz me";
-    }
+  function dayKey(d) {
+    var x = d || new Date();
+    return x.getFullYear() + "-" + ("0" + (x.getMonth() + 1)).slice(-2) + "-" + ("0" + x.getDate()).slice(-2);
+  }
+
+  function yesterdayKey() {
+    var y = new Date();
+    y.setDate(y.getDate() - 1);
+    return dayKey(y);
+  }
+
+  /* A streak stays alive until a day is missed; it does not reset at midnight. */
+  function currentStreak() {
+    var st = state.streak;
+    if (!st || !st.last) return 0;
+    if (st.last === dayKey() || st.last === yesterdayKey()) return st.days;
+    return 0;
+  }
+
+  function bumpStreak() {
+    var today = dayKey();
+    var st = state.streak || { last: null, days: 0 };
+    if (st.last === today) { state.streak = st; return st.days; }
+    st.days = st.last === yesterdayKey() ? st.days + 1 : 1;
+    st.last = today;
+    state.streak = st;
+    return st.days;
   }
 
   /* --------------------------------------------------------- items + pools */
@@ -524,6 +543,8 @@
       qi: 0,
       requeued: {},
       missed: {},
+      times: [],
+      qStart: 0,
       answered: {},
       firstCorrect: 0,
       unique: 0
@@ -603,6 +624,7 @@
       session.unique += 1;
     }
 
+    session.qStart = Date.now();
     var type = quizType(card, session.qi);
     if (type === "pick-word") renderPickWord(id);
     else if (type === "say" && SR) renderSay(id);
@@ -715,6 +737,10 @@
   function answer(ok, chosenId) {
     var id = session.quiz[session.qi];
     var it = itemOf(id);
+    if (session.qStart) {
+      session.times.push(Date.now() - session.qStart);
+      session.qStart = 0;
+    }
 
     if (ok) {
       if (!session.missed[id]) session.firstCorrect += 1;
@@ -771,17 +797,25 @@
         }).join("") + "</ul>"
       : "";
 
+    var days = bumpStreak();
+    save();
+
+    var avg = session.times.length
+      ? (session.times.reduce(function (a, b) { return a + b; }, 0) / session.times.length / 1000).toFixed(1)
+      : null;
+
     $("stage").innerHTML =
-      '<p class="prompt">Quiz complete</p>' +
+      '<p class="prompt">Done</p>' +
       '<div class="word">' + acc + "%</div>" +
       '<p class="sentence">' + session.firstCorrect + " of " + total +
-        " right on the first try." + (missed.length ? " These are scheduled to return soon:" : "") +
+        " first try" + (avg ? " · " + avg + "s per answer" : "") +
+        " · " + days + " day streak" +
       "</p>" + list;
 
     feedback("", "");
     $("actions").innerHTML =
-      '<button class="btn btn-primary" id="back">Back to today</button>' +
-      '<button class="btn btn-ghost" id="again">Another round</button>';
+      '<button class="btn btn-primary" id="again">One more</button>' +
+      '<button class="btn btn-ghost" id="back">Done for now</button>';
 
     $("back").addEventListener("click", function () { session = null; show("today"); });
     $("again").addEventListener("click", function () { startSession(); });

@@ -29,103 +29,57 @@
     </nav>
   </header>
 
-  <div class="ticker" aria-hidden="true">
-    <div class="ticker-track">
-      <span>no translations</span><span><b>★</b> image → sound</span><span>42 words · 18 phrases</span><span><b>★</b> produce, don't recognise</span><span>sin traducciones</span><span><b>★</b> spaced repetition</span>
-      <span>no translations</span><span><b>★</b> image → sound</span><span>42 words · 18 phrases</span><span><b>★</b> produce, don't recognise</span><span>sin traducciones</span><span><b>★</b> spaced repetition</span>
-    </div>
-  </div>
 
   <main>
 
     <!-- ============================================================ TODAY -->
     <section class="view is-active" id="view-today" aria-labelledby="today-title">
 
-      <div class="hero">
-        <div class="hero-copy">
-          <span class="eyebrow"><span class="dot"></span>No translations, by design</span>
-          <h1 id="today-title">Learn the <span class="grad">meaning</span>,<br />not the dictionary.</h1>
-          <p class="lede">
-            Each concept arrives as a pair: the <strong>picture</strong>, the <strong>word</strong>
-            and the <strong>sound</strong> — never an English gloss. Then the quiz hides half of the
-            pair and asks you for it, so what you recall is the world itself instead of a translation.
-          </p>
-          <div class="cta-row">
-            <button class="btn btn-primary" id="start-btn">
-              <span aria-hidden="true">▶</span> <span id="start-label">Start session</span>
-            </button>
-            <button class="btn btn-ghost" data-goto="map">
-              <span aria-hidden="true">◇</span> Explore the map
-            </button>
-          </div>
-        </div>
+      <div class="solo">
+        <span class="eyebrow"><span class="dot"></span>No translations, by design</span>
 
-        <aside class="panel panel-pad today-panel" aria-label="Your progress">
-          <p class="panel-title">Today</p>
-          <div class="ring-wrap">
-            <svg class="ring" width="180" height="180" viewBox="0 0 180 180" role="img" aria-label="Retention">
-              <defs>
-                <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#d93a1c" />
-                  <stop offset="55%" stop-color="#f4622a" />
-                  <stop offset="100%" stop-color="#f2b705" />
-                </linearGradient>
-              </defs>
-              <circle class="track" cx="90" cy="90" r="76" stroke-width="14" />
-              <circle class="value" id="ring-value" cx="90" cy="90" r="76" stroke-width="14"
-                      stroke-dasharray="477.5" stroke-dashoffset="477.5" />
-            </svg>
-            <div class="ring-label">
-              <b id="retention-num">—</b>
-              <span>retention</span>
+        <h1 id="today-title">Learn the <span class="grad">meaning</span>,<br />not the dictionary.</h1>
+
+        <p class="lede">
+          Picture and word together, then the quiz takes one away. Sixty seconds a day is
+          enough to keep it.
+        </p>
+
+        <button class="btn btn-huge" id="start-btn">
+          <span id="start-label">Start lesson</span>
+          <small>60 seconds · 8 cards</small>
+        </button>
+
+        <p class="today-stats">
+          <span><b id="stat-due">0</b> due</span>
+          <span><b id="stat-streak">0</b> day streak</span>
+          <span><b id="stat-learned">0</b>/<b id="stat-total">0</b> known</span>
+          <span><b id="stat-mastered">0</b> solid</span>
+        </p>
+
+        <details class="tune">
+          <summary>Tune the lesson</summary>
+
+          <div class="builder-head">
+            <div class="mode-pick" role="group" aria-label="What to study">
+              <button class="mode is-on" data-mode="words" type="button">Words</button>
+              <button class="mode" data-mode="phrases" type="button">Phrases</button>
+            </div>
+            <div class="size-pick" role="group" aria-label="Session length">
+              <button class="size" data-size="5" type="button">5</button>
+              <button class="size is-on" data-size="8" type="button">8</button>
+              <button class="size" data-size="12" type="button">12</button>
             </div>
           </div>
-          <p class="ring-caption" id="ring-caption">Your first session sets the baseline.</p>
-          <div class="mini-stats">
-            <div class="mini"><b id="stat-due">0</b><span>due</span></div>
-            <div class="mini"><b id="stat-learned">0</b><span>known</span></div>
-            <div class="mini"><b id="stat-total">0</b><span>concepts</span></div>
-          </div>
-        </aside>
-      </div>
 
-      <section class="panel panel-pad builder" aria-labelledby="builder-title">
-        <div class="builder-head">
-          <p class="panel-title" id="builder-title">Build your lesson</p>
-          <div class="mode-pick" role="group" aria-label="What to study">
-            <button class="mode is-on" data-mode="words" type="button">Words</button>
-            <button class="mode" data-mode="phrases" type="button">Phrases</button>
-          </div>
-          <div class="size-pick" role="group" aria-label="Session length">
-            <button class="size" data-size="5" type="button">5</button>
-            <button class="size is-on" data-size="8" type="button">8</button>
-            <button class="size" data-size="12" type="button">12</button>
-          </div>
-        </div>
-        <div class="fields" id="fields"></div>
-        <div class="builder-actions">
-          <button class="btn btn-primary" id="build-start">Start this lesson</button>
-          <button class="btn btn-ghost" id="review-missed">Review my mistakes</button>
-          <span class="builder-note" id="builder-note"></span>
-        </div>
-      </section>
+          <div class="fields" id="fields"></div>
 
-      <div class="principles">
-        <article class="principle">
-          <span class="k">01 / learn</span>
-          <h3>Meet the pair</h3>
-          <p>A new concept is shown whole: picture, word and sound together. Nothing is translated; the image is what the word hangs on.</p>
-        </article>
-        <article class="principle">
-          <span class="k">02 / quiz</span>
-          <h3>Then hide one half</h3>
-          <p>Picture → word, word → picture, or say it aloud. Anything you miss returns before the session ends, not tomorrow.</p>
-        </article>
-        <article class="principle">
-          <span class="k">03 / connect</span>
-          <h3>Words are a web</h3>
-          <p>Near-miss answers are drawn from semantic neighbours, so the confusions you make are meaningful ones — and they get recorded, not forgotten.</p>
-        </article>
+          <div class="builder-actions">
+            <button class="btn btn-ghost btn-sm" id="build-start">Start with these</button>
+            <button class="btn btn-ghost btn-sm" id="review-missed">Review my mistakes</button>
+            <span class="builder-note" id="builder-note"></span>
+          </div>
+        </details>
       </div>
     </section>
 
@@ -209,9 +163,10 @@
   <footer class="foot">
     <span class="foot-left">
       <button class="audio-chip" id="audio-chip" type="button">🔊 checking audio…</button>
-      <span>sema · learn the pair, then get quizzed · data stays in this browser</span>
+      <a class="foot-link" href="#map">map</a>
+      <a class="foot-link" href="#stats">progress</a>
     </span>
-    <span><code>no dependencies · no build step</code></span>
+    <span><code>no accounts · no tracking · nothing leaves this tab</code></span>
   </footer>
 </div>
 

@@ -41,8 +41,12 @@ Deep links: `#practice` (start a lesson), `#phrases` (phrase lesson), `#quiz`, `
 3. **Miss and repeat.** A wrong answer is pushed to the back of the same quiz, and scheduled
    ten minutes out rather than tomorrow.
 
-The **Build your lesson** panel picks the semantic fields you actually need and the session
-length; **Review my mistakes** builds a quiz from everything you have lapsed on, worst first.
+The Today screen is deliberately one button: **Start lesson**, eight cards, about a minute.
+Everything else — words or phrases, which fields, session length, mistake review — hides
+behind *Tune the lesson* so it cannot distract from starting.
+
+What the screen shows is only what earns a return visit: cards due, the streak, how many
+words you know, and how many are solid.
 
 ## Verify it
 
