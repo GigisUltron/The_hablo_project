@@ -617,3 +617,11 @@ test("every settings option is read, applied now, and remembered", () => {
   assert.equal(/data-size=/.test(html), false, "the numeric length picker is still in the markup");
   assert.equal(/data-mode=/.test(html), false, "a deck-mode chooser came back");
 });
+
+test("no settings link goes nowhere", () => {
+  const gotos = [...html.matchAll(/data-goto="([^"]+)"/g)].map((m) => m[1]);
+  const ids = idsIn(html);
+  for (const g of gotos) assert.ok(ids.has("view-" + g), "no view for goto " + g);
+  assert.equal(/class="foot-link"[^>]*href="#/.test(html), false,
+    "a foot link points at a hash no view handles");
+});
