@@ -2007,10 +2007,30 @@
     return "";
   }
 
+  /* Say why this card is here: it is one of the pairs you keep mixing. */
+  function confusionNote(id) {
+    var c = state.confusions || {};
+    var best = null, bestN = 0;
+    Object.keys(c).forEach(function (k) {
+      var ids = String(k).split("|");
+      if (ids.indexOf(id) === -1) return;
+      if (c[k] < 2 || c[k] <= bestN) return;
+      best = ids; bestN = c[k];
+    });
+    if (!best) return "";
+    var other = best[0] === id ? best[1] : best[0];
+    var it = itemOf(other);
+    if (!it || !it.text) return "";
+    return tr("mix", "you mix these up") + ": " + it.text;
+  }
+
   function feedback(msg, kind, it) {
     var f = $("feedback");
     var why = whyText(it);
-    f.innerHTML = esc(msg) + (why ? '<span class="why">' + esc(why) + "</span>" : "");
+    var note = it ? confusionNote(it.id) : "";
+    f.innerHTML = esc(msg) +
+      (why ? '<span class="why">' + esc(why) + "</span>" : "") +
+      (note ? '<span class="why">' + esc(note) + "</span>" : "");
     f.className = "feedback" + (kind ? " " + kind : "");
   }
 
