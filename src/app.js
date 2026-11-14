@@ -1115,7 +1115,10 @@
     session.qStart = Date.now();
     /* never seen it? teach on this card, then move on. One screen per item,
      * but the first exposure informs instead of interrogating. */
-    if (card.last === null) { renderTeach(id); return; }
+    /* teach the first few, then ask: a session of eight brand-new items used to
+     * be eight teach cards and zero questions, and every answer counted zero. */
+    var taught = session.taught || 0;
+    if (card.last === null && taught < 3) { session.taught = taught + 1; renderTeach(id); return; }
 
     if (itemOf(id).kind === "term") { renderPickFrame(id); return; }
 
@@ -1163,6 +1166,7 @@
     wireGloss();
     $("actions").innerHTML = '<button class="btn btn-primary" id="gotit">Got it →</button>';
     $("gotit").addEventListener("click", function () {
+      session.firstCorrect += 1;   // it was taught and acknowledged, not guessed
       S.review(state, id, 2, Date.now());
       save();
       session.qi += 1;
