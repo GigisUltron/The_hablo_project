@@ -366,12 +366,486 @@
     });
     box.style.display = mode === "words" ? "flex" : "none";
 
-    /* a lesson is not a deck: words, phrases and terms together, scoped only
-     * by the unit's fields. The mode picker narrows emphasis, not content. */
-    var scopeWords = (unit && unit.fields)
-      ? allIds.filter(function (id) { return inFields(id, unit.fields); })
-      : allIds.slice();
-    var pool = scopeWords.concat(phraseIds, termIds);
+    var pool = mode === "phrases" ? phraseIds
+      : mode === "terms" ? termIds
+      : allIds.filter(function (id) { return inFields(id, fields); });
+    var due = S.dueList(state, Date.now()).filter(function (id) {
+      return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
+    }).length;
+
+    var gt = $("gloss-toggle");
+    if (gt) {
+      gt.textContent = state.settings.translations === "off"
+        ? "translations off"
+        : "translations on request";
+    }
+
+    var note = $("builder-note");
+    if (note) {
+      note.textContent = lessonSize() + " cards · " + pool.length +
+        (mode === "phrases" ? " phrases" : mode === "terms" ? " terms" : " concepts") +
+        " · " + due + " due";
+    }
+  }
+
+  function renderToday() {
+    renderBuilder();
+    renderTrack();
+
+    var due = S.dueList(state, Date.now()).filter(function (id) {
+      return state.cards[id] && state.cards[id].last !== null;
+    }).length;
+    var known = allIds.filter(function (id) { return state.cards[id].reps > 0; }).length;
+    var mastered = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
+
+    var streak = currentStreak();
+    var line = due > 0
+      ? due + (due === 1 ? " card to review" : " cards to review")
+      : known + " of " + allIds.length + " words learned";
+    if (streak > 1) line += " · " + streak + " day streak";
+    $("progress-line").textContent = line;
+
+    $("start-label").textContent = due > 0 ? "Start lesson · " + due + " due" : "Start lesson";
+
+    var sub = $("start-btn").querySelector("small");
+    if (sub && TRACK) {
+      var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
+      sub.textContent = "60 seconds · " + TRACK.currentUnit(solid).title.toLowerCase();
+    }
+  }
+
+  /* -------------------------------------------------------------- reader */
+
+  var reader = null;
+
+  function startReader() {
+    var texts = (window.SEMA_TEXTS && window.SEMA_TEXTS.texts) || [];
+    if (!texts.length) { toast("No texts yet."); return; }
+    reader = { text: texts[0], qi: 0, correct: 0 };
+    show("reader");
+    renderReaderText();
+  }
+
+  function renderReaderText() {
+    var t = reader.text;
+    $("reader-count").textContent = "level " + t.level;
+    $("reader-bar").style.width = "8%";
+    $("reader-feedback").textContent = "";
+    $("reader-stage").innerHTML =
+      '<p class="prompt">Reading</p>' +
+      '<h3 class="reader-title">' + esc(t.title) + "</h3>" +
+      '<p class="reader-body">' + esc(t.body) + "</p>";
+    $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-go">Questions →</button>';
+    $("reader-go").addEventListener("click", renderReaderQuestion);
+  }
+
+  function renderReaderQuestion() {
+    if (!reader) return;
+    if (reader.qi >= reader.text.questions.length) { finishReader(); return; }
+
+    var q = reader.text.questions[reader.qi];
+    $("reader-bar").style.width = Math.round(((reader.qi + 1) / reader.text.questions.length) * 100) + "%";
+    $("reader-count").textContent = (reader.qi + 1) + "/" + reader.text.questions.length;
+    $("reader-stage").innerHTML =
+      '<p class="prompt">' + esc(reader.text.title) + "</p>" +
+      '<p class="reader-q">' + esc(q.q) + "</p>" +
+      '<div class="word-options">' + q.options.map(function (o, i) {
+        return '<button class="option-word" data-i="' + i + '">' + esc(o) + "</button>";
+      }).join("") + "</div>";
+    $("reader-actions").innerHTML = "";
+
+    Array.prototype.forEach.call($("reader-stage").querySelectorAll(".option-word"), function (btn) {
+      btn.addEventListener("click", function () {
+        var picked = Number(btn.getAttribute("data-i"));
+        var ok = picked === q.answer;
+        if (ok) reader.correct += 1;
+        btn.classList.add(ok ? "pick-correct" : "pick-wrong");
+        Array.prototype.forEach.call($("reader-stage").querySelectorAll(".option-word"), function (b) {
+          b.disabled = true;
+          if (Number(b.getAttribute("data-i")) === q.answer) b.classList.add("pick-correct");
+        });
+        $("reader-feedback").textContent = ok ? "correct" : "the answer was: " + q.options[q.answer];
+        $("reader-feedback").className = "feedback " + (ok ? "good" : "bad");
+        reader.qi += 1;
+        $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-next">Continue →</button>';
+        $("reader-next").addEventListener("click", function () {
+          $("reader-feedback").className = "feedback";
+          renderReaderQuestion();
+        });
+      });
+    });
+  }
+
+  function finishReader() {
+    var total = reader.text.questions.length;
+    $("reader-bar").style.width = "100%";
+    $("reader-stage").innerHTML =
+      '<p class="prompt">Text finished</p>' +
+      '<div class="word">' + reader.correct + "/" + total + "</div>" +
+      '<p class="sentence">' + esc(reader.text.title) + " · level " + reader.text.level + "</p>";
+    $("reader-feedback").textContent = "";
+    $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-done">Back to today</button>';
+    $("reader-done").addEventListener("click", function () { reader = null; show("today"); });
+  }
+
+  /* --------------------------------------------------------- conversation */
+
+  var conv = null;
+
+  function startConversation() {
+    conv = CONV.start("cv-first-meeting");
+    show("conv");
+    $("chat").innerHTML = "";
+    renderTurn();
+  }
+
+  function bubble(text, mine) {
+    var el = document.createElement("p");
+    el.className = "bubble" + (mine ? " mine" : "");
+    el.textContent = text;
+    $("chat").appendChild(el);
+    $("chat").scrollTop = $("chat").scrollHeight;
+  }
+
+  function renderTurn() {
+    var t = conv.dialogue.turns[conv.turn];
+    if (!t) { finishConv(); return; }
+    bubble(t.es, false);
+    $("conv-count").textContent = (conv.turn + 1) + "/" + conv.dialogue.turns.length;
+    $("conv-bar").style.width = Math.round((conv.turn / conv.dialogue.turns.length) * 100) + "%";
+    $("conv-feedback").textContent = "";
+    if (!t.expects.length) { finishConv(); return; }
+    $("conv-stage").innerHTML =
+      '<input class="type-input" id="conv-input" type="text" autocomplete="off" placeholder="reply in spanish" aria-label="your reply" />' +
+      '<button class="btn btn-primary" id="conv-send">Send</button>';
+    var input = $("conv-input");
+    input.focus();
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") sendReply(); });
+    $("conv-send").addEventListener("click", sendReply);
+  }
+
+  function sendReply() {
+    var t = conv.dialogue.turns[conv.turn];
+    var el = $("conv-input");
+    var said = el ? el.value : "";
+    if (!said.trim()) return;
+    bubble(said.trim(), true);
+    if (CONV.fits(said, t)) {
+      if (t.item) { S.review(state, t.item, 2, Date.now()); save(); }
+      $("conv-feedback").className = "feedback good";
+      $("conv-feedback").textContent = "that works";
+      conv.turn += 1;
+      setTimeout(renderTurn, 400);
+    } else {
+      conv.misses += 1;
+      if (t.item) { S.review(state, t.item, 0, Date.now()); save(); }
+      $("conv-feedback").className = "feedback bad";
+      $("conv-feedback").textContent = "try: " + t.reply;
+      if (el) { el.value = ""; el.focus(); }
+    }
+  }
+
+  function finishConv() {
+    $("conv-bar").style.width = "100%";
+    $("conv-count").textContent = "done";
+    $("conv-stage").innerHTML = "";
+    $("conv-feedback").className = "feedback good";
+    $("conv-feedback").textContent = "conversation complete · " + conv.misses + " retries";
+  }
+
+  /* ------------------------------------------------------------ placement */
+
+  var placement = null;
+
+  /* Eight questions, mixed decks, hardest last. The result is a floor on the
+   * track: a false beginner should not be made to click through "casa". */
+  function startPlacement() {
+    var queue = S.shuffle(allIds, Math.random).slice(0, 4)
+      .concat(S.shuffle(phraseIds, Math.random).slice(0, 2))
+      .concat(S.shuffle(termIds, Math.random).slice(0, 2));
+
+    placement = { queue: queue, i: 0, correct: 0 };
+    show("session");
+    renderPlaceItem();
+  }
+
+  function placementFloor() {
+    return (state.placement && state.placement.floor) || 0;
+  }
+
+  function renderPlaceItem() {
+    if (!placement) return;
+    if (placement.i >= placement.queue.length) { finishPlacement(); return; }
+
+    clearCard();
+    var id = placement.queue[placement.i];
+    var it = itemOf(id);
+    var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
+
+    $("counter").textContent = (placement.i + 1) + "/" + placement.queue.length;
+    $("bar-fill").style.width = Math.round((placement.i / placement.queue.length) * 100) + "%";
+
+    $("stage").innerHTML =
+      '<p class="prompt">How much do you know?</p>' +
+      tileHTML(it) +
+      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
+
+    Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
+      btn.addEventListener("click", function () {
+        var ok = btn.getAttribute("data-id") === id;
+        if (ok) placement.correct += 1;
+        btn.classList.add(ok ? "pick-correct" : "pick-wrong");
+        markChoices(".option-word", id);
+        placement.i += 1;
+        setTimeout(renderPlaceItem, ok ? 220 : 700);
+      });
+    });
+  }
+
+  function finishPlacement() {
+    var total = placement.queue.length;
+    var ratio = placement.correct / total;
+    var floor = Math.min(TRACK.units.length - 1, Math.floor(ratio * TRACK.units.length));
+    state.placement = { floor: floor, score: placement.correct, total: total, at: Date.now() };
+    placement = null;
+    save();
+
+    show("today");
+    toast(floor > 0
+      ? "Starting at " + TRACK.units[floor].title + " — " + placement.correct + "/" + total + " right."
+      : "Starting from the beginning.");
+    renderToday();
+  }
+
+  /* ---------------------------------------------------------------- track */
+
+  function renderTrack() {
+    var box = $("track");
+    if (!box || !TRACK) return;
+
+    var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
+    var rows = TRACK.map(solid);
+
+    /* the placement floor is a floor, not a ceiling: real progress still wins */
+    var bySolid = 0;
+    rows.forEach(function (r) { if (r.current) bySolid = r.index; });
+    var currentIndex = Math.max(bySolid, placementFloor());
+    var floor = placementFloor();
+
+    rows.forEach(function (r) {
+      r.unlocked = r.unlocked || r.index <= floor;
+      r.current = r.index === currentIndex;
+    });
+
+    box.innerHTML = rows.map(function (u) {
+      var cls = "step" + (u.unlocked ? "" : " locked") + (u.current ? " now" : "");
+      return '<button class="' + cls + '" type="button" data-unit="' + esc(u.id) + '"' +
+        (u.unlocked ? "" : " disabled") + ">" +
+        '<span class="step-n">' + (u.unlocked ? u.index + 1 : "·") + "</span>" +
+        '<span class="step-t">' + esc(u.title) + "</span>" +
+      "</button>";
+    }).join("");
+
+    Array.prototype.forEach.call(box.querySelectorAll(".step"), function (b) {
+      b.addEventListener("click", function () {
+        var id = b.getAttribute("data-unit");
+        var unit = TRACK.units.filter(function (u) { return u.id === id; })[0];
+        if (unit) startSession({ unit: unit });
+      });
+    });
+
+    var cur = rows[currentIndex];
+    var next = rows.filter(function (r) { return !r.unlocked; })[0];
+
+  }
+
+  /* --------------------------------------------------------------- streak */
+
+  function dayKey(d) {
+    var x = d || new Date();
+    return x.getFullYear() + "-" + ("0" + (x.getMonth() + 1)).slice(-2) + "-" + ("0" + x.getDate()).slice(-2);
+  }
+
+  function yesterdayKey() {
+    var y = new Date();
+    y.setDate(y.getDate() - 1);
+    return dayKey(y);
+  }
+
+  /* A streak stays alive until a day is missed; it does not reset at midnight. */
+  function currentStreak() {
+    var st = state.streak;
+    if (!st || !st.last) return 0;
+    if (st.last === dayKey() || st.last === yesterdayKey()) return st.days;
+    return 0;
+  }
+
+  function bumpStreak() {
+    var today = dayKey();
+    var st = state.streak || { last: null, days: 0 };
+    if (st.last === today) { state.streak = st; return st.days; }
+    st.days = st.last === yesterdayKey() ? st.days + 1 : 1;
+    st.last = today;
+    state.streak = st;
+    return st.days;
+  }
+
+  /* --------------------------------------------------------- items + pools */
+
+  /* A lesson can teach a word or a whole phrase; both present the same shape
+   * to the drill, so there is one renderer to maintain instead of two. */
+  function itemOf(id) {
+    var t = termById[id];
+    if (t) {
+      return {
+        id: t.id, emoji: null, schema: t.schema, article: "", text: t.text,
+        sub: t.frame, frame: t.frame, contrast: t.contrast, kind: "term"
+      };
+    }
+    var p = phraseById[id];
+    if (p) {
+      return { id: p.id, emoji: p.emoji, article: "", text: p.text, sub: p.sub || "", kind: "phrase" };
+    }
+    var c = conceptById[id];
+    if (!c) return { id: id, emoji: "❓", article: "", text: id, sub: "", kind: "word" };
+    return { id: c.id, emoji: c.emoji, article: c.article, text: c.word, sub: c.sentence, kind: "word" };
+  }
+
+  /* Small schematic glyphs. A picture cannot carry "however"; a balance can. */
+  var SCHEMAS = {
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    repeat: '<path d="M4 12a8 8 0 0 1 13.7-5.6"/><path d="M20 12a8 8 0 0 1-13.7 5.6"/><path d="M17 3v4h-4"/><path d="M7 21v-4h4"/>',
+    left: '<path d="M20 12H5"/><path d="M11 6l-6 6 6 6"/>',
+    right: '<path d="M4 12h15"/><path d="M13 6l6 6-6 6"/>',
+    fork: '<path d="M12 20v-8"/><path d="M12 12L6 5"/><path d="M12 12l6-7"/>',
+    balance: '<path d="M4 9h16"/><path d="M12 9v8"/><path d="M8 17h8"/><path d="M4 9l2 4h4z"/><path d="M20 9l-2 4h-4z"/>',
+    parallel: '<path d="M4 9h16"/><path d="M4 15h16"/>',
+    question: '<path d="M9 9a3 3 0 1 1 4 2.8c-.8.4-1 1-1 1.7"/><circle cx="12" cy="18" r="1"/>',
+    plus: '<path d="M12 5v14"/><path d="M5 12h14"/>',
+    chain: '<circle cx="8" cy="12" r="3.5"/><circle cx="16" cy="12" r="3.5"/>'
+  };
+
+  function schemaSVG(key) {
+    var body = SCHEMAS[key] || SCHEMAS.question;
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + body + "</svg>";
+  }
+
+  function tileHTML(it, small) {
+    var cls = "tile" + (small ? " sm" : "");
+    if (it.schema) return '<div class="' + cls + ' schema">' + schemaSVG(it.schema) + "</div>";
+    return '<div class="' + cls + '" aria-hidden="true">' + it.emoji + "</div>";
+  }
+
+  function poolFor(mode) {
+    if (mode === "phrases") return phraseIds.slice();
+    if (mode === "terms") return termIds.slice();
+    if (mode === "mixed") return allIds.concat(phraseIds, termIds);
+    return allIds.slice();
+  }
+
+  function distractorsFor(id, count) {
+    var it = itemOf(id);
+    if (it.kind === "phrase") return S.pickDistractors(id, phraseIds, [], count, Math.random);
+    return S.pickDistractors(id, allIds, neighboursOf(id), count, Math.random);
+  }
+
+  function wordsHTML(it) {
+    var art = it.article ? '<span class="art">' + esc(it.article) + "</span>" : "";
+    var long = it.text.length > 16 ? " long" : "";
+    return '<div class="word' + long + '">' + art + esc(it.text) + "</div>";
+  }
+
+  function glossHTML(id) {
+    if (state.settings && state.settings.translations === "off") return "";
+    var g = window.SEMA_GLOSSES && window.SEMA_GLOSSES[id];
+    if (!g) return "";
+    return '<div class="gloss-wrap">' +
+      '<button class="gloss-btn" type="button" data-gloss="' + esc(g) + '">show translation</button>' +
+      '<span class="gloss" hidden></span>' +
+      "</div>";
+  }
+
+  /* Translations are a deliberate escape hatch, not a crutch: they appear on
+   * request, vanish after a few seconds, and every look is counted. */
+  var glossTimer = null;
+
+  function wireGloss() {
+    Array.prototype.forEach.call($("stage").querySelectorAll(".gloss-btn"), function (btn) {
+      btn.addEventListener("click", function () {
+        var out = btn.parentNode.querySelector(".gloss");
+        if (!out) return;
+        var isOpen = !out.hidden;
+        out.hidden = isOpen;
+        btn.textContent = isOpen ? "show translation" : "hide";
+        if (!isOpen) {
+          out.textContent = btn.getAttribute("data-gloss");
+          state.memory.peeked = (state.memory.peeked || 0) + 1;
+          save();
+          clearTimeout(glossTimer);
+          glossTimer = setTimeout(function () {
+            out.hidden = true;
+            btn.textContent = "show translation";
+          }, 6000);
+        }
+      });
+    });
+  }
+
+  function contextHTML(it) {
+    if (it.kind === "term") {
+      var filled = String(it.frame || "").replace("____", "<b>" + esc(it.text) + "</b>");
+      var twin = it.contrast && termById[it.contrast];
+      return '<p class="sentence">' + filled + "</p>" +
+        (twin ? '<p class="term-contrast">↔ ' + esc(twin.text) + "</p>" : "");
+    }
+    if (!it.sub) return "";
+    if (it.kind === "phrase") return '<p class="sentence">' + esc(it.sub) + "</p>";
+    var txt = esc(it.sub);
+    var w = esc(it.text);
+    return '<p class="sentence">' + txt.replace(new RegExp("\\b(" + w + ")\\b", "i"), "<b>$1</b>") + "</p>";
+  }
+
+  /* -------------------------------------------------------------- session */
+
+  var session = null;
+
+  function selectedFields() {
+    var f = state.settings && state.settings.fields;
+    if (!f || !f.length) return Object.keys(D.categories);
+    return f;
+  }
+
+  function lessonSize() {
+    return (state.settings && state.settings.size) || 8;
+  }
+
+  function sessionMode() {
+    return (state.settings && state.settings.mode) || "words";
+  }
+
+  function inFields(id, fields) {
+    var c = conceptById[id];
+    return !!c && fields.indexOf(c.cat) !== -1;
+  }
+
+  function startSession(opts) {
+    var o = opts || {};
+    var unit = o.unit || null;
+    var mode = unit ? unit.mode : (o.mode || sessionMode());
+    var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
+    var plan = ADAPT ? ADAPT.plan(solid) : { fresh: 4, review: 4, production: 0, size: 8, level: 1 };
+    var size = o.size || plan.size;
+    var fields = unit && unit.fields ? unit.fields : selectedFields();
+    var now = Date.now();
+
+    var pool = mode === "phrases"
+      ? phraseIds.slice()
+      : mode === "terms"
+        ? termIds.slice()
+        : mode === "mixed"
+          ? allIds.concat(phraseIds, termIds)
+          : allIds.filter(function (id) { return inFields(id, fields); });
 
     var due = S.dueList(state, now).filter(function (id) {
       return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
