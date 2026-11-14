@@ -1395,3 +1395,4 @@ button.brand { background: none; border: 0; padding: 0; cursor: pointer; }
    let the card size to its content instead of inheriting the drill's height */
 #conv-stage { flex-wrap: nowrap; }
 .conv-card { min-height: 0; }
+#conv-stage { flex-direction: row; align-items: center; }
