@@ -1396,3 +1396,6 @@ button.brand { background: none; border: 0; padding: 0; cursor: pointer; }
 #conv-stage { flex-wrap: nowrap; }
 .conv-card { min-height: 0; }
 #conv-stage { flex-direction: row; align-items: center; }
+
+/* the bar and the number said the same thing; keep the glanceable one */
+#counter { display: none; }
