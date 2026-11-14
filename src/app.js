@@ -1886,7 +1886,7 @@
     var mic = $("mic-btn");
     if (mic) mic.disabled = true;
 
-    feedback(ok ? "got it" : "it comes back at the end", ok ? "good" : "bad");
+    feedback(ok ? "got it" : "it comes back at the end", ok ? "good" : "bad", it);
 
     var advance = function () { session.qi += 1; renderQuiz(); };
     if (ok) {
@@ -1988,9 +1988,24 @@
     return d <= 1 ? "tomorrow" : "in " + d + " days";
   }
 
-  function feedback(msg, kind) {
+  function whyText(it) {
+    if (!it) return "";
+    if (it.kind === "basic") {
+      if (it.of) {
+        var who = { "1s": "yo", "2s": "tú", "3s": "él o ella", "1p": "nosotros", "3p": "ellos" }[it.person] || "";
+        return it.text + " is " + it.of + " for " + who + " — " + (it.sub || "");
+      }
+      return it.text + " names who the verb is about.";
+    }
+    if (it.kind === "term" && it.frame) return it.frame.replace("____", it.text);
+    if (it.sub) return it.sub;
+    return "";
+  }
+
+  function feedback(msg, kind, it) {
     var f = $("feedback");
-    f.textContent = msg;
+    var why = whyText(it);
+    f.innerHTML = esc(msg) + (why ? '<span class="why">' + esc(why) + "</span>" : "");
     f.className = "feedback" + (kind ? " " + kind : "");
   }
 

@@ -1252,3 +1252,11 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 }
 .gloss-btn:hover, .explain-btn:hover { color: var(--text); }
 .gloss-btn + .explain-btn { margin-left: 18px; }
+
+.feedback .why {
+  display: block;
+  margin-top: 6px;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-2);
+}
