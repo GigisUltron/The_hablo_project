@@ -83,6 +83,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/lang/fr/alphabet.js",
     "assets/audio/fr/manifest.js",
     "src/lang/fr/audio.js",
+    "src/ui-strings.js",
     "src/srs.js",
     "src/memory.js",
     "src/app.js"
@@ -143,4 +144,13 @@ test("every track unit has a mode the app can start", () => {
   const T = require("../src/track.js");
   const modes = new Set(T.units.map((u) => u.mode));
   for (const m of modes) assert.ok(["words", "phrases", "terms", "read"].includes(m), "unknown mode " + m);
+});
+
+test("every data-i18n key in the markup exists in every locale", () => {
+  const U = require("../src/ui-strings.js");
+  const keys = [...html.matchAll(/data-i18n="([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(keys.length >= 5, "no strings wired yet");
+  for (const k of keys) {
+    for (const lang of ["en", "es"]) assert.ok(U[lang][k], `${lang} missing ${k}`);
+  }
 });

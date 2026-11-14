@@ -12,6 +12,18 @@
   var LANGS = window.SemaLangs;
   var S = window.SemaSRS;
   var MEM = window.SemaMemory;
+  var UI = window.SEMA_UI;
+
+  /* Chrome in the learner's interface language, not the deck's. */
+  function applyStrings() {
+    if (!UI) return;
+    var lang = (state.profile && state.profile.uiLang) || "en";
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (el) {
+      var key = el.getAttribute("data-i18n");
+      var text = UI.t(lang, key);
+      if (text) el.textContent = text;
+    });
+  }
   var TRACK = window.SemaTrack;
   var ADAPT = window.SemaAdaptive;
   var CORRECT = window.SemaCorrect;
