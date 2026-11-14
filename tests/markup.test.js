@@ -58,19 +58,22 @@ test("markup only references assets that exist", () => {
   }
 });
 
-test("scripts load in dependency order (data, audio manifest, srs, app)", () => {
+test("scripts load in dependency order (registry, pack, audio manifest, srs, app)", () => {
   const order = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((x) => x[1]);
   assert.deepEqual(order, [
-    "src/data.js",
-    "src/phrases.js",
-    "src/terms.js",
+    "src/lang/index.js",
+    "src/lang/es/concepts.js",
+    "src/lang/es/phrases.js",
+    "src/lang/es/terms.js",
     "src/track.js",
-    "src/texts.js",
+    "src/lang/es/texts.js",
     "src/adaptive.js",
     "src/correct.js",
-    "src/conv.js",
-    "src/glosses.js",
+    "src/lang/es/conv.js",
+    "src/lang/es/glosses.js",
+    "src/lang/es/alphabet.js",
     "assets/audio/manifest.js",
+    "src/lang/es/audio.js",
     "src/srs.js",
     "src/memory.js",
     "src/app.js"
