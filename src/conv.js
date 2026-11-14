@@ -10,11 +10,11 @@
       id: "cv-first-meeting",
       title: "First meeting",
       turns: [
-        { es: "¡Hola! ¿Qué tal?", expects: ["bien", "genial", "asi asi"], reply: "Bien, gracias." },
-        { es: "¿Cómo te llamas?", expects: ["me llamo"], reply: "Me llamo…" },
-        { es: "¿De dónde eres?", expects: ["soy de"], reply: "Soy de…" },
-        { es: "¿Cuál es tu color favorito?", expects: ["color favorito", "mi color"], reply: "Mi color favorito es el azul." },
-        { es: "¡Encantado! Nos vemos mañana.", expects: [], reply: "" }
+        { es: "¡Hola! ¿Qué tal?", expects: ["bien", "genial", "asi asi"], item: "ph-hola", reply: "Bien, gracias." },
+        { es: "¿Cómo te llamas?", expects: ["me llamo"], item: "ph-tu-nombre", reply: "Me llamo…" },
+        { es: "¿De dónde eres?", expects: ["soy de"], item: "ph-de-donde", reply: "Soy de…" },
+        { es: "¿Cuál es tu color favorito?", expects: ["color favorito", "mi color"], item: "ph-color", reply: "Mi color favorito es el azul." },
+        { es: "¡Encantado! Nos vemos mañana.", expects: [], item: "ph-nos-vemos", reply: "" }
       ]
     }
   ];

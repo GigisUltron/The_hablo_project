@@ -531,12 +531,14 @@
     if (!said.trim()) return;
     bubble(said.trim(), true);
     if (CONV.fits(said, t)) {
+      if (t.item) { S.review(state, t.item, 2, Date.now()); save(); }
       $("conv-feedback").className = "feedback good";
       $("conv-feedback").textContent = "that works";
       conv.turn += 1;
       setTimeout(renderTurn, 400);
     } else {
       conv.misses += 1;
+      if (t.item) { S.review(state, t.item, 0, Date.now()); save(); }
       $("conv-feedback").className = "feedback bad";
       $("conv-feedback").textContent = "try: " + t.reply;
       if (el) { el.value = ""; el.focus(); }
