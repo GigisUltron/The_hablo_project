@@ -1372,7 +1372,7 @@
     );
 
     $("stage").innerHTML =
-      '<p class="prompt">' + (ok ? "Correct" : "Not quite") + "</p>" +
+      '<p class="prompt">' + (ok ? "Correct" : tr("notQuite", "Not quite")) + "</p>" +
       '<p class="personal-line">' + full + "</p>" +
       '<p class="sentence">your own words, from ' + esc(shortDate(p.sentence.created)) + "</p>";
 
@@ -1665,7 +1665,7 @@
     var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
 
     $("stage").innerHTML =
-      '<p class="prompt">Which one is this?</p>' +
+      '<p class="prompt">' + tr("whichOne", "Which one is this?") + "</p>" +
       figureHTML(it, "Hear it") +
       '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
 

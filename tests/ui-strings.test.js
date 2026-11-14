@@ -21,3 +21,13 @@ test("an unknown language falls back to english, not to a blank", () => {
   assert.equal(U.t("es", "start"), U.es.start);
   assert.equal(U.t("es", "nonexistent"), "nonexistent");
 });
+
+test("the session prompt and correction use the table, not literals", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.equal(app.includes('<p class="prompt">Which one is this?</p>'), false,
+    "the prompt is still a literal");
+  assert.match(app, /tr\("whichOne"/);
+  assert.match(app, /tr\("notQuite"/);
+});
