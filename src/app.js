@@ -1550,6 +1550,7 @@
   $("review-missed").addEventListener("click", reviewMistakes);
   $("place-btn").addEventListener("click", startPlacement);
   $("read-btn").addEventListener("click", startReader);
+  $("brand-btn").addEventListener("click", function () { show("today"); });
   $("settings-btn").addEventListener("click", function () { show("settings"); });
   $("settings-back").addEventListener("click", function () { show("today"); });
   $("reader-back").addEventListener("click", function () { reader = null; show("today"); });
