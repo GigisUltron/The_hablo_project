@@ -29,3 +29,14 @@ test("no pronouns or forms collide with the phrase deck", () => {
   const P = require("../src/lang/es/phrases.js").phrases.map((p) => p.text.toLowerCase());
   for (const b of B.items) assert.equal(P.includes(b.text.toLowerCase()), false, b.text);
 });
+
+test("french has the same grammar layer as spanish", () => {
+  const F = require("../src/lang/fr/basics.js");
+  const S = require("../src/lang/es/basics.js");
+  assert.equal(F.items.length, S.items.length);
+  for (const f of F.items) {
+    assert.ok(f.id && f.text && f.gloss && f.kind && f.person, f.id);
+    if (f.kind === "verb") assert.ok(["être", "avoir"].includes(f.of), f.id);
+  }
+  for (const row of F.rows) assert.equal(F.items.filter((i) => i.of === row.verb).length, 5, row.verb);
+});
