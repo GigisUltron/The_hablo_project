@@ -6,7 +6,7 @@ Each concept arrives as a pair — the picture, the word, the sound — with no 
 anywhere in the data. Then the quiz hides one half and asks you for the other. What you miss
 comes back before the session ends.
 
-Spanish, 42 concepts and 18 phrases, spaced repetition, a semantic map, a lesson builder, and
+Spanish, 42 concepts and 60 phrases, spaced repetition, a semantic map, a lesson builder, and
 audio that ships with the app instead of depending on your operating system.
 
 ![sema — the Today view](docs/preview.png)
@@ -80,6 +80,9 @@ DEMO.md               design notes, decisions and honest limits
 - **Audio is pre-rendered.** Browser speech synthesis needs a voice installed by the OS, and
   many machines have none, which is silence with no error. The WAVs remove that dependency;
   synthesis is only a fallback.
+- **The voice is eSpeak by default** — clear, consistent, synthetic. The generator also takes
+  `--engine piper`, so one command on a machine with `pip` and a Spanish Piper voice replaces
+  all 102 clips with neural ones. See [tools/README.md](tools/README.md).
 - **Interface state stays in the browser.** `localStorage`, no accounts, no analytics.
 
 The reasoning, the tradeoffs and what this does *not* do are in [DEMO.md](DEMO.md).

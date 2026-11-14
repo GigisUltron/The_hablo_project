@@ -6,9 +6,9 @@ A concept is introduced as a pair — picture, word, sound — with no English g
 the data. Then the quiz hides one half and asks you for the other: picture → word, word →
 picture, or say it aloud. What you miss comes back before the session ends.
 
-42 Spanish concepts, 43 semantic relations, spaced repetition, a lesson builder that chooses
-what you study, spoken production, a map of the semantic web — and audio that ships with the
-app instead of depending on your operating system.
+42 Spanish concepts and 60 phrases, 43 semantic relations, spaced repetition, a lesson
+builder that chooses what you study, spoken production, a map of the semantic web — and audio
+that ships with the app instead of depending on your operating system.
 
 ![sema — the Today view](docs/preview.png)
 
@@ -68,7 +68,7 @@ worst first. Both choices persist in `localStorage`.
 | Semantic map | `buildMap` | 42 nodes, relations drawn as curves, learned nodes lit |
 | Audio diagnostics | `audioStatus` | Reports voice availability instead of playing nothing |
 | Lesson builder | `renderBuilder` | Field toggles, words/phrases switch, session size |
-| Phrase deck | `src/phrases.js` | 18 whole utterances, scene-anchored, no gloss |
+| Phrase deck | `src/phrases.js` | 60 whole utterances, scene-anchored, no gloss |
 | Mistake review | `reviewMistakes` | Quiz built from your lapses, worst first |
 | Progress | `renderStats` | Coverage per field, sessions, recalls, lapses |
 
@@ -85,7 +85,7 @@ Speech synthesis is now only a fallback, used if the manifest is missing. The fo
 reports which path is active (`bundled audio · 42 words`), and the earlier "no voice on this
 device" message only appears when there is genuinely no audio at all.
 
-Sixty clips: 42 words and 18 phrases, spoken by the same voice, at 16 kHz with the edges
+102 clips: 42 words and 60 phrases, spoken by the same voice, at 16 kHz with the edges
 faded and every clip peak-normalised so none is quieter than its neighbours. eSpeak is
 formant synthesis and will never sound human — slower rate, a touch more pitch and the
 resampling above is as far as it goes without a neural engine, which would mean a
@@ -106,7 +106,7 @@ make check          # syntax gate + full suite
 node --test tests/  # the tests on their own
 ```
 
-24 tests, standard library only: scheduling arithmetic, the similarity matcher, queue
+31 tests, standard library only: scheduling arithmetic, the similarity matcher, queue
 construction, distractor selection, dataset integrity (unique ids, unique images, no
 dangling relations) and consistency between the markup and the script — the kind of breakage
 a no-build front end otherwise surfaces only in the browser.

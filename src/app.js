@@ -157,7 +157,7 @@
     chip.classList.toggle("warn", st.state !== "ok");
     chip.title = st.state === "ok"
       ? "Tap to hear a test word"
-      : "No usable speech voice here. The demo is fully usable without audio.";
+      : "No usable speech voice here. Everything still works without audio.";
   }
 
   if (hasTTS) {
@@ -1068,13 +1068,13 @@
     }
   });
 
-  /* Deep links: #map, #stats and #practice are shareable — useful for a demo,
+  /* Deep links: #map, #stats and #practice are shareable — useful for sharing,
    * and they let the views be driven without a click. */
   $("audio-chip").addEventListener("click", function () {
     sayItem(itemOf("noche"));
     toast(audioStatus().state === "ok"
       ? "That was the synthesized voice — if you heard nothing, check the system volume."
-      : "No Spanish voice on this device; the demo still works without audio.");
+      : "No Spanish voice on this device; everything still works without audio.");
   });
   updateAudioChip();
 

@@ -130,18 +130,6 @@ button { font: inherit; color: inherit; }
   box-shadow: 3px 3px 0 var(--ink);
 }
 
-.tag {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--paper);
-  background: var(--ink);
-  padding: 4px 8px;
-  border-radius: 4px;
-  transform: rotate(-3deg);
-}
-
 .tabs {
   display: flex;
   gap: 8px;
@@ -800,7 +788,6 @@ h1 em {
   .app { padding: 14px 13px 50px; }
   .brand { font-size: 19px; }
   .mark { width: 30px; height: 30px; }
-  .tag { display: none; }
   .tab { padding: 7px 10px; font-size: 11.5px; }
   .card { padding: 24px 14px 18px; min-height: 400px; }
   .tile { width: 126px; height: 126px; font-size: 62px; }
