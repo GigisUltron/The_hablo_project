@@ -68,8 +68,22 @@
     return null;
   }
 
+  /* How much today should be, learned from what you actually finish.
+   * Recent completed sessions, clamped so a bad week cannot shrink it to two
+   * cards and a good one cannot set an impossible target. */
+  function dailyGoal(history, floor, ceiling) {
+    var lo = floor === undefined ? 4 : floor;
+    var hi = ceiling === undefined ? 15 : ceiling;
+    var done = (history || []).filter(function (n) { return typeof n === "number" && n > 0; });
+    if (!done.length) return 8;
+    var recent = done.slice(-7);
+    var total = recent.reduce(function (a, b) { return a + b; }, 0);
+    var avg = total / recent.length;
+    return Math.max(lo, Math.min(hi, Math.round(avg)));
+  }
+
   var api = { LEVELS: LEVELS, level: level, plan: plan, shouldStop: shouldStop,
-              CEFR: CEFR, within: within, confusionSeed: confusionSeed };
+              CEFR: CEFR, within: within, confusionSeed: confusionSeed, dailyGoal: dailyGoal };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.SemaAdaptive = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);

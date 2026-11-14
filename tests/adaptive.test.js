@@ -58,3 +58,12 @@ test("the session can open on the pair you actually confuse", () => {
   assert.equal(A.confusionSeed({ "q|r": 9 }, pool), null);   // strongest, but out of scope
   assert.equal(A.confusionSeed(null, pool), null);
 });
+
+test("the daily goal follows what you finish, within reason", () => {
+  assert.equal(A.dailyGoal([]), 8);                       // no history: a sane start
+  assert.equal(A.dailyGoal([6, 8, 10]), 8);               // average of recent
+  assert.equal(A.dailyGoal([2, 2, 2]), 4);                // floored, never 2
+  assert.equal(A.dailyGoal([40, 40]), 15);                // capped, never 40
+  assert.equal(A.dailyGoal([0, 0]), 8);                   // zeroes are not a pace
+  assert.equal(A.dailyGoal([6, 6, 6, 6, 6, 6, 6, 20, 20]), 10);  // only the last seven
+});
