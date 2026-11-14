@@ -560,6 +560,7 @@
       quiz: quiz,
       qi: 0,
       types: null,
+      startedAt: Date.now(),
       requeued: {},
       missed: {},
       times: [],
@@ -589,6 +590,7 @@
   function clearCard() {
     $("stage").innerHTML = "";
     $("actions").innerHTML = "";
+    $("card").classList.remove("is-summary");
     var f = $("feedback");
     f.textContent = "";
     f.className = "feedback";
@@ -806,34 +808,39 @@
     state.lastSession = Date.now();
     save();
 
+    var now = Date.now();
     var total = session.unique || 1;
-    var acc = Math.round((session.firstCorrect / total) * 100);
+    var seen = Object.keys(session.answered);
     var missed = Object.keys(session.missed);
+    var kept = seen.filter(function (id) { return !session.missed[id]; });
 
     $("bar-fill").style.width = "100%";
     $("counter").textContent = String(total);
 
-    var list = missed.length
-      ? '<ul class="missed">' + missed.map(function (id) {
-          var it = itemOf(id);
-          return "<li>" + it.emoji + " " + esc(it.text) + "</li>";
-        }).join("") + "</ul>"
-      : "";
-
     var days = bumpStreak();
     save();
 
-    var avg = session.times.length
-      ? (session.times.reduce(function (a, b) { return a + b; }, 0) / session.times.length / 1000).toFixed(1)
-      : null;
+    /* This screen gets shown to other people, across a room: one number,
+     * then what stuck and what is coming back. Nothing else competes. */
+    var noun = session.mode === "phrases" ? "phrase" : "word";
+    var secs = Math.max(1, Math.round((now - session.startedAt) / 1000));
+    var took = secs < 120 ? secs + " second" + (secs === 1 ? "" : "s") : Math.round(secs / 60) + " minutes";
 
+    var soonest = missed.reduce(function (t, id) {
+      return Math.min(t, state.cards[id].due);
+    }, Infinity);
+
+    $("card").classList.add("is-summary");
     $("stage").innerHTML =
-      '<p class="prompt">Done</p>' +
-      '<div class="word">' + acc + "%</div>" +
-      '<p class="sentence">' + session.firstCorrect + " of " + total +
-        " first try" + (avg ? " · " + avg + "s per answer" : "") +
-        " · " + days + " day streak" +
-      "</p>" + list;
+      '<p class="prompt">Lesson done</p>' +
+      '<p class="sum-big">' + total + "</p>" +
+      '<p class="sum-line">' + noun + (total === 1 ? "" : "s") + " in " + took + "</p>" +
+      '<div class="sum-cols">' +
+        (kept.length ? sumGroup("kept", "Remembered", kept) : "") +
+        (missed.length ? sumGroup("back", "Comes back " + whenFrom(soonest - now), missed) : "") +
+      "</div>" +
+      '<p class="sum-meta">' + session.firstCorrect + " of " + total + " first try · " +
+        days + " day streak</p>";
 
     feedback("", "");
     $("actions").innerHTML =
@@ -842,6 +849,24 @@
 
     $("back").addEventListener("click", function () { session = null; show("today"); });
     $("again").addEventListener("click", function () { startSession(); });
+  }
+
+  function sumGroup(kind, title, ids) {
+    return '<section class="sum-col ' + kind + '">' +
+      "<h3>" + esc(title) + "</h3>" +
+      '<ul class="sum-chips">' + ids.map(function (id) {
+        var it = itemOf(id);
+        return '<li><span aria-hidden="true">' + it.emoji + "</span> " + esc(it.text) + "</li>";
+      }).join("") + "</ul></section>";
+  }
+
+  function whenFrom(ms) {
+    var min = Math.round(ms / 60000);
+    if (min < 60) return "in " + Math.max(1, min) + " min";
+    var h = Math.round(min / 60);
+    if (h < 20) return "in " + h + " h";
+    var d = Math.round(h / 24);
+    return d <= 1 ? "tomorrow" : "in " + d + " days";
   }
 
   function feedback(msg, kind) {

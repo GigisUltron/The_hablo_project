@@ -990,22 +990,79 @@ h1 em {
 .word.long { font-size: clamp(22px, 4vw, 32px); line-height: 1.15; max-width: 18ch; }
 .option-word.long { font-size: 14px; line-height: 1.25; font-weight: 700; padding: 14px 8px; }
 
-.missed {
+/* lesson summary: meant to be read from across a room */
+.card.is-summary { max-width: 880px; }
+.sum-big {
+  margin: 0;
+  font-size: clamp(110px, 30vw, 200px);
+  font-weight: 900;
+  letter-spacing: -0.07em;
+  line-height: 0.82;
+  color: var(--chili);
+  text-shadow: 5px 5px 0 var(--ink);
+}
+.sum-line {
+  margin: 0;
+  font-size: clamp(26px, 5vw, 42px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+.sum-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  width: 100%;
+  margin-top: 6px;
+}
+.sum-col {
+  border: var(--rule);
+  background: var(--paper);
+  padding: 14px 14px 16px;
+  text-align: left;
+}
+.sum-col h3 {
+  margin: 0 0 12px;
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.sum-col h3::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+  border: var(--rule-thin);
+  vertical-align: -1px;
+}
+.sum-col.kept h3::before { background: var(--olive); }
+.sum-col.back h3::before { background: var(--chili); }
+.sum-chips {
   list-style: none;
   padding: 0;
-  margin: 6px 0 0;
+  margin: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  justify-content: center;
 }
-.missed li {
+.sum-chips li {
   border: var(--rule-thin);
-  background: var(--paper);
-  padding: 6px 10px;
-  font-size: 13px;
-  font-weight: 700;
+  background: var(--card);
+  padding: 6px 12px;
+  font-size: clamp(17px, 2.4vw, 22px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
   box-shadow: 2px 2px 0 var(--ink);
+}
+.sum-meta {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
 }
 
 .kbd-hint {
