@@ -325,9 +325,9 @@
     if (view === "map" && !mapBuilt) { buildMap(); mapBuilt = true; }
     if (view === "map") {
       refreshMapState();
-      /* on a phone the map pans; open it on the middle, where the clusters meet */
-      var panel = document.querySelector(".map-panel");
-      if (panel) panel.scrollLeft = (panel.scrollWidth - panel.clientWidth) / 2;
+      renderMapList();
+      /* the web pans on a phone; it opens on the middle, where the clusters meet */
+      setMapMode($("view-map").getAttribute("data-mode") || "list");
     }
     if (window.history && window.history.replaceState) {
       window.history.replaceState(null, "", "#" + view);
@@ -1229,6 +1229,45 @@
     });
   }
 
+  /* On a phone the web is too wide to read, so the same graph also comes as
+   * a list: each field, its words, and what each word sits next to. */
+  function renderMapList() {
+    var box = $("map-list");
+    box.innerHTML = Object.keys(D.categories).map(function (cat) {
+      var words = D.concepts.filter(function (c) { return c.cat === cat; });
+      if (!words.length) return "";
+      var known = words.filter(function (c) { return state.cards[c.id].reps > 0; }).length;
+      return '<section class="group">' +
+        '<h3 class="group-title">' + esc(D.categories[cat].label) + " · " + known + " of " + words.length + "</h3>" +
+        '<div class="list">' + words.map(function (c) {
+          var near = neighboursOf(c.id).slice(0, 3).map(function (n) { return esc(conceptById[n].word); }).join(", ");
+          return '<button class="row" type="button" data-id="' + esc(c.id) + '">' +
+            '<span class="row-pic" aria-hidden="true">' + c.emoji + "</span>" +
+            '<span class="row-body">' +
+              '<span class="row-main">' + (c.article ? '<span class="art">' + esc(c.article) + "</span> " : "") + esc(c.word) + "</span>" +
+              '<span class="row-meta">' + near + "</span>" +
+            "</span></button>";
+        }).join("") + "</div></section>";
+    }).join("");
+
+    Array.prototype.forEach.call(box.querySelectorAll(".row"), function (btn) {
+      btn.addEventListener("click", function () { sayItem(itemOf(btn.getAttribute("data-id"))); });
+    });
+  }
+
+  function setMapMode(mode) {
+    $("view-map").setAttribute("data-mode", mode);
+    Array.prototype.forEach.call(document.querySelectorAll("[data-mapmode]"), function (b) {
+      var on = b.getAttribute("data-mapmode") === mode;
+      b.classList.toggle("is-on", on);
+      b.setAttribute("aria-pressed", String(on));
+    });
+    if (mode === "web") {
+      var panel = document.querySelector(".map-panel");
+      if (panel) panel.scrollLeft = (panel.scrollWidth - panel.clientWidth) / 2;
+    }
+  }
+
   function selectNode(id) {
     var c = conceptById[id];
     sayItem(itemOf(c.id));
@@ -1324,6 +1363,9 @@
   });
   $("quit-btn").addEventListener("click", function () { session = null; show("today"); });
   $("map-practice").addEventListener("click", function () { startSession(); });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-mapmode]"), function (b) {
+    b.addEventListener("click", function () { setMapMode(b.getAttribute("data-mapmode")); });
+  });
 
   document.addEventListener("keydown", function (ev) {
     if (currentView !== "session" || !session) return;

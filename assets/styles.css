@@ -285,7 +285,15 @@ svg { flex: none; }
   letter-spacing: 0.02em;
   color: var(--text-2);
 }
-.list { background: var(--card); border-radius: var(--radius-sm); }
+.list { background: var(--card); border-radius: var(--radius-sm); overflow: hidden; }
+button.row {
+  width: 100%;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+button.row:active { background: var(--fill); }
 .row { display: flex; align-items: center; gap: 12px; padding-left: 14px; min-height: 52px; }
 .row-pic { width: 32px; text-align: center; font-size: 26px; line-height: 1; }
 .row-body {
@@ -627,6 +635,10 @@ svg { flex: none; }
 .map-head h2 { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 6px; }
 .map-head p { color: var(--text-2); max-width: 60ch; font-size: 15px; }
 
+/* the list form of the map is for phones; wide screens show the web */
+.map-mode, .map-list { display: none; }
+.map-list .row-meta { overflow: hidden; text-overflow: ellipsis; max-width: 55%; }
+
 .map-panel { padding: 8px; overflow: hidden; }
 .map-svg { display: block; width: 100%; height: auto; }
 .map-svg .edge { fill: none; stroke: var(--edge); stroke-width: 1.2; }
@@ -813,7 +825,30 @@ svg { flex: none; }
   .map-info { flex-wrap: wrap; }
   .bar-row { grid-template-columns: 72px 1fr 36px; }
 
-  /* the map keeps a readable scale and pans sideways inside its panel */
+  /* the map opens as a list of fields; the web keeps a readable scale and
+     pans sideways inside its panel */
+  .map-mode {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    margin-bottom: 20px;
+    background: var(--fill);
+    border-radius: 9px;
+  }
+  .map-mode button {
+    flex: 1;
+    min-height: 32px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .map-mode button.is-on { background: var(--card); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+  #view-map:not([data-mode="web"]) .map-list { display: grid; gap: 22px; }
+  #view-map:not([data-mode="web"]) .map-panel,
+  #view-map:not([data-mode="web"]) .map-info { display: none; }
   .map-panel { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .map-svg { min-width: 660px; }
 }

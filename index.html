@@ -134,6 +134,13 @@
         <button class="btn btn-ghost btn-sm" id="map-practice">Practise neighbours</button>
       </div>
 
+      <div class="map-mode" role="group" aria-label="Show the map as">
+        <button class="is-on" data-mapmode="list" type="button" aria-pressed="true">List</button>
+        <button data-mapmode="web" type="button" aria-pressed="false">Web</button>
+      </div>
+
+      <div class="map-list" id="map-list"></div>
+
       <div class="panel map-panel">
         <svg class="map-svg" id="map-svg" viewBox="0 0 900 690" role="img" aria-label="Semantic map of concepts">
           <g id="map-edges"></g>
