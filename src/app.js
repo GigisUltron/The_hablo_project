@@ -36,6 +36,8 @@
   var termIds = [];
   var phraseById = {};
   var phraseIds = [];
+  var basicById = {};
+  var basicIds = [];
 
   function deckIds() {
     return allIds.concat(phraseIds, termIds);
@@ -78,6 +80,13 @@
     (P.phrases || []).forEach(function (p) {
       phraseById[p.id] = p;
       phraseIds.push(p.id);
+    });
+
+    basicById = {};
+    basicIds = [];
+    ((ACTIVE && ACTIVE.basics && ACTIVE.basics.items) || []).forEach(function (b) {
+      basicById[b.id] = b;
+      basicIds.push(b.id);
     });
   }
 
