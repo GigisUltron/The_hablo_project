@@ -60,6 +60,24 @@
     return /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/i.test(String(url || ""));
   }
 
+  /* The conversation store is plain data that must survive a JSON round trip:
+   * messages, cached translations, and the scripted turn counter. This is the
+   * one normalisation the app runs on boot, so a save from an older shape
+   * cannot present a blank view. */
+  function normaliseChatStore(saved) {
+    var store = saved && saved.chat;
+    if (!store || typeof store !== "object" || Array.isArray(store)) return {};
+    Object.keys(store).forEach(function (code) {
+      var c = store[code];
+      if (!c || typeof c !== "object" || Array.isArray(c)) {
+        delete store[code];
+        return;
+      }
+      if (!Array.isArray(c.messages)) c.messages = [];
+    });
+    return store;
+  }
+
   /* --------------------------------------------------------------- the prompt */
 
   /* Built only from the live pack: its display name and locale. The learner's
@@ -465,6 +483,7 @@
     normaliseBaseUrl: normaliseBaseUrl,
     endpointFor: endpointFor,
     isLocalEndpoint: isLocalEndpoint,
+    normaliseChatStore: normaliseChatStore,
     replyText: replyText,
     discover: discover,
     visionFor: visionFor,

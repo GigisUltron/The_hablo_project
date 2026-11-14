@@ -293,7 +293,9 @@
       s.settings.chatEndpoint = (CE && CE.DEFAULT_ENDPOINT) || "http://localhost:11434";
     }
     if (typeof s.settings.chatModel !== "string") s.settings.chatModel = "";
-    s.chat = s.chat && typeof s.chat === "object" && !Array.isArray(s.chat) ? s.chat : {};
+    s.chat = CE && CE.normaliseChatStore
+      ? CE.normaliseChatStore(s)
+      : (s.chat && typeof s.chat === "object" && !Array.isArray(s.chat) ? s.chat : {});
     if (!Array.isArray(s.settings.fields) || !s.settings.fields.length) {
       s.settings.fields = Object.keys(D.categories);
     } else {
@@ -1933,7 +1935,12 @@
     }
     var c = conceptById[id];
     if (!c) return { id: id, emoji: "❓", article: "", text: id, sub: "", kind: "word" };
-    return { id: c.id, emoji: c.emoji, article: c.article, text: c.word, sub: c.sentence, kind: "word" };
+    /* concepts carry a reading aid of their own in `sub` (pinyin, a
+     * transliteration); the example sentence is a separate field */
+    return {
+      id: c.id, emoji: c.emoji, article: c.article, text: c.word,
+      sub: c.sub || "", sentence: c.sentence || "", kind: "word"
+    };
   }
 
   /* Small schematic glyphs. A picture cannot carry "however"; a balance can. */
@@ -2000,11 +2007,24 @@
       return '<p class="sentence">' + filled + "</p>" +
         (twin ? '<p class="term-contrast">↔ ' + esc(twin.text) + "</p>" : "");
     }
-    if (!it.sub) return "";
-    if (it.kind === "phrase") return '<p class="sentence">' + esc(it.sub) + "</p>";
-    var txt = esc(it.sub);
-    var w = esc(it.text);
-    return '<p class="sentence">' + txt.replace(new RegExp("\\b(" + w + ")\\b", "i"), "<b>$1</b>") + "</p>";
+    if (it.kind === "phrase") return it.sub ? '<p class="sentence">' + esc(it.sub) + "</p>" : "";
+
+    var line = it.sentence || it.sub || "";
+    if (!line) return "";
+    var bolded = boldFirst(line, it.text);
+    return (it.sub && it.kind === "word" ? '<p class="roman">' + esc(it.sub) + "</p>" : "") +
+      '<p class="sentence">' + bolded + "</p>";
+  }
+
+  /* Bold the target word in its own sentence. Plain indexOf, because \b is
+   * ASCII-only and silently skips every Chinese or Japanese character. */
+  function boldFirst(sentence, word) {
+    var text = String(sentence || "");
+    var needle = String(word || "");
+    if (!needle) return esc(text);
+    var at = text.toLowerCase().indexOf(needle.toLowerCase());
+    if (at === -1) return esc(text);
+    return esc(text.slice(0, at)) + "<b>" + esc(text.slice(at, at + needle.length)) + "</b>" + esc(text.slice(at + needle.length));
   }
 
   /* -------------------------------------------------------------- session */
@@ -2819,6 +2839,7 @@
       return it.text + " names who the verb is about.";
     }
     if (it.kind === "term" && it.frame) return it.frame.replace("____", it.text);
+    if (it.kind === "word") return [it.sub, it.sentence].filter(Boolean).join(" · ");
     if (it.sub) return it.sub;
     return "";
   }
@@ -3266,7 +3287,7 @@
   if (initial === "practice") startSession();
   else if (initial === "placement") startPlacement();
   else if (initial === "read") startReader();
-  else if (initial === "chat") startConversation();
+  else if (initial === "chat" || initial === "conv") startConversation();
   else if (initial === "write") {
     session = newSession("words", [], S.shuffle(allIds, Math.random).slice(0, 6));
     session.forceWrite = true;

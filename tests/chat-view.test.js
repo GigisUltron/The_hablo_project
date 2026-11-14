@@ -137,10 +137,18 @@ test("the chat view passes the app's escape helper into both builders", () => {
 test("conversation state is per language and the prompt comes from the live pack", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(app, /state\.chat\[code\]/, "the chat is not keyed by the active language");
-  assert.match(app, /s\.chat = s\.chat/, "older saves do not get a chat store");
+  assert.match(app, /CE\.normaliseChatStore\(s\)/, "boot does not load the chat store");
   assert.match(app, /CE\.buildSystemPrompt\(ACTIVE/, "the prompt does not read the active pack");
   assert.match(app, /history: chat\.messages\.slice\(-CE\.MAX_HISTORY\)/,
     "the request does not send a bounded recent history");
+});
+
+test("the conversation view opens its saved chat on a refresh", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /initial === "chat" \|\| initial === "conv"/,
+    "#conv must call startConversation, not just show the view");
+  assert.match(app, /CE\.normaliseChatStore\(s\)/,
+    "boot does not run the conversation store through the load path");
 });
 
 test("the view says when no local model answered", () => {

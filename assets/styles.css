@@ -147,18 +147,17 @@ svg { flex: none; }
   font-weight: 700;
   letter-spacing: -0.01em;
 }
-.mark {
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-sm);
-  display: grid;
-  place-items: center;
-  background: var(--accent);
-  color: var(--on-accent);
-  font-size: 17px;
-  font-weight: 800;
-  line-height: 1;
+.brand-mark {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
+.brand-mark .mark-accent { stroke: var(--accent); stroke-width: 2.6; }
 
 /* wide screens: a segmented control */
 .tabs {
@@ -491,6 +490,8 @@ button.row:active { background: var(--fill); }
 
 .sentence { font-size: 17px; color: var(--text-2); }
 .sentence b { color: var(--text); font-weight: 600; }
+/* the reading aid above the sentence: pinyin, transliteration, nothing else */
+.roman { font-size: 15px; color: var(--text-3); letter-spacing: 0.01em; }
 
 .speak-btn, .mic {
   align-self: flex-start;
@@ -873,7 +874,10 @@ button.row:active { background: var(--fill); }
   }
   .app:has(#view-session.is-active) { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
   .topbar { margin: 0; }
-  .brand { display: none; }
+  /* the mark stays: it is the one piece of identity a phone screen keeps */
+  .brand { display: flex; }
+  .brand-name { display: none; }
+  .brand-mark { width: 20px; height: 20px; }
 
   /* tabs become the tab bar, where a thumb expects them */
   .tabs {
@@ -1501,4 +1505,20 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 #chat-listen.is-live {
   background: var(--accent-soft);
   color: var(--accent);
+}
+
+/* the mark: a plain S on the accent square, nothing clever */
+.brand-badge {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--on-accent);
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
 }

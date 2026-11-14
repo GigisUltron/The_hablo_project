@@ -208,6 +208,37 @@ test("vision is a declaration from the model, not a guess from its name", async 
   assert.equal(declared, true);
 });
 
+test("a serialised conversation survives the load path with translations and scripted state", () => {
+  const saved = {
+    version: 1,
+    chat: {
+      es: {
+        messages: [
+          { role: "user", text: "hola", at: 1 },
+          { role: "assistant", text: "¡Hola!", translation: "Hello!", showTranslation: true, at: 2 },
+          { role: "assistant", text: "¿Cómo te llamas?", scripted: true, note: "scripted", at: 3 }
+        ],
+        scripted: { turn: 1, misses: 0, topics: ["greet", "name"] }
+      },
+      fr: { messages: [{ role: "user", text: "salut", at: 4 }], scripted: null }
+    }
+  };
+
+  const reloaded = CE.normaliseChatStore(JSON.parse(JSON.stringify(saved)));
+  assert.deepEqual(reloaded, saved.chat);
+  assert.equal(reloaded.es.messages[1].translation, "Hello!");
+  assert.equal(reloaded.es.messages[1].showTranslation, true);
+  assert.equal(reloaded.es.messages[2].scripted, true);
+  assert.deepEqual(reloaded.es.scripted, { turn: 1, misses: 0, topics: ["greet", "name"] });
+  assert.deepEqual(reloaded.fr.messages, [{ role: "user", text: "salut", at: 4 }]);
+});
+
+test("the chat store tolerates a missing or broken save", () => {
+  assert.deepEqual(CE.normaliseChatStore(null), {});
+  assert.deepEqual(CE.normaliseChatStore({ chat: [] }), {});
+  assert.deepEqual(CE.normaliseChatStore({ chat: { es: { messages: "nope" } } }), { es: { messages: [] } });
+});
+
 test("the Spanish fallback is the existing scripted responder", () => {
   const session = CE.scriptedStart("es");
   const reply = CE.scriptedRespond("es", session, "bien");

@@ -246,6 +246,18 @@ test("no concept carries a translation field", () => {
   }
 });
 
+test("the brand mark is the S badge, by owner's decision", () => {
+  assert.match(html, /class="brand-badge"[^>]*>S</, "the mark is a plain S on the accent square");
+  assert.equal(/class="mark"/.test(html), false, "the old letter span is gone");
+});
+
+test("a concept card carries its reading aid, not only its sentence", () => {
+  assert.match(app, /sub:\s*c\.sub\s*\|\|\s*""/, "concept sub is dropped");
+  assert.match(app, /sentence:\s*c\.sentence/, "the sentence field is dropped");
+  assert.match(app, /class="roman"/, "the reading aid is never rendered");
+  assert.match(app, /boldFirst\(/, "the target word is not marked in its sentence");
+});
+
 test("the session summary offers exactly one filled control", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   const summary = app.slice(app.indexOf("function finishSession"), app.indexOf("function feedback"));
