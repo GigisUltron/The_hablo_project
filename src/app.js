@@ -1009,7 +1009,8 @@
     if ((state.settings && state.settings.translations) === "off") return "";
     var g = (window.SEMA_GLOSSES || {})[id];
     if (!g) return "";
-    return '<button class="gloss-btn" type="button" data-gloss="' + esc(g) + '">show translation</button>';
+    return '<button class="gloss-btn" type="button" data-gloss="' + esc(g) + '">' +
+      tr("glossShow", "show translation") + "</button>";
   }
 
   function wireGloss() {
@@ -1017,7 +1018,7 @@
       btn.addEventListener("click", function () {
         var on = btn.getAttribute("data-on") === "1";
         btn.setAttribute("data-on", on ? "0" : "1");
-        btn.textContent = on ? "show translation" : esc(btn.getAttribute("data-gloss"));
+        btn.textContent = on ? tr("glossShow", "show translation") : esc(btn.getAttribute("data-gloss"));
       });
     });
   }
@@ -2372,7 +2373,9 @@
       state.settings = state.settings || {};
       state.settings.translations = state.settings.translations === "off" ? "on" : "off";
       save();
-      glossBtn.textContent = state.settings.translations === "off" ? "translations off" : "translations on";
+      glossBtn.textContent = state.settings.translations === "off"
+        ? tr("translationsOff", "translations off")
+        : tr("translationsOn", "translations on");
     });
   }
 
