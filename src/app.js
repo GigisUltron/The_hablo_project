@@ -1097,6 +1097,10 @@
     }
 
     session.qStart = Date.now();
+    /* never seen it? teach on this card, then move on. One screen per item,
+     * but the first exposure informs instead of interrogating. */
+    if (card.last === null) { renderTeach(id); return; }
+
     if (itemOf(id).kind === "term") { renderPickFrame(id); return; }
 
     var type = quizType(card, session.qi);
@@ -1122,6 +1126,27 @@
   }
 
   /* The only honest question for "aunque": which one fits this sentence. */
+  function renderTeach(id) {
+    var it = itemOf(id);
+    $("stage").innerHTML =
+      '<p class="prompt">New</p>' +
+      tileHTML(it) +
+      wordsHTML(it) +
+      contextHTML(it) +
+      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
+      glossHTML(id);
+    sayItem(it);
+    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
+    wireGloss();
+    $("actions").innerHTML = '<button class="btn btn-primary" id="gotit">Got it →</button>';
+    $("gotit").addEventListener("click", function () {
+      S.review(state, id, 2, Date.now());
+      save();
+      session.qi += 1;
+      renderQuiz();
+    });
+  }
+
   function renderPickFrame(id) {
     var it = itemOf(id);
     var set = S.shuffle([id].concat(S.pickDistractors(id, termIds, [], 3, Math.random)), Math.random);
