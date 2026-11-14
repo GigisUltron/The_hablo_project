@@ -25,7 +25,7 @@ var SEMA_UI = {
     yourWords: "your words",
     deckLang: "language you are learning",
     interfaceLang: "interface language",
-    settingsTitle: "settings",
+    settingsTitle: "Settings",
 
     glossShow: "show translation",
     explain: "why?",
@@ -58,7 +58,7 @@ var SEMA_UI = {
     yourWords: "tus palabras",
     deckLang: "idioma que estudias",
     interfaceLang: "idioma de la interfaz",
-    settingsTitle: "ajustes",
+    settingsTitle: "Ajustes",
 
     glossShow: "ver traducción",
     explain: "¿por qué?",
