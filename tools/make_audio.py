@@ -164,6 +164,14 @@ def items(code="es"):
             spoken = article + " " + word
         out.append((concept_id, spoken))
 
+    basics_path = folder / "basics.js"
+    if basics_path.exists():
+        for block in _objects(basics_path.read_text(encoding="utf-8")):
+            base_id = _field(block, "id")
+            text = _field(block, "text")
+            if base_id and base_id.startswith("b-") and text:
+                out.append((base_id, text))
+
     terms_path = folder / "terms.js"
     if terms_path.exists():
         for block in _objects(terms_path.read_text(encoding="utf-8")):

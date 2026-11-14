@@ -29,3 +29,13 @@ test("every band a learner can reach has enough material to be a lesson", () => 
   assert.ok(counts.A2 >= 40, `A2 has ${counts.A2} items`);
   assert.ok(counts.B1 >= 12, `B1 has ${counts.B1} items`);
 });
+
+test("every graded item is voiced", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const file = path.join(__dirname, "..", "assets", "audio", "manifest.js");
+  const src = fs.readFileSync(file, "utf8");
+  const audio = JSON.parse(src.slice(src.indexOf("{"), src.lastIndexOf("}") + 1));
+  const silent = Object.keys(L).filter((id) => !audio[id]);
+  assert.deepEqual(silent, [], "no audio for: " + silent.join(", "));
+});
