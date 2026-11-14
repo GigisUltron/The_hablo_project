@@ -1376,3 +1376,7 @@ h1 em {
 
 /* the tab for the page you are already on is a control that does nothing */
 .topbar .tabs { gap: 8px; }
+
+/* the lesson page: the progress bar and its counter already say where you are,
+   so the three step chips were saying it a third time */
+.steps { display: none; }
