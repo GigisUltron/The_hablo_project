@@ -1406,3 +1406,16 @@ button.brand { background: none; border: 0; padding: 0; cursor: pointer; }
 .bg::after { opacity: 0.07; }
 .card::before { display: none; }      /* the strip of tape */
 .card, .panel { box-shadow: 5px 5px 0 var(--ink); }
+
+/* setup: its own rhythm, so the question and the buttons never sit on each other */
+#view-setup .solo { padding: 34px 0 12px; }
+#view-setup .prompt { margin: 0 0 18px; }
+#view-setup .setup-q {
+  font-size: clamp(28px, 4.6vw, 40px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0 0 28px;
+  max-width: 22ch;
+}
+#view-setup .cta-row { margin: 0 0 22px; }
+#view-setup .builder-note { margin: 0; }
