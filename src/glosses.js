@@ -110,7 +110,21 @@ var SEMA_GLOSSES = {
   "ph-gracias": "thank you very much",
   "ph-de-nada": "you're welcome",
   "ph-disculpa": "excuse me, may I get past?",
-  "ph-sentarme": "may I sit here?"
+  "ph-sentarme": "may I sit here?",
+
+  /* terms — vocabulary a picture cannot carry */
+  "t-ya": "already",
+  "t-todavia": "still / not yet",
+  "t-siempre": "always",
+  "t-nunca": "never",
+  "t-antes": "before / used to",
+  "t-despues": "afterwards",
+  "t-aunque": "although / even if",
+  "t-sin-embargo": "however",
+  "t-mientras": "while",
+  "t-quiza": "maybe",
+  "t-ademas": "moreover",
+  "t-por-eso": "that's why"
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

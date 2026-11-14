@@ -39,6 +39,15 @@
     neighbours[id].sort(function (a, b) { return b.w - a.w; });
   });
 
+  /* term deck: vocabulary that cannot be drawn (see src/terms.js) */
+  var TERMS = window.SEMA_TERMS || { terms: [] };
+  var termById = {};
+  var termIds = [];
+  TERMS.terms.forEach(function (t) {
+    termById[t.id] = t;
+    termIds.push(t.id);
+  });
+
   /* phrase deck: same shape as a concept once itemOf() normalises it */
   var P = window.SEMA_PHRASES || { phrases: [] };
   var phraseById = {};
@@ -75,12 +84,12 @@
   var state = load();
   /* a fresh browser has no saved settings; every screen reads them */
   if (!state.settings) {
-    state.settings = { fields: Object.keys(D.categories), size: 8, mode: "words" };
+    state.settings = { fields: Object.keys(D.categories), size: 8, mode: "words", translations: "on" };
   }
   if (!state.memory) state.memory = MEM.empty();
 
   function load() {
-    var base = S.newState(allIds.concat(phraseIds), Date.now());
+    var base = S.newState(allIds.concat(phraseIds, termIds), Date.now());
     base.memory = MEM.empty();
     try {
       var raw = localStorage.getItem(STORE_KEY);
@@ -96,8 +105,9 @@
         saved.settings.fields = Object.keys(D.categories);
       }
       if (!saved.settings.size) saved.settings.size = 8;
-      if (saved.settings.mode !== "phrases") saved.settings.mode = "words";
-      allIds.concat(phraseIds).forEach(function (id) {
+      if (["words", "phrases", "terms"].indexOf(saved.settings.mode) === -1) saved.settings.mode = "words";
+      if (saved.settings.translations !== "off") saved.settings.translations = "on";
+      allIds.concat(phraseIds, termIds).forEach(function (id) {
         if (!saved.cards[id]) saved.cards[id] = S.newCard(id, Date.now());
       });
       return saved;
@@ -350,19 +360,27 @@
       b.classList.toggle("is-on", on);
       b.setAttribute("aria-pressed", String(on));
     });
-    box.style.display = mode === "phrases" ? "none" : "flex";
+    box.style.display = mode === "words" ? "flex" : "none";
 
-    var pool = mode === "phrases" ? phraseIds : allIds.filter(function (id) {
-      return inFields(id, fields);
-    });
+    var pool = mode === "phrases" ? phraseIds
+      : mode === "terms" ? termIds
+      : allIds.filter(function (id) { return inFields(id, fields); });
     var due = S.dueList(state, Date.now()).filter(function (id) {
       return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
     }).length;
 
+    var gt = $("gloss-toggle");
+    if (gt) {
+      gt.textContent = state.settings.translations === "off"
+        ? "translations off"
+        : "translations on request";
+    }
+
     var note = $("builder-note");
     if (note) {
       note.textContent = lessonSize() + " cards · " + pool.length +
-        (mode === "phrases" ? " phrases" : " concepts") + " · " + due + " due";
+        (mode === "phrases" ? " phrases" : mode === "terms" ? " terms" : " concepts") +
+        " · " + due + " due";
     }
   }
 
@@ -431,6 +449,13 @@
   /* A lesson can teach a word or a whole phrase; both present the same shape
    * to the drill, so there is one renderer to maintain instead of two. */
   function itemOf(id) {
+    var t = termById[id];
+    if (t) {
+      return {
+        id: t.id, emoji: null, schema: t.schema, article: "", text: t.text,
+        sub: t.frame, frame: t.frame, contrast: t.contrast, kind: "term"
+      };
+    }
     var p = phraseById[id];
     if (p) {
       return { id: p.id, emoji: p.emoji, article: "", text: p.text, sub: p.sub || "", kind: "phrase" };
@@ -440,8 +465,36 @@
     return { id: c.id, emoji: c.emoji, article: c.article, text: c.word, sub: c.sentence, kind: "word" };
   }
 
+  /* Small schematic glyphs. A picture cannot carry "however"; a balance can. */
+  var SCHEMAS = {
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    repeat: '<path d="M4 12a8 8 0 0 1 13.7-5.6"/><path d="M20 12a8 8 0 0 1-13.7 5.6"/><path d="M17 3v4h-4"/><path d="M7 21v-4h4"/>',
+    left: '<path d="M20 12H5"/><path d="M11 6l-6 6 6 6"/>',
+    right: '<path d="M4 12h15"/><path d="M13 6l6 6-6 6"/>',
+    fork: '<path d="M12 20v-8"/><path d="M12 12L6 5"/><path d="M12 12l6-7"/>',
+    balance: '<path d="M4 9h16"/><path d="M12 9v8"/><path d="M8 17h8"/><path d="M4 9l2 4h4z"/><path d="M20 9l-2 4h-4z"/>',
+    parallel: '<path d="M4 9h16"/><path d="M4 15h16"/>',
+    question: '<path d="M9 9a3 3 0 1 1 4 2.8c-.8.4-1 1-1 1.7"/><circle cx="12" cy="18" r="1"/>',
+    plus: '<path d="M12 5v14"/><path d="M5 12h14"/>',
+    chain: '<circle cx="8" cy="12" r="3.5"/><circle cx="16" cy="12" r="3.5"/>'
+  };
+
+  function schemaSVG(key) {
+    var body = SCHEMAS[key] || SCHEMAS.question;
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + body + "</svg>";
+  }
+
+  function tileHTML(it, small) {
+    var cls = "tile" + (small ? " sm" : "");
+    if (it.schema) return '<div class="' + cls + ' schema">' + schemaSVG(it.schema) + "</div>";
+    return '<div class="' + cls + '" aria-hidden="true">' + it.emoji + "</div>";
+  }
+
   function poolFor(mode) {
-    return mode === "phrases" ? phraseIds.slice() : allIds.slice();
+    if (mode === "phrases") return phraseIds.slice();
+    if (mode === "terms") return termIds.slice();
+    return allIds.slice();
   }
 
   function distractorsFor(id, count) {
@@ -457,6 +510,7 @@
   }
 
   function glossHTML(id) {
+    if (state.settings && state.settings.translations === "off") return "";
     var g = window.SEMA_GLOSSES && window.SEMA_GLOSSES[id];
     if (!g) return "";
     return '<div class="gloss-wrap">' +
@@ -492,6 +546,12 @@
   }
 
   function contextHTML(it) {
+    if (it.kind === "term") {
+      var filled = String(it.frame || "").replace("____", "<b>" + esc(it.text) + "</b>");
+      var twin = it.contrast && termById[it.contrast];
+      return '<p class="sentence">' + filled + "</p>" +
+        (twin ? '<p class="term-contrast">↔ ' + esc(twin.text) + "</p>" : "");
+    }
     if (!it.sub) return "";
     if (it.kind === "phrase") return '<p class="sentence">' + esc(it.sub) + "</p>";
     var txt = esc(it.sub);
@@ -531,7 +591,9 @@
 
     var pool = mode === "phrases"
       ? phraseIds.slice()
-      : allIds.filter(function (id) { return inFields(id, fields); });
+      : mode === "terms"
+        ? termIds.slice()
+        : allIds.filter(function (id) { return inFields(id, fields); });
 
     var due = S.dueList(state, now).filter(function (id) {
       return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
@@ -719,7 +781,7 @@
     $("stage").innerHTML =
       '<p class="prompt">Learn the pair · ' + (session.si + 1) + " of " + session.study.length +
         (it.kind === "phrase" ? " · phrase" : "") + "</p>" +
-      '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
+      tileHTML(it) +
       wordsHTML(it) +
       contextHTML(it) +
       '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
@@ -759,6 +821,8 @@
     }
 
     session.qStart = Date.now();
+    if (itemOf(id).kind === "term") { renderPickFrame(id); return; }
+
     var type = quizType(card, session.qi);
     if (type === "pick-word") renderPickWord(id);
     else if (type === "say" && SR) renderSay(id);
@@ -780,13 +844,37 @@
     });
   }
 
+  /* The only honest question for "aunque": which one fits this sentence. */
+  function renderPickFrame(id) {
+    var it = itemOf(id);
+    var set = S.shuffle([id].concat(S.pickDistractors(id, termIds, [], 3, Math.random)), Math.random);
+
+    $("stage").innerHTML =
+      '<p class="prompt">Which one fits?</p>' +
+      '<p class="term-blank">' + esc(it.frame) + "</p>" +
+      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>" +
+      glossHTML(id);
+
+    wireGloss();
+
+    Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
+      btn.addEventListener("click", function () {
+        var picked = btn.getAttribute("data-id");
+        var ok = picked === id;
+        btn.classList.add(ok ? "pick-correct" : "pick-wrong");
+        markChoices(".option-word", id);
+        answer(ok, ok ? null : picked);
+      });
+    });
+  }
+
   function renderPickWord(id) {
     var it = itemOf(id);
     var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
 
     $("stage").innerHTML =
       '<p class="prompt">Which one is this?</p>' +
-      '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
+      tileHTML(it) +
       '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
       '<div class="word-options">' + set.map(optionHTML).join("") + "</div>" +
       glossHTML(it.id);
@@ -840,7 +928,7 @@
 
     $("stage").innerHTML =
       '<p class="prompt">Say it in ' + esc(LANG.name) + "</p>" +
-      '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
+      tileHTML(it) +
       '<button class="mic" id="mic-btn">🎙 Say it aloud</button>' +
       '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
       '<p class="score" id="score"></p>';
@@ -899,7 +987,7 @@
   function showAnswer(ok, it) {
     $("stage").innerHTML =
       '<p class="prompt">' + (ok ? "Correct" : "Not quite") + "</p>" +
-      '<div class="tile sm" aria-hidden="true">' + it.emoji + "</div>" +
+      tileHTML(it, true) +
       wordsHTML(it) +
       contextHTML(it) +
       '<button class="speak-btn" id="hear-btn">🔊 Hear it again</button>' +
@@ -1216,6 +1304,14 @@
   $("start-btn").addEventListener("click", function () { startSession(); });
   $("build-start").addEventListener("click", function () { startSession(); });
   $("review-missed").addEventListener("click", reviewMistakes);
+  $("gloss-toggle").addEventListener("click", function () {
+    state.settings.translations = state.settings.translations === "off" ? "on" : "off";
+    save();
+    renderBuilder();
+    toast(state.settings.translations === "off"
+      ? "Translations off. Meanings come from pictures, schemas and sentences."
+      : "Translations available on request.");
+  });
   Array.prototype.forEach.call(document.querySelectorAll(".mode"), function (b) {
     b.addEventListener("click", function () {
       state.settings.mode = b.getAttribute("data-mode");
@@ -1263,6 +1359,7 @@
   renderToday();
   if (initial === "practice") startSession();
   else if (initial === "phrases") { state.settings.mode = "phrases"; save(); startSession(); }
+  else if (initial === "terms") { state.settings.mode = "terms"; save(); startSession(); }
   else if (initial === "quiz") startQuizOnly();
   else if (VIEWS.indexOf(initial) !== -1 && initial !== "today") show(initial);
 })();
