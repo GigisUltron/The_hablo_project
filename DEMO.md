@@ -6,8 +6,9 @@ A concept is introduced as a pair — picture, word, sound — with no English g
 the data. Then the quiz hides one half and asks you for the other: picture → word, word →
 picture, or say it aloud. What you miss comes back before the session ends.
 
-42 Spanish concepts, 43 semantic relations, spaced repetition, microphone scoring, a map of
-the semantic web, and audio that fails loudly instead of silently.
+42 Spanish concepts, 43 semantic relations, spaced repetition, a lesson builder that chooses
+what you study, spoken production, a map of the semantic web — and audio that ships with the
+app instead of depending on your operating system.
 
 ![sema — the Today view](docs/preview.png)
 
@@ -35,6 +36,13 @@ qualify. Any other static server works too — there is no build step.
 Deep links: `#practice` (start a session), `#quiz` (quiz only, no teaching), `#map`,
 `#stats`.
 
+## Pick what you learn
+
+The Today view has a builder: toggle the semantic fields you actually need (Food, City,
+Body…), pick 5/8/12 cards, and start. The session draws only from that pool, reviews first,
+then new concepts. **Review my mistakes** builds a quiz from everything you have got wrong,
+worst first. Both choices persist in `localStorage`.
+
 ## The loop
 
 1. **Learn.** A new concept is shown whole: picture, word, article, a sentence, and the
@@ -57,6 +65,8 @@ Deep links: `#practice` (start a session), `#quiz` (quiz only, no teaching), `#m
 | Confusion tracking | `recordConfusion` | Surfaces as "most confused pairs" in Progress |
 | Semantic map | `buildMap` | 42 nodes, relations drawn as curves, learned nodes lit |
 | Audio diagnostics | `audioStatus` | Reports voice availability instead of playing nothing |
+| Lesson builder | `renderBuilder` | Field toggles + session size, persisted |
+| Mistake review | `reviewMistakes` | Quiz built from your lapses, worst first |
 | Progress | `renderStats` | Coverage per field, sessions, recalls, lapses |
 
 Everything is stored in `localStorage` under `sema.v1`. No analytics, no network calls after
@@ -64,16 +74,21 @@ the page loads.
 
 ## Audio
 
-Pronunciation comes from the browser's own speech synthesis, which depends entirely on the
-voices installed in the operating system. On a machine with no Spanish voice, the audio is
-simply absent — so the app **says so**:
+The words are **pre-rendered WAV files committed to the repo** (42 files, 576 KB). The browser
+plays an `<audio>` element, so playback does not depend on any voice installed in the
+operating system — which is what made the earlier version silent on machines without one.
 
-- the footer chip shows `1 Spanish voice` when audio will work, or `no voice on this device`
-  after a short grace period, so a silent device never looks like a loading one;
-- the first card that tries to speak explains itself once, instead of failing quietly;
-- the chip is a button: tap it to hear a test word.
+Speech synthesis is now only a fallback, used if the manifest is missing. The footer chip
+reports which path is active (`bundled audio · 42 words`), and the earlier "no voice on this
+device" message only appears when there is genuinely no audio at all.
 
-Nothing in the learning loop requires audio. Everything is also written.
+To regenerate the files (needs `libespeak-ng` at build time, nothing at runtime):
+
+```sh
+python3 tools/make_audio.py
+```
+
+Replacing them with real recordings is a drop-in change: same file names, same manifest.
 
 ## Verify it
 
@@ -92,6 +107,8 @@ a no-build front end otherwise surfaces only in the browser.
 ```
 index.html          shell, four views
 serve.py            local preview server (stdlib only)
+tools/make_audio.py pre-renders the WAVs with libespeak-ng (build time only)
+assets/audio/       generated WAVs + manifest.js
 Makefile            make serve / make test / make check
 assets/styles.css   the whole visual system: riso-poster, no external assets
 src/data.js         42 concepts + semantic relations
@@ -115,7 +132,9 @@ fonts, icons or images are downloaded, so the page still works with the network 
   feedback is out of scope here.
 - **Recognition is Chromium-strongest.** Firefox exposes neither recognition nor voices
   reliably on Linux, hence the self-check path and the audio chip.
-- **Audio quality is the OS's**, not the app's.
+- **The voice is synthesized** (eSpeak), not a native recording — intelligible, robotic.
+- **A demo is not a tutor.** It can drill, schedule and quiz, but it cannot hold a
+  conversation, correct spontaneous speech, or adapt to why you got something wrong.
 - **The map is a curated graph**, not something inferred from a corpus.
 - **No accounts or sync** — clearing storage resets progress.
 

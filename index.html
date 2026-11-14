@@ -89,6 +89,23 @@
         </aside>
       </div>
 
+      <section class="panel panel-pad builder" aria-labelledby="builder-title">
+        <div class="builder-head">
+          <p class="panel-title" id="builder-title">Build your lesson</p>
+          <div class="size-pick" role="group" aria-label="Session length">
+            <button class="size" data-size="5" type="button">5</button>
+            <button class="size is-on" data-size="8" type="button">8</button>
+            <button class="size" data-size="12" type="button">12</button>
+          </div>
+        </div>
+        <div class="fields" id="fields"></div>
+        <div class="builder-actions">
+          <button class="btn btn-primary" id="build-start">Start this lesson</button>
+          <button class="btn btn-ghost" id="review-missed">Review my mistakes</button>
+          <span class="builder-note" id="builder-note"></span>
+        </div>
+      </section>
+
       <div class="principles">
         <article class="principle">
           <span class="k">01 / learn</span>
@@ -195,6 +212,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="src/data.js"></script>
+<script src="assets/audio/manifest.js"></script>
 <script src="src/srs.js"></script>
 <script src="src/app.js"></script>
 </body>

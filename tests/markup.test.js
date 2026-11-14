@@ -58,9 +58,28 @@ test("markup only references assets that exist", () => {
   }
 });
 
-test("scripts load in dependency order (data, srs, app)", () => {
+test("scripts load in dependency order (data, audio manifest, srs, app)", () => {
   const order = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((x) => x[1]);
-  assert.deepEqual(order, ["src/data.js", "src/srs.js", "src/app.js"]);
+  assert.deepEqual(order, [
+    "src/data.js",
+    "assets/audio/manifest.js",
+    "src/srs.js",
+    "src/app.js"
+  ]);
+});
+
+test("every bundled audio file exists and matches the manifest", () => {
+  const manifestPath = path.join(root, "assets", "audio", "manifest.js");
+  assert.ok(fs.existsSync(manifestPath), "missing generated audio manifest");
+  const src = fs.readFileSync(manifestPath, "utf8");
+  const json = JSON.parse(src.slice(src.indexOf("=") + 1).trim().replace(/;$/, ""));
+  const ids = Object.keys(json);
+  assert.ok(ids.length >= 40, `only ${ids.length} audio files`);
+  for (const [id, rel] of Object.entries(json)) {
+    const file = path.join(root, rel);
+    assert.ok(fs.existsSync(file), `audio missing for ${id}: ${rel}`);
+    assert.ok(fs.statSync(file).size > 2000, `audio too small for ${id}`);
+  }
 });
 
 test("every data-view tab has a matching section", () => {

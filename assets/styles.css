@@ -959,3 +959,61 @@ h1 em {
 .audio-chip.warn { background: var(--saffron); }
 
 .foot-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* ------------------------------------------------------- lesson builder */
+.builder { margin-top: 26px; }
+
+.builder-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.size-pick { display: flex; gap: 6px; }
+
+.size {
+  width: 38px;
+  height: 32px;
+  border: var(--rule-thin);
+  background: var(--card);
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--ink);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+.size:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+.size.is-on { background: var(--saffron); }
+
+.fields { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+
+.field {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: var(--rule-thin);
+  background: var(--card);
+  padding: 7px 11px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--ink);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+.field b { font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--ink-faint); }
+.field:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+.field.is-on { background: var(--ink); color: var(--card); }
+.field.is-on b { color: var(--saffron); }
+
+.builder-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.builder-note {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}

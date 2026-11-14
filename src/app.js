@@ -74,6 +74,11 @@
       saved.cards = saved.cards || {};
       saved.confusions = saved.confusions || {};
       saved.reviews = saved.reviews || { good: 0, again: 0 };
+      saved.settings = saved.settings || {};
+      if (!Array.isArray(saved.settings.fields) || !saved.settings.fields.length) {
+        saved.settings.fields = Object.keys(D.categories);
+      }
+      if (!saved.settings.size) saved.settings.size = 8;
       allIds.forEach(function (id) {
         if (!saved.cards[id]) saved.cards[id] = S.newCard(id, Date.now());
       });
@@ -118,6 +123,7 @@
    * it. Waiting forever is why a silent device looks identical to a loading
    * one, so after a short grace period "no voices" becomes a definite answer. */
   function audioStatus() {
+    if (hasBundled()) return { state: "ok", text: "bundled audio · " + Object.keys(bundled).length + " words" };
     if (!hasTTS) return { state: "none", text: "no speech support" };
     var all = window.speechSynthesis.getVoices() || [];
     if (!all.length) {
@@ -148,7 +154,34 @@
     try { window.speechSynthesis.addEventListener("voiceschanged", pickVoice); } catch (err) { /* older engines */ }
   }
 
+  var bundled = window.SEMA_AUDIO || null;
+  var audioCache = {};
   var speakTimer = null;
+
+  function hasBundled() {
+    return !!(bundled && Object.keys(bundled).length);
+  }
+
+  /* Prefer the WAV shipped with the app: it works on a machine with no
+   * installed voices, which is the common case on Linux. Speech synthesis is
+   * the fallback, not the primary path. */
+  function sayConcept(c, btn) {
+    var url = bundled && bundled[c.id];
+    if (url) {
+      try {
+        var a = audioCache[url] || (audioCache[url] = new Audio(url));
+        a.currentTime = 0;
+        var p = a.play();
+        if (p && typeof p.catch === "function") p.catch(function () { /* autoplay policy */ });
+        if (btn) {
+          btn.classList.add("is-playing");
+          a.onended = function () { btn.classList.remove("is-playing"); };
+        }
+        return;
+      } catch (err) { /* fall through */ }
+    }
+    speak(c.word, btn);
+  }
 
   var warnedNoVoice = false;
 
@@ -157,7 +190,7 @@
     var synth = window.speechSynthesis;
     try {
       if (!voice) pickVoice();
-      if (!esVoices().length && !synth.speaking && !warnedNoVoice && audioStatus().state === "none") {
+      if (!hasBundled() && !esVoices().length && !synth.speaking && !warnedNoVoice && audioStatus().state === "none") {
         warnedNoVoice = true;
         toast("No speech voice on this device — everything else still works.");
       }
@@ -259,6 +292,7 @@
   /* ---------------------------------------------------------------- today */
 
   function renderToday() {
+    renderBuilder();
     var due = S.dueList(state, Date.now()).filter(function (id) {
       return state.cards[id].last !== null;
     }).length;
@@ -291,23 +325,115 @@
 
   var session = null;
 
-  function startSession() {
-    var now = Date.now();
-    var due = S.dueList(state, now).filter(function (id) {
-      return state.cards[id].last !== null;   // seen before, including lapses
-    });
-    var fresh = S.shuffle(allIds.filter(function (id) {
-      return state.cards[id].last === null;   // genuinely new
-    }), Math.random).slice(0, 4);
+  function selectedFields() {
+    var f = state.settings && state.settings.fields;
+    if (!f || !f.length) return Object.keys(D.categories);
+    return f;
+  }
 
-    if (!due.length && !fresh.length) {
-      due = S.shuffle(allIds, Math.random).slice(0, 6);
+  function lessonSize() {
+    return (state.settings && state.settings.size) || 8;
+  }
+
+  function inFields(id, fields) {
+    return fields.indexOf(conceptById[id].cat) !== -1;
+  }
+
+  /* A lesson is drawn from the fields the learner picked: reviews first, then
+   * enough new concepts to fill the session. Nothing outside the selection is
+   * ever shown, which is the point of choosing. */
+  function startSession(opts) {
+    var o = opts || {};
+    var fields = o.fields || selectedFields();
+    var size = o.size || lessonSize();
+    var now = Date.now();
+    var pool = allIds.filter(function (id) { return inFields(id, fields); });
+
+    var due = S.dueList(state, now).filter(function (id) {
+      return state.cards[id].last !== null && inFields(id, fields);
+    }).slice(0, size);
+
+    var freshCap = Math.max(1, Math.min(6, Math.round(size / 2)));
+    var fresh = S.shuffle(pool.filter(function (id) {
+      return state.cards[id].last === null;
+    }), Math.random).slice(0, freshCap);
+
+    var quiz = S.shuffle(due.concat(fresh), Math.random).slice(0, size);
+
+    if (!quiz.length) {
+      var fallback = pool.length ? pool : allIds;
+      quiz = S.shuffle(fallback, Math.random).slice(0, size);
+      toast("Nothing due in those fields — free practice.");
     }
 
-    session = newSession(fresh, S.shuffle(due.concat(fresh), Math.random));
+    session = newSession(fresh, quiz);
     show("session");
     if (session.study.length) renderStudy();
     else renderQuiz();
+  }
+
+  /* Everything the learner has actually got wrong, worst first. */
+  function reviewMistakes() {
+    var ids = allIds.filter(function (id) {
+      return state.cards[id].lapses > 0;
+    }).sort(function (a, b) {
+      return state.cards[b].lapses - state.cards[a].lapses;
+    });
+
+    if (!ids.length) {
+      ids = S.topConfusions(state, 12).map(function (r) { return r.target; });
+    }
+    if (!ids.length) {
+      toast("No mistakes recorded yet — do a lesson first.");
+      return;
+    }
+
+    session = newSession([], S.shuffle(ids, Math.random).slice(0, 10));
+    show("session");
+    renderQuiz();
+  }
+
+  function renderBuilder() {
+    var fields = selectedFields();
+    var box = $("fields");
+    if (!box) return;
+
+    box.innerHTML = Object.keys(D.categories).map(function (cat) {
+      var n = D.concepts.filter(function (c) { return c.cat === cat; }).length;
+      var on = fields.indexOf(cat) !== -1;
+      return '<button type="button" class="field' + (on ? " is-on" : "") + '" data-cat="' + cat + '"' +
+        ' aria-pressed="' + on + '">' + esc(D.categories[cat].label) +
+        ' <b>' + n + "</b></button>";
+    }).join("");
+
+    Array.prototype.forEach.call(box.querySelectorAll(".field"), function (btn) {
+      btn.addEventListener("click", function () {
+        var cat = btn.getAttribute("data-cat");
+        var current = selectedFields().slice();
+        var i = current.indexOf(cat);
+        if (i === -1) current.push(cat);
+        else current.splice(i, 1);
+        if (!current.length) { toast("Pick at least one field."); return; }
+        state.settings.fields = current;
+        save();
+        renderBuilder();
+      });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll(".size"), function (b) {
+      var on = Number(b.getAttribute("data-size")) === lessonSize();
+      b.classList.toggle("is-on", on);
+      b.setAttribute("aria-pressed", String(on));
+    });
+
+    var total = D.concepts.filter(function (c) { return fields.indexOf(c.cat) !== -1; }).length;
+    var due = S.dueList(state, Date.now()).filter(function (id) {
+      return state.cards[id].last !== null && inFields(id, fields);
+    }).length;
+    var note = $("builder-note");
+    if (note) {
+      note.textContent = lessonSize() + " cards · " + total + " concepts in scope · " + due + " due";
+    }
   }
 
   /* Shareable "just quiz me" link (#quiz): no teaching, straight to questions. */
@@ -374,8 +500,8 @@
       '<p class="sentence">' + highlightSentence(c) + "</p>" +
       '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>';
 
-    speak(c.word);
-    $("hear-btn").addEventListener("click", function () { speak(c.word, this); });
+    sayConcept(c);
+    $("hear-btn").addEventListener("click", function () { sayConcept(c, this); });
 
     $("actions").innerHTML = '<button class="btn btn-primary" id="next">' +
       (last ? "Start the quiz →" : "Next →") + "</button>";
@@ -431,8 +557,8 @@
       '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
       '<div class="word-options">' + set.map(optionWord).join("") + "</div>";
 
-    speak(c.word);
-    $("hear-btn").addEventListener("click", function () { speak(c.word, this); });
+    sayConcept(c);
+    $("hear-btn").addEventListener("click", function () { sayConcept(c, this); });
 
     Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
       btn.addEventListener("click", function () {
@@ -464,8 +590,8 @@
       }).join("") + "</div>" +
       '<button class="speak-btn" id="hear-btn">🔊 Hear the word</button>';
 
-    speak(c.word);
-    $("hear-btn").addEventListener("click", function () { speak(c.word, this); });
+    sayConcept(c);
+    $("hear-btn").addEventListener("click", function () { sayConcept(c, this); });
 
     Array.prototype.forEach.call($("stage").querySelectorAll(".option"), function (btn) {
       btn.addEventListener("click", function () {
@@ -490,7 +616,7 @@
       '<button class="speak-btn" id="hear-btn">🔊 Hear the word</button>' +
       '<p class="score" id="score"></p>';
 
-    $("hear-btn").addEventListener("click", function () { speak(c.word, this); });
+    $("hear-btn").addEventListener("click", function () { sayConcept(c, this); });
 
     var mic = $("mic-btn");
     mic.addEventListener("click", function () {
@@ -732,7 +858,7 @@
 
   function selectNode(id) {
     var c = conceptById[id];
-    speak(c.word);
+    sayConcept(c);
     var info = $("map-info");
     var links = (neighbours[id] || []).slice(0, 4).map(function (n) {
       var rel = D.relationTypes[n.type] ? D.relationTypes[n.type].label : "related to";
@@ -805,9 +931,18 @@
     b.addEventListener("click", function () { show(b.getAttribute("data-goto")); });
   });
 
-  $("start-btn").addEventListener("click", startSession);
+  $("start-btn").addEventListener("click", function () { startSession(); });
+  $("build-start").addEventListener("click", function () { startSession(); });
+  $("review-missed").addEventListener("click", reviewMistakes);
+  Array.prototype.forEach.call(document.querySelectorAll(".size"), function (b) {
+    b.addEventListener("click", function () {
+      state.settings.size = Number(b.getAttribute("data-size"));
+      save();
+      renderBuilder();
+    });
+  });
   $("quit-btn").addEventListener("click", function () { session = null; show("today"); });
-  $("map-practice").addEventListener("click", startSession);
+  $("map-practice").addEventListener("click", function () { startSession(); });
 
   document.addEventListener("keydown", function (ev) {
     if (currentView !== "session" || !session) return;
@@ -821,7 +956,7 @@
   /* Deep links: #map, #stats and #practice are shareable — useful for a demo,
    * and they let the views be driven without a click. */
   $("audio-chip").addEventListener("click", function () {
-    speak(conceptById["noche"] ? conceptById["noche"].word : "hola");
+    sayConcept(conceptById["noche"] || { id: "noche", word: "noche" });
     toast(audioStatus().state === "ok"
       ? "That was the synthesized voice — if you heard nothing, check the system volume."
       : "No Spanish voice on this device; the demo still works without audio.");
