@@ -65,6 +65,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/lang/es/concepts.js",
     "src/lang/es/phrases.js",
     "src/lang/es/terms.js",
+    "src/lang/es/basics.js",
     "src/track.js",
     "src/lang/es/texts.js",
     "src/adaptive.js",
