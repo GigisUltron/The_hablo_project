@@ -1426,3 +1426,4 @@ button.brand { background: none; border: 0; padding: 0; cursor: pointer; }
 #view-settings .settings-lang { margin: 0 0 16px; }
 #view-setup select,
 #view-settings select { font: inherit; font-family: var(--font); font-size: 15px; text-transform: none; letter-spacing: 0; padding: 10px 12px; min-height: 44px; border: var(--rule-thin); background: var(--card); color: var(--ink); box-shadow: 2px 2px 0 var(--ink); max-width: 220px; }
+#actions .foot-link { background: none; border: 0; border-bottom: 2px solid var(--ink-faint); padding: 4px 2px; cursor: pointer; }

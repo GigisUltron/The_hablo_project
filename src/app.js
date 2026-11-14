@@ -1662,7 +1662,7 @@
 
     $("actions").innerHTML =
       '<button class="btn btn-primary" id="again">One more</button>' +
-      '<button class="btn btn-ghost" id="back">Done for now</button>';
+      '<button class="foot-link" id="back" type="button">done for now</button>';
 
     $("back").addEventListener("click", function () { session = null; show("today"); });
     $("again").addEventListener("click", function () { startSession(); });
