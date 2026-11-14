@@ -475,8 +475,11 @@ test("a beginner's first session opens on phrases, with nothing above A2", () =>
     assert.ok(P.includes(q[0]), deck + " opens on " + q[0] + ", not a phrase");
     assert.equal(q.filter((id) => T.includes(id)).length, 0, deck + " puts a connector in a first session");
     assert.deepEqual(q.filter((id) => !A.within(L[id], "A2")), [], deck + " queues above A2");
-    const opening = q.slice(0, 3);
-    assert.deepEqual(opening, opening.filter((id) => P.includes(id)),
+    /* the opening run is however many openers the deck has (at least the
+     * greeting and how-are-you), and it is all phrases */
+    const firstNonPhrase = q.findIndex((id) => !P.includes(id));
+    assert.ok(firstNonPhrase >= 2, deck + " opens with fewer than two phrases");
+    assert.deepEqual(q.slice(0, firstNonPhrase), q.slice(0, firstNonPhrase).filter((id) => P.includes(id)),
       deck + " opens with something that is not a phrase");
     const grammar = require("../src/lang/" + deck + "/basics.js").items.map((b) => b.id);
     assert.ok(q.filter((id) => grammar.includes(id)).length * 2 <= q.length,
