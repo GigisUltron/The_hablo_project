@@ -181,6 +181,26 @@ Per session you may propose **one** non-obvious change that meaningfully improve
 experience. State the hypothesis, the metric it should move, and the cheapest way to test it.
 Then stop and wait for approval. Do not implement it silently.
 
+## Committing
+
+You may commit. You may **not** push.
+
+- **One concern per commit**, subject prefixed with your lane: `ui:`, `content:`, `audio:`,
+  `docs:`.
+- **Never `git push`**, never `--force`, never rewrite history, never amend a commit that is
+  already on `main`. Pushing is the owner's call, always.
+- **Attribute the lane**, because otherwise the history credits everything to whoever ran the
+  shell. End every commit with a trailer:
+
+  ```
+  Co-authored-by: interface agent <interface@local>
+  ```
+
+  Use `content@local`, `audio@local`, `docs@local` for the other lanes.
+- **Commit nothing while `make check` is red.** Fix or revert first.
+- **Do not commit generated binaries** (`assets/audio/**`, `docs/preview.png`) unless you ran
+  the generator that produced them in this session.
+
 ## Verification — do this before claiming done
 
 ```sh
