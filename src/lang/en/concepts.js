@@ -71,7 +71,7 @@ var SEMA_DATA = {
     { id: "en-run", emoji: "🏃", word: "run", article: "", cat: "action", sentence: "I run in the morning." },
     { id: "en-speak", emoji: "💬", word: "speak", article: "", cat: "action", sentence: "I speak with my mother." },
     { id: "en-listen", emoji: "👂", word: "listen", article: "", cat: "action", sentence: "I listen to the rain." },
-    { id: "en-freedom", emoji: "🦅", word: "freedom", article: "the", cat: "abstract", sentence: "Freedom has a price." },
+    { id: "en-freedom", emoji: "🗽", word: "freedom", article: "the", cat: "abstract", sentence: "Freedom has a price." },
   ],
 
   edges: [

@@ -12,11 +12,11 @@ const BANDS = ["A1", "A2", "B1", "B2", "C1"];
  * flagship. Every other pack must clear the starter floor: enough to be a
  * short course, not a sample. */
 const FLOORS = {
-  es: { concepts: 40, phrases: 120, terms: 20, basics: 16, texts: 1 },
-  fr: { concepts: 40, phrases: 120, terms: 20, basics: 16, texts: 1 },
-  it: { concepts: 20, phrases: 120, terms: 20, basics: 16, texts: 1 },
-  en: { concepts: 40, phrases: 120, terms: 27, basics: 16, texts: 1 },
-  starter: { concepts: 20, phrases: 30, terms: 8, basics: 8, texts: 1 }
+  es: { concepts: 40, phrases: 120, terms: 20, basics: 16, texts: 5, dialogues: 3, turns: 6 },
+  fr: { concepts: 40, phrases: 120, terms: 20, basics: 16, texts: 5, dialogues: 3, turns: 6 },
+  it: { concepts: 20, phrases: 120, terms: 20, basics: 16, texts: 5, dialogues: 3, turns: 6 },
+  en: { concepts: 40, phrases: 120, terms: 27, basics: 16, texts: 5, dialogues: 3, turns: 6 },
+  starter: { concepts: 20, phrases: 30, terms: 8, basics: 8, texts: 3, dialogues: 1, turns: 6 }
 };
 const FLAGSHIP = new Set(["es", "fr", "it", "en"]);
 
@@ -80,7 +80,9 @@ test("a pack has enough material to be a course, not a sample", () => {
       phrases: (require(path.join(dir, "phrases.js")).phrases || []).length,
       terms: (require(path.join(dir, "terms.js")).terms || []).length,
       basics: (require(path.join(dir, "basics.js")).items || []).length,
-      texts: (require(path.join(dir, "texts.js")).texts || []).length
+      texts: (require(path.join(dir, "texts.js")).texts || []).length,
+      dialogues: (require(path.join(dir, "conv.js")).dialogues || []).length,
+      turns: Math.min(...(require(path.join(dir, "conv.js")).dialogues || [{ turns: [] }]).map((d) => d.turns.length))
     };
     const floor = FLOORS[code] || FLOORS.starter;
     for (const [part, min] of Object.entries(floor)) {
@@ -273,5 +275,17 @@ test("chinese pinyin aligns one syllable to each Han character", () => {
     assert.equal(tokens, characters, `${item.id}: ${characters} characters, ${tokens} pinyin tokens (${item.sub})`);
     assert.equal(/\s{2,}/.test(item.sub), false, `${item.id} pinyin has more than one space between tokens`);
     assert.equal(item.sub, item.sub.trim(), `${item.id} pinyin has an outer space`);
+  }
+});
+
+
+test("every concept has one distinct, non-empty emoji", () => {
+  for (const code of codes) {
+    const concepts = require(path.join(root, code, "concepts.js")).concepts || [];
+    const emoji = concepts.map((concept) => concept.emoji);
+    const missing = concepts.filter((concept) => !concept.emoji).map((concept) => concept.id);
+    assert.deepEqual(missing, [], `${code}: no emoji for ${missing.join(", ")}`);
+    const duplicates = emoji.filter((value, i) => emoji.indexOf(value) !== i);
+    assert.deepEqual([...new Set(duplicates)], [], `${code}: duplicate concept emoji`);
   }
 });

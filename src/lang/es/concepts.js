@@ -88,8 +88,8 @@ var SEMA_DATA = {
     { id: "hablar",   emoji: "💬", word: "hablar",   article: "",   cat: "action",   sentence: "Hablo con mi madre." },
     { id: "escuchar", emoji: "👂", word: "escuchar", article: "",   cat: "action",   sentence: "Escucho la lluvia." },
 
-    { id: "paz",      emoji: "🕊️", word: "paz",      article: "la", cat: "abstract", sentence: "La paz es frágil." },
-    { id: "libertad", emoji: "🦅", word: "libertad", article: "la", cat: "abstract", sentence: "La libertad tiene un precio." }
+    { id: "paz",      emoji: "☮️", word: "paz",      article: "la", cat: "abstract", sentence: "La paz es frágil." },
+    { id: "libertad", emoji: "🗽", word: "libertad", article: "la", cat: "abstract", sentence: "La libertad tiene un precio." }
   ],
 
   /* The semantic web. Distractors in the recall drill are drawn from here first,

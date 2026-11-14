@@ -84,8 +84,8 @@ var SEMA_DATA = {
     { id: "parler",   emoji: "💬", word: "parler",   article: "",   cat: "action",   sentence: "Je parle avec ma mère." },
     { id: "ecouter",  emoji: "👂", word: "écouter",  article: "",   cat: "action",   sentence: "J'écoute la pluie." },
 
-    { id: "paix",     emoji: "🕊️", word: "paix",     article: "la", cat: "abstract", sentence: "La paix est fragile." },
-    { id: "liberte",  emoji: "🦅", word: "liberté",  article: "la", cat: "abstract", sentence: "La liberté a un prix." }
+    { id: "paix",     emoji: "☮️", word: "paix",     article: "la", cat: "abstract", sentence: "La paix est fragile." },
+    { id: "liberte",  emoji: "🗽", word: "liberté",  article: "la", cat: "abstract", sentence: "La liberté a un prix." }
   ],
 
   /* The semantic web, translated edge for edge. Distractors come from here
