@@ -14,8 +14,8 @@ var SEMA_TEXTS = {
       level: 1,
       body: "El mercado abre muy temprano. Mi madre compra pan y manzanas. Yo compro café y leche. El pan está fresco y huele muy bien. La mujer del puesto sonríe y dice: «Buenos días». Pagamos con dinero y volvemos a casa. En casa desayunamos juntos. Mi padre bebe café y yo bebo agua. Después yo estudio y mi madre trabaja. Por la noche cenamos y hablamos del día. El mercado es mi lugar favorito del barrio.",
       questions: [
-        { q: "¿Qué compra la madre?", options: ["pan y manzanas", "café y leche", "agua y sal"], answer: 0 },
-        { q: "¿Cuándo abre el mercado?", options: ["por la noche", "muy temprano", "por la tarde"], answer: 1 },
+        { q: "¿Qué compra la madre?", options: ["pan y manzanas", "café y leche", "agua y sal"], answer: 0, why: ["", "ese es el que compra el hijo", "el agua no se compra aquí"] },
+        { q: "¿Cuándo abre el mercado?", options: ["por la noche", "muy temprano", "por la tarde"], answer: 1, why: ["el texto dice temprano, no de noche", "", "el texto no habla de la tarde"] },
         { q: "¿Quién bebe café en casa?", options: ["el padre", "la madre", "el hijo"], answer: 0 }
       ]
     },

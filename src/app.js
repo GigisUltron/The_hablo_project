@@ -464,7 +464,10 @@
           b.disabled = true;
           if (Number(b.getAttribute("data-i")) === q.answer) b.classList.add("pick-correct");
         });
-        $("reader-feedback").textContent = ok ? "correct" : "the answer was: " + q.options[q.answer];
+        var why = !ok && q.why && q.why[picked];
+        $("reader-feedback").textContent = ok
+          ? "correct"
+          : (why ? why + " — " + q.options[q.answer] : "the answer was: " + q.options[q.answer]);
         $("reader-feedback").className = "feedback " + (ok ? "good" : "bad");
         reader.qi += 1;
         $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-next">Continue →</button>';
