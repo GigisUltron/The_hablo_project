@@ -1677,6 +1677,7 @@
   $("read-btn").addEventListener("click", startReader);
   $("settings-btn").addEventListener("click", function () { show("settings"); });
   $("conv-btn").addEventListener("click", startConversation);
+  $("home-conv").addEventListener("click", startConversation);
   $("reset-btn").addEventListener("click", function () {
     if (!window.confirm("Clear all progress on this device?")) return;
     try { localStorage.removeItem(STORE_KEY); } catch (err) { /* ignore */ }
