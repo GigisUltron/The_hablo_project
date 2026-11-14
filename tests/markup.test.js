@@ -248,9 +248,26 @@ test("no concept carries a translation field", () => {
   }
 });
 
-test("the brand mark is the S badge, by owner's decision", () => {
-  assert.match(html, /class="brand-badge"[^>]*>S</, "the mark is a plain S on the accent square");
-  assert.equal(/class="mark"/.test(html), false, "the old letter span is gone");
+test("the brand mark is a path of three steps, the top one solid", () => {
+  assert.match(html, /<svg class="brand-mark"/, "no inline mark");
+  assert.equal(/brand-badge/.test(html), false, "the letter badge is gone");
+  assert.equal(/<img\b/.test(html), false, "the mark must not be an image");
+  assert.equal((html.match(/class="mark-step"/g) || []).length, 2, "two open steps");
+  assert.match(html, /class="mark-solid"/, "the filled step is missing");
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(css, /\.brand-mark\s*\{/, "no .brand-mark rule");
+  assert.match(css, /\.brand-mark[^}]*stroke:\s*currentColor/s, "the mark does not follow the text");
+});
+
+test("a locked unit is refused by the session code, not only by the click", () => {
+  assert.match(app, /function unitUnlocked\(/, "no single unlock rule");
+  assert.match(app, /if \(o\.unit && !unitUnlocked\(o\.unit\)\)/, "startSession does not refuse a locked unit");
+  assert.match(app, /aria-disabled="true"/, "locked nodes are not marked for assistive tech");
+  assert.match(app, /ICON\.lock/, "locked nodes have no cue beyond colour");
+  assert.match(app, /\.step\.done|step.* done/, "no completed state");
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(css, /\.step\.locked[^}]*cursor:\s*not-allowed/s, "locked nodes do not say they are not allowed");
+  assert.match(css, /\.step\.done \.step-n/, "no completed state in the stylesheet");
 });
 
 test("a concept card carries its reading aid, not only its sentence", () => {

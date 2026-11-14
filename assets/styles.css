@@ -147,17 +147,22 @@ svg { flex: none; }
   font-weight: 700;
   letter-spacing: -0.01em;
 }
+/* the mark: three steps climbing, the top one solid */
 .brand-mark {
   width: 24px;
   height: 24px;
   flex: none;
+  display: block;
+}
+.brand-mark .mark-step {
   fill: none;
   stroke: currentColor;
-  stroke-width: 2.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-width: 2;
 }
-.brand-mark .mark-accent { stroke: var(--accent); stroke-width: 2.6; }
+.brand-mark .mark-solid {
+  fill: var(--accent);
+  stroke: none;
+}
 
 /* wide screens: a segmented control */
 .tabs {
@@ -1089,9 +1094,18 @@ button.row:active .row-pic { transform: scale(0.92); }
   color: var(--on-accent);
 }
 .step.now .step-t { font-size: 19px; font-weight: 800; }
-.step.locked { cursor: default; }
-.step.locked .step-n { background: var(--fill); color: var(--text-3); box-shadow: 0 5px 0 var(--border-deep); }
+/* three states: current (filled), done (quiet tick), locked (muted, not allowed) */
+.step.locked { cursor: not-allowed; }
+.step.locked .step-n {
+  background: var(--fill);
+  color: var(--text-3);
+  box-shadow: 0 5px 0 var(--border-deep);
+}
 .step.locked .step-t { color: var(--text-3); font-weight: 600; }
+.step.locked .ico { width: 20px; height: 20px; }
+.step.done .step-n { background: var(--good-soft); color: var(--good); box-shadow: 0 5px 0 var(--good-deep); }
+.step.done .step-t { color: var(--text-2); font-weight: 600; }
+.step.done .ico { width: 26px; height: 26px; }
 .step:not(.locked):active .step-n { transform: translateY(4px); box-shadow: 0 1px 0 var(--accent-deep); }
 .step:focus-visible { outline: none; }
 .step:focus-visible .step-n { outline: 3px solid var(--accent); outline-offset: 3px; }
@@ -1491,18 +1505,4 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   color: var(--accent);
 }
 
-/* the mark: a plain S on the accent square, nothing clever */
-.brand-badge {
-  width: 28px;
-  height: 28px;
-  flex: none;
-  border-radius: var(--radius-sm);
-  background: var(--accent);
-  color: var(--on-accent);
-  display: grid;
-  place-items: center;
-  font-size: 17px;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: 0;
-}
+
