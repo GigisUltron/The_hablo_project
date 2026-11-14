@@ -28,3 +28,20 @@ test("every pack grades every item it ships", () => {
     }
   }
 });
+
+test("a pack has enough material to be a course, not a sample", () => {
+  const floors = { concepts: 40, phrases: 60, terms: 20, basics: 16, texts: 1 };
+  for (const code of codes) {
+    const dir = path.join(root, code);
+    const counts = {
+      concepts: (require(path.join(dir, "concepts.js")).concepts || []).length,
+      phrases: (require(path.join(dir, "phrases.js")).phrases || []).length,
+      terms: (require(path.join(dir, "terms.js")).terms || []).length,
+      basics: (require(path.join(dir, "basics.js")).items || []).length,
+      texts: (require(path.join(dir, "texts.js")).texts || []).length
+    };
+    for (const [part, floor] of Object.entries(floors)) {
+      assert.ok(counts[part] >= floor, `${code}: ${part} has ${counts[part]}, floor ${floor}`);
+    }
+  }
+});
