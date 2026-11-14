@@ -1347,3 +1347,11 @@ h1 em {
 .track { gap: 6px; margin-top: 20px; }
 .track-note { display: none; }
 .step.now { background: var(--saffron); }
+
+/* one sentence instead of four labelled numbers */
+.progress-line {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin: 18px 0 4px;
+}

@@ -396,11 +396,12 @@
     var known = allIds.filter(function (id) { return state.cards[id].reps > 0; }).length;
     var mastered = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
 
-    $("stat-due").textContent = due;
-    $("stat-learned").textContent = known;
-    $("stat-total").textContent = allIds.length;
-    $("stat-streak").textContent = currentStreak();
-    $("stat-mastered").textContent = mastered;
+    var streak = currentStreak();
+    var line = due > 0
+      ? due + (due === 1 ? " card to review" : " cards to review")
+      : known + " of " + allIds.length + " words learned";
+    if (streak > 1) line += " · " + streak + " day streak";
+    $("progress-line").textContent = line;
 
     $("start-label").textContent = due > 0 ? "Start lesson · " + due + " due" : "Start lesson";
 
