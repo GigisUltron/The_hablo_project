@@ -516,6 +516,15 @@
     return '<div class="word' + long + kind + '">' + art + esc(it.text) + "</div>";
   }
 
+  /* The picture takes the free height of the screen; its sound button sits
+   * in the corner, where a thumb finds it without covering the picture. */
+  function figureHTML(it, label) {
+    return '<div class="figure">' +
+      '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
+      '<button class="speak-btn round" id="hear-btn" aria-label="' + label + '" title="' + label + '">' +
+        ICON.speaker + "</button></div>";
+  }
+
   function contextHTML(it) {
     if (!it.sub) return "";
     if (it.kind === "phrase") return '<p class="sentence">' + esc(it.sub) + "</p>";
@@ -790,10 +799,9 @@
     $("stage").innerHTML =
       '<p class="prompt">Learn the pair · ' + (session.si + 1) + " of " + session.study.length +
         (it.kind === "phrase" ? " · phrase" : "") + "</p>" +
-      '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
+      figureHTML(it, "Hear it") +
       wordsHTML(it) +
-      contextHTML(it) +
-      '<button class="speak-btn" id="hear-btn">' + ICON.speaker + 'Hear it</button>';
+      contextHTML(it);
     markScene(it.id, true);
 
     sayItem(it);
@@ -862,8 +870,7 @@
 
     $("stage").innerHTML =
       '<p class="prompt">Which one is this?</p>' +
-      '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
-      '<button class="speak-btn" id="hear-btn">' + ICON.speaker + 'Hear it</button>' +
+      figureHTML(it, "Hear it") +
       '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
 
     sayItem(it);
@@ -912,9 +919,8 @@
 
     $("stage").innerHTML =
       '<p class="prompt">Say it in ' + esc(LANG.name) + "</p>" +
-      '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
+      figureHTML(it, "Hear it") +
       (SR ? '<button class="mic" id="mic-btn">' + ICON.mic + 'Say it aloud</button>' : "") +
-      '<button class="speak-btn" id="hear-btn">' + ICON.speaker + 'Hear it</button>' +
       '<p class="score" id="score"></p>';
 
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
@@ -974,10 +980,9 @@
   function showAnswer(ok, it) {
     $("stage").innerHTML =
       '<p class="prompt">' + (ok ? "Correct" : "Not quite") + "</p>" +
-      '<div class="tile sm" aria-hidden="true">' + it.emoji + "</div>" +
+      figureHTML(it, "Hear it again") +
       wordsHTML(it) +
-      contextHTML(it) +
-      '<button class="speak-btn" id="hear-btn">' + ICON.speaker + 'Hear it again</button>';
+      contextHTML(it);
     markScene(it.id, true);
 
     sayItem(it);

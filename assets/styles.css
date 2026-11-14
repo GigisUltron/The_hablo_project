@@ -427,7 +427,23 @@ svg { flex: none; }
   gap: 16px;
 }
 
-.stage { display: flex; flex-direction: column; gap: 16px; }
+.stage { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+
+/* the picture takes the free height, so answers sit low, under the thumb */
+.figure { position: relative; flex: 1 1 200px; min-height: 200px; max-height: 480px; display: flex; }
+.figure .tile { flex: 1; height: auto; }
+.speak-btn.round {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 48px;
+  height: 48px;
+  min-height: 0;
+  padding: 0;
+  justify-content: center;
+  border-radius: 50%;
+}
+.speak-btn.round .ico { width: 22px; height: 22px; }
 
 .prompt { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
 
@@ -534,6 +550,8 @@ svg { flex: none; }
 .feedback.bad { color: var(--bad); }
 
 .card-actions { margin-top: auto; display: grid; gap: 8px; padding-bottom: 8px; }
+/* while the question is open there is no verdict and no button yet */
+.feedback:empty, .card-actions:empty { display: none; }
 .card-actions .btn { width: 100%; min-height: 50px; }
 .card-actions .btn-ghost { background: transparent; color: var(--accent); }
 .card-actions .btn-ghost:hover { background: var(--accent-soft); }
@@ -789,6 +807,8 @@ svg { flex: none; }
 
   .options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tile { height: 200px; }
+  /* the lesson fills the phone screen down to the home bar */
+  .card { min-height: calc(100dvh - 84px - env(safe-area-inset-bottom)); }
   .map-head h2 { font-size: 30px; }
   .map-info { flex-wrap: wrap; }
   .bar-row { grid-template-columns: 72px 1fr 36px; }
