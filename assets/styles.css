@@ -1292,3 +1292,15 @@ h1 em {
   letter-spacing: -0.01em;
   padding: 14px 10px;
 }
+
+/* ------------------------------------------------------ phone polish */
+@media (max-width: 560px), (hover: none) {
+  /* no keyboard on a phone: the shortcut line only takes room */
+  .kbd-hint .keys { display: none; }
+  .kbd-hint:not(.is-demo) { display: none; }
+}
+@media (max-width: 560px) {
+  /* the map keeps a readable scale and pans sideways inside its panel */
+  .map-panel { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .map-svg { min-width: 660px; }
+}

@@ -317,7 +317,12 @@
     if (view === "today") renderToday();
     if (view === "stats") renderStats();
     if (view === "map" && !mapBuilt) { buildMap(); mapBuilt = true; }
-    if (view === "map") refreshMapState();
+    if (view === "map") {
+      refreshMapState();
+      /* on a phone the map pans; open it on the middle, where the clusters meet */
+      var panel = document.querySelector(".map-panel");
+      if (panel) panel.scrollLeft = (panel.scrollWidth - panel.clientWidth) / 2;
+    }
     if (window.history && window.history.replaceState) {
       window.history.replaceState(null, "", "#" + view);
     }
@@ -649,7 +654,9 @@
     session = newSession("words", ids, S.shuffle(ids, Math.random));
     session.types = DEMO_TYPES;
     show("session");
-    $("kbd-hint").textContent = "demo · miss one, it comes back · Enter → next · 1–4 → answer";
+    var hint = $("kbd-hint");
+    hint.classList.add("is-demo");
+    hint.innerHTML = 'demo · miss one, it comes back<span class="keys"> · Enter → next · 1–4 → answer</span>';
     renderStudy();
     toast("Demo — starts clean; saved progress is untouched.", 3200);
   }
