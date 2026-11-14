@@ -1646,7 +1646,7 @@
       tile.setAttribute("aria-label", "Play the audio");
       tile.addEventListener("click", function () { sayItem(it); });
     }
-    $("actions").innerHTML = glossHTML(id) + explainHTML(itemOf(id)) +
+    $("actions").innerHTML = glossHTML(id) +
       '<button class="btn btn-primary" id="gotit">' + tr("gotit", "Got it") + '</button>';
     wireGloss();
     wireExplain();

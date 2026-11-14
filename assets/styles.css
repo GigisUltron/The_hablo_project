@@ -1236,3 +1236,19 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 }
 .gloss-btn:hover, .explain-btn:hover { color: var(--ink, #171009); }
 .gloss-text, .explain-text { display: block; font-size: 14px; color: var(--ink-soft, #4a3b2c); margin-top: 4px; }
+
+/* the two aids, styled like the rest of look E: quiet secondary text, no chrome */
+.gloss-btn, .explain-btn {
+  border: 0;
+  background: none;
+  padding: 8px 0 0;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.gloss-btn:hover, .explain-btn:hover { color: var(--text); }
+.gloss-btn + .explain-btn { margin-left: 18px; }
