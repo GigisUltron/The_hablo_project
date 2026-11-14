@@ -1333,3 +1333,9 @@ h1 em {
 }
 #view-settings .builder-note { display: block; margin-top: 10px; }
 #view-settings .builder-actions { margin-bottom: 4px; }
+
+/* rhythm after the headline left: give the one action room to breathe */
+.solo { padding-top: 18px; }
+#start-btn { margin-bottom: 4px; }
+/* the settings panel is a stack, not a disclosure */
+#view-settings .panel-pad > *:first-child { margin-top: 0; }
