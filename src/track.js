@@ -61,6 +61,21 @@ var SEMA_TRACK = {
     return T.titles.en[key] || key;
   }
 
+  /* Does a set of letters need a script lesson? A declared script wins; Latin
+   * never needs one, so an alphabet part on a Latin deck is not a lesson. */
+  function scriptNeeded(letters, declared) {
+    if (!letters || !letters.length) return false;
+    if (declared) return String(declared).toLowerCase() !== "latin";
+    return !letters.every(function (l) { return isLatinLetter(l.letter); });
+  }
+
+  function isLatinLetter(ch) {
+    var text = String(ch == null ? "" : ch);
+    if (!text) return true;
+    try { return /^[\p{Script=Latin}\p{M}]+$/u.test(text); }
+    catch (err) { return /^[A-Za-z\u00c0-\u024f]+$/.test(text); }
+  }
+
   function map(solid, opts) {
     var n = Number(solid) || 0;
     var o = opts || {};
@@ -86,6 +101,7 @@ var SEMA_TRACK = {
 
   var api = {
     units: T.units, titles: T.titles, title: title, unitList: unitList,
+    scriptNeeded: scriptNeeded, isLatinLetter: isLatinLetter,
     map: map, currentUnit: currentUnit
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

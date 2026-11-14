@@ -302,6 +302,23 @@ test("the read unit on the path opens the reader as a lesson", () => {
   assert.match(startSession, /startReader\(\)/, "the read unit does not open the reader");
 });
 
+test("every member the app calls on a shared module exists", () => {
+  // A rename or a half-landed commit can leave the app calling a function that
+  // is not there any more; that throws at boot and kills every listener with it.
+  const mods = {
+    TRACK: require("../src/track.js"),
+    ADAPT: require("../src/adaptive.js")
+  };
+  const problems = [];
+  for (const [name, mod] of Object.entries(mods)) {
+    const used = [...new Set([...app.matchAll(new RegExp("\\b" + name + "\\.([A-Za-z_$][\\w$]*)", "g"))].map((m) => m[1]))];
+    for (const member of used) {
+      if (typeof mod[member] === "undefined") problems.push(name + "." + member);
+    }
+  }
+  assert.deepEqual(problems, [], "the app calls missing members: " + problems.join(", "));
+});
+
 test("every track unit has a mode the app can start", () => {
   const T = require("../src/track.js");
   const modes = new Set(T.units.map((u) => u.mode));

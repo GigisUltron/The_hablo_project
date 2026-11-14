@@ -168,7 +168,7 @@ var SEMA_UI_LANGS = (function () {
     KEYS.forEach(function (key, i) { table[key] = values[i]; });
     out[code] = table;
   });
-  out.KEYS = KEYS;
+  out.keys = KEYS;
   return out;
 })();
 
