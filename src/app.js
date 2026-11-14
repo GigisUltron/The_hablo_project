@@ -1192,7 +1192,9 @@
     var unit = o.custom ? null : (o.unit || (TRACK ? TRACK.currentUnit(solid) : null));
     var mode = unit ? unit.mode : (o.mode || sessionMode());
     var plan = ADAPT ? ADAPT.plan(solid) : { fresh: 4, review: 4, production: 0, size: 8, level: 1 };
-    var size = o.size || (unit ? plan.size : lessonSize());
+    var hist = (state.history || []).map(function (h) { return typeof h === "number" ? h : h && h.size; });
+    var goal = ADAPT ? ADAPT.dailyGoal(hist) : 8;
+    var size = o.size || (o.custom ? lessonSize() : Math.min(plan.size + 2, goal));
     var fields = unit && unit.fields ? unit.fields : selectedFields();
     var now = Date.now();
 
@@ -1905,6 +1907,10 @@
   }
 
   function finishSession() {
+    state.history = state.history || [];
+    state.history.push(session.qi);
+    if (state.history.length > 50) state.history = state.history.slice(-50);
+
     state.sessions += 1;
     state.lastSession = Date.now();
     save();
