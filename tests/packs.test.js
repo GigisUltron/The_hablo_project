@@ -8,15 +8,16 @@ const codes = fs.readdirSync(root).filter((f) => fs.statSync(path.join(root, f))
 const REQUIRED = ["concepts.js", "phrases.js", "terms.js", "basics.js", "glosses.js", "levels.js", "audio.js", "conv.js", "texts.js"];
 const BANDS = ["A1", "A2", "B1", "B2", "C1"];
 
-/* The two original decks are full courses. Every other pack must clear the
- * starter floor the project set for a new language: enough to be a short
- * course, not a sample. Italian joins the flagship group once its extended
- * deck lands. */
-const FULL = new Set(["es", "fr"]);
+/* Spanish and French are the original full courses; Italian is the third
+ * flagship. Every other pack must clear the starter floor: enough to be a
+ * short course, not a sample. */
 const FLOORS = {
-  full: { concepts: 40, phrases: 60, terms: 20, basics: 16, texts: 1 },
+  es: { concepts: 40, phrases: 120, terms: 20, basics: 16, texts: 1 },
+  fr: { concepts: 40, phrases: 120, terms: 20, basics: 16, texts: 1 },
+  it: { concepts: 20, phrases: 120, terms: 20, basics: 16, texts: 1 },
   starter: { concepts: 20, phrases: 30, terms: 8, basics: 8, texts: 1 }
 };
+const FLAGSHIP = new Set(["es", "fr", "it"]);
 
 /* eSpeak-ng has no voice named "zh"; its Mandarin voice is "cmn", which this
  * pack's ids do not use. A silent pack is honest; a missing manifest is not. */
@@ -80,10 +81,23 @@ test("a pack has enough material to be a course, not a sample", () => {
       basics: (require(path.join(dir, "basics.js")).items || []).length,
       texts: (require(path.join(dir, "texts.js")).texts || []).length
     };
-    const floor = FULL.has(code) ? FLOORS.full : FLOORS.starter;
+    const floor = FLOORS[code] || FLOORS.starter;
     for (const [part, min] of Object.entries(floor)) {
       assert.ok(counts[part] >= min, `${code}: ${part} has ${counts[part]}, floor ${min}`);
     }
+  }
+});
+
+test("the flagship decks reach thirty situations, not a list", () => {
+  for (const code of FLAGSHIP) {
+    const phrases = require(path.join(root, code, "phrases.js")).phrases || [];
+    assert.ok(phrases.length >= 120, `${code}: only ${phrases.length} phrases`);
+    const topics = new Set(phrases.map((p) => p.topic));
+    assert.ok(topics.size >= 30, `${code}: only ${topics.size} situations`);
+    const ungrouped = phrases.filter((p) => !p.topic).map((p) => p.id);
+    assert.deepEqual(ungrouped, [], `${code}: phrases without a situation: ${ungrouped.slice(0, 5).join(", ")}`);
+    const levels = require(path.join(root, code, "levels.js"));
+    assert.ok(phrases.some((p) => levels[p.id] === "C1"), `${code}: no C1 phrase`);
   }
 });
 
