@@ -674,6 +674,7 @@
   function poolFor(mode) {
     if (mode === "phrases") return phraseIds.slice();
     if (mode === "terms") return termIds.slice();
+    if (mode === "mixed") return allIds.concat(phraseIds, termIds);
     return allIds.slice();
   }
 
@@ -776,7 +777,9 @@
       ? phraseIds.slice()
       : mode === "terms"
         ? termIds.slice()
-        : allIds.filter(function (id) { return inFields(id, fields); });
+        : mode === "mixed"
+          ? allIds.concat(phraseIds, termIds)
+          : allIds.filter(function (id) { return inFields(id, fields); });
 
     var due = S.dueList(state, now).filter(function (id) {
       return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
@@ -888,22 +891,20 @@
     renderQuiz();
   }
 
+  /* One queue for everything you keep getting wrong, across all three decks.
+   * Memory already ranks it; this just refuses to pretend a review is a deck. */
   function reviewMistakes() {
-    var ids = allIds.concat(phraseIds).filter(function (id) {
-      return state.cards[id] && state.cards[id].lapses > 0;
-    }).sort(function (a, b) {
-      return state.cards[b].lapses - state.cards[a].lapses;
-    });
+    var ids = MEM.weakItems(state, 12);
 
     if (!ids.length) {
       ids = S.topConfusions(state, 12).map(function (r) { return r.target; });
     }
     if (!ids.length) {
-      toast("No mistakes recorded yet — do a lesson first.");
+      toast("Nothing to review yet — do a lesson first.");
       return;
     }
 
-    var mode = phraseById[ids[0]] ? "phrases" : "words";
+    var mode = "mixed";
     session = newSession(mode, [], S.shuffle(ids, Math.random).slice(0, 10));
     show("session");
     renderQuiz();
