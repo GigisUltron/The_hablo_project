@@ -2801,9 +2801,9 @@
     feedback("", "");
     $("stage").insertAdjacentHTML("beforeend",
       '<div class="compose">' +
-        '<label class="prompt" for="compose-input">one sentence with today\'s words</label>' +
+        '<label class="prompt" for="compose-input">' + esc(tr("composeLabel", "one sentence with today's words")) + "</label>" +
         '<textarea class="type-input" id="compose-input" rows="2" maxlength="160" ' +
-          'placeholder="escribe una frase"></textarea>' +
+          'placeholder="' + esc(tr("composePlaceholder", "write a sentence")) + '"></textarea>' +
         '<button class="btn btn-ghost btn-sm" id="compose-save">keep it</button>' +
       "</div>");
 
