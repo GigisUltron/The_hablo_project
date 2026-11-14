@@ -1281,3 +1281,14 @@ h1 em {
   .today-grid { grid-template-columns: minmax(0, 1fr); }
   .next-stack { display: none; }
 }
+
+/* ------------------------------------------------------------ phrases */
+/* a phrase is a sentence: it keeps its capital and its ¿ */
+.word.phrase { text-transform: none; letter-spacing: -0.035em; }
+.option-word.phrase {
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  padding: 14px 10px;
+}

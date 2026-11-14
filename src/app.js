@@ -471,7 +471,8 @@
   function wordsHTML(it) {
     var art = it.article ? '<span class="art">' + esc(it.article) + "</span>" : "";
     var long = it.text.length > 16 ? " long" : "";
-    return '<div class="word' + long + '">' + art + esc(it.text) + "</div>";
+    var kind = it.kind === "phrase" ? " phrase" : "";
+    return '<div class="word' + long + kind + '">' + art + esc(it.text) + "</div>";
   }
 
   function contextHTML(it) {
@@ -788,7 +789,8 @@
 
   function optionHTML(id) {
     var it = itemOf(id);
-    var long = it.text.length > 16 ? " long" : "";
+    /* phrases share one size, so four options never look like four fonts */
+    var long = it.kind === "phrase" ? " phrase" : it.text.length > 16 ? " long" : "";
     return '<button class="option-word' + long + '" data-id="' + esc(id) + '">' +
       (it.article ? '<span class="art">' + esc(it.article) + "</span>" : "") +
       esc(it.text) + "</button>";
