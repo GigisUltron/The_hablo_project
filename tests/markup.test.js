@@ -132,3 +132,15 @@ test("the session summary offers exactly one filled control", () => {
   assert.equal(filled, 1, `summary has ${filled} filled buttons`);
   assert.match(summary, /foot-link/);
 });
+
+test("the path's read unit is actually routed", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /unit\.mode === "read"/, "no read route in startSession");
+  assert.match(app, /startReader\(\)/, "route does not open the reader");
+});
+
+test("every track unit has a mode the app can start", () => {
+  const T = require("../src/track.js");
+  const modes = new Set(T.units.map((u) => u.mode));
+  for (const m of modes) assert.ok(["words", "phrases", "terms", "read"].includes(m), "unknown mode " + m);
+});
