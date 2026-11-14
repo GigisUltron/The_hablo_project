@@ -1,6 +1,6 @@
 # sema
 
-A language-learning demo that **never shows a translation**.
+A language-learning app that teaches Spanish and French, with translations on by default.
 
 Each concept arrives as a pair — the picture, the word, the sound — with no English gloss
 anywhere in the data. Then the quiz hides one half and asks you for the other. What you miss
@@ -56,7 +56,7 @@ words you know, and how many are solid.
 
 ```sh
 make check          # syntax gate + full suite
-node --test tests/  # 41 tests, stdlib only
+node --test tests/  # 85 tests, stdlib only
 ```
 
 ## Layout

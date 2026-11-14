@@ -243,7 +243,14 @@ make check
 python3 tools/make_audio.py --check
 ```
 
-Then **look at it**. Tests cannot see layout:
+Then **read the diff and the code paths**. Rendering is out of scope for this project now —
+screenshots cost more than they find, and the bugs that matter have been logic bugs: a 0%
+score, a missing card seed, an ordering that shuffled. Prefer a test over a picture.
+
+Historical note: this section used to require screenshots. That produced a habit of shipping
+unverified UI. The rule now is: if it can be asserted, assert it.
+
+If a test cannot express the risk, say so in the report — do not silently skip verification.
 
 ```sh
 python3 serve.py --no-open      # then open the printed URL

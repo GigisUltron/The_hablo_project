@@ -73,6 +73,20 @@ Rules of thumb:
   one; append rather than replace.
 - If unsure whether something is someone's work, treat it as theirs and ask.
 
+## 5. Translations are allowed, and visible
+
+The old rule was "never show a translation". That produced `🕊️` for *paz* and taught
+nothing. Translations are now a first-class, default-on feature: every card shows the English
+meaning, and the learner can switch them off in settings. Never let a picture be the only
+clue to a meaning.
+
+## 6. Verification is the suite, not screenshots
+
+Headless rendering is no longer part of the loop: do not spend rounds capturing images. A
+change is verified when the tests pass, the code path is read end to end, and any new
+invariant is covered by a test. If something cannot be verified without a screen, say so
+plainly instead of guessing.
+
 ## Working agreements
 
 - Ask before doing anything the four rules leave ambiguous. A short question
