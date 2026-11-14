@@ -862,8 +862,7 @@
    * and never above it. A1 meets level 1, A2 level 2, B1 level 3, and B2 or C1
    * level 4. */
   function readerLevel() {
-    var at = ADAPT.CEFR.indexOf((state.profile && state.profile.level) || "A2");
-    return Math.max(1, Math.min(4, (at === -1 ? 1 : at) + 1));
+    return ADAPT.shelf(learnerLevel());
   }
 
   function readerShelf() {
@@ -2694,13 +2693,49 @@
     return EX.canListen(bundled, id, hasTTS);
   }
 
+  function gapFor(id) {
+    var it = itemOf(id);
+    if (it.kind === "phrase") return EX.gapPhrase(it.text, it.sub);
+    if (it.kind !== "word") return null;
+    var texts = (window.SEMA_TEXTS && window.SEMA_TEXTS.texts) || [];
+    for (var i = 0; i < texts.length; i += 1) {
+      var parts = String(texts[i].body || "").split(/[.!?。！？]/);
+      for (var j = 0; j < parts.length; j += 1) {
+        var gap = EX.gapWord(parts[j], it.text);
+        if (gap) return gap;
+      }
+    }
+    return null;
+  }
+
+  /* Three wrong words, taken from the deck itself, never a duplicate. */
+  function gapDistractors(answer, count) {
+    var seen = {};
+    seen[String(answer).toLowerCase()] = true;
+    var pool = [];
+    deckIds().forEach(function (id) {
+      EX.words(itemOf(id).text).forEach(function (w) {
+        var key = w.toLowerCase();
+        if (key.length < 2 || seen[key]) return;
+        seen[key] = true;
+        pool.push(w);
+      });
+    });
+    return S.shuffle(pool, Math.random).slice(0, count);
+  }
+
   function quizType(card, i) {
     if (session.types) return session.types[i] || "pick-picture";
     if (session.forceWrite) return "write";
     if (card.last === null) return "pick-word";
     /* harder cards arrive as a minority: one in four, gated on the pack's own
      * sentences and clips */
-    var extra = EX ? EX.extraKind(i, buildable(session.quiz[i]), listenable(session.quiz[i])) : null;
+    var link = session.quiz[i];
+    var extra = EX ? EX.extraKind(i, {
+      listen: listenable(link),
+      build: buildable(link),
+      gap: !!gapFor(link)
+    }) : null;
     if (extra) return extra;
     var prod = (session.plan && session.plan.production) || 0;
     if (prod >= 2 && i % 2 === 1) return "write";
@@ -2747,6 +2782,7 @@
     else if (type === "say") renderSay(id);
     else if (type === "build") renderBuild(id);
     else if (type === "listen") renderListen(id);
+    else if (type === "gap") renderGap(id);
     else renderPickPicture(id);
   }
 
@@ -2898,6 +2934,38 @@
       var ok = EX.sameOrder(attempt, it.text);
       if (!ok) $("stage").innerHTML += '<p class="sentence">the sentence is ' + esc(it.text) + "</p>";
       answer(ok, null);
+    });
+  }
+
+  /* Fill the gap: one word removed, four offered. A wrong pick shows the
+   * completed sentence, not just a red chip. */
+  function renderGap(id) {
+    var gap = gapFor(id);
+    if (!gap) { renderPickWord(id); return; }
+    var options = S.shuffle([gap.answer].concat(gapDistractors(gap.answer, 3)), Math.random);
+    var completed = gap.sentence.replace("___", gap.answer);
+
+    $("stage").innerHTML =
+      '<p class="prompt">Fill the gap</p>' +
+      '<p class="gap-sentence">' + esc(gap.sentence) + "</p>" +
+      '<div class="word-options">' + options.map(function (word) {
+        return '<button class="option-word" data-word="' + esc(word) + '">' + esc(word) + "</button>";
+      }).join("") + "</div>";
+    $("actions").innerHTML = "";
+
+    Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
+      btn.addEventListener("click", function () {
+        var ok = EX.gradeGap(btn.getAttribute("data-word"), gap.answer);
+        Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (b) {
+          b.disabled = true;
+          if (b.getAttribute("data-word") === gap.answer) b.classList.add("pick-correct");
+        });
+        if (!ok) {
+          btn.classList.add("pick-wrong");
+          $("stage").innerHTML += '<p class="sentence">' + esc(completed) + "</p>";
+        }
+        answer(ok, null);
+      });
     });
   }
 

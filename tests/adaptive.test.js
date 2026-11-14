@@ -142,3 +142,13 @@ test("the goal drifts with three consistent sessions, never one", () => {
   assert.equal(A.nextGoal(15, [20, 20, 20]), 15);    // capped
   assert.equal(A.nextGoal(8, [2, 2]), 8);            // needs three
 });
+
+test("reading has five shelves, one per band", () => {
+  assert.equal(A.shelf("A1"), 1);
+  assert.equal(A.shelf("A2"), 2);
+  assert.equal(A.shelf("B1"), 3);
+  assert.equal(A.shelf("B2"), 4);
+  assert.equal(A.shelf("C1"), 5);
+  assert.equal(A.shelf("?"), 1, "an unknown band reads from shelf one");
+  assert.equal(A.shelf(undefined), 1);
+});

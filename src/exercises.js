@@ -35,15 +35,50 @@
 
   var LISTEN_SLOT = 2;   // one card in four is a harder one
   var SPREAD = 4;
+  var HARD = ["listen", "build", "gap"];
 
   /* The harder kind for this card, or null. At most one card in four is hard;
-   * the two kinds alternate between those slots so a session is not a wall of
-   * the same exercise. */
-  function extraKind(index, buildable, listenable) {
+   * the three kinds rotate through those slots so a session is not a wall of
+   * the same exercise, and a kind the data cannot support is passed over. */
+  function extraKind(index, available) {
     if (index % SPREAD !== LISTEN_SLOT) return null;
-    var turn = Math.floor(index / SPREAD) % 2;
-    if (turn === 0) return listenable ? "listen" : buildable ? "build" : null;
-    return buildable ? "build" : listenable ? "listen" : null;
+    var a = available || {};
+    var turn = Math.floor(index / SPREAD);
+    for (var i = 0; i < HARD.length; i += 1) {
+      var kind = HARD[(turn + i) % HARD.length];
+      if (a[kind]) return kind;
+    }
+    return null;
+  }
+
+  /* Fill the gap: one word of a sentence is removed and four words are offered.
+   * A phrase needs three words and a context line; a text sentence only has to
+   * contain the word being asked for. */
+  function gapPhrase(text, context) {
+    var list = words(text);
+    if (list.length < MIN_WORDS || !context) return null;
+    var answer = list.slice().sort(function (a, b) { return b.length - a.length; })[0];
+    return { answer: answer, sentence: blank(text, answer) };
+  }
+
+  function gapWord(sentence, word) {
+    var text = String(sentence || "");
+    var target = String(word || "");
+    if (!target || words(text).length < MIN_WORDS) return null;
+    var at = text.toLowerCase().indexOf(target.toLowerCase());
+    if (at === -1) return null;
+    return { answer: text.slice(at, at + target.length), sentence: blank(text, target) };
+  }
+
+  function blank(sentence, word) {
+    var text = String(sentence || "");
+    var at = text.toLowerCase().indexOf(String(word).toLowerCase());
+    if (at === -1) return text;
+    return text.slice(0, at) + "___" + text.slice(at + String(word).length);
+  }
+
+  function gradeGap(answer, expected) {
+    return sameOrder(answer, expected);
   }
 
   var api = {
@@ -52,6 +87,10 @@
     canBuild: canBuild,
     canListen: canListen,
     sameOrder: sameOrder,
+    gapPhrase: gapPhrase,
+    gapWord: gapWord,
+    blank: blank,
+    gradeGap: gradeGap,
     extraKind: extraKind
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

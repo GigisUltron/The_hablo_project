@@ -599,6 +599,7 @@ ruby rt {
 .token.placed { box-shadow: 0 3px 0 var(--accent-deep); }
 .build-line .token { border-color: var(--accent); }
 .listen-face { display: flex; justify-content: center; padding: 16px 0; }
+.gap-sentence { font-size: 21px; font-weight: 700; line-height: 1.35; }
 /* answers are raised keys: a lower edge, and they sink when pressed */
 .option-word, .option {
   --edge-c: var(--border-deep);

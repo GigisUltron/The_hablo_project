@@ -42,6 +42,13 @@
    * easiest first; C1 is the top band the decks are graded against. */
   var CEFR = ["A1", "A2", "B1", "B2", "C1"];
 
+  /* Reading shelves: five, one per band, so B2 and C1 do not share a shelf.
+   * An unknown band sits on the first shelf. */
+  function shelf(band) {
+    var at = CEFR.indexOf(band);
+    return at === -1 ? 1 : at + 1;
+  }
+
   function within(itemLevel, profileLevel) {
     var i = CEFR.indexOf(itemLevel);
     var p = CEFR.indexOf(profileLevel);
@@ -166,7 +173,7 @@
   }
 
   var api = { LEVELS: LEVELS, level: level, plan: plan, shouldStop: shouldStop,
-              CEFR: CEFR, within: within, OPENERS: OPENERS, sessionMix: sessionMix,
+              CEFR: CEFR, shelf: shelf, within: within, OPENERS: OPENERS, sessionMix: sessionMix,
               confusionSeed: confusionSeed, dailyGoal: dailyGoal, nextGoal: nextGoal };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.SemaAdaptive = api;

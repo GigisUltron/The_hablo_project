@@ -325,7 +325,7 @@ test("the reader is graded by the learner's band", () => {
   const end = app.indexOf("function finishReader");
   assert.ok(start !== -1 && end > start, "reader level gate not found");
   const gate = app.slice(start, end);
-  assert.match(gate, /ADAPT\.CEFR\.indexOf/, "text level is not derived from the band");
+  assert.match(gate, /ADAPT\.shelf\(learnerLevel\(\)\)/, "text level is not derived from the band");
   assert.match(gate, /t\.level <= max/, "texts above the band are still offered");
 });
 
@@ -580,9 +580,12 @@ test("the harder exercises exist only where the data supports them", () => {
   assert.equal(X.sameOrder("Hola, qué tal?", "Hola,  qué   tal?"), true, "spacing is not the answer");
   assert.equal(X.sameOrder("qué tal? Hola,", "Hola, qué tal?"), false, "order matters");
 
-  const kinds = Array.from({ length: 8 }, (_, i) => X.extraKind(i, true, true)).filter(Boolean);
-  assert.deepEqual(kinds, ["listen", "build"], "two hard cards in eight, alternating");
-  assert.equal(Array.from({ length: 8 }, (_, i) => X.extraKind(i, false, false)).filter(Boolean).length, 0,
+  const all = { listen: true, build: true, gap: true };
+  const kinds = Array.from({ length: 8 }, (_, i) => X.extraKind(i, all)).filter(Boolean);
+  assert.deepEqual(kinds, ["listen", "build"], "two hard cards in eight");
+  const longer = Array.from({ length: 12 }, (_, i) => X.extraKind(i, all)).filter(Boolean);
+  assert.deepEqual(longer, ["listen", "build", "gap"], "a longer session rotates all three");
+  assert.equal(Array.from({ length: 8 }, (_, i) => X.extraKind(i, {})).filter(Boolean).length, 0,
     "nothing hard when the data is missing");
 
   assert.match(app, /function renderBuild\(/, "no sentence build");
@@ -624,4 +627,30 @@ test("no settings link goes nowhere", () => {
   for (const g of gotos) assert.ok(ids.has("view-" + g), "no view for goto " + g);
   assert.equal(/class="foot-link"[^>]*href="#/.test(html), false,
     "a foot link points at a hash no view handles");
+});
+
+test("fill the gap is offered only where a sentence holds a word, and graded exactly", () => {
+  const X = require("../src/exercises.js");
+
+  const gap = X.gapPhrase("Buenos días, señor", "a greeting");
+  assert.ok(gap && gap.answer, "a phrase of three words is material");
+  assert.ok(gap.sentence.indexOf("___") !== -1, "the answer is removed from the sentence");
+  assert.equal(X.gapPhrase("Buenos días", "two words"), null, "two words is not material");
+  assert.equal(X.gapPhrase("Buenos días, señor", ""), null, "no context, no gap");
+
+  const fromText = X.gapWord("Mi casa está cerca del mar.", "casa");
+  assert.deepEqual(fromText, { answer: "casa", sentence: "Mi ___ está cerca del mar." },
+    "a text sentence blanks the word it holds");
+  assert.equal(X.gapWord("Mi casa está cerca del mar.", "perro"), null, "a word the sentence lacks is no gap");
+
+  assert.equal(X.gradeGap("casa", "casa"), true, "the missing word is exact");
+  assert.equal(X.gradeGap(" casas ", "casa"), false, "a different word fails");
+  assert.equal(X.gradeGap("Casa", "casa"), false, "case is part of the word");
+
+  assert.match(app, /function renderGap\(/, "no gap card");
+  assert.match(app, /EX\.gradeGap\(/, "the gap card does not use the grader");
+  assert.match(app, /gap\.sentence\.replace\("___", gap\.answer\)/, "a wrong answer never shows the completed sentence");
+
+  assert.match(app, /ADAPT\.shelf\(learnerLevel\(\)\)/, "reading does not use the five shelves");
+  assert.equal(/Math\.min\(4, /g.test(app), false, "the reader still collapses its shelves at four");
 });
