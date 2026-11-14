@@ -835,7 +835,8 @@
 
   function startSession(opts) {
     var o = opts || {};
-    var unit = o.unit || null;
+    var solidNow = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
+    var unit = o.unit || (TRACK ? TRACK.currentUnit(solidNow) : null);
     var mode = unit ? unit.mode : (o.mode || sessionMode());
     var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
     var plan = ADAPT ? ADAPT.plan(solid) : { fresh: 4, review: 4, production: 0, size: 8, level: 1 };
