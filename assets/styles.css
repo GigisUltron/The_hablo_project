@@ -583,11 +583,12 @@ button.row:active { background: var(--fill); }
 /* while the question is open there is no verdict and no button yet */
 .feedback:empty, .card-actions:empty { display: none; }
 .card-actions .btn { width: 100%; min-height: 52px; }
-.card-actions .btn-ghost { background: transparent; color: var(--accent); }
+.card-actions .btn-ghost { background: transparent; color: var(--accent); border: 0; text-transform: none; letter-spacing: 0; font-size: 17px; font-weight: 600; }
+.card-actions .btn-ghost, .card-actions .btn-ghost:active:not(:disabled) { box-shadow: none; transform: none; }
 .card-actions .btn-ghost:hover { background: var(--accent-soft); }
 
-/* the lesson's main buttons are raised keys too */
-.card-actions .btn-primary {
+/* every main button is a raised key: a lower edge, and it sinks when pressed */
+.btn-primary, .btn-ghost {
   --edge-c: var(--accent-deep);
   border-radius: 14px;
   box-shadow: 0 4px 0 var(--edge-c);
@@ -597,8 +598,11 @@ button.row:active { background: var(--fill); }
   font-weight: 700;
   transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.12s ease;
 }
-.card-actions .btn-primary:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge-c); opacity: 1; }
-.card-actions .btn-primary:disabled {
+.btn-ghost { --edge-c: var(--border-deep); background: var(--card); border: 2px solid var(--border); color: var(--accent); }
+.btn-ghost:hover { background: var(--accent-soft); }
+.btn-sm { font-size: 13px; }
+.btn-primary:active:not(:disabled), .btn-ghost:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge-c); opacity: 1; }
+.btn-primary:disabled {
   --edge-c: var(--border-deep);
   background: var(--fill);
   color: var(--text-3);
@@ -936,6 +940,97 @@ button.row:active { background: var(--fill); }
   #view-map:not([data-mode="web"]) .map-info { display: none; }
   .map-panel { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .map-svg { min-width: 660px; }
+}
+
+/* ------------------------------------------------------- game feel, all screens
+   Cards have a firm outline and a lower edge, like the lesson keys; meters
+   are thick tubes; picked controls light up in the accent. */
+.lesson-card, .list, .panel, .map-info, .tune {
+  border: 2px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 4px 0 var(--border-deep);
+}
+.row + .row .row-body { border-top-width: 2px; border-top-color: var(--fill); }
+
+.lesson-card { gap: 16px; padding: 18px; }
+.lesson-top h2 { font-size: 22px; font-weight: 800; }
+.lesson-pics .pic { border-radius: 14px; box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.06); }
+.lesson-pics .pic:nth-child(2n) { transform: rotate(-3deg); }
+.lesson-pics .pic:nth-child(2n+1) { transform: rotate(2deg); }
+
+/* the streak is a badge you want to keep */
+.streak {
+  gap: 6px;
+  margin-bottom: 4px;
+  padding: 6px 14px 6px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.streak svg { width: 24px; height: 24px; }
+
+.meter, .bar-row .track { height: 14px !important; border-radius: 7px !important; }
+.meter i, .bar-row .fill {
+  min-width: 0 !important;
+  border-radius: 7px !important;
+  box-shadow: inset 0 4px 0 -1px rgba(255, 255, 255, 0.28);
+}
+.known-line b { font-size: 28px; font-weight: 800; color: var(--accent); }
+.known-meta b { font-weight: 800; }
+
+/* the row picture sits on a little tile */
+.row-pic {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 12px;
+  background: var(--tint);
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+}
+.row-meta { font-weight: 600; }
+button.row:active .row-pic { transform: scale(0.92); }
+
+/* segmented controls: the chosen part lights up and stands raised */
+.mode-pick, .size-pick, .map-mode { padding: 3px; gap: 3px; border-radius: 12px; }
+.mode, .size, .map-mode button { border-radius: 9px; font-weight: 700; }
+.mode.is-on, .size.is-on, .map-mode button.is-on {
+  background: var(--card);
+  color: var(--accent);
+  box-shadow: 0 2px 0 var(--border-deep);
+}
+.field { font-weight: 600; }
+.field.is-on { box-shadow: 0 3px 0 var(--accent-deep); }
+
+/* progress: the counts are tiles */
+.mini {
+  padding: 12px 8px;
+  border-radius: 14px;
+  background: var(--tint);
+  text-align: center;
+  gap: 0;
+}
+.mini b { font-size: 30px; font-weight: 800; color: var(--accent); }
+.mini span { font-weight: 600; }
+.panel-title, .group-title { font-weight: 700; }
+.map-head h2, .today-head h1 { font-weight: 800; }
+
+/* map nodes you know glow in the accent */
+.map-svg .node .halo { stroke-width: 2; }
+.map-svg .node.learned .halo { fill: var(--accent-soft); stroke-width: 2.5; }
+
+@media (min-width: 561px) {
+  .tab.is-active { color: var(--accent); }
+}
+@media (max-width: 560px) {
+  /* the active tab gets a soft pill behind its icon */
+  .tab svg { width: 44px; height: 30px; padding: 3px 9px; border-radius: 999px; }
+  .tab.is-active svg { background: var(--accent-soft); stroke-width: 2.4; }
+  .tab.is-active span { font-weight: 700; }
 }
 
 /* no keyboard on a phone: the shortcut line only takes room */
