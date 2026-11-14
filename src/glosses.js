@@ -51,6 +51,14 @@ var SEMA_GLOSSES = {
   libertad: "freedom",
 
   /* phrases */
+  "ph-que-pasa": "what's up?",
+  "ph-tu-nombre": "what's your name?",
+  "ph-de-donde": "where are you from?",
+  "ph-color": "what's your favourite colour?",
+  "ph-trabajo": "what do you do for a living?",
+  "ph-como-se-dice": "how do you say this?",
+  "ph-significa": "what does it mean?",
+  "ph-nos-vemos": "see you tomorrow",
   "ph-hola": "hi, how's it going?",
   "ph-dias": "good morning",
   "ph-noches": "good night",

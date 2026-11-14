@@ -7,6 +7,14 @@
  */
 var SEMA_PHRASES = {
   phrases: [
+    { id: "ph-que-pasa",   emoji: "🤙", text: "¿Qué pasa?",                     sub: "Entre amigos.",                  cat: "phrase" },
+    { id: "ph-tu-nombre",   emoji: "🙋", text: "¿Cómo te llamas?",                sub: "Al conocer a alguien.",          cat: "phrase" },
+    { id: "ph-de-donde",    emoji: "🌍", text: "¿De dónde eres?",                  sub: "Preguntando por su país.",       cat: "phrase" },
+    { id: "ph-color",       emoji: "🎨", text: "¿Cuál es tu color favorito?",     sub: "Hablando de gustos.",            cat: "phrase" },
+    { id: "ph-trabajo",     emoji: "💼", text: "¿A qué te dedicas?",               sub: "Preguntando por el trabajo.",    cat: "phrase" },
+    { id: "ph-como-se-dice", emoji: "❓", text: "¿Cómo se dice esto?",             sub: "Cuando falta una palabra.",      cat: "phrase" },
+    { id: "ph-significa",   emoji: "🔎", text: "¿Qué significa?",                 sub: "Preguntando por una palabra.",   cat: "phrase" },
+    { id: "ph-nos-vemos",   emoji: "🫡", text: "Nos vemos mañana.",               sub: "Al despedirte.",                 cat: "phrase" },
     { id: "ph-hola",         emoji: "👋",  text: "Hola, ¿qué tal?",                  sub: "Al entrar en un sitio.",          cat: "phrase" },
     { id: "ph-dias",         emoji: "🌅",  text: "Buenos días.",                     sub: "Por la mañana.",                  cat: "phrase" },
     { id: "ph-noches",       emoji: "🌙",  text: "Buenas noches.",                   sub: "Al despedirte de noche.",         cat: "phrase" },
