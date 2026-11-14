@@ -21,3 +21,11 @@ test("grammar and concrete nouns come before phrases", () => {
   assert.ok(P.slice(10).every((p) => L[p.id] === "A2"));
   assert.ok(T.every((t) => L[t.id] === "B1"));
 });
+
+test("every band a learner can reach has enough material to be a lesson", () => {
+  const counts = {};
+  for (const lv of Object.values(L)) counts[lv] = (counts[lv] || 0) + 1;
+  assert.ok(counts.A1 >= 60, `A1 has ${counts.A1} items, a lesson needs 60+`);
+  assert.ok(counts.A2 >= 40, `A2 has ${counts.A2} items`);
+  assert.ok(counts.B1 >= 12, `B1 has ${counts.B1} items`);
+});
