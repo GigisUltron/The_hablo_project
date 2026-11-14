@@ -1584,14 +1584,18 @@
   }
 
   /* The first question that tests a rule, not a word. */
-  var PRONOUN = { "1s": "yo", "2s": "tú", "3s": "él", "1p": "nosotros", "3p": "ellos" };
+  /* Some persons have two valid pronouns: "es" is either él or ella. Both must
+   be offered and both accepted, or the question punishes a coin flip. */
+  var PRONOUN = { "1s": ["yo"], "2s": ["tú"], "3s": ["él", "ella"], "1p": ["nosotros"], "3p": ["ellos"] };
 
   function renderPerson(id) {
     var it = itemOf(id);
-    var correct = PRONOUN[it.person] || "yo";
-    var others = Object.keys(PRONOUN).map(function (k) { return PRONOUN[k]; })
-      .filter(function (w) { return w !== correct; });
-    var set = S.shuffle([correct].concat(others), Math.random).slice(0, 4);
+    var accepted = PRONOUN[it.person] || ["yo"];
+    var others = Object.keys(PRONOUN).reduce(function (acc, k) {
+      if (k === it.person) return acc;
+      return acc.concat(PRONOUN[k]);
+    }, []).slice(0, 2);
+    var set = S.shuffle(accepted.concat(others), Math.random);
 
     $("stage").innerHTML =
       '<p class="prompt">¿Quién?</p>' +
@@ -1603,10 +1607,10 @@
 
     Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
       btn.addEventListener("click", function () {
-        var ok = btn.getAttribute("data-w") === correct;
+        var ok = accepted.indexOf(btn.getAttribute("data-w")) !== -1;
         Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (b) {
           b.disabled = true;
-          if (b.getAttribute("data-w") === correct) b.classList.add("pick-correct");
+          if (accepted.indexOf(b.getAttribute("data-w")) !== -1) b.classList.add("pick-correct");
         });
         if (!ok) btn.classList.add("pick-wrong");
         answer(ok, null);
