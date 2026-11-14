@@ -960,7 +960,7 @@
     box.innerHTML = steps.map(function (s) {
       var cls = s[0] === active ? " is-current" : (passed ? " is-done" : "");
       if (s[0] === active) passed = true;
-      return '<li class="step' + cls + '">' + esc(s[1]) + "</li>";
+      return '<li class="pstep' + cls + '">' + esc(s[1]) + "</li>";
     }).join("");
   }
 
@@ -1007,6 +1007,7 @@
   /* ---- phase 2: hide one half, ask for the other ------------------------ */
 
   function quizType(card, i) {
+    if (session.forceWrite) return "write";
     if (card.last === null) return "pick-word";
     var prod = (session.plan && session.plan.production) || 0;
     if (prod >= 2 && i % 2 === 1) return "write";
@@ -1609,6 +1610,12 @@
   else if (initial === "terms") { state.settings.mode = "terms"; save(); startSession(); }
   else if (initial === "placement") startPlacement();
   else if (initial === "read") startReader();
+  else if (initial === "write") {
+    session = newSession("words", [], S.shuffle(allIds, Math.random).slice(0, 6));
+    session.forceWrite = true;
+    show("session");
+    renderQuiz();
+  }
   else if (initial === "quiz") startQuizOnly();
   else if (VIEWS.indexOf(initial) !== -1 && initial !== "today") show(initial);
 })();

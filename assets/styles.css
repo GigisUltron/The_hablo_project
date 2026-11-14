@@ -1250,7 +1250,7 @@ h1 em {
   padding: 0;
   margin: 0 0 12px;
 }
-.steps .step {
+.steps .pstep {
   font-family: var(--mono);
   font-size: 9.5px;
   letter-spacing: 0.1em;
@@ -1259,8 +1259,8 @@ h1 em {
   border: 2px solid transparent;
   padding: 3px 7px;
 }
-.steps .step.is-current { color: var(--ink); border-color: var(--ink); background: var(--saffron); }
-.steps .step.is-done { color: var(--ink-soft); border-bottom-color: var(--ink-faint); }
+.steps .pstep.is-current { color: var(--ink); border-color: var(--ink); background: var(--saffron); }
+.steps .pstep.is-done { color: var(--ink-soft); border-bottom-color: var(--ink-faint); }
 
 /* ---------------------------------------------------------------- reader */
 .reader-card { max-width: 680px; min-height: 0; padding: 28px 26px 24px; display: block; }
