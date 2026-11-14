@@ -84,6 +84,39 @@ test("pinyin text is escaped and an inline gloss still reads", () => {
   assert.match(html, /bubble-pinyin/);
 });
 
+test("the replay button speaks the first message after a third reply arrives", () => {
+  const { esc } = spyEsc();
+  const first = { id: "m1", role: "assistant", text: "first reply" };
+  const second = { id: "m2", role: "assistant", text: "second reply" };
+
+  const html = CE.messageHTML(first, esc, { canSpeak: true, index: 0 });
+  const id = /data-hear="([^"]+)"/.exec(html)[1];
+  assert.equal(id, "m1");
+
+  const messages = [first, second];
+  messages.push({ id: "m3", role: "assistant", text: "third reply" });
+  assert.equal(CE.messageTextById(messages, id), "first reply");
+});
+
+test("translation controls carry the same stable id, not the array position", () => {
+  const { esc } = spyEsc();
+  const html = CE.messageHTML(
+    { id: "m7", role: "assistant", text: "hola" },
+    esc,
+    { canTranslate: true, index: 0 }
+  );
+  assert.match(html, /data-translate="m7"/);
+  assert.doesNotMatch(html, /data-translate="0"/);
+});
+
+test("a failed replay lookup is visible, not silent", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /that reply is no longer available\./);
+  assert.doesNotMatch(app, /chat\.messages\[Number\(btn\.getAttribute\("data-hear"\)\)\]/);
+  assert.match(app, /id: newChatId\(\)/, "new messages do not get an id");
+  assert.match(app, /m\.id = newChatId\(\)/, "older saved messages do not get an id");
+});
+
 test("the conversation view no longer offers image attachment", () => {
   const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");

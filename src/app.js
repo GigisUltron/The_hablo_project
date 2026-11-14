@@ -1308,6 +1308,12 @@
   var chatTranslating = {};
   var chatCleared = false;
   var clearState = { armed: false };
+  var chatSeq = 0;
+
+  function newChatId() {
+    chatSeq += 1;
+    return "m-" + Date.now().toString(36) + "-" + chatSeq.toString(36);
+  }
 
   function chatState() {
     if (!ACTIVE) return { messages: [], scripted: null };
@@ -1315,6 +1321,9 @@
     var c = state.chat[code];
     if (!c || typeof c !== "object" || Array.isArray(c)) c = state.chat[code] = { messages: [] };
     if (!Array.isArray(c.messages)) c.messages = [];
+    c.messages.forEach(function (m) {
+      if (m && !m.id) m.id = newChatId();
+    });
     return c;
   }
 
@@ -1457,7 +1466,7 @@
             canSpeak: hasTTS,
             canTranslate: chatMeta.status === "ready" && !!chatMeta.model,
             index: i,
-            translating: !!chatTranslating[i]
+            translating: !!chatTranslating[m.id]
           })
           : '<p class="bubble-text">' + esc(m.text) + "</p>";
       }).join("");
@@ -1465,13 +1474,16 @@
 
     Array.prototype.forEach.call(log.querySelectorAll("[data-hear]"), function (btn) {
       btn.addEventListener("click", function () {
-        var m = chat.messages[Number(btn.getAttribute("data-hear"))];
-        if (m && m.text) speak(m.text, btn);
+        var text = CE && CE.messageTextById
+          ? CE.messageTextById(chat.messages, btn.getAttribute("data-hear"))
+          : "";
+        if (text) speak(text, btn);
+        else setChatFeedback("that reply is no longer available.", "");
       });
     });
     Array.prototype.forEach.call(log.querySelectorAll("[data-translate]"), function (btn) {
       btn.addEventListener("click", function () {
-        translateMessage(Number(btn.getAttribute("data-translate")));
+        translateMessage(btn.getAttribute("data-translate"));
       });
     });
     updateChatClear();
@@ -1534,9 +1546,9 @@
     if (result.action === "clear") clearChat();
   }
 
-  function translateMessage(index) {
+  function translateMessage(id) {
     if (!chat || !CE || !ACTIVE || chatMeta.status !== "ready" || !chatMeta.model) return;
-    var msg = chat.messages[index];
+    var msg = CE.findMessage ? CE.findMessage(chat.messages, id) : null;
     if (!msg || msg.role !== "assistant" || !msg.text) return;
 
     if (msg.translation) {
@@ -1545,9 +1557,9 @@
       renderChat();
       return;
     }
-    if (chatTranslating[index]) return;
+    if (chatTranslating[id]) return;
 
-    chatTranslating[index] = true;
+    chatTranslating[id] = true;
     msg.translationError = false;
     renderChat();
 
@@ -1563,7 +1575,7 @@
       vision: false,
       timeoutMs: 30000
     }).then(function (res) {
-      delete chatTranslating[index];
+      delete chatTranslating[id];
       if (!chat || chatEpoch !== epoch || !ACTIVE || ACTIVE.code !== code) return;
       if (chat.messages.indexOf(target) === -1) return;
       if (res && res.ok && res.text) {
@@ -1576,7 +1588,7 @@
       }
       renderChat();
     }).catch(function () {
-      delete chatTranslating[index];
+      delete chatTranslating[id];
       if (!chat || chatEpoch !== epoch || !ACTIVE || ACTIVE.code !== code) return;
       if (chat.messages.indexOf(target) === -1) return;
       target.translationError = true;
@@ -1602,6 +1614,7 @@
     var clean = String(text == null ? "" : text).trim();
     if (!clean) return;
     chat.messages.push({
+      id: newChatId(),
       role: "assistant",
       text: clean,
       scripted: !!scripted,
@@ -1617,6 +1630,7 @@
   function addUser(text) {
     if (!chat) return;
     var msg = {
+      id: newChatId(),
       role: "user",
       text: String(text == null ? "" : text).trim(),
       at: Date.now()

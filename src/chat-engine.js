@@ -107,6 +107,23 @@
     };
   }
 
+  /* Message controls carry a stable id, never an array position. These two
+   * helpers are the whole lookup the handlers need, and they are pure. */
+  function findMessage(messages, id) {
+    var key = String(id == null ? "" : id);
+    if (!key || !Array.isArray(messages)) return null;
+    for (var i = 0; i < messages.length; i += 1) {
+      var m = messages[i];
+      if (m && String(m.id == null ? "" : m.id) === key) return m;
+    }
+    return null;
+  }
+
+  function messageTextById(messages, id) {
+    var m = findMessage(messages, id);
+    return m && typeof m.text === "string" ? m.text : "";
+  }
+
   /* --------------------------------------------------------------- the prompt */
 
   /* Built only from the live pack: its display name and locale. The learner's
@@ -503,6 +520,7 @@
         '" alt="' + escValue(esc, "attached image") + '" />';
     }
     var note = m.note ? '<span class="bubble-note">' + escValue(esc, m.note) + "</span>" : "";
+    var messageId = m.id != null ? String(m.id) : String(o.index || 0);
 
     var translation = typeof m.translation === "string" ? m.translation : "";
     var translating = !!o.translating;
@@ -512,13 +530,13 @@
         ? "translating…"
         : (translation && m.showTranslation ? "hide translation" : "show translation");
       translate = '<button class="bubble-translate" type="button" data-translate="' +
-        escValue(esc, String(o.index || 0)) + '"' + (translating ? " disabled" : "") + ">" +
+        escValue(esc, messageId) + '"' + (translating ? " disabled" : "") + ">" +
         escValue(esc, label) + "</button>";
     }
 
     var hear = "";
     if (!mine && m.text && o.canSpeak) {
-      hear = '<button class="bubble-hear" type="button" data-hear="' + escValue(esc, String(o.index || 0)) +
+      hear = '<button class="bubble-hear" type="button" data-hear="' + escValue(esc, messageId) +
         '" aria-label="' + escValue(esc, "hear this reply") + '">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/>' +
         '<path d="M16 9a4 4 0 010 6M18.5 6.5a7.5 7.5 0 010 11"/></svg></button>';
@@ -560,6 +578,8 @@
     normaliseChatStore: normaliseChatStore,
     clearTap: clearTap,
     clearControl: clearControl,
+    findMessage: findMessage,
+    messageTextById: messageTextById,
     replyText: replyText,
     discover: discover,
     visionFor: visionFor,
