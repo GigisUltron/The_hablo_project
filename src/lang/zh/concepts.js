@@ -1,7 +1,7 @@
 /* sema — Chinese concept dataset.
  *
- * The `sub` field is Hanyu Pinyin with tone marks: the reading a learner
- * needs before the characters are familiar. It is not an English gloss.
+ * The `sub` field is Hanyu Pinyin with tone marks, one syllable per Han
+ * character: the spacing is the ruby alignment data. It is not an English gloss.
  */
 var SEMA_DATA = {
   language: { code: "zh", name: "Chinese", locale: "zh-CN" },
@@ -31,28 +31,28 @@ var SEMA_DATA = {
   },
 
   concepts: [
-    { id: "zh-house", emoji: "🏠", word: "房子", article: "", cat: "home", sentence: "我的房子离海很近。", sub: "fángzi" },
+    { id: "zh-house", emoji: "🏠", word: "房子", article: "", cat: "home", sentence: "我的房子离海很近。", sub: "fáng zi" },
     { id: "zh-door", emoji: "🚪", word: "门", article: "", cat: "home", sentence: "门开着。", sub: "mén" },
     { id: "zh-water", emoji: "💧", word: "水", article: "", cat: "food", sentence: "我每天喝水。", sub: "shuǐ" },
-    { id: "zh-bread", emoji: "🍞", word: "面包", article: "", cat: "food", sentence: "面包很新鲜。", sub: "miànbāo" },
-    { id: "zh-apple", emoji: "🍎", word: "苹果", article: "", cat: "food", sentence: "苹果是红色的。", sub: "píngguǒ" },
-    { id: "zh-coffee", emoji: "☕", word: "咖啡", article: "", cat: "food", sentence: "我早上喝咖啡。", sub: "kāfēi" },
-    { id: "zh-sun", emoji: "☀️", word: "太阳", article: "", cat: "nature", sentence: "太阳升得很早。", sub: "tàiyáng" },
-    { id: "zh-moon", emoji: "🌙", word: "月亮", article: "", cat: "nature", sentence: "今晚月亮很圆。", sub: "yuèliang" },
+    { id: "zh-bread", emoji: "🍞", word: "面包", article: "", cat: "food", sentence: "面包很新鲜。", sub: "miàn bāo" },
+    { id: "zh-apple", emoji: "🍎", word: "苹果", article: "", cat: "food", sentence: "苹果是红色的。", sub: "píng guǒ" },
+    { id: "zh-coffee", emoji: "☕", word: "咖啡", article: "", cat: "food", sentence: "我早上喝咖啡。", sub: "kā fēi" },
+    { id: "zh-sun", emoji: "☀️", word: "太阳", article: "", cat: "nature", sentence: "太阳升得很早。", sub: "tài yáng" },
+    { id: "zh-moon", emoji: "🌙", word: "月亮", article: "", cat: "nature", sentence: "今晚月亮很圆。", sub: "yuè liang" },
     { id: "zh-tree", emoji: "🌳", word: "树", article: "", cat: "nature", sentence: "树很高。", sub: "shù" },
     { id: "zh-sea", emoji: "🌊", word: "海", article: "", cat: "nature", sentence: "今天海很平静。", sub: "hǎi" },
     { id: "zh-dog", emoji: "🐕", word: "狗", article: "", cat: "animals", sentence: "狗睡在地上。", sub: "gǒu" },
     { id: "zh-cat", emoji: "🐈", word: "猫", article: "", cat: "animals", sentence: "猫看着窗外。", sub: "māo" },
     { id: "zh-bird", emoji: "🐦", word: "鸟", article: "", cat: "animals", sentence: "鸟在树上唱歌。", sub: "niǎo" },
     { id: "zh-hand", emoji: "✋", word: "手", article: "", cat: "body", sentence: "我举起手。", sub: "shǒu" },
-    { id: "zh-eye", emoji: "👁️", word: "眼睛", article: "", cat: "body", sentence: "我闭上一只眼睛。", sub: "yǎnjing" },
+    { id: "zh-eye", emoji: "👁️", word: "眼睛", article: "", cat: "body", sentence: "我闭上一只眼睛。", sub: "yǎn jing" },
     { id: "zh-heart", emoji: "❤️", word: "心", article: "", cat: "body", sentence: "心在快速跳动。", sub: "xīn" },
-    { id: "zh-city", emoji: "🏙️", word: "城市", article: "", cat: "city", sentence: "城市很大。", sub: "chéngshì" },
-    { id: "zh-car", emoji: "🚗", word: "汽车", article: "", cat: "city", sentence: "汽车是红色的。", sub: "qìchē" },
-    { id: "zh-train", emoji: "🚆", word: "火车", article: "", cat: "city", sentence: "火车晚点了。", sub: "huǒchē" },
-    { id: "zh-street", emoji: "🛣️", word: "街道", article: "", cat: "city", sentence: "我住在这条街上。", sub: "jiēdào" },
-    { id: "zh-night", emoji: "🌃", word: "夜晚", article: "", cat: "time", sentence: "夜晚很安静。", sub: "yèwǎn" },
-    { id: "zh-day", emoji: "📅", word: "白天", article: "", cat: "time", sentence: "白天很长。", sub: "báitiān" },
+    { id: "zh-city", emoji: "🏙️", word: "城市", article: "", cat: "city", sentence: "城市很大。", sub: "chéng shì" },
+    { id: "zh-car", emoji: "🚗", word: "汽车", article: "", cat: "city", sentence: "汽车是红色的。", sub: "qì chē" },
+    { id: "zh-train", emoji: "🚆", word: "火车", article: "", cat: "city", sentence: "火车晚点了。", sub: "huǒ chē" },
+    { id: "zh-street", emoji: "🛣️", word: "街道", article: "", cat: "city", sentence: "我住在这条街上。", sub: "jiē dào" },
+    { id: "zh-night", emoji: "🌃", word: "夜晚", article: "", cat: "time", sentence: "夜晚很安静。", sub: "yè wǎn" },
+    { id: "zh-day", emoji: "📅", word: "白天", article: "", cat: "time", sentence: "白天很长。", sub: "bái tiān" },
     { id: "zh-love", emoji: "💗", word: "爱", article: "", cat: "emotion", sentence: "爱无法解释。", sub: "ài" },
     { id: "zh-eat", emoji: "🍽️", word: "吃", article: "", cat: "action", sentence: "我想吃面包。", sub: "chī" },
   ],

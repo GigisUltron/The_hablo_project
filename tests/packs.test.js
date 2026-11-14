@@ -245,3 +245,20 @@ test("every pack names four opening phrases that exist", () => {
     }
   }
 });
+
+test("chinese pinyin aligns one syllable to each Han character", () => {
+  const dir = path.join(root, "zh");
+  const concepts = (require(path.join(dir, "concepts.js")).concepts || [])
+    .map((c) => ({ id: c.id, text: c.word, sub: c.sub }));
+  const phrases = (require(path.join(dir, "phrases.js")).phrases || [])
+    .map((p) => ({ id: p.id, text: p.text, sub: p.sub }));
+  const han = /[\u3400-\u9fff]/g;
+  for (const item of concepts.concat(phrases)) {
+    assert.ok(item.sub, `${item.id} has no pinyin`);
+    const characters = (item.text.match(han) || []).length;
+    const tokens = item.sub.trim().split(/\s+/).filter(Boolean).length;
+    assert.equal(tokens, characters, `${item.id}: ${characters} characters, ${tokens} pinyin tokens (${item.sub})`);
+    assert.equal(/\s{2,}/.test(item.sub), false, `${item.id} pinyin has more than one space between tokens`);
+    assert.equal(item.sub, item.sub.trim(), `${item.id} pinyin has an outer space`);
+  }
+});
