@@ -71,7 +71,14 @@
 
   /* ----------------------------------------------------------- persistence */
 
-  var state = load();
+  /* #demo runs on a throwaway state: it starts clean every time and never
+   * writes, so showing the app to someone leaves the real progress alone. */
+  var DEMO = String(window.location.hash || "") === "#demo";
+  var DEMO_IDS = ["casa", "gato", "agua", "sol", "manzana"];
+  /* one of each question type up front, so a minute is enough to see all three */
+  var DEMO_TYPES = ["pick-word", "pick-picture", "say", "pick-picture", "pick-word"];
+
+  var state = DEMO ? S.newState(allIds.concat(phraseIds), Date.now()) : load();
   /* a fresh browser has no saved settings; every screen reads them */
   if (!state.settings) {
     state.settings = { fields: Object.keys(D.categories), size: 8, mode: "words" };
@@ -103,6 +110,7 @@
   }
 
   function save() {
+    if (DEMO) return;
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (err) { /* private mode */ }
   }
 
@@ -505,6 +513,16 @@
     else renderQuiz();
   }
 
+  function startDemo() {
+    var ids = DEMO_IDS.filter(function (id) { return conceptById[id]; });
+    session = newSession("words", ids, S.shuffle(ids, Math.random));
+    session.types = DEMO_TYPES;
+    show("session");
+    $("kbd-hint").textContent = "demo · miss one, it comes back · Enter → next · 1–4 → answer";
+    renderStudy();
+    toast("Demo — starts clean; saved progress is untouched.", 3200);
+  }
+
   function startQuizOnly() {
     var pool = poolFor(sessionMode());
     session = newSession(sessionMode(), [], S.shuffle(pool, Math.random).slice(0, 6));
@@ -541,6 +559,7 @@
       si: 0,
       quiz: quiz,
       qi: 0,
+      types: null,
       requeued: {},
       missed: {},
       times: [],
@@ -607,6 +626,7 @@
   /* ---- phase 2: hide one half, ask for the other ------------------------ */
 
   function quizType(card, i) {
+    if (session.types) return session.types[i] || "pick-picture";
     if (card.last === null) return "pick-word";
     if (SR && i % 2 === 1) return "say";
     return "pick-picture";
@@ -627,7 +647,7 @@
     session.qStart = Date.now();
     var type = quizType(card, session.qi);
     if (type === "pick-word") renderPickWord(id);
-    else if (type === "say" && SR) renderSay(id);
+    else if (type === "say") renderSay(id);
     else renderPickPicture(id);
   }
 
@@ -1119,5 +1139,6 @@
   if (initial === "practice") startSession();
   else if (initial === "phrases") { state.settings.mode = "phrases"; save(); startSession(); }
   else if (initial === "quiz") startQuizOnly();
+  else if (DEMO) startDemo();
   else if (VIEWS.indexOf(initial) !== -1 && initial !== "today") show(initial);
 })();
