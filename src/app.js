@@ -558,6 +558,7 @@
   var mapBuilt = false;
 
   function show(view) {
+    applyStrings();
     currentView = view;
     VIEWS.forEach(function (v) {
       var el = $("view-" + v);
@@ -2236,6 +2237,12 @@
   $("setup-new").addEventListener("click", function () {
     beginProfile("A1");
     show("today");
+  });
+  $("setup-uilang").addEventListener("change", function () {
+    state.profile = state.profile || {};
+    state.profile.uiLang = this.value;
+    save();
+    applyStrings();
   });
   $("setup-test").addEventListener("click", function () {
     beginProfile("?");
