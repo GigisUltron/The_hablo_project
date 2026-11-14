@@ -703,14 +703,14 @@
     $("stage").innerHTML =
       '<p class="prompt">Say it in ' + esc(LANG.name) + "</p>" +
       '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
-      '<button class="mic" id="mic-btn">🎙 Say it aloud</button>' +
+      (SR ? '<button class="mic" id="mic-btn">🎙 Say it aloud</button>' : "") +
       '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
       '<p class="score" id="score"></p>';
 
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
 
     var mic = $("mic-btn");
-    mic.addEventListener("click", function () {
+    if (mic) mic.addEventListener("click", function () {
       var btn = this;
       var started = listen(it.text, function (score, said) {
         var el = $("score");
@@ -730,7 +730,10 @@
       }
     });
 
-    $("actions").innerHTML = '<button class="btn btn-ghost" id="reveal">Show the answer</button>';
+    /* without a recogniser the learner says it aloud and checks themselves */
+    $("actions").innerHTML = (SR ? "" : '<button class="btn btn-primary" id="said">I said it</button>') +
+      '<button class="btn btn-ghost" id="reveal">Show the answer</button>';
+    if (!SR) $("said").addEventListener("click", function () { answer(true, null); });
     $("reveal").addEventListener("click", function () { answer(false, null); });
   }
 
