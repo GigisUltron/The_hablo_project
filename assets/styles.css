@@ -1339,3 +1339,11 @@ h1 em {
 #start-btn { margin-bottom: 4px; }
 /* the settings panel is a stack, not a disclosure */
 #view-settings .panel-pad > *:first-child { margin-top: 0; }
+
+/* the path, compacted: it should read at a glance, not occupy the screen */
+.step { min-height: 46px; padding: 5px 12px 5px 6px; gap: 12px; grid-template-columns: 30px 1fr; box-shadow: 2px 2px 0 var(--ink); }
+.step .step-n { width: 30px; height: 30px; font-size: 11px; }
+.step .step-t { font-size: 13px; }
+.track { gap: 6px; margin-top: 20px; }
+.track-note { display: none; }
+.step.now { background: var(--saffron); }

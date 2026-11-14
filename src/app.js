@@ -588,9 +588,7 @@
 
     var cur = rows[currentIndex];
     var next = rows.filter(function (r) { return !r.unlocked; })[0];
-    $("track-note").textContent = next
-      ? cur.title + " · " + next.remaining + " solid cards to " + next.title
-      : "every unit open · keep them solid";
+
   }
 
   /* --------------------------------------------------------------- streak */
