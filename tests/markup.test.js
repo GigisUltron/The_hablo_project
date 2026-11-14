@@ -203,6 +203,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/lang/en/conv.js",
     "assets/audio/en/manifest.js",
     "src/lang/en/audio.js",
+    "src/ui-langs.js",
     "src/ui-strings.js",
     "src/srs.js",
     "src/memory.js",
