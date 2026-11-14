@@ -296,7 +296,15 @@ svg { flex: none; }
   letter-spacing: 0.02em;
   color: var(--text-2);
 }
-.list { background: var(--card); border-radius: var(--radius-sm); }
+.list { background: var(--card); border-radius: var(--radius-sm); overflow: hidden; }
+button.row {
+  width: 100%;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+button.row:active { background: var(--fill); }
 .row { display: flex; align-items: center; gap: 12px; padding-left: 14px; min-height: 52px; }
 .row-pic { width: 32px; text-align: center; font-size: 26px; line-height: 1; }
 .row-body {
@@ -438,7 +446,23 @@ svg { flex: none; }
   gap: 16px;
 }
 
-.stage { display: flex; flex-direction: column; gap: 16px; }
+.stage { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+
+/* the picture takes the free height, so answers sit low, under the thumb */
+.figure { position: relative; flex: 1 1 200px; min-height: 200px; max-height: 480px; display: flex; }
+.figure .tile { flex: 1; height: auto; }
+.speak-btn.round {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 48px;
+  height: 48px;
+  min-height: 0;
+  padding: 0;
+  justify-content: center;
+  border-radius: 50%;
+}
+.speak-btn.round .ico { width: 22px; height: 22px; }
 
 .prompt { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
 
@@ -545,6 +569,8 @@ svg { flex: none; }
 .feedback.bad { color: var(--bad); }
 
 .card-actions { margin-top: auto; display: grid; gap: 8px; padding-bottom: 8px; }
+/* while the question is open there is no verdict and no button yet */
+.feedback:empty, .card-actions:empty { display: none; }
 .card-actions .btn { width: 100%; min-height: 50px; }
 .card-actions .btn-ghost { background: transparent; color: var(--accent); }
 .card-actions .btn-ghost:hover { background: var(--accent-soft); }
@@ -619,6 +645,10 @@ svg { flex: none; }
 }
 .map-head h2 { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 6px; }
 .map-head p { color: var(--text-2); max-width: 60ch; font-size: 15px; }
+
+/* the list form of the map is for phones; wide screens show the web */
+.map-mode, .map-list { display: none; }
+.map-list .row-meta { overflow: hidden; text-overflow: ellipsis; max-width: 55%; }
 
 .map-panel { padding: 8px; overflow: hidden; }
 .map-svg { display: block; width: 100%; height: auto; }
@@ -800,11 +830,36 @@ svg { flex: none; }
 
   .options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tile { height: 200px; }
+  /* the lesson fills the phone screen down to the home bar */
+  .card { min-height: calc(100dvh - 84px - env(safe-area-inset-bottom)); }
   .map-head h2 { font-size: 30px; }
   .map-info { flex-wrap: wrap; }
   .bar-row { grid-template-columns: 72px 1fr 36px; }
 
-  /* the map keeps a readable scale and pans sideways inside its panel */
+  /* the map opens as a list of fields; the web keeps a readable scale and
+     pans sideways inside its panel */
+  .map-mode {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    margin-bottom: 20px;
+    background: var(--fill);
+    border-radius: 9px;
+  }
+  .map-mode button {
+    flex: 1;
+    min-height: 32px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .map-mode button.is-on { background: var(--card); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+  #view-map:not([data-mode="web"]) .map-list { display: grid; gap: 22px; }
+  #view-map:not([data-mode="web"]) .map-panel,
+  #view-map:not([data-mode="web"]) .map-info { display: none; }
   .map-panel { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .map-svg { min-width: 660px; }
 }
@@ -948,6 +1003,13 @@ svg { flex: none; }
         </div>
         <button class="btn btn-ghost btn-sm" id="map-practice">Practise neighbours</button>
       </div>
+
+      <div class="map-mode" role="group" aria-label="Show the map as">
+        <button class="is-on" data-mapmode="list" type="button" aria-pressed="true">List</button>
+        <button data-mapmode="web" type="button" aria-pressed="false">Web</button>
+      </div>
+
+      <div class="map-list" id="map-list"></div>
 
       <div class="panel map-panel">
         <svg class="map-svg" id="map-svg" viewBox="0 0 900 690" role="img" aria-label="Semantic map of concepts">
@@ -1764,9 +1826,9 @@ window.SEMA_AUDIO = {"casa":"data:audio/wav;base64,UklGRrRWAABXQVZFZm10IBAAAAABA
     if (view === "map" && !mapBuilt) { buildMap(); mapBuilt = true; }
     if (view === "map") {
       refreshMapState();
-      /* on a phone the map pans; open it on the middle, where the clusters meet */
-      var panel = document.querySelector(".map-panel");
-      if (panel) panel.scrollLeft = (panel.scrollWidth - panel.clientWidth) / 2;
+      renderMapList();
+      /* the web pans on a phone; it opens on the middle, where the clusters meet */
+      setMapMode($("view-map").getAttribute("data-mode") || "list");
     }
     if (window.history && window.history.replaceState) {
       window.history.replaceState(null, "", "#" + view);
@@ -1953,6 +2015,15 @@ window.SEMA_AUDIO = {"casa":"data:audio/wav;base64,UklGRrRWAABXQVZFZm10IBAAAAABA
     var long = it.text.length > 16 ? " long" : "";
     var kind = it.kind === "phrase" ? " phrase" : "";
     return '<div class="word' + long + kind + '">' + art + esc(it.text) + "</div>";
+  }
+
+  /* The picture takes the free height of the screen; its sound button sits
+   * in the corner, where a thumb finds it without covering the picture. */
+  function figureHTML(it, label) {
+    return '<div class="figure">' +
+      '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
+      '<button class="speak-btn round" id="hear-btn" aria-label="' + label + '" title="' + label + '">' +
+        ICON.speaker + "</button></div>";
   }
 
   function contextHTML(it) {
@@ -2229,10 +2300,9 @@ window.SEMA_AUDIO = {"casa":"data:audio/wav;base64,UklGRrRWAABXQVZFZm10IBAAAAABA
     $("stage").innerHTML =
       '<p class="prompt">Learn the pair · ' + (session.si + 1) + " of " + session.study.length +
         (it.kind === "phrase" ? " · phrase" : "") + "</p>" +
-      '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
+      figureHTML(it, "Hear it") +
       wordsHTML(it) +
-      contextHTML(it) +
-      '<button class="speak-btn" id="hear-btn">' + ICON.speaker + 'Hear it</button>';
+      contextHTML(it);
     markScene(it.id, true);
 
     sayItem(it);
@@ -2301,8 +2371,7 @@ window.SEMA_AUDIO = {"casa":"data:audio/wav;base64,UklGRrRWAABXQVZFZm10IBAAAAABA
 
     $("stage").innerHTML =
       '<p class="prompt">Which one is this?</p>' +
-      '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
-      '<button class="speak-btn" id="hear-btn">' + ICON.speaker + 'Hear it</button>' +
+      figureHTML(it, "Hear it") +
       '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
 
     sayItem(it);
@@ -2351,9 +2420,8 @@ window.SEMA_AUDIO = {"casa":"data:audio/wav;base64,UklGRrRWAABXQVZFZm10IBAAAAABA
 
     $("stage").innerHTML =
       '<p class="prompt">Say it in ' + esc(LANG.name) + "</p>" +
-      '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
+      figureHTML(it, "Hear it") +
       (SR ? '<button class="mic" id="mic-btn">' + ICON.mic + 'Say it aloud</button>' : "") +
-      '<button class="speak-btn" id="hear-btn">' + ICON.speaker + 'Hear it</button>' +
       '<p class="score" id="score"></p>';
 
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
@@ -2413,10 +2481,9 @@ window.SEMA_AUDIO = {"casa":"data:audio/wav;base64,UklGRrRWAABXQVZFZm10IBAAAAABA
   function showAnswer(ok, it) {
     $("stage").innerHTML =
       '<p class="prompt">' + (ok ? "Correct" : "Not quite") + "</p>" +
-      '<div class="tile sm" aria-hidden="true">' + it.emoji + "</div>" +
+      figureHTML(it, "Hear it again") +
       wordsHTML(it) +
-      contextHTML(it) +
-      '<button class="speak-btn" id="hear-btn">' + ICON.speaker + 'Hear it again</button>';
+      contextHTML(it);
     markScene(it.id, true);
 
     sayItem(it);
@@ -2663,6 +2730,45 @@ window.SEMA_AUDIO = {"casa":"data:audio/wav;base64,UklGRrRWAABXQVZFZm10IBAAAAABA
     });
   }
 
+  /* On a phone the web is too wide to read, so the same graph also comes as
+   * a list: each field, its words, and what each word sits next to. */
+  function renderMapList() {
+    var box = $("map-list");
+    box.innerHTML = Object.keys(D.categories).map(function (cat) {
+      var words = D.concepts.filter(function (c) { return c.cat === cat; });
+      if (!words.length) return "";
+      var known = words.filter(function (c) { return state.cards[c.id].reps > 0; }).length;
+      return '<section class="group">' +
+        '<h3 class="group-title">' + esc(D.categories[cat].label) + " · " + known + " of " + words.length + "</h3>" +
+        '<div class="list">' + words.map(function (c) {
+          var near = neighboursOf(c.id).slice(0, 3).map(function (n) { return esc(conceptById[n].word); }).join(", ");
+          return '<button class="row" type="button" data-id="' + esc(c.id) + '">' +
+            '<span class="row-pic" aria-hidden="true">' + c.emoji + "</span>" +
+            '<span class="row-body">' +
+              '<span class="row-main">' + (c.article ? '<span class="art">' + esc(c.article) + "</span> " : "") + esc(c.word) + "</span>" +
+              '<span class="row-meta">' + near + "</span>" +
+            "</span></button>";
+        }).join("") + "</div></section>";
+    }).join("");
+
+    Array.prototype.forEach.call(box.querySelectorAll(".row"), function (btn) {
+      btn.addEventListener("click", function () { sayItem(itemOf(btn.getAttribute("data-id"))); });
+    });
+  }
+
+  function setMapMode(mode) {
+    $("view-map").setAttribute("data-mode", mode);
+    Array.prototype.forEach.call(document.querySelectorAll("[data-mapmode]"), function (b) {
+      var on = b.getAttribute("data-mapmode") === mode;
+      b.classList.toggle("is-on", on);
+      b.setAttribute("aria-pressed", String(on));
+    });
+    if (mode === "web") {
+      var panel = document.querySelector(".map-panel");
+      if (panel) panel.scrollLeft = (panel.scrollWidth - panel.clientWidth) / 2;
+    }
+  }
+
   function selectNode(id) {
     var c = conceptById[id];
     sayItem(itemOf(c.id));
@@ -2758,6 +2864,9 @@ window.SEMA_AUDIO = {"casa":"data:audio/wav;base64,UklGRrRWAABXQVZFZm10IBAAAAABA
   });
   $("quit-btn").addEventListener("click", function () { session = null; show("today"); });
   $("map-practice").addEventListener("click", function () { startSession(); });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-mapmode]"), function (b) {
+    b.addEventListener("click", function () { setMapMode(b.getAttribute("data-mapmode")); });
+  });
 
   document.addEventListener("keydown", function (ev) {
     if (currentView !== "session" || !session) return;
