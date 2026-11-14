@@ -964,8 +964,16 @@
     return S.pickDistractors(id, allIds, neighboursOf(id), count, Math.random);
   }
 
+  function articleHTML(article) {
+    if (!article) return "";
+    /* French elides the article before a vowel (l'eau, l'arbre); the space
+     * that separates a full article from its noun must not appear there. */
+    var elide = /['’]$/.test(article) ? " elide" : "";
+    return '<span class="art' + elide + '">' + esc(article) + "</span>";
+  }
+
   function wordsHTML(it) {
-    var art = it.article ? '<span class="art">' + esc(it.article) + "</span>" : "";
+    var art = articleHTML(it.article);
     var long = it.text.length > 16 ? " long" : "";
     return '<div class="word' + long + '">' + art + esc(it.text) + "</div>";
   }
@@ -1343,7 +1351,7 @@
     var it = itemOf(id);
     var long = it.text.length > 16 ? " long" : "";
     return '<button class="option-word' + long + '" data-id="' + esc(id) + '">' +
-      (it.article ? '<span class="art">' + esc(it.article) + "</span>" : "") +
+      articleHTML(it.article) +
       esc(it.text) + "</button>";
   }
 

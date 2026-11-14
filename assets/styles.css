@@ -869,6 +869,8 @@ h1 em {
   margin-right: 0.3em;
   letter-spacing: 0;
 }
+.word .art.elide,
+.option-word .art.elide { margin-right: 0; }
 .option-word:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--ink); background: var(--paper-2); }
 .option-word:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
 .option-word:disabled { cursor: default; }
