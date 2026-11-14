@@ -40,6 +40,64 @@ Judge yourself by these, not by how it looks in a screenshot:
 | `prefers-reduced-motion` | no motion that carries meaning is lost |
 | `make check` | green, 31 tests, never fewer |
 
+## What "professional" means here
+
+Not beige, and not a component library. Professional is a property of the **system**, not the
+palette — the print identity stays, the craft underneath it gets strict.
+
+- **One spacing scale** (4 / 8 / 12 / 16 / 24 / 32 / 48). No arbitrary numbers, ever.
+- **At most three type sizes per screen**, and one accent colour doing the pointing.
+- **Every control has five states**: default, hover, active, `focus-visible`, disabled — plus
+  a loading state wherever it can be pressed twice.
+- **Alignment is exact.** Nothing off by two pixels, no element that moves when text length
+  changes, no card whose height depends on which word it got.
+- **Motion is a system**: three durations, one easing curve, and a reason for each animation.
+  If you cannot say what an animation communicates, delete it.
+- **Copy is sentence case**, no exclamation marks, no filler. Say what happened.
+
+If it looks like a generic SaaS dashboard, you have failed in the other direction. The test is
+whether someone believes a designer made decisions, or a framework did.
+
+## What "addictive" means — and what it does not
+
+Build **pull**, not compulsion. The loop should be worth returning to because it feels fast and
+visibly works. Concretely:
+
+- **Time to first card is the product.** Every 100 ms of friction before a card costs returns.
+- **The answer lands under 100 ms** and the next card is already rendered when it does.
+- **The number that grows must be real** — solid cards, speed, days — never invented XP.
+- **One "one more"**, placed where the finger already is. Never a guilt screen.
+- **Variable challenge**: as mastery rises the session should feel slightly harder, not longer.
+- **Finish briefly.** A short, earned end state. No confetti, no slot machine.
+
+**Banned, without discussion:** notifications, guilt copy ("don't break your streak"),
+loss-framed streaks, coins/XP/badges/leaderboards, artificial scarcity, dark-pattern defaults,
+infinite card feeds, anything that punishes a missed day.
+
+## What "simple" means
+
+One primary action per screen. No dead ends: every state has a visible next step. If a screen
+needs a sentence of explanation, the screen is wrong, not the sentence.
+
+Three tests, run on every screen:
+
+1. **The three-second test.** A stranger looking for three seconds can name the next action.
+2. **The thumb test.** At 390 px, every action is reachable and ≥ 44 px.
+3. **The cold-start test.** Wipe storage. The app must be understandable with zero history and
+   no audio.
+
+## Order of work for a design pass
+
+Do these in order and do not skip ahead to the last one because it is the fun one:
+
+1. **Audit** — screenshot every screen at 390 and 1280, list every inconsistency in spacing,
+   weight, radius, colour and state. Fix the list before designing anything.
+2. **Tokens** — collapse the ad-hoc values into the scale above.
+3. **States** — focus, hover, disabled, loading, empty, error, offline.
+4. **Motion** — the timing system, applied to the session loop only.
+5. **The loop** — time-to-first-card, answer latency, the "one more" placement.
+6. **Looks** — only now, and only with a metric attached to each change.
+
 ## The design language — extend it, do not restart it
 
 `sema` looks like a riso-printed poster: warm paper, near-black ink, thick rules, hard offset
