@@ -6,7 +6,7 @@ Each concept arrives as a pair — the picture, the word, the sound — with no 
 anywhere in the data. Then the quiz hides one half and asks you for the other. What you miss
 comes back before the session ends.
 
-Spanish, 42 concepts and 18 phrases, spaced repetition, a semantic map, a lesson builder, and
+Spanish, 42 concepts and 60 phrases, spaced repetition, a semantic map, a lesson builder, and
 audio that ships with the app instead of depending on your operating system.
 
 ![sema — the Today view](docs/preview.png)
@@ -40,6 +40,10 @@ Deep links: `#practice` (start a lesson), `#phrases` (phrase lesson), `#quiz`, `
 2. **Get quizzed.** One half is hidden: word from picture, picture from word, or say it aloud.
 3. **Miss and repeat.** A wrong answer is pushed to the back of the same quiz, and scheduled
    ten minutes out rather than tomorrow.
+4. **Write one line.** At the end of a session you can keep a sentence of your own, in
+   Spanish. It is stored, and a day later it comes back as a card with one word blanked out —
+   your own words, your own gap. Nothing else in the app is made of your writing, and that is
+   exactly why it works.
 
 The Today screen is deliberately one button: **Start lesson**, eight cards, about a minute.
 Everything else — words or phrases, which fields, session length, mistake review — hides
@@ -52,7 +56,7 @@ words you know, and how many are solid.
 
 ```sh
 make check          # syntax gate + full suite
-node --test tests/  # 31 tests, stdlib only
+node --test tests/  # 41 tests, stdlib only
 ```
 
 ## Layout
@@ -66,6 +70,7 @@ assets/audio/         pre-rendered WAVs + manifest.js
 src/data.js           42 concepts + semantic relations
 src/phrases.js        phrases, with a scene emoji instead of a translation
 src/srs.js            scheduling + matching (pure, testable)
+src/memory.js         persistent learner memory: sentences, cloze, weak items (pure)
 src/app.js            views, lesson flow, quiz, speech, map, stats
 tools/make_audio.py   regenerates the audio from the dataset (build time only)
 tests/                node:test suites
@@ -80,6 +85,9 @@ DEMO.md               design notes, decisions and honest limits
 - **Audio is pre-rendered.** Browser speech synthesis needs a voice installed by the OS, and
   many machines have none, which is silence with no error. The WAVs remove that dependency;
   synthesis is only a fallback.
+- **The voice is eSpeak by default** — clear, consistent, synthetic. The generator also takes
+  `--engine piper`, so one command on a machine with `pip` and a Spanish Piper voice replaces
+  all 102 clips with neural ones. See [tools/README.md](tools/README.md).
 - **Interface state stays in the browser.** `localStorage`, no accounts, no analytics.
 
 The reasoning, the tradeoffs and what this does *not* do are in [DEMO.md](DEMO.md).

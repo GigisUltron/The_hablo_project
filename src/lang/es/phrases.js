@@ -1,0 +1,85 @@
+/* Phrases — whole utterances, not single words.
+ *
+ * Same rule as the vocabulary: there is no English translation here. The scene
+ * emoji is the anchor, and the phrase is what a person would actually say.
+ *
+ * `text` is spoken and displayed; `sub` is optional context in Spanish.
+ */
+var SEMA_PHRASES = {
+  phrases: [
+    { id: "ph-que-pasa",   emoji: "🤙", text: "¿Qué pasa?",                     sub: "Entre amigos.",                  cat: "phrase" },
+    { id: "ph-tu-nombre",   emoji: "🙋", text: "¿Cómo te llamas?",                sub: "Al conocer a alguien.",          cat: "phrase" },
+    { id: "ph-de-donde",    emoji: "🏳️", text: "¿De dónde eres?",                  sub: "Preguntando por su país.",       cat: "phrase" },
+    { id: "ph-color",       emoji: "🎨", text: "¿Cuál es tu color favorito?",     sub: "Hablando de gustos.",            cat: "phrase" },
+    { id: "ph-trabajo",     emoji: "💼", text: "¿A qué te dedicas?",               sub: "Preguntando por el trabajo.",    cat: "phrase" },
+    { id: "ph-como-se-dice", emoji: "❓", text: "¿Cómo se dice esto?",             sub: "Cuando falta una palabra.",      cat: "phrase" },
+    { id: "ph-significa",   emoji: "🔎", text: "¿Qué significa?",                 sub: "Preguntando por una palabra.",   cat: "phrase" },
+    { id: "ph-nos-vemos",   emoji: "🫡", text: "Nos vemos mañana.",               sub: "Al despedirte.",                 cat: "phrase" },
+    { id: "ph-hola",         emoji: "👋",  text: "Hola, ¿qué tal?",                  sub: "Al entrar en un sitio.",          cat: "phrase" },
+    { id: "ph-dias",         emoji: "🌅",  text: "Buenos días.",                     sub: "Por la mañana.",                  cat: "phrase" },
+    { id: "ph-noches",       emoji: "🌙",  text: "Buenas noches.",                   sub: "Al despedirte de noche.",         cat: "phrase" },
+    { id: "ph-adios",        emoji: "✌️",  text: "Hasta luego.",                     sub: "Al irte.",                        cat: "phrase" },
+    { id: "ph-gusto",        emoji: "🤝",  text: "Mucho gusto.",                     sub: "Al conocer a alguien.",           cat: "phrase" },
+    { id: "ph-como-estas",   emoji: "😊",  text: "¿Cómo estás?",                     sub: "Al ver a un conocido.",           cat: "phrase" },
+    { id: "ph-eres-de-aqui",  emoji: "🌍",  text: "¿Eres de aquí?",                   sub: "Charlando con alguien nuevo.",    cat: "phrase" },
+    { id: "ph-hora",         emoji: "🕐",  text: "¿Qué hora es?",                    sub: "Preguntando la hora.",            cat: "phrase" },
+    { id: "ph-cafe",         emoji: "☕",  text: "Un café, por favor.",              sub: "Pidiendo en la barra.",           cat: "phrase" },
+    { id: "ph-agua",         emoji: "💧",  text: "Agua sin gas, por favor.",         sub: "Pidiendo de beber.",              cat: "phrase" },
+    { id: "ph-mesa-dos",     emoji: "🪑",  text: "Una mesa para dos, por favor.",    sub: "Al entrar en un restaurante.",    cat: "phrase" },
+    { id: "ph-carta",        emoji: "📋",  text: "¿Me traes la carta?",              sub: "Al sentarte a la mesa.",          cat: "phrase" },
+    { id: "ph-recomiendas",  emoji: "🍲",  text: "¿Qué me recomiendas?",             sub: "Cuando no sabes qué pedir.",      cat: "phrase" },
+    { id: "ph-vegetariano",  emoji: "🥗",  text: "¿Tienen platos vegetarianos?",     sub: "Preguntando por opciones.",       cat: "phrase" },
+    { id: "ph-sin-cebolla",  emoji: "🧅",  text: "Sin cebolla, por favor.",          sub: "Pidiendo sin un ingrediente.",    cat: "phrase" },
+    { id: "ph-vino",         emoji: "🍷",  text: "Un vino tinto, por favor.",        sub: "Al pedir la bebida.",             cat: "phrase" },
+    { id: "ph-rico",         emoji: "😋",  text: "Está muy rico.",                   sub: "Después de comer.",               cat: "phrase" },
+    { id: "ph-cuenta",       emoji: "🧾",  text: "La cuenta, por favor.",            sub: "Al terminar de comer.",           cat: "phrase" },
+    { id: "ph-banio",        emoji: "🚻",  text: "¿Dónde está el baño?",             sub: "En un bar o una tienda.",         cat: "phrase" },
+    { id: "ph-centro",       emoji: "🗺️",  text: "¿Cómo llego al centro?",           sub: "Pidiendo indicaciones.",          cat: "phrase" },
+    { id: "ph-lejos",        emoji: "📍",  text: "¿Está lejos de aquí?",             sub: "Preguntando por la distancia.",   cat: "phrase" },
+    { id: "ph-autobus",      emoji: "🚌",  text: "¿Qué autobús me lleva al centro?",  sub: "En la parada del bus.",           cat: "phrase" },
+    { id: "ph-estacion",     emoji: "🚉",  text: "¿Dónde está la estación?",         sub: "Buscando el tren.",               cat: "phrase" },
+    { id: "ph-billete",      emoji: "🎫",  text: "Un billete de ida, por favor.",    sub: "En la taquilla.",                 cat: "phrase" },
+    { id: "ph-anden",        emoji: "🚏",  text: "¿En qué andén sale el tren?",      sub: "Preguntando en la estación.",     cat: "phrase" },
+    { id: "ph-tarda",        emoji: "⏱️",  text: "¿Cuánto tarda?",                   sub: "Preguntando por el viaje.",       cat: "phrase" },
+    { id: "ph-taxi",         emoji: "🚕",  text: "¿Puedes llamarme un taxi?",        sub: "Cuando no hay ninguno.",          cat: "phrase" },
+    { id: "ph-aeropuerto",   emoji: "✈️",  text: "¿Cómo voy al aeropuerto?",         sub: "Buscando transporte.",            cat: "phrase" },
+    { id: "ph-derecha",      emoji: "➡️",  text: "Gira a la derecha.",               sub: "Dando indicaciones a alguien.",   cat: "phrase" },
+    { id: "ph-precio",       emoji: "🏷️",  text: "¿Cuánto cuesta?",                  sub: "Mirando un producto.",            cat: "phrase" },
+    { id: "ph-talla",        emoji: "👕",  text: "¿Tienes esta talla más grande?",   sub: "Probándote ropa.",                cat: "phrase" },
+    { id: "ph-probar",       emoji: "👗",  text: "¿Puedo probármelo?",               sub: "Antes de comprar ropa.",          cat: "phrase" },
+    { id: "ph-descuento",    emoji: "💸",  text: "¿Hay algún descuento?",            sub: "Preguntando por el precio.",      cat: "phrase" },
+    { id: "ph-tarjeta",      emoji: "💳",  text: "¿Puedo pagar con tarjeta?",        sub: "Al pagar en la caja.",            cat: "phrase" },
+    { id: "ph-bolsa",        emoji: "🛍️",  text: "¿Me das una bolsa?",               sub: "Al terminar la compra.",          cat: "phrase" },
+    { id: "ph-mirando",      emoji: "👀",  text: "Solo estoy mirando, gracias.",     sub: "Cuando te ofrecen ayuda.",        cat: "phrase" },
+    { id: "ph-mercado",      emoji: "🧺",  text: "¿A qué hora abre el mercado?",     sub: "Preguntando por horarios.",       cat: "phrase" },
+    { id: "ph-reserva",      emoji: "🛎️",  text: "Tengo una reserva.",               sub: "Al llegar al hotel.",             cat: "phrase" },
+    { id: "ph-habitacion",   emoji: "🛏️",  text: "Quisiera una habitación doble.",   sub: "Al hacer la reserva.",            cat: "phrase" },
+    { id: "ph-wifi",         emoji: "📶",  text: "¿Cuál es la contraseña del wifi?",  sub: "Para conectarte en el hotel.",    cat: "phrase" },
+    { id: "ph-desayuno",     emoji: "🥐",  text: "¿A qué hora es el desayuno?",      sub: "En el hotel.",                    cat: "phrase" },
+    { id: "ph-maletas",      emoji: "🧳",  text: "¿Puedo dejar las maletas aquí?",   sub: "Al dejar la habitación.",         cat: "phrase" },
+    { id: "ph-vuelo",        emoji: "🛫",  text: "¿A qué hora sale el vuelo?",       sub: "En el aeropuerto.",               cat: "phrase" },
+    { id: "ph-pasaporte",    emoji: "🛂",  text: "Aquí está mi pasaporte.",          sub: "En el control de pasaportes.",    cat: "phrase" },
+    { id: "ph-cambio",       emoji: "💱",  text: "¿Dónde puedo cambiar dinero?",     sub: "Buscando una casa de cambio.",    cat: "phrase" },
+    { id: "ph-ayuda",        emoji: "🆘",  text: "Necesito ayuda.",                  sub: "Cuando algo va mal.",             cat: "phrase" },
+    { id: "ph-medico",       emoji: "🏥",  text: "Necesito un médico.",              sub: "Cuando te encuentras mal.",       cat: "phrase" },
+    { id: "ph-farmacia",     emoji: "💊",  text: "¿Dónde hay una farmacia?",         sub: "Buscando medicinas.",             cat: "phrase" },
+    { id: "ph-dolor",        emoji: "🤕",  text: "Me duele la cabeza.",              sub: "Explicando qué te pasa.",         cat: "phrase" },
+    { id: "ph-fiebre",       emoji: "🌡️",  text: "Creo que tengo fiebre.",           sub: "Cuando te sientes mal.",          cat: "phrase" },
+    { id: "ph-perdido",      emoji: "🧭",  text: "Me he perdido.",                   sub: "Cuando no encuentras el camino.",  cat: "phrase" },
+    { id: "ph-robo",         emoji: "🚨",  text: "Me han robado la cartera.",        sub: "Para poner una denuncia.",        cat: "phrase" },
+    { id: "ph-emergencia",   emoji: "🚑",  text: "Es una emergencia.",               sub: "Al llamar a urgencias.",          cat: "phrase" },
+    { id: "ph-perdon",       emoji: "🙇",  text: "Perdón, no entiendo.",             sub: "Cuando algo no queda claro.",     cat: "phrase" },
+    { id: "ph-repetir",      emoji: "🔁",  text: "¿Puedes repetirlo?",               sub: "Cuando no has oído bien.",        cat: "phrase" },
+    { id: "ph-despacio",     emoji: "🐢",  text: "¿Puedes hablar más despacio?",     sub: "Cuando hablan muy rápido.",       cat: "phrase" },
+    { id: "ph-gracias",      emoji: "🙌",  text: "Muchas gracias.",                  sub: "Al recibir algo.",                cat: "phrase" },
+    { id: "ph-de-nada",      emoji: "💐",  text: "De nada.",                         sub: "Cuando te dan las gracias.",      cat: "phrase" },
+    { id: "ph-disculpa",     emoji: "🙏",  text: "Disculpa, ¿puedo pasar?",          sub: "Al abrirte paso.",                cat: "phrase" },
+    { id: "ph-sentarme",     emoji: "💺",  text: "¿Puedo sentarme aquí?",            sub: "Buscando un sitio libre.",        cat: "phrase" },
+  ]
+};
+
+if (typeof module !== "undefined" && module.exports) module.exports = SEMA_PHRASES;
+if (typeof window !== "undefined") {
+  window.SEMA_PHRASES = SEMA_PHRASES;
+  if (window.SemaLangs) window.SemaLangs.define("es", "phrases", SEMA_PHRASES);
+}

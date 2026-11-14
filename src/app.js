@@ -9,56 +9,119 @@
 (function () {
   "use strict";
 
-  var D = window.SEMA_DATA;
+  var LANGS = window.SemaLangs;
   var S = window.SemaSRS;
+  var MEM = window.SemaMemory;
+  var TRACK = window.SemaTrack;
+  var ADAPT = window.SemaAdaptive;
+  var CORRECT = window.SemaCorrect;
   var STORE_KEY = "sema.v1";
-  var LANG = D.language;
+
+  /* The live pack. Everything below reads it through these bindings; switching
+   * a language swaps the bindings and rebuilds the indexes, so no other part of
+   * the app needs to know which language is active. */
+  var ACTIVE = null;
+  var D = null;
+  var LANG = null;
+  var TERMS = null;
+  var P = null;
+  var CONV = null;
+  var bundled = null;
 
   var conceptById = {};
   var allIds = [];
   var neighbours = {};   // id -> [id]   (ordered by relation weight)
   var weights = {};      // "a|b" -> type
-
-  D.concepts.forEach(function (c) {
-    conceptById[c.id] = c;
-    allIds.push(c.id);
-    neighbours[c.id] = [];
-  });
-
-  D.edges.forEach(function (e) {
-    if (!conceptById[e.a] || !conceptById[e.b]) return;
-    var w = (D.relationTypes[e.type] && D.relationTypes[e.type].weight) || 1;
-    neighbours[e.a].push({ id: e.b, w: w, type: e.type });
-    neighbours[e.b].push({ id: e.a, w: w, type: e.type });
-    weights[e.a + "|" + e.b] = e.type;
-    weights[e.b + "|" + e.a] = e.type;
-  });
-
-  Object.keys(neighbours).forEach(function (id) {
-    neighbours[id].sort(function (a, b) { return b.w - a.w; });
-  });
-
-  /* phrase deck: same shape as a concept once itemOf() normalises it */
-  var P = window.SEMA_PHRASES || { phrases: [] };
+  var termById = {};
+  var termIds = [];
   var phraseById = {};
   var phraseIds = [];
-  P.phrases.forEach(function (p) {
-    phraseById[p.id] = p;
-    phraseIds.push(p.id);
-  });
+
+  function deckIds() {
+    return allIds.concat(phraseIds, termIds);
+  }
+
+  function rebuildIndexes() {
+    conceptById = {};
+    allIds = [];
+    neighbours = {};
+    weights = {};
+
+    D.concepts.forEach(function (c) {
+      conceptById[c.id] = c;
+      allIds.push(c.id);
+      neighbours[c.id] = [];
+    });
+
+    D.edges.forEach(function (e) {
+      if (!conceptById[e.a] || !conceptById[e.b]) return;
+      var w = (D.relationTypes[e.type] && D.relationTypes[e.type].weight) || 1;
+      neighbours[e.a].push({ id: e.b, w: w, type: e.type });
+      neighbours[e.b].push({ id: e.a, w: w, type: e.type });
+      weights[e.a + "|" + e.b] = e.type;
+      weights[e.b + "|" + e.a] = e.type;
+    });
+
+    Object.keys(neighbours).forEach(function (id) {
+      neighbours[id].sort(function (a, b) { return b.w - a.w; });
+    });
+
+    termById = {};
+    termIds = [];
+    (TERMS.terms || []).forEach(function (t) {
+      termById[t.id] = t;
+      termIds.push(t.id);
+    });
+
+    phraseById = {};
+    phraseIds = [];
+    (P.phrases || []).forEach(function (p) {
+      phraseById[p.id] = p;
+      phraseIds.push(p.id);
+    });
+  }
+
+  function activatePack(code) {
+    var pack = LANGS && LANGS.load(code);
+    if (!pack && LANGS) pack = LANGS.load(LANGS.defaultCode || "es");
+    if (!pack) throw new Error("sema: no language pack available");
+
+    ACTIVE = pack;
+    D = pack.concepts;
+    LANG = D.language || { code: pack.code, name: pack.name, locale: pack.locale };
+    TERMS = pack.terms;
+    P = pack.phrases;
+    CONV = pack.conv;
+    bundled = pack.audio && Object.keys(pack.audio).length ? pack.audio : null;
+
+    /* A few renderers read the pack globals directly (texts, glosses). Point
+     * them at the live pack rather than whichever script loaded last. */
+    LANGS.bind(pack);
+
+    rebuildIndexes();
+    voice = null;
+    warnedNoVoice = false;
+    if (hasTTS) pickVoice();
+    updateAudioChip();
+    return pack;
+  }
 
   /* Scenes: a phrase lesson is one short exchange from one situation, in the
    * order it happens, instead of a shuffled deck. The grouping lives here
    * until the phrase file carries a scene field of its own. */
-  var SCENES = [
-    { emoji: "☕", title: "En el café", lines: ["ph-cafe", "ph-agua", "ph-rico", "ph-cuenta"] },
+  var SCENE_DEFS = [
     { emoji: "👋", title: "Saludar", lines: ["ph-dias", "ph-hola", "ph-gusto", "ph-adios"] },
+    { emoji: "☕", title: "En el café", lines: ["ph-cafe", "ph-agua", "ph-rico", "ph-cuenta"] },
     { emoji: "🚉", title: "En la estación", lines: ["ph-estacion", "ph-hora", "ph-tarda", "ph-precio"] },
     { emoji: "🔁", title: "Si no entiendes", lines: ["ph-perdon", "ph-repetir", "ph-despacio"] }
-  ].map(function (s) {
-    s.lines = s.lines.filter(function (id) { return phraseById[id]; });
-    return s;
-  }).filter(function (s) { return s.lines.length >= 2; });
+  ];
+
+  /* only the lines the live language pack actually has */
+  function scenes() {
+    return SCENE_DEFS.map(function (s) {
+      return { emoji: s.emoji, title: s.title, lines: s.lines.filter(function (id) { return phraseById[id]; }) };
+    }).filter(function (s) { return s.lines.length >= 2; });
+  }
 
   /* ------------------------------------------------------------ utilities */
 
@@ -99,40 +162,201 @@
   /* one of each question type up front, so a minute is enough to see all three */
   var DEMO_TYPES = ["pick-word", "pick-picture", "say", "pick-picture", "pick-word"];
 
-  var state = DEMO ? S.newState(allIds.concat(phraseIds), Date.now()) : load();
-  /* a fresh browser has no saved settings; every screen reads them */
-  if (!state.settings) {
-    state.settings = { fields: Object.keys(D.categories), size: 8, mode: "words" };
+  var state = boot();
+  renderLangPickers();
+  updateSetupCopy();
+
+  /* Progress is per language. `state.cards` and friends are the live deck for
+   * the active language; `state.profile.byLang[code]` is its archive, so a
+   * switch never discards what was learned in the other language. */
+  function boot() {
+    var saved = DEMO ? null : loadSaved();
+    var code = saved && saved.profile && saved.profile.lang;
+    if (!code || !LANGS || !LANGS.has(code)) code = (LANGS && LANGS.defaultCode) || "es";
+    activatePack(code);
+
+    var s = saved || emptyLive();
+    /* the demo skips first-run setup and starts on a clean deck */
+    if (DEMO) s.profile = { lang: code, byLang: {} };
+    s.version = 1;
+    s.cards = s.cards || {};
+    s.confusions = s.confusions || {};
+    s.reviews = s.reviews || { good: 0, again: 0 };
+    s.sessions = s.sessions || 0;
+    if (!s.memory || !Array.isArray(s.memory.sentences)) s.memory = MEM.empty();
+
+    if (s.profile) {
+      s.profile.lang = code;
+      s.profile.byLang = s.profile.byLang || {};
+      /* Older saves kept one deck at the top level. Adopt it as that pack's
+       * archive instead of throwing it away. */
+      if (!s.profile.byLang[code]) s.profile.byLang[code] = bucketOf(s);
+      else loadBucket(s, s.profile.byLang[code]);
+    }
+
+    s.settings = s.settings || {};
+    if (!Array.isArray(s.settings.fields) || !s.settings.fields.length) {
+      s.settings.fields = Object.keys(D.categories);
+    } else {
+      s.settings.fields = s.settings.fields.filter(function (f) { return D.categories[f]; });
+      if (!s.settings.fields.length) s.settings.fields = Object.keys(D.categories);
+    }
+    if (!s.settings.size) s.settings.size = 8;
+    if (["words", "phrases", "terms"].indexOf(s.settings.mode) === -1) s.settings.mode = "words";
+
+    seedDeck(s);
+    return s;
   }
 
-  function load() {
-    var base = S.newState(allIds.concat(phraseIds), Date.now());
+  function loadSaved() {
     try {
       var raw = localStorage.getItem(STORE_KEY);
-      if (!raw) return base;
+      if (!raw) return null;
       var saved = JSON.parse(raw);
-      if (!saved || saved.version !== 1) return base;
-      saved.cards = saved.cards || {};
-      saved.confusions = saved.confusions || {};
-      saved.reviews = saved.reviews || { good: 0, again: 0 };
-      saved.settings = saved.settings || {};
-      if (!Array.isArray(saved.settings.fields) || !saved.settings.fields.length) {
-        saved.settings.fields = Object.keys(D.categories);
-      }
-      if (!saved.settings.size) saved.settings.size = 8;
-      if (saved.settings.mode !== "phrases") saved.settings.mode = "words";
-      allIds.concat(phraseIds).forEach(function (id) {
-        if (!saved.cards[id]) saved.cards[id] = S.newCard(id, Date.now());
-      });
+      if (!saved || saved.version !== 1) return null;
       return saved;
     } catch (err) {
-      return base;
+      return null;
     }
+  }
+
+  function emptyLive() {
+    var s = S.newState(deckIds(), Date.now());
+    s.memory = MEM.empty();
+    s.profile = null;
+    return s;
+  }
+
+  function resetLive() {
+    var fresh = emptyLive();
+    state.cards = fresh.cards;
+    state.confusions = fresh.confusions;
+    state.reviews = fresh.reviews;
+    state.sessions = fresh.sessions;
+    state.lastSession = null;
+    state.placement = null;
+    state.memory = fresh.memory;
+  }
+
+  function bucketOf(s) {
+    return {
+      cards: s.cards || {},
+      confusions: s.confusions || {},
+      reviews: s.reviews || { good: 0, again: 0 },
+      sessions: s.sessions || 0,
+      lastSession: s.lastSession || null,
+      placement: s.placement || null,
+      memory: s.memory || MEM.empty()
+    };
+  }
+
+  function loadBucket(s, bucket) {
+    s.cards = bucket.cards || {};
+    s.confusions = bucket.confusions || {};
+    s.reviews = bucket.reviews || { good: 0, again: 0 };
+    s.sessions = bucket.sessions || 0;
+    s.lastSession = bucket.lastSession || null;
+    s.placement = bucket.placement || null;
+    s.memory = bucket.memory && Array.isArray(bucket.memory.sentences) ? bucket.memory : MEM.empty();
+  }
+
+  function seedDeck(s) {
+    var now = Date.now();
+    deckIds().forEach(function (id) {
+      if (!s.cards[id]) s.cards[id] = S.newCard(id, now);
+    });
   }
 
   function save() {
     if (DEMO) return;
+    if (state && state.profile && state.profile.byLang) {
+      state.profile.byLang[state.profile.lang] = bucketOf(state);
+    }
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (err) { /* private mode */ }
+  }
+
+  /* --------------------------------------------------------------- language */
+
+  function packList() {
+    var list = (LANGS && LANGS.list()) || [];
+    if (!list.length) list = [{ code: "es", name: "Spanish", locale: "es-ES" }];
+    return list;
+  }
+
+  function renderLangPickers() {
+    var list = packList();
+    var current = state.profile ? state.profile.lang : (ACTIVE && ACTIVE.code);
+    ["setup-lang", "settings-lang"].forEach(function (id) {
+      var sel = $(id);
+      if (!sel) return;
+      sel.innerHTML = list.map(function (p) {
+        return '<option value="' + esc(p.code) + '">' + esc(p.name) + "</option>";
+      }).join("");
+      if (list.some(function (p) { return p.code === current; })) sel.value = current;
+    });
+
+    var note = document.querySelector("#view-setup .builder-note");
+    if (note) {
+      note.textContent = list.length > 1
+        ? "Each language keeps its own deck, progress and audio."
+        : "More languages need their own deck and audio — Spanish is the only pack so far.";
+    }
+  }
+
+  function updateSetupCopy() {
+    var q = document.querySelector("#view-setup .setup-q");
+    if (!q || !ACTIVE) return;
+    q.textContent = "Have you studied " + ACTIVE.name + " before?";
+  }
+
+  function switchLang(code) {
+    if (!code || !LANGS || !LANGS.has(code)) return false;
+    if (ACTIVE && ACTIVE.code === code) {
+      if (state.profile) state.profile.lang = code;
+      return false;
+    }
+
+    if (state.profile) state.profile.byLang[state.profile.lang] = bucketOf(state);
+    activatePack(code);
+
+    if (state.profile) {
+      state.profile.lang = code;
+      var bucket = state.profile.byLang[code];
+      if (bucket) {
+        loadBucket(state, bucket);
+      } else {
+        resetLive();
+      }
+      state.settings.fields = Object.keys(D.categories);
+      state.profile.byLang[code] = bucketOf(state);
+    } else {
+      /* Before the first profile exists there is nothing to keep, but the live
+       * deck must still contain only the chosen pack's ids. */
+      resetLive();
+      state.settings.fields = Object.keys(D.categories);
+    }
+
+    seedDeck(state);
+    session = null;
+    reader = null;
+    conv = null;
+    placement = null;
+    mapBuilt = false;
+    save();
+    renderLangPickers();
+    updateSetupCopy();
+    renderToday();
+    if (currentView === "map") buildMap();
+    if (currentView === "stats") renderStats();
+    return true;
+  }
+
+  function beginProfile(level) {
+    var code = (ACTIVE && ACTIVE.code) || "es";
+    var byLang = (state.profile && state.profile.byLang) || {};
+    byLang[code] = bucketOf(state);
+    state.profile = { level: level, lang: code, byLang: byLang };
+    save();
   }
 
   /* -------------------------------------------------------------- speech */
@@ -140,26 +364,29 @@
   var voice = null;
   var hasTTS = "speechSynthesis" in window;
 
-  function esVoices() {
+  function langVoices() {
     if (!hasTTS) return [];
     var voices = window.speechSynthesis.getVoices() || [];
+    var want = String((LANG && LANG.code) || "").toLowerCase();
+    var name = String((LANG && LANG.name) || "").toLowerCase();
     return voices.filter(function (v) {
       var lang = String(v.lang || "").toLowerCase();
-      return lang.indexOf(LANG.code) === 0 || /spanish|español|espanol/i.test(v.name || "");
+      return lang.indexOf(want) === 0 || (name && String(v.name || "").toLowerCase().indexOf(name) !== -1);
     });
   }
 
   function pickVoice() {
     if (!hasTTS) return;
-    var voices = esVoices();
+    var voices = langVoices();
     voice = voices[0] || null;
     updateAudioChip();
   setTimeout(updateAudioChip, 1600);
   setTimeout(updateAudioChip, 4000);
   }
 
-  /* Audio is a bonus, not a dependency: if the device has no Spanish voice the
-   * whole app still works, and it says so instead of failing silently. */
+  /* Audio is a bonus, not a dependency: if the device has no voice for the
+   * active language the whole app still works, and it says so instead of
+   * failing silently. */
   var audioCheckedAt = Date.now();
 
   /* Some platforms expose the API with an empty voice list and never populate
@@ -173,9 +400,9 @@
       if (Date.now() - audioCheckedAt < 1500) return { state: "idle", text: "checking audio" };
       return { state: "none", text: "no voice on this device" };
     }
-    var es = esVoices();
-    if (es.length) return { state: "ok", text: es.length + " Spanish voice" + (es.length > 1 ? "s" : "") };
-    return { state: "no-es", text: "no Spanish voice" };
+    var voices = langVoices();
+    if (voices.length) return { state: "ok", text: voices.length + " " + LANG.name + " voice" + (voices.length > 1 ? "s" : "") };
+    return { state: "no-" + LANG.code, text: "no " + LANG.name + " voice" };
   }
 
   function updateAudioChip() {
@@ -186,7 +413,7 @@
     chip.classList.toggle("warn", st.state !== "ok");
     chip.title = st.state === "ok"
       ? "Tap to hear a test word"
-      : "No usable speech voice here. The demo is fully usable without audio.";
+      : "No usable speech voice here. Everything still works without audio.";
   }
 
   if (hasTTS) {
@@ -197,7 +424,6 @@
     try { window.speechSynthesis.addEventListener("voiceschanged", pickVoice); } catch (err) { /* older engines */ }
   }
 
-  var bundled = window.SEMA_AUDIO || null;
   var audioCache = {};
   var speakTimer = null;
 
@@ -233,7 +459,7 @@
     var synth = window.speechSynthesis;
     try {
       if (!voice) pickVoice();
-      if (!hasBundled() && !esVoices().length && !synth.speaking && !warnedNoVoice && audioStatus().state === "none") {
+      if (!hasBundled() && !langVoices().length && !synth.speaking && !warnedNoVoice && audioStatus().state === "none") {
         warnedNoVoice = true;
         toast("No speech voice on this device — everything else still works.");
       }
@@ -306,7 +532,7 @@
 
   /* ---------------------------------------------------------------- views */
 
-  var VIEWS = ["today", "session", "map", "stats"];
+  var VIEWS = ["today", "session", "reader", "conv", "setup", "settings", "map", "stats"];
   var currentView = "today";
   var mapBuilt = false;
 
@@ -322,7 +548,7 @@
       if (on) t.setAttribute("aria-current", "page");
       else t.removeAttribute("aria-current");
     });
-    if (view === "today") renderToday();
+    if (view === "today" || view === "settings") renderToday();
     if (view === "stats") renderStats();
     if (view === "map" && !mapBuilt) { buildMap(); mapBuilt = true; }
     if (view === "map") {
@@ -380,17 +606,18 @@
       b.classList.toggle("is-on", on);
       b.setAttribute("aria-pressed", String(on));
     });
-    box.style.display = mode === "phrases" ? "none" : "flex";
+    box.style.display = mode === "words" ? "flex" : "none";
     /* a scene sets its own length */
     var sizes = document.querySelector(".size-pick");
-    if (sizes) sizes.style.visibility = mode === "phrases" && SCENES.length ? "hidden" : "";
+    if (sizes) sizes.style.visibility = mode === "phrases" && scenes().length ? "hidden" : "";
 
-    var pool = mode === "phrases" ? phraseIds : allIds.filter(function (id) {
-      return inFields(id, fields);
-    });
+    var pool = mode === "phrases" ? phraseIds
+      : mode === "terms" ? termIds
+      : allIds.filter(function (id) { return inFields(id, fields); });
     var due = S.dueList(state, Date.now()).filter(function (id) {
       return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
     }).length;
+
 
     var note = $("builder-note");
     var scene = mode === "phrases" && nextScene();
@@ -399,12 +626,14 @@
         scene.lines.length + " lines · " + due + " due";
     } else if (note) {
       note.textContent = lessonSize() + " cards · " + pool.length +
-        (mode === "phrases" ? " phrases" : " concepts") + " · " + due + " due";
+        (mode === "phrases" ? " phrases" : mode === "terms" ? " terms" : " concepts") +
+        " · " + due + " due";
     }
   }
 
   function renderToday() {
     renderBuilder();
+    renderTrack();
 
     var due = S.dueList(state, Date.now()).filter(function (id) {
       return state.cards[id] && state.cards[id].last !== null;
@@ -446,7 +675,7 @@
       return '<div class="row">' +
         '<span class="row-pic" aria-hidden="true">' + it.emoji + "</span>" +
         '<span class="row-body">' +
-          '<span class="row-main">' + (it.article ? '<span class="art">' + esc(it.article) + "</span> " : "") + esc(it.text) + "</span>" +
+          '<span class="row-main">' + articleHTML(it.article) + esc(it.text) + "</span>" +
           '<span class="row-meta">' + (due <= now ? "Now" : capital(whenFrom(due - now))) + "</span>" +
         "</span></div>";
     }).join("");
@@ -454,6 +683,261 @@
 
   function capital(s) {
     return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  /* -------------------------------------------------------------- reader */
+
+  var reader = null;
+
+  function startReader() {
+    var texts = (window.SEMA_TEXTS && window.SEMA_TEXTS.texts) || [];
+    if (!texts.length) { toast("No texts yet."); return; }
+    reader = { text: texts[0], qi: 0, correct: 0 };
+    show("reader");
+    renderReaderText();
+  }
+
+  function renderReaderText() {
+    var t = reader.text;
+    $("reader-count").textContent = "level " + t.level;
+    $("reader-bar").style.width = "8%";
+    $("reader-feedback").textContent = "";
+    $("reader-stage").innerHTML =
+      '<p class="prompt">Reading</p>' +
+      '<h3 class="reader-title">' + esc(t.title) + "</h3>" +
+      '<p class="reader-body">' + esc(t.body) + "</p>";
+    $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-go">Questions</button>';
+    $("reader-go").addEventListener("click", renderReaderQuestion);
+  }
+
+  function renderReaderQuestion() {
+    if (!reader) return;
+    if (reader.qi >= reader.text.questions.length) { finishReader(); return; }
+
+    var q = reader.text.questions[reader.qi];
+    $("reader-bar").style.width = Math.round(((reader.qi + 1) / reader.text.questions.length) * 100) + "%";
+    $("reader-count").textContent = (reader.qi + 1) + "/" + reader.text.questions.length;
+    $("reader-stage").innerHTML =
+      '<p class="prompt">' + esc(reader.text.title) + "</p>" +
+      '<p class="reader-q">' + esc(q.q) + "</p>" +
+      '<div class="word-options">' + q.options.map(function (o, i) {
+        return '<button class="option-word" data-i="' + i + '">' + esc(o) + "</button>";
+      }).join("") + "</div>";
+    $("reader-actions").innerHTML = "";
+
+    Array.prototype.forEach.call($("reader-stage").querySelectorAll(".option-word"), function (btn) {
+      btn.addEventListener("click", function () {
+        var picked = Number(btn.getAttribute("data-i"));
+        var ok = picked === q.answer;
+        if (ok) reader.correct += 1;
+        btn.classList.add(ok ? "pick-correct" : "pick-wrong");
+        Array.prototype.forEach.call($("reader-stage").querySelectorAll(".option-word"), function (b) {
+          b.disabled = true;
+          if (Number(b.getAttribute("data-i")) === q.answer) b.classList.add("pick-correct");
+        });
+        var why = !ok && q.why && q.why[picked];
+        $("reader-feedback").textContent = ok
+          ? "correct"
+          : (why ? why + " — " + q.options[q.answer] : "the answer was: " + q.options[q.answer]);
+        $("reader-feedback").className = "feedback " + (ok ? "good" : "bad");
+        reader.qi += 1;
+        $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-next">Continue</button>';
+        $("reader-next").addEventListener("click", function () {
+          $("reader-feedback").className = "feedback";
+          renderReaderQuestion();
+        });
+      });
+    });
+  }
+
+  function finishReader() {
+    var total = reader.text.questions.length;
+    $("reader-bar").style.width = "100%";
+    $("reader-stage").innerHTML =
+      '<p class="prompt">Text finished</p>' +
+      '<div class="word">' + reader.correct + "/" + total + "</div>" +
+      '<p class="sentence">' + esc(reader.text.title) + " · level " + reader.text.level + "</p>";
+    $("reader-feedback").textContent = "";
+    $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-done">Back to today</button>';
+    $("reader-done").addEventListener("click", function () { reader = null; show("today"); });
+  }
+
+  /* --------------------------------------------------------- conversation */
+
+  var conv = null;
+
+  function startConversation() {
+    if (!CONV || !CONV.dialogues.length) { toast("No conversations in this pack yet."); return; }
+    var pick = CONV.dialogues[Math.floor(Math.random() * CONV.dialogues.length)];
+    conv = CONV.start(pick.id);
+    show("conv");
+    $("chat").innerHTML = "";
+    renderTurn();
+  }
+
+  function bubble(text, mine) {
+    var el = document.createElement("p");
+    el.className = "bubble" + (mine ? " mine" : "");
+    el.textContent = text;
+    $("chat").appendChild(el);
+    $("chat").scrollTop = $("chat").scrollHeight;
+  }
+
+  function renderTurn() {
+    var t = conv.dialogue.turns[conv.turn];
+    if (!t) { finishConv(); return; }
+    bubble(t.es, false);
+    /* the tutor speaks: play the phrase's own audio when it has one */
+    if (t.item) sayItem(itemOf(t.item)); else speak(t.es);
+    $("conv-count").textContent = (conv.turn + 1) + "/" + conv.dialogue.turns.length;
+    $("conv-bar").style.width = Math.round((conv.turn / conv.dialogue.turns.length) * 100) + "%";
+    $("conv-feedback").textContent = "";
+    if (!t.expects.length) { finishConv(); return; }
+    $("conv-stage").innerHTML =
+      '<input class="type-input" id="conv-input" type="text" autocomplete="off" placeholder="reply in spanish" aria-label="your reply" />' +
+      '<button class="btn btn-primary" id="conv-send">Send</button>';
+    var input = $("conv-input");
+    input.focus();
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") sendReply(); });
+    $("conv-send").addEventListener("click", sendReply);
+  }
+
+  function sendReply() {
+    var t = conv.dialogue.turns[conv.turn];
+    var el = $("conv-input");
+    var said = el ? el.value : "";
+    if (!said.trim()) return;
+    bubble(said.trim(), true);
+    if (CONV.fits(said, t)) {
+      if (t.item) { S.review(state, t.item, 2, Date.now()); save(); }
+      $("conv-feedback").className = "feedback good";
+      $("conv-feedback").textContent = "that works";
+      conv.turn += 1;
+      setTimeout(renderTurn, 400);
+    } else {
+      conv.misses += 1;
+      if (t.item) { S.review(state, t.item, 0, Date.now()); save(); }
+      $("conv-feedback").className = "feedback bad";
+      $("conv-feedback").textContent = "try: " + t.reply;
+      if (el) { el.value = ""; el.focus(); }
+    }
+  }
+
+  function finishConv() {
+    $("conv-bar").style.width = "100%";
+    $("conv-count").textContent = "done";
+    $("conv-stage").innerHTML = "";
+    $("conv-feedback").className = "feedback good";
+    $("conv-feedback").textContent = "conversation complete · " + conv.misses + " retries";
+  }
+
+  /* ------------------------------------------------------------ placement */
+
+  var placement = null;
+
+  /* Eight questions, mixed decks, hardest last. The result is a floor on the
+   * track: a false beginner should not be made to click through "casa". */
+  function startPlacement() {
+    var queue = S.shuffle(allIds, Math.random).slice(0, 4)
+      .concat(S.shuffle(phraseIds, Math.random).slice(0, 2))
+      .concat(S.shuffle(termIds, Math.random).slice(0, 2));
+
+    placement = { queue: queue, i: 0, correct: 0 };
+    show("session");
+    renderPlaceItem();
+  }
+
+  function placementFloor() {
+    return (state.placement && state.placement.floor) || 0;
+  }
+
+  function renderPlaceItem() {
+    if (!placement) return;
+    if (placement.i >= placement.queue.length) { finishPlacement(); return; }
+
+    clearCard();
+    var id = placement.queue[placement.i];
+    var it = itemOf(id);
+    var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
+
+    $("counter").textContent = (placement.i + 1) + "/" + placement.queue.length;
+    $("bar-fill").style.width = Math.round((placement.i / placement.queue.length) * 100) + "%";
+
+    $("stage").innerHTML =
+      '<p class="prompt">How much do you know?</p>' +
+      tileHTML(it) +
+      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
+
+    Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
+      btn.addEventListener("click", function () {
+        var ok = btn.getAttribute("data-id") === id;
+        if (ok) placement.correct += 1;
+        btn.classList.add(ok ? "pick-correct" : "pick-wrong");
+        markChoices(".option-word", id);
+        placement.i += 1;
+        setTimeout(renderPlaceItem, ok ? 220 : 700);
+      });
+    });
+  }
+
+  function finishPlacement() {
+    var total = placement.queue.length;
+    var ratio = placement.correct / total;
+    var floor = Math.min(TRACK.units.length - 1, Math.floor(ratio * TRACK.units.length));
+    state.placement = { floor: floor, score: placement.correct, total: total, at: Date.now() };
+    if (state.profile) {
+      state.profile.level = floor >= 3 ? "B1" : floor >= 1 ? "A2" : "A1";
+    }
+    placement = null;
+    save();
+
+    show("today");
+    toast(floor > 0
+      ? "Starting at " + TRACK.units[floor].title + " — " + placement.correct + "/" + total + " right."
+      : "Starting from the beginning.");
+    renderToday();
+  }
+
+  /* ---------------------------------------------------------------- track */
+
+  function renderTrack() {
+    var box = $("track");
+    if (!box || !TRACK) return;
+
+    var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
+    var rows = TRACK.map(solid);
+
+    /* the placement floor is a floor, not a ceiling: real progress still wins */
+    var bySolid = 0;
+    rows.forEach(function (r) { if (r.current) bySolid = r.index; });
+    var currentIndex = Math.max(bySolid, placementFloor());
+    var floor = placementFloor();
+
+    rows.forEach(function (r) {
+      r.unlocked = r.unlocked || r.index <= floor;
+      r.current = r.index === currentIndex;
+    });
+
+    box.innerHTML = rows.map(function (u) {
+      var cls = "step" + (u.unlocked ? "" : " locked") + (u.current ? " now" : "");
+      return '<button class="' + cls + '" type="button" data-unit="' + esc(u.id) + '"' +
+        (u.unlocked ? "" : " disabled") + ">" +
+        '<span class="step-n">' + (u.unlocked ? u.index + 1 : "·") + "</span>" +
+        '<span class="step-t">' + esc(u.title) + "</span>" +
+      "</button>";
+    }).join("");
+
+    Array.prototype.forEach.call(box.querySelectorAll(".step"), function (b) {
+      b.addEventListener("click", function () {
+        var id = b.getAttribute("data-unit");
+        var unit = TRACK.units.filter(function (u) { return u.id === id; })[0];
+        if (unit) startSession({ unit: unit });
+      });
+    });
+
+    var cur = rows[currentIndex];
+    var next = rows.filter(function (r) { return !r.unlocked; })[0];
+
   }
 
   /* --------------------------------------------------------------- streak */
@@ -492,6 +976,13 @@
   /* A lesson can teach a word or a whole phrase; both present the same shape
    * to the drill, so there is one renderer to maintain instead of two. */
   function itemOf(id) {
+    var t = termById[id];
+    if (t) {
+      return {
+        id: t.id, emoji: null, schema: t.schema, article: "", text: t.text,
+        sub: t.frame, frame: t.frame, contrast: t.contrast, kind: "term"
+      };
+    }
     var p = phraseById[id];
     if (p) {
       return { id: p.id, emoji: p.emoji, article: "", text: p.text, sub: p.sub || "", kind: "phrase" };
@@ -501,8 +992,37 @@
     return { id: c.id, emoji: c.emoji, article: c.article, text: c.word, sub: c.sentence, kind: "word" };
   }
 
+  /* Small schematic glyphs. A picture cannot carry "however"; a balance can. */
+  var SCHEMAS = {
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    repeat: '<path d="M4 12a8 8 0 0 1 13.7-5.6"/><path d="M20 12a8 8 0 0 1-13.7 5.6"/><path d="M17 3v4h-4"/><path d="M7 21v-4h4"/>',
+    left: '<path d="M20 12H5"/><path d="M11 6l-6 6 6 6"/>',
+    right: '<path d="M4 12h15"/><path d="M13 6l6 6-6 6"/>',
+    fork: '<path d="M12 20v-8"/><path d="M12 12L6 5"/><path d="M12 12l6-7"/>',
+    balance: '<path d="M4 9h16"/><path d="M12 9v8"/><path d="M8 17h8"/><path d="M4 9l2 4h4z"/><path d="M20 9l-2 4h-4z"/>',
+    parallel: '<path d="M4 9h16"/><path d="M4 15h16"/>',
+    question: '<path d="M9 9a3 3 0 1 1 4 2.8c-.8.4-1 1-1 1.7"/><circle cx="12" cy="18" r="1"/>',
+    plus: '<path d="M12 5v14"/><path d="M5 12h14"/>',
+    chain: '<circle cx="8" cy="12" r="3.5"/><circle cx="16" cy="12" r="3.5"/>'
+  };
+
+  function schemaSVG(key) {
+    var body = SCHEMAS[key] || SCHEMAS.question;
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + body + "</svg>";
+  }
+
+  function tileHTML(it, small) {
+    var cls = "tile" + (small ? " sm" : "");
+    if (it.schema) return '<div class="' + cls + ' schema">' + schemaSVG(it.schema) + "</div>";
+    return '<div class="' + cls + '" aria-hidden="true">' + it.emoji + "</div>";
+  }
+
   function poolFor(mode) {
-    return mode === "phrases" ? phraseIds.slice() : allIds.slice();
+    if (mode === "phrases") return phraseIds.slice();
+    if (mode === "terms") return termIds.slice();
+    if (mode === "mixed") return allIds.concat(phraseIds, termIds);
+    return allIds.slice();
   }
 
   function distractorsFor(id, count) {
@@ -511,8 +1031,16 @@
     return S.pickDistractors(id, allIds, neighboursOf(id), count, Math.random);
   }
 
+  function articleHTML(article) {
+    if (!article) return "";
+    /* French elides the article before a vowel (l'eau, l'arbre); the space
+     * that separates a full article from its noun must not appear there. */
+    var elide = /['’]$/.test(article) ? " elide" : "";
+    return '<span class="art' + elide + '">' + esc(article) + "</span>";
+  }
+
   function wordsHTML(it) {
-    var art = it.article ? '<span class="art">' + esc(it.article) + "</span>" : "";
+    var art = articleHTML(it.article);
     var long = it.text.length > 16 ? " long" : "";
     var kind = it.kind === "phrase" ? " phrase" : "";
     return '<div class="word' + long + kind + '">' + art + esc(it.text) + "</div>";
@@ -527,7 +1055,14 @@
         ICON.speaker + "</button></div>";
   }
 
+
   function contextHTML(it) {
+    if (it.kind === "term") {
+      var filled = String(it.frame || "").replace("____", "<b>" + esc(it.text) + "</b>");
+      var twin = it.contrast && termById[it.contrast];
+      return '<p class="sentence">' + filled + "</p>" +
+        (twin ? '<p class="term-contrast">↔ ' + esc(twin.text) + "</p>" : "");
+    }
     if (!it.sub) return "";
     if (it.kind === "phrase") return '<p class="sentence">' + esc(it.sub) + "</p>";
     var txt = esc(it.sub);
@@ -558,32 +1093,55 @@
     return !!c && fields.indexOf(c.cat) !== -1;
   }
 
-  /* The new concepts of the next lesson are drawn once and kept until it
-   * starts, so the stack on the Today view shows the cards that will
-   * actually be taught, not a different random draw. */
+  /* What the next lesson holds: the track's current unit (or the one asked
+   * for), its pool, what is due in it and the new items. `custom` skips the
+   * track and uses the lesson settings instead. The new items are drawn once
+   * and kept until the lesson starts, so the Today card shows the cards that
+   * will actually be taught, not a different random draw. */
   var planned = null;
 
-  function lessonPlan(mode, size, now) {
-    var fields = selectedFields();
-    var pool = mode === "phrases"
-      ? phraseIds.slice()
-      : allIds.filter(function (id) { return inFields(id, fields); });
+  function lessonPlan(opts) {
+    var o = opts || {};
+    var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
+    var unit = o.custom ? null : (o.unit || (TRACK ? TRACK.currentUnit(solid) : null));
+    var mode = unit ? unit.mode : (o.mode || sessionMode());
+    var plan = ADAPT ? ADAPT.plan(solid) : { fresh: 4, review: 4, production: 0, size: 8, level: 1 };
+    var size = o.size || (unit ? plan.size : lessonSize());
+    var fields = unit && unit.fields ? unit.fields : selectedFields();
+    var now = Date.now();
+
+    /* a lesson is not a deck: words, phrases and terms together, scoped only by
+     * the unit's fields. The mode picker becomes emphasis, not exclusion. */
+    var scopeWords = fields.length
+      ? allIds.filter(function (id) { return inFields(id, fields); })
+      : allIds.slice();
+    /* basics first: words, then phrases, then connectors. Terms are advanced
+     * material and stay out of a lesson until there is something to connect. */
+    var pool;
+    if (mode === "phrases") pool = phraseIds.slice();
+    else if (mode === "terms") pool = termIds.slice();
+    else if (!unit) pool = scopeWords;
+    else {
+      pool = scopeWords.concat(phraseIds);
+      if (solid >= 10) pool = pool.concat(termIds);
+    }
 
     var due = S.dueList(state, now).filter(function (id) {
       return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
     }).slice(0, size);
 
-    var key = mode + "|" + size + "|" + pool.join(",");
+    var freshCap = Math.max(0, Math.min(6, unit ? plan.fresh : Math.round(size / 2)));
+    var key = (unit ? unit.id : mode) + "|" + size + "|" + state.sessions + "|" + pool.join(",");
     if (!planned || planned.key !== key) {
-      var freshCap = Math.max(1, Math.min(6, Math.round(size / 2)));
+      var unseen = pool.filter(function (id) { return state.cards[id].last === null; });
+      /* the very first lesson follows the deck's own order - the deck is authored
+       * greetings first - instead of a shuffle, so a beginner meets hola. */
       planned = {
         key: key,
-        fresh: S.shuffle(pool.filter(function (id) {
-          return state.cards[id].last === null;
-        }), Math.random).slice(0, freshCap)
+        fresh: state.sessions === 0 ? unseen.slice(0, freshCap) : S.shuffle(unseen, Math.random).slice(0, freshCap)
       };
     }
-    return { pool: pool, due: due, fresh: planned.fresh };
+    return { unit: unit, mode: mode, plan: plan, size: size, pool: pool, due: due, fresh: planned.fresh };
   }
 
   /* The lesson card shows the pictures the next lesson opens with, and
@@ -591,19 +1149,11 @@
   function renderNextStack() {
     var box = $("next-stack");
     var ids, title, caption;
-    var scene = sessionMode() === "phrases" && nextScene();
-    if (scene) {
-      ids = scene.lines;
-      title = scene.title;
-      caption = scene.lines.length + " lines of one conversation";
-    } else {
-      var plan = lessonPlan(sessionMode(), lessonSize(), Date.now());
-      /* new cards are always taught; reviews can be trimmed to the lesson size */
-      ids = plan.fresh.concat(plan.due);
-      title = lessonTitle(plan);
-      caption = [plan.fresh.length ? plan.fresh.length + " new word" + (plan.fresh.length === 1 ? "" : "s") : "",
-        plan.due.length ? plan.due.length + " to review" : ""].filter(Boolean).join(", ");
-    }
+    var p = lessonPlan();
+    ids = p.fresh.concat(p.due);
+    title = p.unit ? p.unit.title : lessonTitle(p);
+    caption = [p.fresh.length ? p.fresh.length + " new" : "",
+      p.due.length ? p.due.length + " to review" : ""].filter(Boolean).join(", ");
     if (box) {
       box.innerHTML = ids.slice(0, 5).map(function (id) {
         return '<span class="pic">' + itemOf(id).emoji + "</span>";
@@ -613,36 +1163,56 @@
   }
 
   /* Named after the field its new words come from, the way a course names a unit. */
-  function lessonTitle(plan) {
-    if (sessionMode() === "phrases") return "Phrases";
-    if (!plan.fresh.length) return plan.due.length ? "Review" : "Practice";
-    var cats = plan.fresh.map(function (id) { return conceptById[id] && conceptById[id].cat; });
+  function lessonTitle(p) {
+    if (p.mode === "phrases") return "Phrases";
+    if (p.mode === "terms") return "Connectors";
+    if (!p.fresh.length) return p.due.length ? "Review" : "Practice";
+    var cats = p.fresh.map(function (id) { return conceptById[id] && conceptById[id].cat; });
     var same = cats.every(function (c) { return c === cats[0]; });
     return same && D.categories[cats[0]] ? D.categories[cats[0]].label : "New words";
   }
 
   function startSession(opts) {
     var o = opts || {};
-    var mode = o.mode || sessionMode();
-    var size = o.size || lessonSize();
     var now = Date.now();
-
-    if (mode === "phrases" && SCENES.length) { startScene(nextScene()); return; }
-
-    var plan = lessonPlan(mode, size, now);
-    var pool = plan.pool, due = plan.due, fresh = plan.fresh;
+    var p = lessonPlan(o);
     planned = null;
 
+    /* phrases chosen in the settings play as a scene, one exchange in order */
+    if (!p.unit && p.mode === "phrases" && scenes().length) { startScene(nextScene()); return; }
+
+    var mode = p.mode, plan = p.plan, size = p.size, pool = p.pool, due = p.due, fresh = p.fresh;
+
     var quiz = S.shuffle(due.concat(fresh), Math.random).slice(0, size);
+
+    /* persistent memory, used: the pairs you keep trading come back first */
+    var weak = MEM.weakItems(state, 6).filter(function (id) {
+      return pool.indexOf(id) !== -1 && quiz.indexOf(id) === -1;
+    }).slice(0, 2);
+    if (weak.length) quiz = weak.concat(quiz);
 
     if (!quiz.length) {
       quiz = S.shuffle(pool.length ? pool : allIds, Math.random).slice(0, size);
       toast("Nothing due here — free practice.");
     }
 
-    session = newSession(mode, fresh, quiz);
+    /* one card per item: the study step is gone, so a new item is taught by
+     * being asked, and the answer is shown the moment it is missed. */
+    session = newSession(mode, [], quiz);
+    session.plan = plan;
+
+    /* your own sentence, if one is old enough to be worth re-reading */
+    var older = MEM.nextToReview(state.memory, now, MEM.DAY_MS / 2);
+    if (older) {
+      var words = older.items.map(function (id) { return itemOf(id).text; });
+      var blanked = MEM.cloze(older.text, words);
+      if (blanked) session.personal = { sentence: older, cloze: blanked };
+    }
+    session.hasPersonal = !!session.personal;
+
     show("session");
-    if (session.study.length) renderStudy();
+    if (session.personal) renderPersonal();
+    else if (session.study.length) renderStudy();
     else renderQuiz();
   }
 
@@ -651,7 +1221,7 @@
   function nextScene() {
     var now = Date.now();
     var best = null, bestDue = 0;
-    SCENES.forEach(function (s) {
+    scenes().forEach(function (s) {
       var due = s.lines.filter(function (id) {
         var c = state.cards[id];
         return c.last !== null && c.due <= now;
@@ -659,11 +1229,11 @@
       if (due > bestDue) { best = s; bestDue = due; }
     });
     if (best) return best;
-    var fresh = SCENES.filter(function (s) {
+    var fresh = scenes().filter(function (s) {
       return s.lines.some(function (id) { return state.cards[id].last === null; });
     })[0];
     if (fresh) return fresh;
-    return SCENES.slice().sort(function (a, b) { return soonestDue(a) - soonestDue(b); })[0];
+    return scenes().sort(function (a, b) { return soonestDue(a) - soonestDue(b); })[0];
   }
 
   function soonestDue(scene) {
@@ -715,6 +1285,69 @@
     toast("Demo — starts clean; saved progress is untouched.", 3200);
   }
 
+  /* ---- the personal card: your sentence from a previous day ------------ */
+
+  function shortDate(ts) {
+    try {
+      return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    } catch (err) { return "earlier"; }
+  }
+
+  function renderPersonal() {
+    clearCard();
+    setProgress();
+    renderSteps("warm");
+
+    var p = session.personal;
+    $("stage").innerHTML =
+      '<p class="prompt">Your own sentence · ' + esc(shortDate(p.sentence.created)) + "</p>" +
+      '<p class="personal-line">' + esc(p.cloze.blanked) + "</p>" +
+      '<input class="type-input" id="type-input" type="text" autocomplete="off" ' +
+        'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
+        'aria-label="the missing word" placeholder="the missing word" />' +
+      '<button class="btn btn-primary" id="check">Check</button>';
+
+    var input = $("type-input");
+    if (input) {
+      input.focus();
+      input.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") { ev.preventDefault(); checkPersonal(); }
+      });
+    }
+    $("check").addEventListener("click", checkPersonal);
+  }
+
+  function checkPersonal() {
+    var p = session.personal;
+    var input = $("type-input");
+    var value = input ? input.value : "";
+    var score = S.similarity(value, p.cloze.answer);
+    var ok = score >= 0.7;
+
+    MEM.markReviewed(state.memory, p.sentence.id, Date.now());
+    MEM.recordAttempt(state.memory, ok, 0);
+    save();
+
+    var answer = esc(p.cloze.answer);
+    var full = esc(p.sentence.text).replace(
+      new RegExp("\\b" + answer + "\\b", "i"), "<b>$&</b>"
+    );
+
+    $("stage").innerHTML =
+      '<p class="prompt">' + (ok ? "Correct" : "Not quite") + "</p>" +
+      '<p class="personal-line">' + full + "</p>" +
+      '<p class="sentence">your own words, from ' + esc(shortDate(p.sentence.created)) + "</p>";
+
+    feedback(ok ? "that was yours" : "the word was “" + p.cloze.answer + "”", ok ? "good" : "bad");
+
+    $("actions").innerHTML = '<button class="btn btn-primary" id="next">Continue</button>';
+    $("next").addEventListener("click", function () {
+      session.personal = null;
+      if (session.study.length) renderStudy();
+      else renderQuiz();
+    });
+  }
+
   function startQuizOnly() {
     var pool = poolFor(sessionMode());
     session = newSession(sessionMode(), [], S.shuffle(pool, Math.random).slice(0, 6));
@@ -722,22 +1355,20 @@
     renderQuiz();
   }
 
+  /* One queue for everything you keep getting wrong, across all three decks.
+   * Memory already ranks it; this just refuses to pretend a review is a deck. */
   function reviewMistakes() {
-    var ids = allIds.concat(phraseIds).filter(function (id) {
-      return state.cards[id] && state.cards[id].lapses > 0;
-    }).sort(function (a, b) {
-      return state.cards[b].lapses - state.cards[a].lapses;
-    });
+    var ids = MEM.weakItems(state, 12);
 
     if (!ids.length) {
       ids = S.topConfusions(state, 12).map(function (r) { return r.target; });
     }
     if (!ids.length) {
-      toast("No mistakes recorded yet — do a lesson first.");
+      toast("Nothing to review yet — do a lesson first.");
       return;
     }
 
-    var mode = phraseById[ids[0]] ? "phrases" : "words";
+    var mode = "mixed";
     session = newSession(mode, [], S.shuffle(ids, Math.random).slice(0, 10));
     show("session");
     renderQuiz();
@@ -765,12 +1396,15 @@
   }
 
   function totalSteps() {
-    return session.study.length + Math.max(session.unique, session.quiz.length);
+    var extra = session.hasPersonal ? 1 : 0;
+    return extra + session.study.length + Math.max(session.unique, session.quiz.length);
   }
 
   function doneSteps() {
-    if (session.phase === "study") return session.si;
-    return session.study.length + session.qi;
+    var extra = session.hasPersonal ? 1 : 0;
+    if (session.personal) return 0;
+    if (session.phase === "study") return extra + session.si;
+    return extra + session.study.length + session.qi;
   }
 
   function setProgress() {
@@ -778,6 +1412,23 @@
     var done = Math.min(doneSteps(), n);
     $("counter").textContent = Math.min(done + 1, n) + " of " + n;
     $("bar-fill").style.width = Math.round((done / n) * 100) + "%";
+  }
+
+  /* The process, made visible: a lesson is four named steps, not one long
+   * undifferentiated deck. You always know where you are and what is left. */
+  function renderSteps(active) {
+    var box = $("steps");
+    if (!box || !session) return;
+    var steps = [];
+    if (session.hasPersonal) steps.push(["warm", "Warm up"]);
+    steps.push(["learn", "Learn"], ["quiz", "Quiz"], ["done", "Done"]);
+
+    var passed = false;
+    box.innerHTML = steps.map(function (s) {
+      var cls = s[0] === active ? " is-current" : (passed ? " is-done" : "");
+      if (s[0] === active) passed = true;
+      return '<li class="pstep' + cls + '">' + esc(s[1]) + "</li>";
+    }).join("");
   }
 
   function clearCard() {
@@ -794,6 +1445,7 @@
   function renderStudy() {
     setProgress();
     clearCard();
+    renderSteps("learn");
 
     var it = itemOf(session.study[session.si]);
     var last = session.si === session.study.length - 1;
@@ -822,7 +1474,11 @@
 
   function quizType(card, i) {
     if (session.types) return session.types[i] || "pick-picture";
+    if (session.forceWrite) return "write";
     if (card.last === null) return "pick-word";
+    var prod = (session.plan && session.plan.production) || 0;
+    if (prod >= 2 && i % 2 === 1) return "write";
+    if (prod >= 1 && i % 3 === 2) return "write";   // production without a microphone
     if (SR && i % 2 === 1) return "say";
     return "pick-picture";
   }
@@ -831,6 +1487,7 @@
     if (session.qi >= session.quiz.length) { finishSession(); return; }
     setProgress();
     clearCard();
+    renderSteps("quiz");
 
     var id = session.quiz[session.qi];
     var card = state.cards[id];
@@ -840,8 +1497,19 @@
     }
 
     session.qStart = Date.now();
+    /* never seen it? teach on this card, then move on. One screen per item,
+     * but the first exposure informs instead of interrogating. */
+    /* teach the first few, then ask: a session of eight brand-new items used to
+     * be eight teach cards and zero questions, and every answer counted zero. */
+    var taught = session.taught || 0;
+    /* a lesson that opened with study cards (a scene, the demo) has taught them already */
+    if (!session.study.length && card.last === null && taught < 3) { session.taught = taught + 1; renderTeach(id); return; }
+
+    if (itemOf(id).kind === "term") { renderPickFrame(id); return; }
+
     var type = quizType(card, session.qi);
     if (type === "pick-word") renderPickWord(id);
+    else if (type === "write") renderWrite(id);
     else if (type === "say") renderSay(id);
     else renderPickPicture(id);
     markScene(id, type !== "pick-picture");
@@ -854,15 +1522,60 @@
     var long = it.kind === "phrase" ? " phrase" : it.text.length > 16 ? " long" : "";
     return '<button class="option-word' + long + '" data-id="' + esc(id) + '">' +
       '<span class="key" aria-hidden="true">' + (i + 1) + "</span>" +
-      '<span class="opt-text">' +
-        (it.article ? '<span class="art">' + esc(it.article) + "</span> " : "") +
-        esc(it.text) + "</span></button>";
+      '<span class="opt-text">' + articleHTML(it.article) + esc(it.text) + "</span></button>";
   }
 
   function markChoices(cls, targetId) {
     Array.prototype.forEach.call($("stage").querySelectorAll(cls), function (b) {
       b.disabled = true;
       if (b.getAttribute("data-id") === targetId) b.classList.add("pick-correct");
+    });
+  }
+
+  /* The only honest question for "aunque": which one fits this sentence. */
+  function renderTeach(id) {
+    var it = itemOf(id);
+    $("stage").innerHTML =
+      '<p class="prompt">New</p>' +
+      figureHTML(it, "Hear it") +
+      wordsHTML(it) +
+      contextHTML(it);
+    sayItem(it);
+    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
+    var tile = $("stage").querySelector(".tile");
+    if (tile) {
+      tile.style.cursor = "pointer";
+      tile.setAttribute("role", "button");
+      tile.setAttribute("aria-label", "Play the audio");
+      tile.addEventListener("click", function () { sayItem(it); });
+    }
+    $("actions").innerHTML = '<button class="btn btn-primary" id="gotit">Got it</button>';
+    $("gotit").addEventListener("click", function () {
+      session.firstCorrect += 1;   // it was taught and acknowledged, not guessed
+      S.review(state, id, 2, Date.now());
+      save();
+      session.qi += 1;
+      renderQuiz();
+    });
+  }
+
+  function renderPickFrame(id) {
+    var it = itemOf(id);
+    var set = S.shuffle([id].concat(S.pickDistractors(id, termIds, [], 3, Math.random)), Math.random);
+
+    $("stage").innerHTML =
+      '<p class="prompt">Which one fits?</p>' +
+      '<p class="term-blank">' + esc(it.frame) + "</p>" +
+      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
+
+    Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
+      btn.addEventListener("click", function () {
+        var picked = btn.getAttribute("data-id");
+        var ok = picked === id;
+        btn.classList.add(ok ? "pick-correct" : "pick-wrong");
+        markChoices(".option-word", id);
+        answer(ok, ok ? null : picked);
+      });
     });
   }
 
@@ -928,6 +1641,42 @@
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
     chooseThenCheck(".option", id);
+  }
+
+  /* Write it: the only exercise that tests production without a microphone.
+   * Fuzzy on purpose - "cafe" for "café" is not a spelling lesson, it is a
+   * recall success. */
+  function renderWrite(id) {
+    var it = itemOf(id);
+
+    $("stage").innerHTML =
+      '<p class="prompt">Write it in ' + esc(LANG.name) + "</p>" +
+      tileHTML(it) +
+      '<input class="type-input" id="type-input" type="text" autocomplete="off" ' +
+        'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
+        'aria-label="write the word" placeholder="type it" />' +
+      '<button class="btn btn-primary" id="write-check">Check</button>';
+    var input = $("type-input");
+    if (input) {
+      input.focus();
+      input.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") { ev.preventDefault(); submitWrite(id, it); }
+      });
+    }
+    $("write-check").addEventListener("click", function () { submitWrite(id, it); });
+  }
+
+  function submitWrite(id, it) {
+    var input = $("type-input");
+    var typed = input ? input.value : "";
+    var score = S.similarity(typed, it.text);
+    var kind = CORRECT ? CORRECT.classify(typed, it.text) : "spelling";
+
+    if (score >= 0.8) { answer(true, null); return; }
+
+    /* A tutor says what was wrong, not just that it was. */
+    toast(CORRECT ? CORRECT.message(kind, it.text) : "not quite");
+    answer(false, null);
   }
 
   function renderSay(id) {
@@ -1006,7 +1755,7 @@
       '<div class="sheet ' + (ok ? "good" : "bad") + '" role="status">' +
         '<p class="sheet-title">' + (ok ? ICON.check + "Correct" : ICON.cross + "Not quite") + "</p>" +
         '<p class="sheet-word"><span aria-hidden="true">' + it.emoji + "</span> " +
-          (it.article ? '<span class="art">' + esc(it.article) + "</span> " : "") + esc(it.text) +
+          articleHTML(it.article) + esc(it.text) +
           '<button class="sheet-hear" id="hear-again" aria-label="Hear it again" title="Hear it again">' + ICON.speaker + "</button>" +
         "</p>" +
         contextHTML(it) +
@@ -1031,6 +1780,7 @@
     var missed = Object.keys(session.missed);
     var kept = seen.filter(function (id) { return !session.missed[id]; });
 
+    renderSteps("done");
     $("bar-fill").style.width = "100%";
     $("counter").textContent = String(total);
 
@@ -1056,6 +1806,28 @@
         days + "-day streak</p>";
 
     feedback("", "");
+    $("stage").insertAdjacentHTML("beforeend",
+      '<div class="compose">' +
+        '<label class="prompt" for="compose-input">one sentence with today\'s words</label>' +
+        '<textarea class="type-input" id="compose-input" rows="2" maxlength="160" ' +
+          'placeholder="escribe una frase"></textarea>' +
+        '<button class="btn btn-ghost btn-sm" id="compose-save">keep it</button>' +
+      "</div>");
+
+    $("compose-save").addEventListener("click", function () {
+      var field = $("compose-input");
+      var text = field ? field.value : "";
+      var kept = MEM.addSentence(state.memory, text, Object.keys(session.answered), Date.now());
+      if (!kept) { toast("A few more words, in Spanish."); return; }
+      save();
+      var form = document.querySelector(".compose");
+      if (form) {
+        form.innerHTML = '<p class="sentence">kept — “' + esc(kept.text) +
+          '”. It comes back as a card tomorrow.</p>';
+      }
+      toast("Saved to your memory.");
+    });
+
     $("actions").innerHTML =
       '<button class="btn btn-primary" id="back">Done</button>' +
       '<button class="btn btn-ghost" id="again">One more lesson</button>';
@@ -1267,7 +2039,7 @@
           return '<button class="row" type="button" data-id="' + esc(c.id) + '">' +
             '<span class="row-pic" aria-hidden="true">' + c.emoji + "</span>" +
             '<span class="row-body">' +
-              '<span class="row-main">' + (c.article ? '<span class="art">' + esc(c.article) + "</span> " : "") + esc(c.word) + "</span>" +
+              '<span class="row-main">' + articleHTML(c.article) + esc(c.word) + "</span>" +
               '<span class="row-meta">' + near + "</span>" +
             "</span></button>";
         }).join("") + "</div></section>";
@@ -1351,6 +2123,21 @@
       }).join("");
     }
 
+    var mem = state.memory;
+    var prof = MEM.profile(mem);
+    $("mem-sentences").textContent = prof.sentences;
+    $("mem-acc").textContent = prof.accuracy === null ? "—" : Math.round(prof.accuracy * 100) + "%";
+    $("mem-days").textContent = prof.days;
+
+    var recent = mem.sentences.slice(-3).reverse();
+    $("mem-list").innerHTML = recent.length
+      ? recent.map(function (item) {
+          return '<p class="mem-line">“' + esc(item.text) + "” <span>" +
+            esc(shortDate(item.created)) + "</span></p>";
+        }).join("")
+      : '<div class="empty">Nothing kept yet. Finish a lesson and write one sentence with the words you just met.</div>';
+
+
     $("stat-sessions").textContent = state.sessions;
     $("stat-good").textContent = state.reviews.good;
     $("stat-again").textContent = state.reviews.again;
@@ -1366,9 +2153,38 @@
     b.addEventListener("click", function () { show(b.getAttribute("data-goto")); });
   });
 
-  $("start-btn").addEventListener("click", function () { startSession(); });
-  $("build-start").addEventListener("click", function () { startSession(); });
+  $("start-btn").addEventListener("click", function () {
+    startSession({ unit: TRACK.units[Math.min(TRACK.units.length - 1, placementFloor())] });
+  });
+  $("build-start").addEventListener("click", function () { startSession({ custom: true }); });
   $("review-missed").addEventListener("click", reviewMistakes);
+  $("place-btn").addEventListener("click", startPlacement);
+  $("read-btn").addEventListener("click", startReader);
+  $("settings-btn").addEventListener("click", function () { show("settings"); });
+  $("conv-btn").addEventListener("click", startConversation);
+  $("setup-new").addEventListener("click", function () {
+    beginProfile("A1");
+    show("today");
+  });
+  $("setup-test").addEventListener("click", function () {
+    beginProfile("?");
+    startPlacement();
+  });
+  $("setup-lang").addEventListener("change", function () {
+    if (switchLang(this.value)) toast(ACTIVE.name + " deck loaded. Progress stays with each language.");
+  });
+  $("settings-lang").addEventListener("change", function () {
+    if (switchLang(this.value)) toast(ACTIVE.name + " deck loaded. Progress stays with each language.");
+  });
+  $("home-conv").addEventListener("click", startConversation);
+  $("reset-btn").addEventListener("click", function () {
+    if (!window.confirm("Clear all progress in every language on this device?")) return;
+    try { localStorage.removeItem(STORE_KEY); } catch (err) { /* ignore */ }
+    window.location.reload();
+  });
+  $("conv-back").addEventListener("click", function () { conv = null; show("today"); });
+  $("settings-back").addEventListener("click", function () { show("today"); });
+  $("reader-back").addEventListener("click", function () { reader = null; show("today"); });
   Array.prototype.forEach.call(document.querySelectorAll(".mode"), function (b) {
     b.addEventListener("click", function () {
       state.settings.mode = b.getAttribute("data-mode");
@@ -1384,7 +2200,12 @@
       renderToday();
     });
   });
-  $("quit-btn").addEventListener("click", function () { session = null; show("today"); });
+  $("quit-btn").addEventListener("click", function () {
+    session = null;
+    // backing out of the placement returns to the question, not to a lesson
+    if (state.profile && state.profile.level === "?") { show("setup"); return; }
+    show("today");
+  });
   $("map-practice").addEventListener("click", function () { startSession(); });
   Array.prototype.forEach.call(document.querySelectorAll("[data-mapmode]"), function (b) {
     b.addEventListener("click", function () { setMapMode(b.getAttribute("data-mapmode")); });
@@ -1411,20 +2232,31 @@
     }
   });
 
-  /* Deep links: #map, #stats and #practice are shareable — useful for a demo,
+  /* Deep links: #map, #stats and #practice are shareable — useful for sharing,
    * and they let the views be driven without a click. */
   $("audio-chip").addEventListener("click", function () {
     sayItem(itemOf("noche"));
     toast(audioStatus().state === "ok"
       ? "That was the synthesized voice — if you heard nothing, check the system volume."
-      : "No Spanish voice on this device; the demo still works without audio.");
+      : "No " + LANG.name + " voice on this device; everything still works without audio.");
   });
   updateAudioChip();
 
+  if (!state.profile) show("setup");
   var initial = String(window.location.hash || "").replace("#", "");
   renderToday();
   if (initial === "practice") startSession();
-  else if (initial === "phrases") { state.settings.mode = "phrases"; save(); startSession(); }
+  else if (initial === "phrases") { state.settings.mode = "phrases"; save(); startSession({ custom: true }); }
+  else if (initial === "terms") { state.settings.mode = "terms"; save(); startSession({ custom: true }); }
+  else if (initial === "placement") startPlacement();
+  else if (initial === "read") startReader();
+  else if (initial === "chat") startConversation();
+  else if (initial === "write") {
+    session = newSession("words", [], S.shuffle(allIds, Math.random).slice(0, 6));
+    session.forceWrite = true;
+    show("session");
+    renderQuiz();
+  }
   else if (initial === "quiz") startQuizOnly();
   else if (DEMO) startDemo();
   else if (VIEWS.indexOf(initial) !== -1 && initial !== "today") show(initial);
