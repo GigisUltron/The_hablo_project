@@ -14,6 +14,7 @@
   var MEM = window.SemaMemory;
   var TRACK = window.SemaTrack;
   var ADAPT = window.SemaAdaptive;
+  var CORRECT = window.SemaCorrect;
   var STORE_KEY = "sema.v1";
   var LANG = D.language;
 
@@ -1160,8 +1161,15 @@
 
   function submitWrite(id, it) {
     var input = $("type-input");
-    var score = S.similarity(input ? input.value : "", it.text);
-    answer(score >= 0.8, null);
+    var typed = input ? input.value : "";
+    var score = S.similarity(typed, it.text);
+    var kind = CORRECT ? CORRECT.classify(typed, it.text) : "spelling";
+
+    if (score >= 0.8) { answer(true, null); return; }
+
+    /* A tutor says what was wrong, not just that it was. */
+    toast(CORRECT ? CORRECT.message(kind, it.text) : "not quite");
+    answer(false, null);
   }
 
   function renderSay(id) {
