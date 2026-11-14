@@ -865,9 +865,11 @@
     }).slice(0, size);
 
     var freshCap = Math.max(0, Math.min(6, plan.fresh));
-    var fresh = S.shuffle(pool.filter(function (id) {
-      return state.cards[id].last === null;
-    }), Math.random).slice(0, freshCap);
+    var unseen = pool.filter(function (id) { return state.cards[id].last === null; });
+    /* the very first lesson follows the deck's own order - the deck is authored
+     * greetings first - instead of a shuffle, so a beginner meets hola. */
+    var fresh = (state.sessions === 0 ? unseen.slice(0, freshCap)
+      : S.shuffle(unseen, Math.random).slice(0, freshCap));
 
     var quiz = S.shuffle(due.concat(fresh), Math.random).slice(0, size);
 
