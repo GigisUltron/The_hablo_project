@@ -38,6 +38,15 @@
     neighbours[id].sort(function (a, b) { return b.w - a.w; });
   });
 
+  /* phrase deck: same shape as a concept once itemOf() normalises it */
+  var P = window.SEMA_PHRASES || { phrases: [] };
+  var phraseById = {};
+  var phraseIds = [];
+  P.phrases.forEach(function (p) {
+    phraseById[p.id] = p;
+    phraseIds.push(p.id);
+  });
+
   /* ------------------------------------------------------------ utilities */
 
   function $(id) { return document.getElementById(id); }
@@ -63,9 +72,13 @@
   /* ----------------------------------------------------------- persistence */
 
   var state = load();
+  /* a fresh browser has no saved settings; every screen reads them */
+  if (!state.settings) {
+    state.settings = { fields: Object.keys(D.categories), size: 8, mode: "words" };
+  }
 
   function load() {
-    var base = S.newState(allIds, Date.now());
+    var base = S.newState(allIds.concat(phraseIds), Date.now());
     try {
       var raw = localStorage.getItem(STORE_KEY);
       if (!raw) return base;
@@ -79,7 +92,8 @@
         saved.settings.fields = Object.keys(D.categories);
       }
       if (!saved.settings.size) saved.settings.size = 8;
-      allIds.forEach(function (id) {
+      if (saved.settings.mode !== "phrases") saved.settings.mode = "words";
+      allIds.concat(phraseIds).forEach(function (id) {
         if (!saved.cards[id]) saved.cards[id] = S.newCard(id, Date.now());
       });
       return saved;
@@ -123,7 +137,7 @@
    * it. Waiting forever is why a silent device looks identical to a loading
    * one, so after a short grace period "no voices" becomes a definite answer. */
   function audioStatus() {
-    if (hasBundled()) return { state: "ok", text: "bundled audio · " + Object.keys(bundled).length + " words" };
+    if (hasBundled()) return { state: "ok", text: "bundled audio · " + Object.keys(bundled).length + " clips" };
     if (!hasTTS) return { state: "none", text: "no speech support" };
     var all = window.speechSynthesis.getVoices() || [];
     if (!all.length) {
@@ -165,8 +179,8 @@
   /* Prefer the WAV shipped with the app: it works on a machine with no
    * installed voices, which is the common case on Linux. Speech synthesis is
    * the fallback, not the primary path. */
-  function sayConcept(c, btn) {
-    var url = bundled && bundled[c.id];
+  function sayItem(it, btn) {
+    var url = bundled && bundled[it.id];
     if (url) {
       try {
         var a = audioCache[url] || (audioCache[url] = new Audio(url));
@@ -180,7 +194,7 @@
         return;
       } catch (err) { /* fall through */ }
     }
-    speak(c.word, btn);
+    speak(it.text, btn);
   }
 
   var warnedNoVoice = false;
@@ -291,6 +305,63 @@
 
   /* ---------------------------------------------------------------- today */
 
+  /* --------------------------------------------------------------- builder */
+
+  function renderBuilder() {
+    var box = $("fields");
+    if (!box) return;
+
+    var fields = selectedFields();
+    box.innerHTML = Object.keys(D.categories).map(function (cat) {
+      var n = D.concepts.filter(function (c) { return c.cat === cat; }).length;
+      var on = fields.indexOf(cat) !== -1;
+      return '<button type="button" class="field' + (on ? " is-on" : "") + '" data-cat="' + cat + '"' +
+        ' aria-pressed="' + on + '">' + esc(D.categories[cat].label) +
+        ' <b>' + n + "</b></button>";
+    }).join("");
+
+    Array.prototype.forEach.call(box.querySelectorAll(".field"), function (btn) {
+      btn.addEventListener("click", function () {
+        var cat = btn.getAttribute("data-cat");
+        var current = selectedFields().slice();
+        var i = current.indexOf(cat);
+        if (i === -1) current.push(cat);
+        else current.splice(i, 1);
+        if (!current.length) { toast("Pick at least one field."); return; }
+        state.settings.fields = current;
+        save();
+        renderBuilder();
+      });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll(".size"), function (b) {
+      var on = Number(b.getAttribute("data-size")) === lessonSize();
+      b.classList.toggle("is-on", on);
+      b.setAttribute("aria-pressed", String(on));
+    });
+
+    var mode = sessionMode();
+    Array.prototype.forEach.call(document.querySelectorAll(".mode"), function (b) {
+      var on = b.getAttribute("data-mode") === mode;
+      b.classList.toggle("is-on", on);
+      b.setAttribute("aria-pressed", String(on));
+    });
+    box.style.display = mode === "phrases" ? "none" : "flex";
+
+    var pool = mode === "phrases" ? phraseIds : allIds.filter(function (id) {
+      return inFields(id, fields);
+    });
+    var due = S.dueList(state, Date.now()).filter(function (id) {
+      return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
+    }).length;
+
+    var note = $("builder-note");
+    if (note) {
+      note.textContent = lessonSize() + " cards · " + pool.length +
+        (mode === "phrases" ? " phrases" : " concepts") + " · " + due + " due";
+    }
+  }
+
   function renderToday() {
     renderBuilder();
     var due = S.dueList(state, Date.now()).filter(function (id) {
@@ -321,6 +392,44 @@
     }
   }
 
+  /* --------------------------------------------------------- items + pools */
+
+  /* A lesson can teach a word or a whole phrase; both present the same shape
+   * to the drill, so there is one renderer to maintain instead of two. */
+  function itemOf(id) {
+    var p = phraseById[id];
+    if (p) {
+      return { id: p.id, emoji: p.emoji, article: "", text: p.text, sub: p.sub || "", kind: "phrase" };
+    }
+    var c = conceptById[id];
+    if (!c) return { id: id, emoji: "❓", article: "", text: id, sub: "", kind: "word" };
+    return { id: c.id, emoji: c.emoji, article: c.article, text: c.word, sub: c.sentence, kind: "word" };
+  }
+
+  function poolFor(mode) {
+    return mode === "phrases" ? phraseIds.slice() : allIds.slice();
+  }
+
+  function distractorsFor(id, count) {
+    var it = itemOf(id);
+    if (it.kind === "phrase") return S.pickDistractors(id, phraseIds, [], count, Math.random);
+    return S.pickDistractors(id, allIds, neighboursOf(id), count, Math.random);
+  }
+
+  function wordsHTML(it) {
+    var art = it.article ? '<span class="art">' + esc(it.article) + "</span>" : "";
+    var long = it.text.length > 16 ? " long" : "";
+    return '<div class="word' + long + '">' + art + esc(it.text) + "</div>";
+  }
+
+  function contextHTML(it) {
+    if (!it.sub) return "";
+    if (it.kind === "phrase") return '<p class="sentence">' + esc(it.sub) + "</p>";
+    var txt = esc(it.sub);
+    var w = esc(it.text);
+    return '<p class="sentence">' + txt.replace(new RegExp("\\b(" + w + ")\\b", "i"), "<b>$1</b>") + "</p>";
+  }
+
   /* -------------------------------------------------------------- session */
 
   var session = null;
@@ -335,22 +444,28 @@
     return (state.settings && state.settings.size) || 8;
   }
 
-  function inFields(id, fields) {
-    return fields.indexOf(conceptById[id].cat) !== -1;
+  function sessionMode() {
+    return (state.settings && state.settings.mode) || "words";
   }
 
-  /* A lesson is drawn from the fields the learner picked: reviews first, then
-   * enough new concepts to fill the session. Nothing outside the selection is
-   * ever shown, which is the point of choosing. */
+  function inFields(id, fields) {
+    var c = conceptById[id];
+    return !!c && fields.indexOf(c.cat) !== -1;
+  }
+
   function startSession(opts) {
     var o = opts || {};
-    var fields = o.fields || selectedFields();
+    var mode = o.mode || sessionMode();
     var size = o.size || lessonSize();
+    var fields = selectedFields();
     var now = Date.now();
-    var pool = allIds.filter(function (id) { return inFields(id, fields); });
+
+    var pool = mode === "phrases"
+      ? phraseIds.slice()
+      : allIds.filter(function (id) { return inFields(id, fields); });
 
     var due = S.dueList(state, now).filter(function (id) {
-      return state.cards[id].last !== null && inFields(id, fields);
+      return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
     }).slice(0, size);
 
     var freshCap = Math.max(1, Math.min(6, Math.round(size / 2)));
@@ -361,21 +476,26 @@
     var quiz = S.shuffle(due.concat(fresh), Math.random).slice(0, size);
 
     if (!quiz.length) {
-      var fallback = pool.length ? pool : allIds;
-      quiz = S.shuffle(fallback, Math.random).slice(0, size);
-      toast("Nothing due in those fields — free practice.");
+      quiz = S.shuffle(pool.length ? pool : allIds, Math.random).slice(0, size);
+      toast("Nothing due here — free practice.");
     }
 
-    session = newSession(fresh, quiz);
+    session = newSession(mode, fresh, quiz);
     show("session");
     if (session.study.length) renderStudy();
     else renderQuiz();
   }
 
-  /* Everything the learner has actually got wrong, worst first. */
+  function startQuizOnly() {
+    var pool = poolFor(sessionMode());
+    session = newSession(sessionMode(), [], S.shuffle(pool, Math.random).slice(0, 6));
+    show("session");
+    renderQuiz();
+  }
+
   function reviewMistakes() {
-    var ids = allIds.filter(function (id) {
-      return state.cards[id].lapses > 0;
+    var ids = allIds.concat(phraseIds).filter(function (id) {
+      return state.cards[id] && state.cards[id].lapses > 0;
     }).sort(function (a, b) {
       return state.cards[b].lapses - state.cards[a].lapses;
     });
@@ -388,63 +508,15 @@
       return;
     }
 
-    session = newSession([], S.shuffle(ids, Math.random).slice(0, 10));
+    var mode = phraseById[ids[0]] ? "phrases" : "words";
+    session = newSession(mode, [], S.shuffle(ids, Math.random).slice(0, 10));
     show("session");
     renderQuiz();
   }
 
-  function renderBuilder() {
-    var fields = selectedFields();
-    var box = $("fields");
-    if (!box) return;
-
-    box.innerHTML = Object.keys(D.categories).map(function (cat) {
-      var n = D.concepts.filter(function (c) { return c.cat === cat; }).length;
-      var on = fields.indexOf(cat) !== -1;
-      return '<button type="button" class="field' + (on ? " is-on" : "") + '" data-cat="' + cat + '"' +
-        ' aria-pressed="' + on + '">' + esc(D.categories[cat].label) +
-        ' <b>' + n + "</b></button>";
-    }).join("");
-
-    Array.prototype.forEach.call(box.querySelectorAll(".field"), function (btn) {
-      btn.addEventListener("click", function () {
-        var cat = btn.getAttribute("data-cat");
-        var current = selectedFields().slice();
-        var i = current.indexOf(cat);
-        if (i === -1) current.push(cat);
-        else current.splice(i, 1);
-        if (!current.length) { toast("Pick at least one field."); return; }
-        state.settings.fields = current;
-        save();
-        renderBuilder();
-      });
-    });
-
-    Array.prototype.forEach.call(document.querySelectorAll(".size"), function (b) {
-      var on = Number(b.getAttribute("data-size")) === lessonSize();
-      b.classList.toggle("is-on", on);
-      b.setAttribute("aria-pressed", String(on));
-    });
-
-    var total = D.concepts.filter(function (c) { return fields.indexOf(c.cat) !== -1; }).length;
-    var due = S.dueList(state, Date.now()).filter(function (id) {
-      return state.cards[id].last !== null && inFields(id, fields);
-    }).length;
-    var note = $("builder-note");
-    if (note) {
-      note.textContent = lessonSize() + " cards · " + total + " concepts in scope · " + due + " due";
-    }
-  }
-
-  /* Shareable "just quiz me" link (#quiz): no teaching, straight to questions. */
-  function startQuizOnly() {
-    session = newSession([], S.shuffle(allIds, Math.random).slice(0, 6));
-    show("session");
-    renderQuiz();
-  }
-
-  function newSession(study, quiz) {
+  function newSession(mode, study, quiz) {
     return {
+      mode: mode,
       phase: "study",
       study: study,
       si: 0,
@@ -488,20 +560,19 @@
     setProgress();
     clearCard();
 
-    var c = conceptById[session.study[session.si]];
+    var it = itemOf(session.study[session.si]);
     var last = session.si === session.study.length - 1;
 
     $("stage").innerHTML =
-      '<p class="prompt">Learn the pair · ' + (session.si + 1) + " of " + session.study.length + "</p>" +
-      '<div class="tile" aria-hidden="true">' + c.emoji + "</div>" +
-      '<div class="word study">' +
-        (c.article ? '<span class="art">' + esc(c.article) + "</span>" : "") + esc(c.word) +
-      "</div>" +
-      '<p class="sentence">' + highlightSentence(c) + "</p>" +
+      '<p class="prompt">Learn the pair · ' + (session.si + 1) + " of " + session.study.length +
+        (it.kind === "phrase" ? " · phrase" : "") + "</p>" +
+      '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
+      wordsHTML(it) +
+      contextHTML(it) +
       '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>';
 
-    sayConcept(c);
-    $("hear-btn").addEventListener("click", function () { sayConcept(c, this); });
+    sayItem(it);
+    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
 
     $("actions").innerHTML = '<button class="btn btn-primary" id="next">' +
       (last ? "Start the quiz →" : "Next →") + "</button>";
@@ -526,102 +597,100 @@
     clearCard();
 
     var id = session.quiz[session.qi];
-    var c = conceptById[id];
     var card = state.cards[id];
-
     if (!session.answered[id]) {
       session.answered[id] = true;
       session.unique += 1;
     }
 
     var type = quizType(card, session.qi);
-    if (type === "pick-word") renderPickWord(c);
-    else if (type === "say" && SR) renderSay(c);
-    else renderPickPicture(c);
+    if (type === "pick-word") renderPickWord(id);
+    else if (type === "say" && SR) renderSay(id);
+    else renderPickPicture(id);
   }
 
-  function optionWord(id) {
-    var o = conceptById[id];
-    return '<button class="option-word" data-id="' + esc(id) + '">' +
-      (o.article ? '<span class="art">' + esc(o.article) + "</span>" : "") +
-      esc(o.word) + "</button>";
+  function optionHTML(id) {
+    var it = itemOf(id);
+    var long = it.text.length > 16 ? " long" : "";
+    return '<button class="option-word' + long + '" data-id="' + esc(id) + '">' +
+      (it.article ? '<span class="art">' + esc(it.article) + "</span>" : "") +
+      esc(it.text) + "</button>";
   }
 
-  function renderPickWord(c) {
-    var near = S.pickDistractors(c.id, allIds, neighboursOf(c.id), 3, Math.random);
-    var set = S.shuffle([c.id].concat(near), Math.random);
+  function markChoices(cls, targetId) {
+    Array.prototype.forEach.call($("stage").querySelectorAll(cls), function (b) {
+      b.disabled = true;
+      if (b.getAttribute("data-id") === targetId) b.classList.add("pick-correct");
+    });
+  }
+
+  function renderPickWord(id) {
+    var it = itemOf(id);
+    var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
 
     $("stage").innerHTML =
-      '<p class="prompt">Which word is this?</p>' +
-      '<div class="tile" aria-hidden="true">' + c.emoji + "</div>" +
+      '<p class="prompt">Which one is this?</p>' +
+      '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
       '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
-      '<div class="word-options">' + set.map(optionWord).join("") + "</div>";
+      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
 
-    sayConcept(c);
-    $("hear-btn").addEventListener("click", function () { sayConcept(c, this); });
+    sayItem(it);
+    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
 
     Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
       btn.addEventListener("click", function () {
         var picked = btn.getAttribute("data-id");
-        var ok = picked === c.id;
-        if (ok) btn.classList.add("pick-correct");
-        else btn.classList.add("pick-wrong");
-        Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (b) {
-          b.disabled = true;
-          if (b.getAttribute("data-id") === c.id) b.classList.add("pick-correct");
-        });
+        var ok = picked === id;
+        btn.classList.add(ok ? "pick-correct" : "pick-wrong");
+        markChoices(".option-word", id);
         answer(ok, ok ? null : picked);
       });
     });
   }
 
-  function renderPickPicture(c) {
-    var near = S.pickDistractors(c.id, allIds, neighboursOf(c.id), 3, Math.random);
-    var set = S.shuffle([c.id].concat(near), Math.random);
+  function renderPickPicture(id) {
+    var it = itemOf(id);
+    var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
 
     $("stage").innerHTML =
       '<p class="prompt">Find the picture</p>' +
-      '<div class="word small">' +
-        (c.article ? '<span class="art">' + esc(c.article) + "</span>" : "") + esc(c.word) +
-      "</div>" +
-      '<div class="options">' + set.map(function (id) {
-        return '<button class="option" data-id="' + esc(id) + '" aria-label="Choose this picture">' +
-          '<span aria-hidden="true">' + conceptById[id].emoji + "</span></button>";
+      wordsHTML(it) +
+      '<div class="options">' + set.map(function (o) {
+        return '<button class="option" data-id="' + esc(o) + '" aria-label="Choose this picture">' +
+          '<span aria-hidden="true">' + itemOf(o).emoji + "</span></button>";
       }).join("") + "</div>" +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear the word</button>';
+      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>';
 
-    sayConcept(c);
-    $("hear-btn").addEventListener("click", function () { sayConcept(c, this); });
+    sayItem(it);
+    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
 
     Array.prototype.forEach.call($("stage").querySelectorAll(".option"), function (btn) {
       btn.addEventListener("click", function () {
         var picked = btn.getAttribute("data-id");
-        var ok = picked === c.id;
-        if (ok) btn.classList.add("pick-correct");
-        else btn.classList.add("pick-wrong");
-        Array.prototype.forEach.call($("stage").querySelectorAll(".option"), function (b) {
-          b.disabled = true;
-          if (b.getAttribute("data-id") === c.id) b.classList.add("reveal-right");
-        });
+        var ok = picked === id;
+        btn.classList.add(ok ? "pick-correct" : "pick-wrong");
+        markChoices(".option", id);
         answer(ok, ok ? null : picked);
       });
     });
   }
 
-  function renderSay(c) {
+  function renderSay(id) {
+    var it = itemOf(id);
+
     $("stage").innerHTML =
       '<p class="prompt">Say it in ' + esc(LANG.name) + "</p>" +
-      '<div class="tile" aria-hidden="true">' + c.emoji + "</div>" +
+      '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
       '<button class="mic" id="mic-btn">🎙 Say it aloud</button>' +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear the word</button>' +
+      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
       '<p class="score" id="score"></p>';
 
-    $("hear-btn").addEventListener("click", function () { sayConcept(c, this); });
+    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
 
     var mic = $("mic-btn");
     mic.addEventListener("click", function () {
       var btn = this;
-      var started = listen(c.word, function (score, said) {
+      var started = listen(it.text, function (score, said) {
         var el = $("score");
         if (el) el.textContent = "heard “" + said + "” · match " + Math.round(score * 100) + "%";
         answer(score > 0.6, null);
@@ -643,11 +712,9 @@
     $("reveal").addEventListener("click", function () { answer(false, null); });
   }
 
-  /* One answer, one scheduling update, one step forward. A miss is pushed to
-   * the back of the same quiz instead of being forgotten until tomorrow. */
   function answer(ok, chosenId) {
     var id = session.quiz[session.qi];
-    var c = conceptById[id];
+    var it = itemOf(id);
 
     if (ok) {
       if (!session.missed[id]) session.firstCorrect += 1;
@@ -662,23 +729,21 @@
 
     S.review(state, id, ok ? 2 : 0, Date.now());
     save();
-    showAnswer(ok, c);
+    showAnswer(ok, it);
   }
 
-  function showAnswer(ok, c) {
+  function showAnswer(ok, it) {
     $("stage").innerHTML =
       '<p class="prompt">' + (ok ? "Correct" : "Not quite") + "</p>" +
-      '<div class="tile sm" aria-hidden="true">' + c.emoji + "</div>" +
-      '<div class="word">' +
-        (c.article ? '<span class="art">' + esc(c.article) + "</span>" : "") + esc(c.word) +
-      "</div>" +
-      '<p class="sentence">' + highlightSentence(c) + "</p>" +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear it in a sentence</button>';
+      '<div class="tile sm" aria-hidden="true">' + it.emoji + "</div>" +
+      wordsHTML(it) +
+      contextHTML(it) +
+      '<button class="speak-btn" id="hear-btn">🔊 Hear it again</button>';
 
-    speak(c.sentence);
-    $("hear-btn").addEventListener("click", function () { speak(c.sentence, this); });
+    sayItem(it);
+    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
 
-    feedback(ok ? "got it" : "it comes back at the end of the quiz", ok ? "good" : "bad");
+    feedback(ok ? "got it" : "it comes back at the end", ok ? "good" : "bad");
 
     $("actions").innerHTML = '<button class="btn btn-primary" id="next">Continue →</button>';
     $("next").addEventListener("click", function () {
@@ -694,16 +759,24 @@
 
     var total = session.unique || 1;
     var acc = Math.round((session.firstCorrect / total) * 100);
+    var missed = Object.keys(session.missed);
 
     $("bar-fill").style.width = "100%";
     $("counter").textContent = String(total);
+
+    var list = missed.length
+      ? '<ul class="missed">' + missed.map(function (id) {
+          var it = itemOf(id);
+          return "<li>" + it.emoji + " " + esc(it.text) + "</li>";
+        }).join("") + "</ul>"
+      : "";
 
     $("stage").innerHTML =
       '<p class="prompt">Quiz complete</p>' +
       '<div class="word">' + acc + "%</div>" +
       '<p class="sentence">' + session.firstCorrect + " of " + total +
-        " right on the first try. The rest will come back sooner, and everything " +
-        "you got right is scheduled further out.</p>";
+        " right on the first try." + (missed.length ? " These are scheduled to return soon:" : "") +
+      "</p>" + list;
 
     feedback("", "");
     $("actions").innerHTML =
@@ -718,12 +791,6 @@
     var f = $("feedback");
     f.textContent = msg;
     f.className = "feedback" + (kind ? " " + kind : "");
-  }
-
-  function highlightSentence(c) {
-    var txt = esc(c.sentence);
-    var w = esc(c.word);
-    return txt.replace(new RegExp("\\b(" + w + ")\\b", "i"), "<b>$1</b>");
   }
 
   /* ------------------------------------------------------------------ map */
@@ -858,7 +925,7 @@
 
   function selectNode(id) {
     var c = conceptById[id];
-    sayConcept(c);
+    sayItem(itemOf(c.id));
     var info = $("map-info");
     var links = (neighbours[id] || []).slice(0, 4).map(function (n) {
       var rel = D.relationTypes[n.type] ? D.relationTypes[n.type].label : "related to";
@@ -870,7 +937,7 @@
       '<div class="info-body">' +
         '<div class="info-word">' + (c.article ? esc(c.article) + " " : "") + esc(c.word) + "</div>" +
         '<div class="info-links">' + (links || "no links yet") + "</div>" +
-        '<div class="hint">' + highlightSentence(c) + "</div>" +
+        '<div class="hint">' + contextHTML(itemOf(c.id)) + "</div>" +
       "</div>" +
       '<button class="speak-btn" id="info-hear" style="margin-left:auto">🔊 Again</button>';
 
@@ -934,6 +1001,14 @@
   $("start-btn").addEventListener("click", function () { startSession(); });
   $("build-start").addEventListener("click", function () { startSession(); });
   $("review-missed").addEventListener("click", reviewMistakes);
+  Array.prototype.forEach.call(document.querySelectorAll(".mode"), function (b) {
+    b.addEventListener("click", function () {
+      state.settings.mode = b.getAttribute("data-mode");
+      save();
+      renderBuilder();
+    });
+  });
+
   Array.prototype.forEach.call(document.querySelectorAll(".size"), function (b) {
     b.addEventListener("click", function () {
       state.settings.size = Number(b.getAttribute("data-size"));
@@ -950,13 +1025,19 @@
     if (ev.key === "Enter") {
       var next = $("next");
       if (next) { ev.preventDefault(); next.click(); }
+      return;
+    }
+    if (["1", "2", "3", "4"].indexOf(ev.key) !== -1) {
+      var opts = document.querySelectorAll("#stage .option-word, #stage .option");
+      var idx = Number(ev.key) - 1;
+      if (opts[idx] && !opts[idx].disabled) { ev.preventDefault(); opts[idx].click(); }
     }
   });
 
   /* Deep links: #map, #stats and #practice are shareable — useful for a demo,
    * and they let the views be driven without a click. */
   $("audio-chip").addEventListener("click", function () {
-    sayConcept(conceptById["noche"] || { id: "noche", word: "noche" });
+    sayItem(itemOf("noche"));
     toast(audioStatus().state === "ok"
       ? "That was the synthesized voice — if you heard nothing, check the system volume."
       : "No Spanish voice on this device; the demo still works without audio.");
@@ -966,6 +1047,7 @@
   var initial = String(window.location.hash || "").replace("#", "");
   renderToday();
   if (initial === "practice") startSession();
+  else if (initial === "phrases") { state.settings.mode = "phrases"; save(); startSession(); }
   else if (initial === "quiz") startQuizOnly();
   else if (VIEWS.indexOf(initial) !== -1 && initial !== "today") show(initial);
 })();

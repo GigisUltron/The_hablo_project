@@ -62,6 +62,7 @@ test("scripts load in dependency order (data, audio manifest, srs, app)", () => 
   const order = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((x) => x[1]);
   assert.deepEqual(order, [
     "src/data.js",
+    "src/phrases.js",
     "assets/audio/manifest.js",
     "src/srs.js",
     "src/app.js"

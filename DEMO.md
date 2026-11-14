@@ -33,8 +33,10 @@ Use the printed `http://localhost:…` URL rather than opening `index.html` from
 filesystem: browsers gate microphone access behind a secure context, and `file://` doesn't
 qualify. Any other static server works too — there is no build step.
 
-Deep links: `#practice` (start a session), `#quiz` (quiz only, no teaching), `#map`,
-`#stats`.
+Deep links: `#practice` (start a session), `#phrases` (phrase lesson), `#quiz` (quiz
+only, no teaching), `#map`, `#stats`.
+
+Keyboard: **Enter** advances, **1–4** pick an answer, **Esc** leaves a session.
 
 ## Pick what you learn
 
@@ -65,7 +67,8 @@ worst first. Both choices persist in `localStorage`.
 | Confusion tracking | `recordConfusion` | Surfaces as "most confused pairs" in Progress |
 | Semantic map | `buildMap` | 42 nodes, relations drawn as curves, learned nodes lit |
 | Audio diagnostics | `audioStatus` | Reports voice availability instead of playing nothing |
-| Lesson builder | `renderBuilder` | Field toggles + session size, persisted |
+| Lesson builder | `renderBuilder` | Field toggles, words/phrases switch, session size |
+| Phrase deck | `src/phrases.js` | 18 whole utterances, scene-anchored, no gloss |
 | Mistake review | `reviewMistakes` | Quiz built from your lapses, worst first |
 | Progress | `renderStats` | Coverage per field, sessions, recalls, lapses |
 
@@ -82,7 +85,13 @@ Speech synthesis is now only a fallback, used if the manifest is missing. The fo
 reports which path is active (`bundled audio · 42 words`), and the earlier "no voice on this
 device" message only appears when there is genuinely no audio at all.
 
-To regenerate the files (needs `libespeak-ng` at build time, nothing at runtime):
+Sixty clips: 42 words and 18 phrases, spoken by the same voice, at 16 kHz with the edges
+faded and every clip peak-normalised so none is quieter than its neighbours. eSpeak is
+formant synthesis and will never sound human — slower rate, a touch more pitch and the
+resampling above is as far as it goes without a neural engine, which would mean a
+dependency the project does not take.
+
+To regenerate (needs `libespeak-ng` at build time, nothing at runtime):
 
 ```sh
 python3 tools/make_audio.py
@@ -123,6 +132,13 @@ Warm paper, near-black ink, chili/paprika/saffron accents, 3px rules and hard of
 — a printed-poster feel rather than a dashboard. Texture is a single inline SVG noise filter
 plus a halftone dot pattern, and the tape on top of the drill card is a pseudo-element. No
 fonts, icons or images are downloaded, so the page still works with the network switched off.
+
+## Phrase mode
+
+The builder has a **Words / Phrases** switch. A phrase is taught the same way as a word —
+scene emoji plus the utterance — and quizzed the same way: pick the phrase for a scene, pick
+the scene for a phrase, or say it. Phrases carry a short Spanish context line instead of a
+sentence-with-a-blank.
 
 ## Honest limits
 
