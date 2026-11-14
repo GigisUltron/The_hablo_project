@@ -699,7 +699,9 @@
       var it = itemOf(id);
       var due = state.cards[id].due;
       return '<div class="row">' +
-        '<span class="row-pic" aria-hidden="true">' + it.emoji + "</span>" +
+        '<span class="row-pic" aria-hidden="true">' +
+          (it.schema && typeof schemaSVG === "function" ? schemaSVG(it.schema) : (it.emoji || "")) +
+        "</span>" +
         '<span class="row-body">' +
           '<span class="row-main">' + articleHTML(it.article) + esc(it.text) + "</span>" +
           '<span class="row-meta">' + (due <= now ? "Now" : capital(whenFrom(due - now))) + "</span>" +

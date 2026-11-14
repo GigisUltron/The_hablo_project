@@ -154,3 +154,10 @@ test("every data-i18n key in the markup exists in every locale", () => {
     for (const lang of ["en", "es"]) assert.ok(U[lang][k], `${lang} missing ${k}`);
   }
 });
+
+test("no card prints null for an item's picture", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.equal(/row-pic[^+]*\+\s*it\.emoji\s*\+/.test(app), false,
+    "row-pic concatenates it.emoji directly; terms have no emoji");
+  assert.match(app, /it\.schema/, "the card should fall back to the schema glyph");
+});
