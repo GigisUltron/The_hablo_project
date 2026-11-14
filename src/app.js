@@ -496,7 +496,8 @@
   var conv = null;
 
   function startConversation() {
-    conv = CONV.start("cv-first-meeting");
+    var pick = CONV.dialogues[Math.floor(Math.random() * CONV.dialogues.length)];
+    conv = CONV.start(pick.id);
     show("conv");
     $("chat").innerHTML = "";
     renderTurn();

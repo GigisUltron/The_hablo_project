@@ -16,6 +16,16 @@
         { es: "¿Cuál es tu color favorito?", expects: ["color favorito", "mi color"], item: "ph-color", reply: "Mi color favorito es el azul." },
         { es: "¡Encantado! Nos vemos mañana.", expects: [], item: "ph-nos-vemos", reply: "" }
       ]
+    },
+    {
+      id: "cv-at-the-cafe",
+      title: "At the cafe",
+      turns: [
+        { es: "Buenas tardes. ¿Qué le pongo?", expects: ["cafe", "café", "agua"], reply: "Un café, por favor." },
+        { es: "¿Con leche?", expects: ["leche", "solo", "sin"], reply: "Solo, por favor." },
+        { es: "¿Algo más?", expects: ["no", "nada", "cuenta"], reply: "No, gracias." },
+        { es: "Son dos euros. ¿Efectivo o tarjeta?" , expects: ["tarjeta", "efectivo"], reply: "Con tarjeta." }
+      ]
     }
   ];
 
