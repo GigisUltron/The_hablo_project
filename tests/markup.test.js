@@ -284,7 +284,7 @@ test("the session summary offers exactly one filled control", () => {
   const summary = app.slice(app.indexOf("function finishSession"), app.indexOf("function feedback"));
   const filled = (summary.match(/btn btn-primary/g) || []).length;
   assert.equal(filled, 1, `summary has ${filled} filled buttons`);
-  assert.match(summary, /foot-link/);
+  assert.match(summary, /btn-ghost/, "the exit is a secondary button");
 });
 
 test("the path's read unit is actually routed", () => {
@@ -315,7 +315,7 @@ test("the reader turns a wrong answer into a why and a way on", () => {
   assert.match(reader, /q\.why/, "the why the text ships with is never read");
   assert.match(reader, /reader-why/, "missed questions are not explained after the text");
   assert.match(reader, /id="reader-again"/, "the reader ends without a next step");
-  assert.match(reader, /foot-link/, "the reader cannot be left");
+  assert.match(reader, /id="reader-done"/, "the reader cannot be left");
 });
 
 test("the reader is graded by the learner's band", () => {

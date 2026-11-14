@@ -924,7 +924,7 @@
     var more = next && next.id !== t.id;
     $("reader-actions").innerHTML =
       '<button class="btn btn-primary" id="reader-again">' + (more ? "Next text" : "Read it again") + "</button>" +
-      '<button class="foot-link" id="reader-done" type="button">done for now</button>';
+      '<button class="btn btn-ghost btn-sm" id="reader-done" type="button">done for now</button>';
     $("reader-again").addEventListener("click", startReader);
     $("reader-done").addEventListener("click", function () { reader = null; show("today"); });
   }
@@ -1036,7 +1036,7 @@
     $("alphabet-actions").innerHTML =
       '<button class="btn btn-primary" id="alphabet-again">' +
         esc(more ? tr("nextLetter", "Next letter") : tr("start", "Start lesson")) + "</button>" +
-      '<button class="foot-link" id="alphabet-done" type="button">' + esc(tr("leave", "done for now")) + "</button>";
+      '<button class="btn btn-ghost btn-sm" id="alphabet-done" type="button">' + esc(tr("leave", "done for now")) + "</button>";
     $("alphabet-again").addEventListener("click", startAlphabet);
     $("alphabet-done").addEventListener("click", function () { alphabet = null; show("today"); });
   }
@@ -2823,7 +2823,7 @@
 
     $("actions").innerHTML =
       '<button class="btn btn-primary" id="again">One more</button>' +
-      '<button class="foot-link" id="back" type="button">done for now</button>';
+      '<button class="btn btn-ghost btn-sm" id="back" type="button">done for now</button>';
 
     $("back").addEventListener("click", function () { session = null; show("today"); });
     $("again").addEventListener("click", function () { startSession(); });
