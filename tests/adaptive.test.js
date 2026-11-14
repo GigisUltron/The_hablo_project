@@ -67,3 +67,12 @@ test("the daily goal follows what you finish, within reason", () => {
   assert.equal(A.dailyGoal([0, 0]), 8);                   // zeroes are not a pace
   assert.equal(A.dailyGoal([6, 6, 6, 6, 6, 6, 6, 20, 20]), 10);  // only the last seven
 });
+
+test("the goal drifts with three consistent sessions, never one", () => {
+  assert.equal(A.nextGoal(8, [2, 2, 2]), 7);         // consistently short
+  assert.equal(A.nextGoal(8, [2, 8, 2]), 8);         // one slow session is not a trend
+  assert.equal(A.nextGoal(8, [12, 12, 12]), 9);      // consistently long
+  assert.equal(A.nextGoal(4, [1, 1, 1]), 4);         // floored
+  assert.equal(A.nextGoal(15, [20, 20, 20]), 15);    // capped
+  assert.equal(A.nextGoal(8, [2, 2]), 8);            // needs three
+});

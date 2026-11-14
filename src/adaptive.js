@@ -82,8 +82,23 @@
     return Math.max(lo, Math.min(hi, Math.round(avg)));
   }
 
+  /* A goal that cannot run away: three short sessions in a row lower it,
+   * three long ones raise it, one session never moves it. */
+  function nextGoal(goal, recent, floor, ceiling) {
+    var lo = floor === undefined ? 4 : floor;
+    var hi = ceiling === undefined ? 15 : ceiling;
+    var g = goal || 8;
+    var last = (recent || []).slice(-3);
+    if (last.length < 3) return g;
+    var short = last.filter(function (n) { return n < g * 0.6; }).length;
+    var long = last.filter(function (n) { return n > g * 1.2; }).length;
+    if (short === 3) g -= 1;
+    else if (long === 3) g += 1;
+    return Math.max(lo, Math.min(hi, g));
+  }
+
   var api = { LEVELS: LEVELS, level: level, plan: plan, shouldStop: shouldStop,
-              CEFR: CEFR, within: within, confusionSeed: confusionSeed, dailyGoal: dailyGoal };
+              CEFR: CEFR, within: within, confusionSeed: confusionSeed, dailyGoal: dailyGoal, nextGoal: nextGoal };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.SemaAdaptive = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);
