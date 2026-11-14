@@ -848,7 +848,11 @@
     var scopeWords = fields.length
       ? allIds.filter(function (id) { return inFields(id, fields); })
       : allIds.slice();
-    var pool = scopeWords.concat(phraseIds, termIds);
+    /* basics first: words, then phrases, then connectors. Terms are advanced
+     * material and stay out of a lesson until there is something to connect. */
+    var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
+    var pool = scopeWords.concat(phraseIds);
+    if (solid >= 10) pool = pool.concat(termIds);
 
     var due = S.dueList(state, now).filter(function (id) {
       return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
@@ -1661,6 +1665,11 @@
   $("read-btn").addEventListener("click", startReader);
   $("settings-btn").addEventListener("click", function () { show("settings"); });
   $("conv-btn").addEventListener("click", startConversation);
+  $("reset-btn").addEventListener("click", function () {
+    if (!window.confirm("Clear all progress on this device?")) return;
+    try { localStorage.removeItem(STORE_KEY); } catch (err) { /* ignore */ }
+    window.location.reload();
+  });
   $("conv-back").addEventListener("click", function () { conv = null; show("today"); });
   $("settings-back").addEventListener("click", function () { show("today"); });
   $("reader-back").addEventListener("click", function () { reader = null; show("today"); });
