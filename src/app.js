@@ -295,7 +295,7 @@
 
   /* ---------------------------------------------------------------- views */
 
-  var VIEWS = ["today", "session", "reader", "conv", "settings", "map", "stats"];
+  var VIEWS = ["today", "session", "reader", "conv", "setup", "settings", "map", "stats"];
   var currentView = "today";
   var mapBuilt = false;
 
@@ -1679,6 +1679,16 @@
   $("read-btn").addEventListener("click", startReader);
   $("settings-btn").addEventListener("click", function () { show("settings"); });
   $("conv-btn").addEventListener("click", startConversation);
+  $("setup-new").addEventListener("click", function () {
+    state.profile = { level: "A1", lang: "es" };
+    save();
+    show("today");
+  });
+  $("setup-test").addEventListener("click", function () {
+    state.profile = { level: "?", lang: "es" };
+    save();
+    startPlacement();
+  });
   $("home-conv").addEventListener("click", startConversation);
   $("reset-btn").addEventListener("click", function () {
     if (!window.confirm("Clear all progress on this device?")) return;
@@ -1739,6 +1749,7 @@
   });
   updateAudioChip();
 
+  if (!state.profile) show("setup");
   var initial = String(window.location.hash || "").replace("#", "");
   renderToday();
   if (initial === "practice") startSession();
