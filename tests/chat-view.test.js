@@ -82,3 +82,19 @@ test("the chat view passes the app's escape helper into both builders", () => {
   assert.equal(/innerHTML\s*=\s*[^;]*\+\s*m\.(text|note|image)\s*\+/.test(app), false,
     "chat text is interpolated into innerHTML without esc");
 });
+
+test("conversation state is per language and the prompt comes from the live pack", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /state\.chat\[code\]/, "the chat is not keyed by the active language");
+  assert.match(app, /s\.chat = s\.chat/, "older saves do not get a chat store");
+  assert.match(app, /CE\.buildSystemPrompt\(ACTIVE/, "the prompt does not read the active pack");
+  assert.match(app, /history: chat\.messages\.slice\(-CE\.MAX_HISTORY\)/,
+    "the request does not send a bounded recent history");
+});
+
+test("the view says when no local model answered", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /no local model found — run ollama serve/);
+  assert.match(app, /scripted/, "fallback replies are not labelled");
+  assert.match(app, /text-only model · image not sent/, "images are not marked text-only");
+});
