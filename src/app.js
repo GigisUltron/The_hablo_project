@@ -839,13 +839,12 @@
     var fields = unit && unit.fields ? unit.fields : selectedFields();
     var now = Date.now();
 
-    var pool = mode === "phrases"
-      ? phraseIds.slice()
-      : mode === "terms"
-        ? termIds.slice()
-        : mode === "mixed"
-          ? allIds.concat(phraseIds, termIds)
-          : allIds.filter(function (id) { return inFields(id, fields); });
+    /* a lesson is not a deck: words, phrases and terms together, scoped only by
+     * the unit's fields. The mode picker becomes emphasis, not exclusion. */
+    var scopeWords = fields.length
+      ? allIds.filter(function (id) { return inFields(id, fields); })
+      : allIds.slice();
+    var pool = scopeWords.concat(phraseIds, termIds);
 
     var due = S.dueList(state, now).filter(function (id) {
       return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
