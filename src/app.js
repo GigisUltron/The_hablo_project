@@ -651,7 +651,8 @@
       note.textContent = "next: " + scene.emoji + " " + scene.title + " · " +
         scene.lines.length + " lines · " + due + " due";
     } else if (note) {
-      note.textContent = lessonSize() + " cards · " + pool.length +
+      var goalNow = ADAPT ? ADAPT.dailyGoal((state.history || [])) : lessonSize();
+      note.textContent = goalNow + " today · " + pool.length +
         (mode === "phrases" ? " phrases" : mode === "terms" ? " terms" : " concepts") +
         " · " + due + " due";
     }
