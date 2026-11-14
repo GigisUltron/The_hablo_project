@@ -607,7 +607,15 @@
       u.lang = (ACTIVE && ACTIVE.locale) || LANG.locale;
       u.rate = 0.9;
       u.pitch = 1;
-      if (voice) u.voice = voice;
+      /* Only bind a voice whose language matches: a voice from another locale is
+       * silent on some platforms, which reads as "the button does nothing". */
+      var want = String(u.lang || "").slice(0, 2).toLowerCase();
+      var pick = voice;
+      if (pick && want && String(pick.lang || "").slice(0, 2).toLowerCase() !== want) {
+        var alt = langVoices();
+        pick = alt.length ? alt[0] : null;
+      }
+      if (pick) u.voice = pick;
 
       var face = $("chat-face");
       var stopFace = function () { if (face) face.classList.remove("is-speaking"); };
@@ -616,7 +624,10 @@
         if (btn) btn.classList.remove("is-playing");
         stopFace();
       };
-      u.onerror = function () {
+      u.onerror = function (ev) {
+        if (ev && ev.error && ev.error !== "canceled" && ev.error !== "interrupted") {
+          toast("This device could not speak that — try the speaker on a card.");
+        }
         if (btn) btn.classList.remove("is-playing");
         stopFace();
       };
