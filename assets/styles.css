@@ -539,6 +539,33 @@ ruby rt {
 
 /* answers: words, as a list of numbered rows */
 .word-options { display: grid; gap: 10px; }
+/* build the sentence: a line the words land on, and the pool below it */
+.build-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+.build-hint { font-size: 15px; color: var(--text-3); }
+.token {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  box-shadow: 0 3px 0 var(--border);
+  font-weight: 600;
+  cursor: pointer;
+}
+.token:disabled { color: var(--text-3); background: var(--fill); box-shadow: none; cursor: default; }
+.token.placed { box-shadow: 0 3px 0 var(--accent-deep); }
+.build-line .token { border-color: var(--accent); }
+.listen-face { display: flex; justify-content: center; padding: 16px 0; }
 /* answers are raised keys: a lower edge, and they sink when pressed */
 .option-word, .option {
   --edge-c: var(--border-deep);

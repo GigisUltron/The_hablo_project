@@ -19,6 +19,11 @@
   var UI_LANGS = window.SEMA_UI_LANGS || {};
   var RUBY = window.SemaRuby;
   var WRITING = window.SemaWriting;
+  var EX = window.SemaExercises;
+
+  function audioEnabled() {
+    return (state && state.settings && state.settings.audio) !== "off";
+  }
 
   var uiCache = {};
 
@@ -2622,10 +2627,24 @@
 
   /* ---- phase 2: hide one half, ask for the other ------------------------ */
 
+  function buildable(id) {
+    var it = itemOf(id);
+    return it.kind === "phrase" && EX.canBuild(it.text);
+  }
+
+  function listenable(id) {
+    if (!audioEnabled()) return false;
+    return EX.canListen(bundled, id, hasTTS);
+  }
+
   function quizType(card, i) {
     if (session.types) return session.types[i] || "pick-picture";
     if (session.forceWrite) return "write";
     if (card.last === null) return "pick-word";
+    /* harder cards arrive as a minority: one in four, gated on the pack's own
+     * sentences and clips */
+    var extra = EX ? EX.extraKind(i, buildable(session.quiz[i]), listenable(session.quiz[i])) : null;
+    if (extra) return extra;
     var prod = (session.plan && session.plan.production) || 0;
     if (prod >= 2 && i % 2 === 1) return "write";
     if (prod >= 1 && i % 3 === 2) return "write";   // production without a microphone
@@ -2669,6 +2688,8 @@
     if (type === "pick-word") renderPickWord(id);
     else if (type === "write") renderWrite(id);
     else if (type === "say") renderSay(id);
+    else if (type === "build") renderBuild(id);
+    else if (type === "listen") renderListen(id);
     else renderPickPicture(id);
   }
 
@@ -2763,6 +2784,82 @@
       '<p class="term-blank">' + esc(it.frame) + "</p>" +
       '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
 
+    Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
+      btn.addEventListener("click", function () {
+        var picked = btn.getAttribute("data-id");
+        var ok = picked === id;
+        btn.classList.add(ok ? "pick-correct" : "pick-wrong");
+        markChoices(".option-word", id);
+        answer(ok, ok ? null : picked);
+      });
+    });
+  }
+
+  /* Build the sentence: the phrase's own words, shuffled, placed in order. */
+  function renderBuild(id) {
+    var it = itemOf(id);
+    var tokens = EX.words(it.text);
+    var pool = S.shuffle(tokens.map(function (w, i) { return { w: w, i: i }; }), Math.random);
+    var placed = [];
+
+    $("stage").innerHTML =
+      '<p class="prompt">Build the sentence</p>' +
+      '<div class="build-line" id="build-line" aria-live="polite"></div>' +
+      '<div class="word-options" id="build-pool"></div>';
+    $("actions").innerHTML = '<button class="btn btn-primary" id="build-check" disabled>Check</button>';
+
+    function paint() {
+      $("build-pool").innerHTML = pool.map(function (t) {
+        var used = placed.indexOf(t.i) !== -1;
+        return '<button class="option-word token" type="button" data-token="' + t.i + '"' +
+          (used ? ' aria-pressed="true" disabled' : "") + ">" + esc(t.w) + "</button>";
+      }).join("");
+      $("build-line").innerHTML = placed.length
+        ? placed.map(function (i) {
+            return '<button class="token placed" type="button" data-slot="' + i + '">' + esc(tokens[i]) + "</button>";
+          }).join("")
+        : '<span class="build-hint">tap the words in order</span>';
+      $("build-check").disabled = placed.length !== tokens.length;
+      Array.prototype.forEach.call($("build-pool").querySelectorAll(".token"), function (b) {
+        b.addEventListener("click", function () {
+          var i = Number(b.getAttribute("data-token"));
+          if (placed.indexOf(i) === -1) { placed.push(i); paint(); }
+        });
+      });
+      Array.prototype.forEach.call($("build-line").querySelectorAll(".placed"), function (b) {
+        b.addEventListener("click", function () {
+          var i = Number(b.getAttribute("data-slot"));
+          placed = placed.filter(function (x) { return x !== i; });
+          paint();
+        });
+      });
+    }
+    paint();
+
+    $("build-check").addEventListener("click", function () {
+      var attempt = placed.map(function (i) { return tokens[i]; }).join(" ");
+      var ok = EX.sameOrder(attempt, it.text);
+      if (!ok) $("stage").innerHTML += '<p class="sentence">the sentence is ' + esc(it.text) + "</p>";
+      answer(ok, null);
+    });
+  }
+
+  /* Listen and pick: the clip first, the text only in the four answers. */
+  function renderListen(id) {
+    var it = itemOf(id);
+    var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
+
+    $("stage").innerHTML =
+      '<p class="prompt">Listen and pick</p>' +
+      '<div class="listen-face">' +
+        '<button class="speak-btn round" id="hear-btn" aria-label="Play it again" title="Play it again">' +
+          ICON.speaker + "</button>" +
+      "</div>" +
+      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
+    $("actions").innerHTML = "";
+
+    sayItem(it);
+    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
     Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
       btn.addEventListener("click", function () {
         var picked = btn.getAttribute("data-id");

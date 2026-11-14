@@ -206,6 +206,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/ui-langs.js",
     "src/ruby.js",
     "src/writing.js",
+    "src/exercises.js",
     "src/ui-strings.js",
     "src/srs.js",
     "src/memory.js",
@@ -563,4 +564,29 @@ test("the map shows the reading where there is room, and keeps nodes plain", () 
   assert.match(app, /aria-label", c\.word \+ \(c\.sub/, "map nodes lose the reading for screen readers");
   assert.match(app, /createElementNS\(svgNS, "title"\)/, "no tooltip reading on the node");
   assert.match(app, /ruby would overflow/, "the reason nodes stay plain is not written down");
+});
+
+test("the harder exercises exist only where the data supports them", () => {
+  const X = require("../src/exercises.js");
+
+  assert.equal(X.canBuild("Hola, ¿qué tal?"), true, "three words can be built");
+  assert.equal(X.canBuild("Buenos días."), false, "two words is not a sentence build");
+  assert.equal(X.canBuild("Hola."), false);
+
+  assert.equal(X.canListen({ clip: "a.wav" }, "clip", false), true, "a bundled clip is enough");
+  assert.equal(X.canListen({}, "clip", false), false, "no clip and no voice: no exercise");
+  assert.equal(X.canListen({}, "clip", true), true, "a device voice is the fallback");
+
+  assert.equal(X.sameOrder("Hola, qué tal?", "Hola,  qué   tal?"), true, "spacing is not the answer");
+  assert.equal(X.sameOrder("qué tal? Hola,", "Hola, qué tal?"), false, "order matters");
+
+  const kinds = Array.from({ length: 8 }, (_, i) => X.extraKind(i, true, true)).filter(Boolean);
+  assert.deepEqual(kinds, ["listen", "build"], "two hard cards in eight, alternating");
+  assert.equal(Array.from({ length: 8 }, (_, i) => X.extraKind(i, false, false)).filter(Boolean).length, 0,
+    "nothing hard when the data is missing");
+
+  assert.match(app, /function renderBuild\(/, "no sentence build");
+  assert.match(app, /function renderListen\(/, "no listen and pick");
+  assert.match(app, /EX\.extraKind/, "the mix ignores the exercise rule");
+  assert.match(app, /S\.review\(state, id, ok \? 2 : 0/, "the new exercises bypass the SRS");
 });
