@@ -43,5 +43,6 @@ test("the gloss file is not loaded by the drill data path", () => {
   // The drill must never read glosses implicitly; only the reveal button does.
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   const uses = (app.match(/SEMA_GLOSSES/g) || []).length;
-  assert.equal(uses, 2, "SEMA_GLOSSES should appear only in the reveal control");
+  // The interface may show no translation at all; it must never read more than a reveal control would.
+  assert.ok(uses <= 2, "SEMA_GLOSSES should appear at most in a reveal control");
 });

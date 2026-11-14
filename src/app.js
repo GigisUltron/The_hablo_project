@@ -106,6 +106,23 @@
     return pack;
   }
 
+  /* Scenes: a phrase lesson is one short exchange from one situation, in the
+   * order it happens, instead of a shuffled deck. The grouping lives here
+   * until the phrase file carries a scene field of its own. */
+  var SCENE_DEFS = [
+    { emoji: "👋", title: "Saludar", lines: ["ph-dias", "ph-hola", "ph-gusto", "ph-adios"] },
+    { emoji: "☕", title: "En el café", lines: ["ph-cafe", "ph-agua", "ph-rico", "ph-cuenta"] },
+    { emoji: "🚉", title: "En la estación", lines: ["ph-estacion", "ph-hora", "ph-tarda", "ph-precio"] },
+    { emoji: "🔁", title: "Si no entiendes", lines: ["ph-perdon", "ph-repetir", "ph-despacio"] }
+  ];
+
+  /* only the lines the live language pack actually has */
+  function scenes() {
+    return SCENE_DEFS.map(function (s) {
+      return { emoji: s.emoji, title: s.title, lines: s.lines.filter(function (id) { return phraseById[id]; }) };
+    }).filter(function (s) { return s.lines.length >= 2; });
+  }
+
   /* ------------------------------------------------------------ utilities */
 
   function $(id) { return document.getElementById(id); }
@@ -115,6 +132,14 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
     });
   }
+
+  /* Line icons drawn inline: nothing to fetch, and they take the text colour. */
+  var ICON = {
+    speaker: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 010 6M18.5 6.5a7.5 7.5 0 010 11"/></svg>',
+    mic: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>',
+    check: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+    cross: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+  };
 
   function neighboursOf(id) {
     return (neighbours[id] || []).map(function (n) { return n.id; });
@@ -130,6 +155,13 @@
 
   /* ----------------------------------------------------------- persistence */
 
+  /* #demo runs on a throwaway state: it starts clean every time and never
+   * writes, so showing the app to someone leaves the real progress alone. */
+  var DEMO = String(window.location.hash || "") === "#demo";
+  var DEMO_IDS = ["casa", "gato", "agua", "sol", "manzana"];
+  /* one of each question type up front, so a minute is enough to see all three */
+  var DEMO_TYPES = ["pick-word", "pick-picture", "say", "pick-picture", "pick-word"];
+
   var state = boot();
   renderLangPickers();
   updateSetupCopy();
@@ -138,12 +170,14 @@
    * the active language; `state.profile.byLang[code]` is its archive, so a
    * switch never discards what was learned in the other language. */
   function boot() {
-    var saved = loadSaved();
+    var saved = DEMO ? null : loadSaved();
     var code = saved && saved.profile && saved.profile.lang;
     if (!code || !LANGS || !LANGS.has(code)) code = (LANGS && LANGS.defaultCode) || "es";
     activatePack(code);
 
     var s = saved || emptyLive();
+    /* the demo skips first-run setup and starts on a clean deck */
+    if (DEMO) s.profile = { lang: code, byLang: {} };
     s.version = 1;
     s.cards = s.cards || {};
     s.confusions = s.confusions || {};
@@ -169,7 +203,6 @@
     }
     if (!s.settings.size) s.settings.size = 8;
     if (["words", "phrases", "terms"].indexOf(s.settings.mode) === -1) s.settings.mode = "words";
-    if (s.settings.translations !== "off") s.settings.translations = "on";
 
     seedDeck(s);
     return s;
@@ -235,6 +268,7 @@
   }
 
   function save() {
+    if (DEMO) return;
     if (state && state.profile && state.profile.byLang) {
       state.profile.byLang[state.profile.lang] = bucketOf(state);
     }
@@ -517,7 +551,12 @@
     if (view === "today" || view === "settings") renderToday();
     if (view === "stats") renderStats();
     if (view === "map" && !mapBuilt) { buildMap(); mapBuilt = true; }
-    if (view === "map") refreshMapState();
+    if (view === "map") {
+      refreshMapState();
+      renderMapList();
+      /* the web pans on a phone; it opens on the middle, where the clusters meet */
+      setMapMode($("view-map").getAttribute("data-mode") || "list");
+    }
     if (window.history && window.history.replaceState) {
       window.history.replaceState(null, "", "#" + view);
     }
@@ -568,6 +607,9 @@
       b.setAttribute("aria-pressed", String(on));
     });
     box.style.display = mode === "words" ? "flex" : "none";
+    /* a scene sets its own length */
+    var sizes = document.querySelector(".size-pick");
+    if (sizes) sizes.style.visibility = mode === "phrases" && scenes().length ? "hidden" : "";
 
     var pool = mode === "phrases" ? phraseIds
       : mode === "terms" ? termIds
@@ -576,15 +618,13 @@
       return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
     }).length;
 
-    var gt = $("gloss-toggle");
-    if (gt) {
-      gt.textContent = state.settings.translations === "off"
-        ? "translations off"
-        : "translations on request";
-    }
 
     var note = $("builder-note");
-    if (note) {
+    var scene = mode === "phrases" && nextScene();
+    if (note && scene) {
+      note.textContent = "next: " + scene.emoji + " " + scene.title + " · " +
+        scene.lines.length + " lines · " + due + " due";
+    } else if (note) {
       note.textContent = lessonSize() + " cards · " + pool.length +
         (mode === "phrases" ? " phrases" : mode === "terms" ? " terms" : " concepts") +
         " · " + due + " due";
@@ -601,20 +641,48 @@
     var known = allIds.filter(function (id) { return state.cards[id].reps > 0; }).length;
     var mastered = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
 
-    var streak = currentStreak();
-    var line = due > 0
-      ? due + (due === 1 ? " card to review" : " cards to review")
-      : known + " of " + allIds.length + " words learned";
-    if (streak > 1) line += " · " + streak + " day streak";
-    $("progress-line").textContent = line;
+    $("stat-due").textContent = due;
+    $("stat-learned").textContent = known;
+    $("stat-total").textContent = allIds.length;
+    $("stat-streak").textContent = currentStreak();
+    $("stat-mastered").textContent = mastered;
+    $("known-bar").style.width = Math.round((known / Math.max(allIds.length, 1)) * 100) + "%";
+    $("today-date").textContent = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
-    $("start-label").textContent = due > 0 ? "Start lesson · " + due + " due" : "Start lesson";
+    var next = renderNextStack();
+    $("lesson-name").textContent = next.title;
+    $("start-sub").textContent = next.caption || "Nothing new or due. Practise anything.";
+    renderReviewList();
+  }
 
-    var sub = $("start-btn").querySelector("small");
-    if (sub && TRACK) {
-      var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
-      sub.textContent = "60 seconds · " + TRACK.currentUnit(solid).title.toLowerCase();
+  /* What the schedule brings back next, soonest first. */
+  function renderReviewList() {
+    var box = $("review-list");
+    var now = Date.now();
+    var ids = allIds.concat(phraseIds).filter(function (id) {
+      return state.cards[id] && state.cards[id].last !== null;
+    }).sort(function (a, b) {
+      return state.cards[a].due - state.cards[b].due;
+    }).slice(0, 4);
+
+    if (!ids.length) {
+      box.innerHTML = '<p class="list-empty">Words you learn come back here when they are due.</p>';
+      return;
     }
+    box.innerHTML = ids.map(function (id) {
+      var it = itemOf(id);
+      var due = state.cards[id].due;
+      return '<div class="row">' +
+        '<span class="row-pic" aria-hidden="true">' + it.emoji + "</span>" +
+        '<span class="row-body">' +
+          '<span class="row-main">' + articleHTML(it.article) + esc(it.text) + "</span>" +
+          '<span class="row-meta">' + (due <= now ? "Now" : capital(whenFrom(due - now))) + "</span>" +
+        "</span></div>";
+    }).join("");
+  }
+
+  function capital(s) {
+    return s.charAt(0).toUpperCase() + s.slice(1);
   }
 
   /* -------------------------------------------------------------- reader */
@@ -638,7 +706,7 @@
       '<p class="prompt">Reading</p>' +
       '<h3 class="reader-title">' + esc(t.title) + "</h3>" +
       '<p class="reader-body">' + esc(t.body) + "</p>";
-    $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-go">Questions →</button>';
+    $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-go">Questions</button>';
     $("reader-go").addEventListener("click", renderReaderQuestion);
   }
 
@@ -673,7 +741,7 @@
           : (why ? why + " — " + q.options[q.answer] : "the answer was: " + q.options[q.answer]);
         $("reader-feedback").className = "feedback " + (ok ? "good" : "bad");
         reader.qi += 1;
-        $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-next">Continue →</button>';
+        $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-next">Continue</button>';
         $("reader-next").addEventListener("click", function () {
           $("reader-feedback").className = "feedback";
           renderReaderQuestion();
@@ -798,8 +866,7 @@
     $("stage").innerHTML =
       '<p class="prompt">How much do you know?</p>' +
       tileHTML(it) +
-      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>" +
-      glossHTML(id);
+      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
 
     Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
       btn.addEventListener("click", function () {
@@ -975,44 +1042,19 @@
   function wordsHTML(it) {
     var art = articleHTML(it.article);
     var long = it.text.length > 16 ? " long" : "";
-    return '<div class="word' + long + '">' + art + esc(it.text) + "</div>";
+    var kind = it.kind === "phrase" ? " phrase" : "";
+    return '<div class="word' + long + kind + '">' + art + esc(it.text) + "</div>";
   }
 
-  function glossHTML(id) {
-    if (state.settings && state.settings.translations === "off") return "";
-    var g = window.SEMA_GLOSSES && window.SEMA_GLOSSES[id];
-    if (!g) return "";
-    return '<div class="gloss-wrap">' +
-      '<button class="gloss-btn" type="button" data-gloss="' + esc(g) + '">show translation</button>' +
-      '<span class="gloss" hidden></span>' +
-      "</div>";
+  /* The picture takes the free height of the screen; its sound button sits
+   * in the corner, where a thumb finds it without covering the picture. */
+  function figureHTML(it, label) {
+    return '<div class="figure">' +
+      '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
+      '<button class="speak-btn round" id="hear-btn" aria-label="' + label + '" title="' + label + '">' +
+        ICON.speaker + "</button></div>";
   }
 
-  /* Translations are a deliberate escape hatch, not a crutch: they appear on
-   * request, vanish after a few seconds, and every look is counted. */
-  var glossTimer = null;
-
-  function wireGloss() {
-    Array.prototype.forEach.call($("stage").querySelectorAll(".gloss-btn"), function (btn) {
-      btn.addEventListener("click", function () {
-        var out = btn.parentNode.querySelector(".gloss");
-        if (!out) return;
-        var isOpen = !out.hidden;
-        out.hidden = isOpen;
-        btn.textContent = isOpen ? "show translation" : "hide";
-        if (!isOpen) {
-          out.textContent = btn.getAttribute("data-gloss");
-          state.memory.peeked = (state.memory.peeked || 0) + 1;
-          save();
-          clearTimeout(glossTimer);
-          glossTimer = setTimeout(function () {
-            out.hidden = true;
-            btn.textContent = "show translation";
-          }, 6000);
-        }
-      });
-    });
-  }
 
   function contextHTML(it) {
     if (it.kind === "term") {
@@ -1051,14 +1093,20 @@
     return !!c && fields.indexOf(c.cat) !== -1;
   }
 
-  function startSession(opts) {
+  /* What the next lesson holds: the track's current unit (or the one asked
+   * for), its pool, what is due in it and the new items. `custom` skips the
+   * track and uses the lesson settings instead. The new items are drawn once
+   * and kept until the lesson starts, so the Today card shows the cards that
+   * will actually be taught, not a different random draw. */
+  var planned = null;
+
+  function lessonPlan(opts) {
     var o = opts || {};
-    var solidNow = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
-    var unit = o.unit || (TRACK ? TRACK.currentUnit(solidNow) : null);
-    var mode = unit ? unit.mode : (o.mode || sessionMode());
     var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
+    var unit = o.custom ? null : (o.unit || (TRACK ? TRACK.currentUnit(solid) : null));
+    var mode = unit ? unit.mode : (o.mode || sessionMode());
     var plan = ADAPT ? ADAPT.plan(solid) : { fresh: 4, review: 4, production: 0, size: 8, level: 1 };
-    var size = o.size || plan.size;
+    var size = o.size || (unit ? plan.size : lessonSize());
     var fields = unit && unit.fields ? unit.fields : selectedFields();
     var now = Date.now();
 
@@ -1069,10 +1117,10 @@
       : allIds.slice();
     /* basics first: words, then phrases, then connectors. Terms are advanced
      * material and stay out of a lesson until there is something to connect. */
-    var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
     var pool;
-    if (unit && unit.mode === "phrases") pool = phraseIds.slice();
-    else if (unit && unit.mode === "terms") pool = termIds.slice();
+    if (mode === "phrases") pool = phraseIds.slice();
+    else if (mode === "terms") pool = termIds.slice();
+    else if (!unit) pool = scopeWords;
     else {
       pool = scopeWords.concat(phraseIds);
       if (solid >= 10) pool = pool.concat(termIds);
@@ -1082,12 +1130,58 @@
       return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
     }).slice(0, size);
 
-    var freshCap = Math.max(0, Math.min(6, plan.fresh));
-    var unseen = pool.filter(function (id) { return state.cards[id].last === null; });
-    /* the very first lesson follows the deck's own order - the deck is authored
-     * greetings first - instead of a shuffle, so a beginner meets hola. */
-    var fresh = (state.sessions === 0 ? unseen.slice(0, freshCap)
-      : S.shuffle(unseen, Math.random).slice(0, freshCap));
+    var freshCap = Math.max(0, Math.min(6, unit ? plan.fresh : Math.round(size / 2)));
+    var key = (unit ? unit.id : mode) + "|" + size + "|" + state.sessions + "|" + pool.join(",");
+    if (!planned || planned.key !== key) {
+      var unseen = pool.filter(function (id) { return state.cards[id].last === null; });
+      /* the very first lesson follows the deck's own order - the deck is authored
+       * greetings first - instead of a shuffle, so a beginner meets hola. */
+      planned = {
+        key: key,
+        fresh: state.sessions === 0 ? unseen.slice(0, freshCap) : S.shuffle(unseen, Math.random).slice(0, freshCap)
+      };
+    }
+    return { unit: unit, mode: mode, plan: plan, size: size, pool: pool, due: due, fresh: planned.fresh };
+  }
+
+  /* The lesson card shows the pictures the next lesson opens with, and
+   * returns its name and a line saying what is in it. */
+  function renderNextStack() {
+    var box = $("next-stack");
+    var ids, title, caption;
+    var p = lessonPlan();
+    ids = p.fresh.concat(p.due);
+    title = p.unit ? p.unit.title : lessonTitle(p);
+    caption = [p.fresh.length ? p.fresh.length + " new" : "",
+      p.due.length ? p.due.length + " to review" : ""].filter(Boolean).join(", ");
+    if (box) {
+      box.innerHTML = ids.slice(0, 5).map(function (id) {
+        return '<span class="pic">' + itemOf(id).emoji + "</span>";
+      }).join("");
+    }
+    return { title: title, caption: caption };
+  }
+
+  /* Named after the field its new words come from, the way a course names a unit. */
+  function lessonTitle(p) {
+    if (p.mode === "phrases") return "Phrases";
+    if (p.mode === "terms") return "Connectors";
+    if (!p.fresh.length) return p.due.length ? "Review" : "Practice";
+    var cats = p.fresh.map(function (id) { return conceptById[id] && conceptById[id].cat; });
+    var same = cats.every(function (c) { return c === cats[0]; });
+    return same && D.categories[cats[0]] ? D.categories[cats[0]].label : "New words";
+  }
+
+  function startSession(opts) {
+    var o = opts || {};
+    var now = Date.now();
+    var p = lessonPlan(o);
+    planned = null;
+
+    /* phrases chosen in the settings play as a scene, one exchange in order */
+    if (!p.unit && p.mode === "phrases" && scenes().length) { startScene(nextScene()); return; }
+
+    var mode = p.mode, plan = p.plan, size = p.size, pool = p.pool, due = p.due, fresh = p.fresh;
 
     var quiz = S.shuffle(due.concat(fresh), Math.random).slice(0, size);
 
@@ -1120,6 +1214,75 @@
     if (session.personal) renderPersonal();
     else if (session.study.length) renderStudy();
     else renderQuiz();
+  }
+
+  /* Reviews first, as in a word lesson: the scene with the most lines due,
+   * then the first scene still holding a new line, then whichever is due soonest. */
+  function nextScene() {
+    var now = Date.now();
+    var best = null, bestDue = 0;
+    scenes().forEach(function (s) {
+      var due = s.lines.filter(function (id) {
+        var c = state.cards[id];
+        return c.last !== null && c.due <= now;
+      }).length;
+      if (due > bestDue) { best = s; bestDue = due; }
+    });
+    if (best) return best;
+    var fresh = scenes().filter(function (s) {
+      return s.lines.some(function (id) { return state.cards[id].last === null; });
+    })[0];
+    if (fresh) return fresh;
+    return scenes().sort(function (a, b) { return soonestDue(a) - soonestDue(b); })[0];
+  }
+
+  function soonestDue(scene) {
+    return Math.min.apply(null, scene.lines.map(function (id) { return state.cards[id].due; }));
+  }
+
+  function startScene(scene) {
+    var fresh = scene.lines.filter(function (id) { return state.cards[id].last === null; });
+    session = newSession("phrases", fresh, scene.lines.slice());
+    session.scene = scene;
+    show("session");
+    if (fresh.length) renderStudy();
+    else renderQuiz();
+  }
+
+  /* The thread of the exchange above the card. Lines already through show
+   * their scene emoji; the current one shows it only when the card does,
+   * so the strip never gives away a "find the picture" answer. */
+  function sceneHTML(id, reveal) {
+    var s = session && session.scene;
+    if (!s) return "";
+    var at = s.lines.indexOf(id);
+    var steps = s.lines.map(function (lid, i) {
+      var done = session.phase === "study" ? i < at : !!session.answered[lid] && lid !== id;
+      var now = i === at;
+      var face = done || (now && reveal) ? itemOf(lid).emoji : now ? "?" : "";
+      return '<li class="' + (done ? "done" : now ? "now" : "") + '">' + face + "</li>";
+    }).join("");
+    return '<div class="scene">' +
+      '<span class="scene-title">' + s.emoji + " " + esc(s.title) + "</span>" +
+      '<ol class="scene-steps" aria-label="line ' + (at + 1) + " of " + s.lines.length + '">' + steps + "</ol>" +
+    "</div>";
+  }
+
+  function markScene(id, reveal) {
+    var html = sceneHTML(id, reveal);
+    if (html) $("stage").insertAdjacentHTML("afterbegin", html);
+  }
+
+  function startDemo() {
+    var ids = DEMO_IDS.filter(function (id) { return conceptById[id]; });
+    session = newSession("words", ids, S.shuffle(ids, Math.random));
+    session.types = DEMO_TYPES;
+    show("session");
+    var hint = $("kbd-hint");
+    hint.classList.add("is-demo");
+    hint.innerHTML = 'demo · miss one, it comes back<span class="keys"> · 1–4 → choose · Enter → check</span>';
+    renderStudy();
+    toast("Demo — starts clean; saved progress is untouched.", 3200);
   }
 
   /* ---- the personal card: your sentence from a previous day ------------ */
@@ -1177,7 +1340,7 @@
 
     feedback(ok ? "that was yours" : "the word was “" + p.cloze.answer + "”", ok ? "good" : "bad");
 
-    $("actions").innerHTML = '<button class="btn btn-primary" id="next">Continue →</button>';
+    $("actions").innerHTML = '<button class="btn btn-primary" id="next">Continue</button>';
     $("next").addEventListener("click", function () {
       session.personal = null;
       if (session.study.length) renderStudy();
@@ -1219,6 +1382,9 @@
       si: 0,
       quiz: quiz,
       qi: 0,
+      types: null,
+      scene: null,
+      startedAt: Date.now(),
       requeued: {},
       missed: {},
       times: [],
@@ -1244,7 +1410,7 @@
   function setProgress() {
     var n = Math.max(totalSteps(), 1);
     var done = Math.min(doneSteps(), n);
-    $("counter").textContent = Math.min(done + 1, n) + "/" + n;
+    $("counter").textContent = Math.min(done + 1, n) + " of " + n;
     $("bar-fill").style.width = Math.round((done / n) * 100) + "%";
   }
 
@@ -1268,6 +1434,7 @@
   function clearCard() {
     $("stage").innerHTML = "";
     $("actions").innerHTML = "";
+    $("card").classList.remove("is-summary", "is-answered");
     var f = $("feedback");
     f.textContent = "";
     f.className = "feedback";
@@ -1286,18 +1453,16 @@
     $("stage").innerHTML =
       '<p class="prompt">Learn the pair · ' + (session.si + 1) + " of " + session.study.length +
         (it.kind === "phrase" ? " · phrase" : "") + "</p>" +
-      tileHTML(it) +
+      figureHTML(it, "Hear it") +
       wordsHTML(it) +
-      contextHTML(it) +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
-      glossHTML(it.id);
+      contextHTML(it);
+    markScene(it.id, true);
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
-    wireGloss();
 
     $("actions").innerHTML = '<button class="btn btn-primary" id="next">' +
-      (last ? "Start the quiz →" : "Next →") + "</button>";
+      (last ? "Start the quiz" : "Next") + "</button>";
     $("next").addEventListener("click", function () {
       session.si += 1;
       if (session.si < session.study.length) renderStudy();
@@ -1308,6 +1473,7 @@
   /* ---- phase 2: hide one half, ask for the other ------------------------ */
 
   function quizType(card, i) {
+    if (session.types) return session.types[i] || "pick-picture";
     if (session.forceWrite) return "write";
     if (card.last === null) return "pick-word";
     var prod = (session.plan && session.plan.production) || 0;
@@ -1343,23 +1509,27 @@
     /* teach the first few, then ask: a session of eight brand-new items used to
      * be eight teach cards and zero questions, and every answer counted zero. */
     var taught = session.taught || 0;
-    if (card.last === null && taught < 3) { session.taught = taught + 1; renderTeach(id); return; }
+    /* a lesson that opened with study cards (a scene, the demo) has taught them already */
+    if (!session.study.length && card.last === null && taught < 3) { session.taught = taught + 1; renderTeach(id); return; }
 
     if (itemOf(id).kind === "term") { renderPickFrame(id); return; }
 
     var type = quizType(card, session.qi);
     if (type === "pick-word") renderPickWord(id);
     else if (type === "write") renderWrite(id);
-    else if (type === "say" && SR) renderSay(id);
+    else if (type === "say") renderSay(id);
     else renderPickPicture(id);
+    markScene(id, type !== "pick-picture");
   }
 
-  function optionHTML(id) {
+  /* The number on each option is also its key: 1–4 answer from the keyboard. */
+  function optionHTML(id, i) {
     var it = itemOf(id);
-    var long = it.text.length > 16 ? " long" : "";
+    /* phrases share one size, so four options never look like four fonts */
+    var long = it.kind === "phrase" ? " phrase" : it.text.length > 16 ? " long" : "";
     return '<button class="option-word' + long + '" data-id="' + esc(id) + '">' +
-      articleHTML(it.article) +
-      esc(it.text) + "</button>";
+      '<span class="key" aria-hidden="true">' + (i + 1) + "</span>" +
+      '<span class="opt-text">' + articleHTML(it.article) + esc(it.text) + "</span></button>";
   }
 
   function markChoices(cls, targetId) {
@@ -1374,11 +1544,9 @@
     var it = itemOf(id);
     $("stage").innerHTML =
       '<p class="prompt">New</p>' +
-      tileHTML(it) +
+      figureHTML(it, "Hear it") +
       wordsHTML(it) +
-      contextHTML(it) +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
-      glossHTML(id);
+      contextHTML(it);
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
     var tile = $("stage").querySelector(".tile");
@@ -1388,8 +1556,7 @@
       tile.setAttribute("aria-label", "Play the audio");
       tile.addEventListener("click", function () { sayItem(it); });
     }
-    wireGloss();
-    $("actions").innerHTML = '<button class="btn btn-primary" id="gotit">Got it →</button>';
+    $("actions").innerHTML = '<button class="btn btn-primary" id="gotit">Got it</button>';
     $("gotit").addEventListener("click", function () {
       session.firstCorrect += 1;   // it was taught and acknowledged, not guessed
       S.review(state, id, 2, Date.now());
@@ -1408,8 +1575,6 @@
       '<p class="term-blank">' + esc(it.frame) + "</p>" +
       '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
 
-    wireGloss();
-
     Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
       btn.addEventListener("click", function () {
         var picked = btn.getAttribute("data-id");
@@ -1427,23 +1592,41 @@
 
     $("stage").innerHTML =
       '<p class="prompt">Which one is this?</p>' +
-      tileHTML(it) +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
-      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>" +
-      glossHTML(it.id);
+      figureHTML(it, "Hear it") +
+      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
-    wireGloss();
+    chooseThenCheck(".option-word", id);
+  }
 
-    Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
+  /* A tap only selects; Check commits. A slip of the finger is not a wrong
+   * answer, and the learner gets a beat to reconsider. */
+  function chooseThenCheck(cls, id) {
+    var picked = null;
+    var opts = $("stage").querySelectorAll(cls);
+    $("actions").innerHTML = '<button class="btn btn-primary" id="check" disabled>Check</button>';
+
+    Array.prototype.forEach.call(opts, function (btn) {
       btn.addEventListener("click", function () {
-        var picked = btn.getAttribute("data-id");
-        var ok = picked === id;
-        btn.classList.add(ok ? "pick-correct" : "pick-wrong");
-        markChoices(".option-word", id);
-        answer(ok, ok ? null : picked);
+        picked = btn.getAttribute("data-id");
+        Array.prototype.forEach.call(opts, function (b) {
+          b.classList.toggle("is-selected", b === btn);
+          b.setAttribute("aria-pressed", String(b === btn));
+        });
+        $("check").disabled = false;
       });
+    });
+
+    $("check").addEventListener("click", function () {
+      if (!picked) return;
+      var ok = picked === id;
+      Array.prototype.forEach.call(opts, function (b) {
+        b.classList.remove("is-selected");
+        if (b.getAttribute("data-id") === picked) b.classList.add(ok ? "pick-correct" : "pick-wrong");
+      });
+      markChoices(cls, id);
+      answer(ok, ok ? null : picked);
     });
   }
 
@@ -1453,27 +1636,18 @@
 
     $("stage").innerHTML =
       '<p class="prompt">Find the picture</p>' +
-      wordsHTML(it) +
-      '<div class="options">' + set.map(function (o) {
-        return '<button class="option" data-id="' + esc(o) + '" aria-label="Choose this picture">' +
+      '<div class="say-line">' +
+        '<button class="speak-btn round" id="hear-btn" aria-label="Hear it" title="Hear it">' + ICON.speaker + "</button>" +
+        wordsHTML(it) +
+      "</div>" +
+      '<div class="options">' + set.map(function (o, i) {
+        return '<button class="option" data-id="' + esc(o) + '" aria-label="Picture ' + (i + 1) + '">' +
           '<span aria-hidden="true">' + itemOf(o).emoji + "</span></button>";
-      }).join("") + "</div>" +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
-      glossHTML(it.id);
+      }).join("") + "</div>";
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
-    wireGloss();
-
-    Array.prototype.forEach.call($("stage").querySelectorAll(".option"), function (btn) {
-      btn.addEventListener("click", function () {
-        var picked = btn.getAttribute("data-id");
-        var ok = picked === id;
-        btn.classList.add(ok ? "pick-correct" : "pick-wrong");
-        markChoices(".option", id);
-        answer(ok, ok ? null : picked);
-      });
-    });
+    chooseThenCheck(".option", id);
   }
 
   /* Write it: the only exercise that tests production without a microphone.
@@ -1488,10 +1662,7 @@
       '<input class="type-input" id="type-input" type="text" autocomplete="off" ' +
         'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
         'aria-label="write the word" placeholder="type it" />' +
-      '<button class="btn btn-primary" id="write-check">Check</button>' +
-      glossHTML(id);
-
-    wireGloss();
+      '<button class="btn btn-primary" id="write-check">Check</button>';
     var input = $("type-input");
     if (input) {
       input.focus();
@@ -1520,15 +1691,14 @@
 
     $("stage").innerHTML =
       '<p class="prompt">Say it in ' + esc(LANG.name) + "</p>" +
-      tileHTML(it) +
-      '<button class="mic" id="mic-btn">🎙 Say it aloud</button>' +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
+      figureHTML(it, "Hear it") +
+      (SR ? '<button class="mic" id="mic-btn">' + ICON.mic + 'Say it aloud</button>' : "") +
       '<p class="score" id="score"></p>';
 
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
 
     var mic = $("mic-btn");
-    mic.addEventListener("click", function () {
+    if (mic) mic.addEventListener("click", function () {
       var btn = this;
       var started = listen(it.text, function (score, said) {
         var el = $("score");
@@ -1537,18 +1707,21 @@
       });
       if (started) {
         btn.classList.add("is-live");
-        btn.textContent = "🎙 Listening…";
+        btn.innerHTML = ICON.mic + "Listening…";
         var reset = setInterval(function () {
           if (!listening) {
             clearInterval(reset);
             btn.classList.remove("is-live");
-            btn.textContent = "🎙 Say it aloud";
+            btn.innerHTML = ICON.mic + "Say it aloud";
           }
         }, 400);
       }
     });
 
-    $("actions").innerHTML = '<button class="btn btn-ghost" id="reveal">Show the answer</button>';
+    /* without a recogniser the learner says it aloud and checks themselves */
+    $("actions").innerHTML = (SR ? "" : '<button class="btn btn-primary" id="said">I said it</button>') +
+      '<button class="btn btn-ghost" id="reveal">Show the answer</button>';
+    if (!SR) $("said").addEventListener("click", function () { answer(true, null); });
     $("reveal").addEventListener("click", function () { answer(false, null); });
   }
 
@@ -1576,18 +1749,13 @@
     showAnswer(ok, it);
   }
 
+  /* The question stays on screen; the verdict rises from the bottom with
+   * the word, its sentence and the way on. */
   function showAnswer(ok, it) {
-    $("stage").innerHTML =
-      '<p class="prompt">' + (ok ? "Correct" : "Not quite") + "</p>" +
-      tileHTML(it, true) +
-      wordsHTML(it) +
-      contextHTML(it) +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear it again</button>' +
-      glossHTML(it.id);
-
+    markScene(it.id, true);
     sayItem(it);
-    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
-    wireGloss();
+    var mic = $("mic-btn");
+    if (mic) mic.disabled = true;
 
     feedback(ok ? "got it" : "it comes back at the end", ok ? "good" : "bad");
 
@@ -1607,35 +1775,36 @@
     state.lastSession = Date.now();
     save();
 
+    var now = Date.now();
     var total = session.unique || 1;
-    var acc = Math.round((session.firstCorrect / total) * 100);
+    var seen = Object.keys(session.answered);
     var missed = Object.keys(session.missed);
+    var kept = seen.filter(function (id) { return !session.missed[id]; });
 
     renderSteps("done");
     $("bar-fill").style.width = "100%";
     $("counter").textContent = String(total);
 
-    var list = missed.length
-      ? '<ul class="missed">' + missed.map(function (id) {
-          var it = itemOf(id);
-          return "<li>" + it.emoji + " " + esc(it.text) + "</li>";
-        }).join("") + "</ul>"
-      : "";
-
     var days = bumpStreak();
     save();
 
-    var avg = session.times.length
-      ? (session.times.reduce(function (a, b) { return a + b; }, 0) / session.times.length / 1000).toFixed(1)
-      : null;
+    /* This screen gets shown to other people, across a room: one number,
+     * then what stuck and what is coming back. Nothing else competes. */
+    var noun = session.mode === "phrases" ? "phrase" : "word";
+    var secs = Math.max(1, Math.round((now - session.startedAt) / 1000));
+    var took = secs < 120 ? secs + " second" + (secs === 1 ? "" : "s") : Math.round(secs / 60) + " minutes";
 
+    $("card").classList.add("is-summary");
     $("stage").innerHTML =
-      '<p class="prompt">Done</p>' +
-      '<div class="word">' + acc + "%</div>" +
-      '<p class="sentence">' + session.firstCorrect + " of " + total +
-        " first try" + (avg ? " · " + avg + "s per answer" : "") +
-        " · " + days + " day streak" +
-      "</p>" + list;
+      '<p class="prompt">' + (session.scene ? esc(session.scene.title) + " · " : "") + "Lesson done</p>" +
+      '<p class="sum-big">' + total + "</p>" +
+      '<p class="sum-line">' + noun + (total === 1 ? "" : "s") + " in " + took + "</p>" +
+      '<div class="sum-cols">' +
+        (kept.length ? sumGroup("kept", "Remembered · " + kept.length, kept, now) : "") +
+        (missed.length ? sumGroup("back", "Comes back · " + missed.length, missed, now) : "") +
+      "</div>" +
+      '<p class="sum-meta">' + session.firstCorrect + " of " + total + " right the first time · " +
+        days + "-day streak</p>";
 
     feedback("", "");
     $("stage").insertAdjacentHTML("beforeend",
@@ -1666,6 +1835,28 @@
 
     $("back").addEventListener("click", function () { session = null; show("today"); });
     $("again").addEventListener("click", function () { startSession(); });
+  }
+
+  /* What stuck is a plain run of words; what comes back says when. */
+  function sumGroup(kind, title, ids, now) {
+    return '<section class="sum-col ' + kind + '">' +
+      "<h3>" + esc(title) + "</h3>" +
+      '<ul class="sum-chips">' + ids.map(function (id) {
+        var it = itemOf(id);
+        var when = kind === "back"
+          ? '<span class="row-meta">' + esc(capital(whenFrom(state.cards[id].due - now))) + "</span>"
+          : "";
+        return '<li><span aria-hidden="true">' + it.emoji + "</span> " + esc(it.text) + when + "</li>";
+      }).join("") + "</ul></section>";
+  }
+
+  function whenFrom(ms) {
+    var min = Math.round(ms / 60000);
+    if (min < 60) return "in " + Math.max(1, min) + " min";
+    var h = Math.round(min / 60);
+    if (h < 20) return "in " + h + " h";
+    var d = Math.round(h / 24);
+    return d <= 1 ? "tomorrow" : "in " + d + " days";
   }
 
   function feedback(msg, kind) {
@@ -1706,6 +1897,36 @@
         };
       });
     });
+
+    separate(Object.keys(positions), 54);
+  }
+
+  /* Neighbouring clusters on the ellipse can land a node exactly on top of
+   * another (mar under perro, amor under correr). A few rounds of pairwise
+   * pushing keep every node visible without redesigning the layout. */
+  function separate(ids, minGap) {
+    for (var round = 0; round < 80; round += 1) {
+      var moved = false;
+      for (var i = 0; i < ids.length; i += 1) {
+        for (var j = i + 1; j < ids.length; j += 1) {
+          var a = positions[ids[i]], b = positions[ids[j]];
+          var dx = b.x - a.x, dy = b.y - a.y;
+          var d = Math.sqrt(dx * dx + dy * dy);
+          if (d >= minGap) continue;
+          if (d < 0.01) { dx = 1; dy = 0; d = 1; }
+          var push = (minGap - d) / 2;
+          a.x -= (dx / d) * push; a.y -= (dy / d) * push;
+          b.x += (dx / d) * push; b.y += (dy / d) * push;
+          moved = true;
+        }
+      }
+      ids.forEach(function (id) {
+        var p = positions[id];
+        p.x = Math.max(40, Math.min(860, p.x));
+        p.y = Math.max(30, Math.min(650, p.y));
+      });
+      if (!moved) break;
+    }
   }
 
   function buildMap() {
@@ -1804,6 +2025,45 @@
     });
   }
 
+  /* On a phone the web is too wide to read, so the same graph also comes as
+   * a list: each field, its words, and what each word sits next to. */
+  function renderMapList() {
+    var box = $("map-list");
+    box.innerHTML = Object.keys(D.categories).map(function (cat) {
+      var words = D.concepts.filter(function (c) { return c.cat === cat; });
+      if (!words.length) return "";
+      var known = words.filter(function (c) { return state.cards[c.id].reps > 0; }).length;
+      return '<section class="group">' +
+        '<h3 class="group-title">' + esc(D.categories[cat].label) + " · " + known + " of " + words.length + "</h3>" +
+        '<div class="list">' + words.map(function (c) {
+          var near = neighboursOf(c.id).slice(0, 3).map(function (n) { return esc(conceptById[n].word); }).join(", ");
+          return '<button class="row" type="button" data-id="' + esc(c.id) + '">' +
+            '<span class="row-pic" aria-hidden="true">' + c.emoji + "</span>" +
+            '<span class="row-body">' +
+              '<span class="row-main">' + articleHTML(c.article) + esc(c.word) + "</span>" +
+              '<span class="row-meta">' + near + "</span>" +
+            "</span></button>";
+        }).join("") + "</div></section>";
+    }).join("");
+
+    Array.prototype.forEach.call(box.querySelectorAll(".row"), function (btn) {
+      btn.addEventListener("click", function () { sayItem(itemOf(btn.getAttribute("data-id"))); });
+    });
+  }
+
+  function setMapMode(mode) {
+    $("view-map").setAttribute("data-mode", mode);
+    Array.prototype.forEach.call(document.querySelectorAll("[data-mapmode]"), function (b) {
+      var on = b.getAttribute("data-mapmode") === mode;
+      b.classList.toggle("is-on", on);
+      b.setAttribute("aria-pressed", String(on));
+    });
+    if (mode === "web") {
+      var panel = document.querySelector(".map-panel");
+      if (panel) panel.scrollLeft = (panel.scrollWidth - panel.clientWidth) / 2;
+    }
+  }
+
   function selectNode(id) {
     var c = conceptById[id];
     sayItem(itemOf(c.id));
@@ -1820,7 +2080,7 @@
         '<div class="info-links">' + (links || "no links yet") + "</div>" +
         '<div class="hint">' + contextHTML(itemOf(c.id)) + "</div>" +
       "</div>" +
-      '<button class="speak-btn" id="info-hear" style="margin-left:auto">🔊 Again</button>';
+      '<button class="speak-btn" id="info-hear">' + ICON.speaker + 'Again</button>';
 
     var hear = $("info-hear");
     if (hear) hear.addEventListener("click", function () { speak(c.sentence, this); });
@@ -1878,10 +2138,6 @@
         }).join("")
       : '<div class="empty">Nothing kept yet. Finish a lesson and write one sentence with the words you just met.</div>';
 
-    var peeks = state.memory.peeked || 0;
-    $("mem-peeks").textContent = peeks
-      ? peeks + (peeks === 1 ? " translation shown" : " translations shown")
-      : "no translations used";
 
     $("stat-sessions").textContent = state.sessions;
     $("stat-good").textContent = state.reviews.good;
@@ -1901,7 +2157,7 @@
   $("start-btn").addEventListener("click", function () {
     startSession({ unit: TRACK.units[Math.min(TRACK.units.length - 1, placementFloor())] });
   });
-  $("build-start").addEventListener("click", function () { startSession(); });
+  $("build-start").addEventListener("click", function () { startSession({ custom: true }); });
   $("review-missed").addEventListener("click", reviewMistakes);
   $("place-btn").addEventListener("click", startPlacement);
   $("read-btn").addEventListener("click", startReader);
@@ -1931,19 +2187,11 @@
   $("conv-back").addEventListener("click", function () { conv = null; show("today"); });
   $("settings-back").addEventListener("click", function () { show("today"); });
   $("reader-back").addEventListener("click", function () { reader = null; show("today"); });
-  $("gloss-toggle").addEventListener("click", function () {
-    state.settings.translations = state.settings.translations === "off" ? "on" : "off";
-    save();
-    renderBuilder();
-    toast(state.settings.translations === "off"
-      ? "Translations off. Meanings come from pictures, schemas and sentences."
-      : "Translations available on request.");
-  });
   Array.prototype.forEach.call(document.querySelectorAll(".mode"), function (b) {
     b.addEventListener("click", function () {
       state.settings.mode = b.getAttribute("data-mode");
       save();
-      renderBuilder();
+      renderToday();
     });
   });
 
@@ -1951,7 +2199,7 @@
     b.addEventListener("click", function () {
       state.settings.size = Number(b.getAttribute("data-size"));
       save();
-      renderBuilder();
+      renderToday();
     });
   });
   $("quit-btn").addEventListener("click", function () {
@@ -1961,13 +2209,22 @@
     show("today");
   });
   $("map-practice").addEventListener("click", function () { startSession(); });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-mapmode]"), function (b) {
+    b.addEventListener("click", function () { setMapMode(b.getAttribute("data-mapmode")); });
+  });
 
   document.addEventListener("keydown", function (ev) {
     if (currentView !== "session" || !session) return;
     if (ev.key === "Escape") { session = null; show("today"); return; }
     if (ev.key === "Enter") {
-      var next = $("next");
-      if (next) { ev.preventDefault(); next.click(); }
+      /* a focused button already gets its own click from Enter */
+      var t = ev.target;
+      var choice = t && t.closest && t.closest(".option, .option-word");
+      if (!choice && t && t.closest && t.closest("button, [role=button]") && t.id !== "next" && t.id !== "check") return;
+      /* Enter checks the chosen answer, then moves on */
+      var check = $("check");
+      var go = check && !check.disabled ? check : $("next");
+      if (go) { ev.preventDefault(); go.click(); }
       return;
     }
     if (["1", "2", "3", "4"].indexOf(ev.key) !== -1) {
@@ -1991,8 +2248,8 @@
   var initial = String(window.location.hash || "").replace("#", "");
   renderToday();
   if (initial === "practice") startSession();
-  else if (initial === "phrases") { state.settings.mode = "phrases"; save(); startSession(); }
-  else if (initial === "terms") { state.settings.mode = "terms"; save(); startSession(); }
+  else if (initial === "phrases") { state.settings.mode = "phrases"; save(); startSession({ custom: true }); }
+  else if (initial === "terms") { state.settings.mode = "terms"; save(); startSession({ custom: true }); }
   else if (initial === "placement") startPlacement();
   else if (initial === "read") startReader();
   else if (initial === "chat") startConversation();
@@ -2003,5 +2260,6 @@
     renderQuiz();
   }
   else if (initial === "quiz") startQuizOnly();
+  else if (DEMO) startDemo();
   else if (VIEWS.indexOf(initial) !== -1 && initial !== "today") show(initial);
 })();
