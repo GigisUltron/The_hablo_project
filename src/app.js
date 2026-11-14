@@ -40,7 +40,7 @@
   var basicIds = [];
 
   function deckIds() {
-    return allIds.concat(phraseIds, termIds);
+    return allIds.concat(phraseIds, termIds, basicIds);
   }
 
   function rebuildIndexes() {
@@ -1136,9 +1136,9 @@
     var pool;
     if (mode === "phrases") pool = phraseIds.slice();
     else if (mode === "terms") pool = termIds.slice();
-    else if (!unit) pool = scopeWords;
+    else if (!unit) pool = basicIds.concat(scopeWords);
     else {
-      pool = scopeWords.concat(phraseIds);
+      pool = basicIds.concat(scopeWords, phraseIds);
       if (solid >= 10) pool = pool.concat(termIds);
     }
 
