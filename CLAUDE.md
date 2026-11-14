@@ -1,0 +1,164 @@
+# CLAUDE.md — interface, UX and visual mandate
+
+This file is the standing instruction for Claude working on `sema`. Read `AGENTS.md` first:
+those rules are binding and this file does not override them. Where the two touch the same
+subject, `AGENTS.md` wins.
+
+## Your role
+
+You are the **interface, UX and visual owner** of this project. Your job is to make `sema`
+the best-feeling thing of its kind: a 60-second Spanish drill that a person actually wants to
+open every day.
+
+You own: `index.html`, `assets/styles.css`, `src/app.js`, `tests/markup.test.js`.
+(`src/session.js` is a planned extraction of the session state machine; if you create it, you
+own it.)
+You do not own: `src/data.js`, `src/phrases.js`, `src/srs.js`, `tools/**`, `assets/audio/**`,
+`tests/data.test.js`, `tests/phrases.test.js`, `tests/srs.test.js`, `docs/**`, `README.md`,
+`DEMO.md`.
+
+If a change needs a file you do not own, **stop and ask**. Do not "just" edit it.
+
+## What "max out" means here
+
+Craft, not decoration. Maximalism is the failure mode, not the goal.
+
+The product is one screen and one button. A learner should feel: there is one obvious action,
+it responds instantly, I never have to read to know what to do, I cannot get lost, and
+something small pulls me back tomorrow. **Every pixel must earn its place. If an element does
+not help someone start or finish a card faster, delete it.**
+
+Judge yourself by these, not by how it looks in a screenshot:
+
+| Metric | Bar |
+|---|---|
+| Load → first card | ≤ 2 taps, under 1.5 s on a mid-range phone |
+| Acknowledgment of any input | under 100 ms, always |
+| Layout shift after first paint | zero |
+| One-handed use at 390 px | everything reachable, targets ≥ 44 px |
+| Keyboard-only use | every action reachable, focus always visible |
+| `prefers-reduced-motion` | no motion that carries meaning is lost |
+| `make check` | green, 31 tests, never fewer |
+
+## The design language — extend it, do not restart it
+
+`sema` looks like a riso-printed poster: warm paper, near-black ink, thick rules, hard offset
+shadows, rotated stickers, mono labels in uppercase.
+
+```
+paper #f6ead6   ink #171009   chili #d93a1c
+paprika #f4622a saffron #f2b705  plum #7a2e57
+rules: 3px solid ink · shadows: 8px 8px 0 ink (no blur)
+texture: one inline SVG grain + a halftone dot pattern
+type: system stack only, heavy weights, tight letter-spacing
+```
+
+No web fonts, no icon packs, no images, no CDN, no framework, no build step. Everything must
+work from `file://` and with the network off.
+
+## Priority queue
+
+Work top-down. Do not start P2 while a P0 exists.
+
+**P0 — correctness and friction**
+1. Anything that makes a learner hesitate, mis-tap, or wonder what happened.
+2. Touch targets under 44 px, focus states too weak to see, contrast under 4.5:1 for body text.
+3. Transient states that flash, jump, or lose scroll position.
+4. Keyboard paths that dead-end.
+
+**P1 — feel**
+5. Session choreography: card → answer → next should feel like one continuous motion, not
+   three redraws.
+6. Feedback timing: correct/incorrect must register before the next card appears, and the
+   next card must be ready the instant it is asked for.
+7. Progress that feels physical: the bar, the counter, the end-of-session number.
+
+**P2 — delight, used sparingly**
+8. One well-chosen micro-interaction per surface, no more.
+9. The session summary should feel earned without confetti.
+
+## Specific mandates
+
+**Session choreography.** Define the exact sequence and timings for: study card → next,
+quiz answer → reveal → continue, correct, incorrect, and session end. No state may render
+twice, no card may appear before its audio has been queued, and the transition must not move
+the card's anchor point on screen.
+
+**Feedback.** Every answer produces three things within 100 ms: a visual state on the choice,
+a one-line message, and the correct answer visible. Wrong answers must explain *what the
+right one was*, not just that you were wrong.
+
+**Motion.** A small motion system, defined once as tokens: fast (120 ms) for press states,
+medium (240 ms) for content changes, slow (400 ms) only for view changes. Everything eases
+out, nothing bounces. Every animation must have a `prefers-reduced-motion` fallback that
+preserves meaning.
+
+**States.** Design and implement: first run (empty), nothing due, mid-session, session
+complete, everything mastered, audio unavailable, microphone denied, and offline. Each needs
+a real screen, not a fallback.
+
+**Accessibility.** Visible focus on every interactive element; `aria-live` where content
+changes; correct roles; no colour-only signalling (a wrong answer must not be red alone);
+text at 200% zoom must not clip.
+
+**Mobile.** 390 px is the primary width, not an afterthought. Safe areas respected, no
+horizontal scroll, no hover-only affordances.
+
+**Micro-copy.** Short, concrete, lowercase, no exclamation marks, no "Oops!", no motivational
+filler. Say what happened and what to do.
+
+## Anti-goals — do not do these
+
+- A second primary button on Today. There is one.
+- New panels, cards, tabs, drawers, modals, tooltips-as-documentation, or onboarding carousels.
+- Icons as decoration; emoji as UI chrome.
+- Confetti, badges, XP, coins, leaderboards, or any streak that punishes a missed day.
+- Guilt copy ("don't lose your streak!"), notifications, or variable-reward loops.
+- Dependencies of any kind, including a "tiny" utility.
+- Restyling a working screen because you can. Redecoration without a metric is churn.
+
+## One bold idea
+
+Per session you may propose **one** non-obvious change that meaningfully improves the
+experience. State the hypothesis, the metric it should move, and the cheapest way to test it.
+Then stop and wait for approval. Do not implement it silently.
+
+## Verification — do this before claiming done
+
+```sh
+node --check src/app.js
+make check
+python3 tools/make_audio.py --check
+```
+
+Then **look at it**. Tests cannot see layout:
+
+```sh
+python3 serve.py --no-open      # then open the printed URL
+```
+
+Render and inspect, at minimum, 390×844 and 1280×900:
+
+- Today, with a fresh profile
+- a study card and a quiz card, mid-session
+- the answer state, correct and incorrect
+- the session summary
+- the phrase deck (`#phrases`)
+- the Tune panel open
+- keyboard focus moving through the session
+
+Check for: overlap, clipping, contrast, alignment drift between viewport widths, and anything
+that jumps when content changes length (a 3-word card and a 12-word phrase must both sit
+still).
+
+## Definition of done
+
+- `make check` green, `--check` green
+- every state above implemented and inspected at both widths
+- no new dependency, no new file outside your ownership
+- the one-button Today screen is still one button
+- a short report: what changed, what you verified, what you deliberately did not change and why
+
+## If you are unsure
+
+Ask. A wrong assumption costs a revert; a question costs one message.
