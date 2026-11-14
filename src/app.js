@@ -1208,11 +1208,16 @@
     var LV = window.SEMA_LEVELS || {};
     var atLevel = function (id) { return ADAPT.within(LV[id], (state.profile && state.profile.level) || "A2"); };
     var pool;
-    if (mode === "phrases") pool = phraseIds.filter(atLevel);
-    else if (mode === "terms") pool = termIds.filter(atLevel);
-    else if (!unit) pool = basicIds.concat(scopeWords).filter(atLevel);
+    var withSeed = function (list) {
+      var seed = ADAPT.confusionSeed(state.confusions, list);
+      if (!seed) return list;
+      return [seed].concat(list.filter(function (x) { return x !== seed; }));
+    };
+    if (mode === "phrases") pool = withSeed(phraseIds.filter(atLevel));
+    else if (mode === "terms") pool = withSeed(termIds.filter(atLevel));
+    else if (!unit) pool = withSeed(basicIds.concat(scopeWords).filter(atLevel));
     else {
-      pool = basicIds.concat(scopeWords, phraseIds).filter(atLevel);
+      pool = withSeed(basicIds.concat(scopeWords, phraseIds).filter(atLevel));
       if (solid >= 10) pool = pool.concat(termIds);
     }
 
