@@ -40,6 +40,22 @@ test("the translation prompt names the active pack and asks for English only", (
   assert.doesNotMatch(de, /Spanish/);
 });
 
+test("the Chinese prompt asks for pinyin lines; Spanish and French do not", () => {
+  const zh = CE.buildSystemPrompt({ code: "zh", name: "Chinese", locale: "zh-CN" }, "A1");
+  assert.match(zh, /pinyin/);
+  assert.match(zh, /Simplified Chinese characters/);
+  assert.match(zh, /parentheses on its own line/);
+  /* the existing rules stay in force */
+  assert.match(zh, /one or two short sentences/);
+  assert.match(zh, /ask one simple question back/);
+  assert.match(zh, /English gloss/);
+
+  const es = CE.buildSystemPrompt({ name: "Spanish", locale: "es-ES" }, "A2");
+  assert.doesNotMatch(es, /pinyin/i);
+  const fr = CE.buildSystemPrompt({ name: "French", locale: "fr-FR" }, "A2");
+  assert.doesNotMatch(fr, /pinyin/i);
+});
+
 test("the ollama request carries the system turn and a user image as base64", () => {
   const req = CE.buildRequest({
     engine: "ollama",

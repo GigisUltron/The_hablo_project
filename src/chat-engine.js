@@ -116,8 +116,11 @@
     var name = String(p.name || "the target language");
     var locale = String(p.locale || p.code || "");
     var lvl = /^(A1|A2|B1|B2)$/.test(String(level || "")) ? String(level) : DEFAULT_LEVEL;
+    var chinese = String(p.code || "").toLowerCase() === "zh" ||
+      /^zh(-|$)/i.test(locale) ||
+      /chinese|中文|汉语|漢語/i.test(name);
 
-    return [
+    var rules = [
       "You are a patient conversation partner helping someone learn " + name +
         (locale ? " (" + locale + ")" : "") + ".",
       "Reply in " + name + " only, in one or two short sentences, at level " + lvl + ".",
@@ -125,7 +128,16 @@
       "If a word is hard, add a short English gloss in parentheses.",
       "Never switch the whole reply to English. Correct a mistake gently by using the right form in your reply.",
       "Do not invent facts about the learner, and do not ask for personal details."
-    ].join(" ");
+    ];
+
+    if (chinese) {
+      rules.push("The learner is reading Chinese characters. Write the reply in Simplified " +
+        "Chinese characters, and after each sentence put that sentence's pinyin in " +
+        "parentheses on its own line, like 你好！ then (nǐ hǎo!). Do not repeat the " +
+        "Chinese characters inside the parentheses.");
+    }
+
+    return rules.join(" ");
   }
 
   /* A translation is a separate, one-message request. It must not reuse the
@@ -443,6 +455,39 @@
     return typeof esc === "function" ? esc(value == null ? "" : value) : "";
   }
 
+  /* The model may put pinyin in parentheses after a Chinese sentence. We do not
+   * generate or transliterate anything: this only recognises an already-Latin
+   * parenthetical and gives it the quiet secondary weight. Empty () is dropped,
+   * and text with no parentheticals is escaped and passed through unchanged. */
+  function renderChatText(text, esc) {
+    var source = String(text == null ? "" : text);
+    if (typeof esc !== "function") return "";
+
+    var out = "";
+    var last = 0;
+    var re = /\(([^()]*)\)/g;
+    var match;
+    while ((match = re.exec(source))) {
+      var inner = match[1].trim();
+      var before = source.slice(last, match.index);
+      if (!inner) {
+        out += esc(before);
+        last = re.lastIndex;
+        continue;
+      }
+
+      var hasCjk = /[\u3400-\u9fff\uf900-\ufaff]/.test(inner);
+      var hasLatin = /[A-Za-z0-9\u00c0-\u024f\u1e00-\u1eff]/.test(inner);
+      if (hasLatin && !hasCjk) {
+        out += esc(before) + '<span class="bubble-pinyin">(' + esc(inner) + ")</span>";
+      } else {
+        out += esc(before) + esc(match[0]);
+      }
+      last = re.lastIndex;
+    }
+    return out + esc(source.slice(last));
+  }
+
   function messageHTML(message, esc, opts) {
     var m = message || {};
     var o = opts || {};
@@ -450,7 +495,7 @@
 
     var mine = m.role === "user";
     var text = m.text
-      ? '<p class="bubble-text">' + escValue(esc, m.text) + "</p>"
+      ? '<p class="bubble-text">' + renderChatText(m.text, esc) + "</p>"
       : "";
     var image = "";
     if (isImage(m.image)) {
@@ -523,6 +568,7 @@
     scriptedOpening: scriptedOpening,
     scriptedRespond: scriptedRespond,
     messageHTML: messageHTML,
+    renderChatText: renderChatText,
     attachmentHTML: attachmentHTML,
     isImage: isImage
   };

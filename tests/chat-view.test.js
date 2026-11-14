@@ -65,6 +65,25 @@ test("a non-image URL never becomes an image element", () => {
   assert.doesNotMatch(html, /bubble-img/);
 });
 
+test("pinyin parentheticals render quietly, and empty parentheses disappear", () => {
+  const { esc } = spyEsc();
+  const html = CE.renderChatText("你好！\n(nǐ hǎo!)", esc);
+  assert.match(html, /bubble-pinyin/);
+  assert.match(html, /\(nǐ hǎo!\)/);
+  assert.doesNotMatch(html, /\(\)/);
+
+  assert.equal(CE.renderChatText("你好()", esc), "你好");
+  assert.equal(CE.renderChatText("你好！", esc), "你好！");
+});
+
+test("pinyin text is escaped and an inline gloss still reads", () => {
+  const { esc } = spyEsc();
+  const html = CE.renderChatText("你好！(nǐ <b>hǎo</b>!)", esc);
+  assert.doesNotMatch(html, /<b>hǎo/);
+  assert.match(html, /&lt;b&gt;hǎo/);
+  assert.match(html, /bubble-pinyin/);
+});
+
 test("the conversation view no longer offers image attachment", () => {
   const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
