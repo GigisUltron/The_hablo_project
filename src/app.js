@@ -859,6 +859,36 @@
         };
       });
     });
+
+    separate(Object.keys(positions), 54);
+  }
+
+  /* Neighbouring clusters on the ellipse can land a node exactly on top of
+   * another (mar under perro, amor under correr). A few rounds of pairwise
+   * pushing keep every node visible without redesigning the layout. */
+  function separate(ids, minGap) {
+    for (var round = 0; round < 80; round += 1) {
+      var moved = false;
+      for (var i = 0; i < ids.length; i += 1) {
+        for (var j = i + 1; j < ids.length; j += 1) {
+          var a = positions[ids[i]], b = positions[ids[j]];
+          var dx = b.x - a.x, dy = b.y - a.y;
+          var d = Math.sqrt(dx * dx + dy * dy);
+          if (d >= minGap) continue;
+          if (d < 0.01) { dx = 1; dy = 0; d = 1; }
+          var push = (minGap - d) / 2;
+          a.x -= (dx / d) * push; a.y -= (dy / d) * push;
+          b.x += (dx / d) * push; b.y += (dy / d) * push;
+          moved = true;
+        }
+      }
+      ids.forEach(function (id) {
+        var p = positions[id];
+        p.x = Math.max(40, Math.min(860, p.x));
+        p.y = Math.max(30, Math.min(650, p.y));
+      });
+      if (!moved) break;
+    }
   }
 
   function buildMap() {
