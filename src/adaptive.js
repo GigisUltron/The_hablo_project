@@ -38,7 +38,18 @@
     return correct / Math.max(1, answered) >= 0.85;
   }
 
-  var api = { LEVELS: LEVELS, level: level, plan: plan, shouldStop: shouldStop };
+  /* CEFR gating: an A1 learner should never be shown B1 material. */
+  var CEFR = ["A1", "A2", "B1", "B2"];
+
+  function within(itemLevel, profileLevel) {
+    var i = CEFR.indexOf(itemLevel);
+    var p = CEFR.indexOf(profileLevel);
+    if (i === -1 || p === -1) return true;   // ungraded items stay available
+    return i <= p;
+  }
+
+  var api = { LEVELS: LEVELS, level: level, plan: plan, shouldStop: shouldStop,
+              CEFR: CEFR, within: within };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.SemaAdaptive = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);

@@ -41,3 +41,11 @@ test("a good session stops early, a poor one does not", () => {
   assert.equal(A.shouldStop(8, 7), true);
   assert.equal(A.shouldStop(6, 0), false);
 });
+
+test("cefr gating keeps harder items out of an easier session", () => {
+  assert.equal(A.within("A1", "A1"), true);
+  assert.equal(A.within("B1", "A1"), false);
+  assert.equal(A.within("A2", "B1"), true);
+  assert.equal(A.within("B2", "B1"), false);
+  assert.equal(A.within(undefined, "A1"), true);   // ungraded is allowed
+});

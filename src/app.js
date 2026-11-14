@@ -1133,12 +1133,16 @@
       : allIds.slice();
     /* basics first: words, then phrases, then connectors. Terms are advanced
      * material and stay out of a lesson until there is something to connect. */
+    /* the level decides what can appear at all; a session never shows material
+       two bands above the learner. */
+    var LV = window.SEMA_LEVELS || {};
+    var atLevel = function (id) { return ADAPT.within(LV[id], (state.profile && state.profile.level) || "A2"); };
     var pool;
-    if (mode === "phrases") pool = phraseIds.slice();
-    else if (mode === "terms") pool = termIds.slice();
-    else if (!unit) pool = basicIds.concat(scopeWords);
+    if (mode === "phrases") pool = phraseIds.filter(atLevel);
+    else if (mode === "terms") pool = termIds.filter(atLevel);
+    else if (!unit) pool = basicIds.concat(scopeWords).filter(atLevel);
     else {
-      pool = basicIds.concat(scopeWords, phraseIds);
+      pool = basicIds.concat(scopeWords, phraseIds).filter(atLevel);
       if (solid >= 10) pool = pool.concat(termIds);
     }
 
