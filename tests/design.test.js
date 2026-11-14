@@ -26,5 +26,5 @@ test("hardcoded colours and radii only decrease", () => {
   const radii = new Set([...body.matchAll(/border-radius:\s*([^;]+)/g)].map((m) => m[1].trim()));
   // ceilings measured today; they may fall, never rise
   assert.ok(hex.size <= 21, `raw hex colours: ${hex.size} (ceiling 21)`);
-  assert.ok(radii.size <= 20, `distinct radii: ${radii.size} (ceiling 20)`);
+  assert.ok(radii.size <= 9, `distinct radii: ${radii.size} (ceiling 9)`);
 });
