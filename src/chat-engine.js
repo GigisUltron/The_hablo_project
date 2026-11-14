@@ -78,6 +78,35 @@
     return store;
   }
 
+  /* Two taps on the same control, and the arm state lives in data, not in the
+   * button label or a timer. A render between the taps can only read it. */
+  function clearTap(state, store, code) {
+    var s = state || {};
+    var c = store && store[code];
+    if (!c || !Array.isArray(c.messages) || !c.messages.length) {
+      s.armed = false;
+      return { action: "none" };
+    }
+    if (!s.armed) {
+      s.armed = true;
+      return { action: "arm" };
+    }
+    c.messages = [];
+    c.scripted = null;
+    s.armed = false;
+    return { action: "clear" };
+  }
+
+  function clearControl(state, hasMessages) {
+    var has = !!hasMessages;
+    var armed = !!has && !!(state && state.armed);
+    return {
+      hidden: !has,
+      armed: armed,
+      label: armed ? "tap again to clear" : "clear"
+    };
+  }
+
   /* --------------------------------------------------------------- the prompt */
 
   /* Built only from the live pack: its display name and locale. The learner's
@@ -484,6 +513,8 @@
     endpointFor: endpointFor,
     isLocalEndpoint: isLocalEndpoint,
     normaliseChatStore: normaliseChatStore,
+    clearTap: clearTap,
+    clearControl: clearControl,
     replyText: replyText,
     discover: discover,
     visionFor: visionFor,

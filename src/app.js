@@ -1051,12 +1051,10 @@
   var chatPending = false;
   var chatListening = false;
   var chatRec = null;
-  var pendingImage = null;
   var chatEpoch = 0;
   var chatTranslating = {};
   var chatCleared = false;
-  var clearArmed = false;
-  var clearTimer = null;
+  var clearState = { armed: false };
 
   function chatState() {
     if (!ACTIVE) return { messages: [], scripted: null };
@@ -1189,12 +1187,13 @@
     setChatStatus();
   }
 
-  function renderChat() {
+  function renderChat(forceBottom) {
     if (!chat) return;
     var log = $("chat");
     if (!log) return;
 
-    var atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 24;
+    var atBottom = !!forceBottom ||
+      log.scrollHeight - log.scrollTop - log.clientHeight < 24;
     var keepTop = log.scrollTop;
     if (!chat.messages.length) {
       log.innerHTML = '<p class="chat-empty">' + esc(emptyChatLine()) + "</p>";
@@ -1224,28 +1223,32 @@
     });
     updateChatClear();
     log.scrollTop = atBottom ? log.scrollHeight : keepTop;
+    if (forceBottom && window.requestAnimationFrame) {
+      window.requestAnimationFrame(function () {
+        if (log) log.scrollTop = log.scrollHeight;
+      });
+    }
   }
 
   function updateChatClear() {
     var btn = $("chat-clear");
     if (!btn) return;
     var has = !!(chat && chat.messages.length);
-    btn.hidden = !has;
-    if (!has) resetChatClear();
+    if (!has) clearState.armed = false;
+    var view = CE && CE.clearControl
+      ? CE.clearControl(clearState, has)
+      : { hidden: !has, armed: false, label: "clear" };
+    btn.hidden = view.hidden;
+    btn.textContent = view.label;
+    btn.classList.toggle("is-armed", view.armed);
+    btn.setAttribute("aria-label", view.armed
+      ? "tap again to clear this conversation"
+      : "clear this conversation");
   }
 
   function resetChatClear() {
-    clearArmed = false;
-    if (clearTimer) {
-      clearTimeout(clearTimer);
-      clearTimer = null;
-    }
-    var btn = $("chat-clear");
-    if (btn) {
-      btn.textContent = "clear";
-      btn.classList.remove("is-armed");
-      btn.setAttribute("aria-label", "clear this conversation");
-    }
+    clearState.armed = false;
+    updateChatClear();
   }
 
   function clearChat() {
@@ -1255,8 +1258,6 @@
     chatCleared = true;
     chatEpoch += 1;
     chatTranslating = {};
-    pendingImage = null;
-    renderAttachment();
     setChatBusy(false);
     save();
     renderChat();
@@ -1269,20 +1270,15 @@
   }
 
   function chatClearClick() {
-    if (!chat || !chat.messages.length) return;
-    if (!clearArmed) {
-      clearArmed = true;
-      var btn = $("chat-clear");
-      if (btn) {
-        btn.textContent = "tap again";
-        btn.classList.add("is-armed");
-        btn.setAttribute("aria-label", "tap again to clear this conversation");
-      }
-      clearTimer = setTimeout(resetChatClear, 4000);
+    if (!chat || !ACTIVE) return;
+    var result = CE && CE.clearTap
+      ? CE.clearTap(clearState, state.chat, ACTIVE.code)
+      : { action: "none" };
+    if (result.action === "arm") {
+      updateChatClear();
       return;
     }
-    resetChatClear();
-    clearChat();
+    if (result.action === "clear") clearChat();
   }
 
   function translateMessage(index) {
@@ -1365,20 +1361,13 @@
     if (hasTTS && !quiet) speak(clean);
   }
 
-  function addUser(text, image) {
+  function addUser(text) {
     if (!chat) return;
     var msg = {
       role: "user",
       text: String(text == null ? "" : text).trim(),
-      image: image || null,
-      note: "",
       at: Date.now()
     };
-    if (image && !(chatMeta.status === "ready" && chatMeta.vision)) {
-      msg.note = chatMeta.status === "ready"
-        ? "text-only model · image not sent"
-        : "no model · image not sent";
-    }
     chat.messages.push(msg);
     trimChat();
     save();
@@ -1449,15 +1438,12 @@
     if (chatPending || !chat || !ACTIVE) return;
     var input = $("chat-input");
     var text = input ? input.value.trim() : "";
-    var image = pendingImage ? pendingImage.dataUrl : null;
-    if (!text && !image) return;
+    if (!text) return;
 
     resetChatClear();
     chatCleared = false;
-    addUser(text, image);
+    addUser(text);
     rememberChatLine(text);
-    pendingImage = null;
-    renderAttachment();
     if (input) input.value = "";
 
     if (chatMeta.status !== "ready" || !CE) {
@@ -1505,85 +1491,9 @@
     resetChatClear();
     show("conv");
     renderChatHeader();
-    renderChat();
-    renderAttachment();
+    renderChat(true);
     setChatBusy(false);
     refreshChatEngine();
-  }
-
-  function renderAttachment() {
-    var box = $("chat-attachment");
-    if (!box) return;
-    box.innerHTML = pendingImage && CE ? CE.attachmentHTML(pendingImage, esc) : "";
-    var clear = box.querySelector("[data-attach-clear]");
-    if (clear) {
-      clear.addEventListener("click", function () {
-        pendingImage = null;
-        renderAttachment();
-        var file = $("chat-image");
-        if (file) file.value = "";
-      });
-    }
-  }
-
-  function downscaleImage(dataUrl, done) {
-    var img = new Image();
-    img.onload = function () {
-      try {
-        var max = 1024;
-        var w = img.naturalWidth || img.width;
-        var h = img.naturalHeight || img.height;
-        if (!w || !h || (w <= max && h <= max)) { done(dataUrl); return; }
-
-        var scale = Math.min(max / w, max / h);
-        var canvas = document.createElement("canvas");
-        canvas.width = Math.max(1, Math.round(w * scale));
-        canvas.height = Math.max(1, Math.round(h * scale));
-        var ctx = canvas.getContext("2d");
-        if (!ctx) { done(dataUrl); return; }
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        done(canvas.toDataURL("image/jpeg", 0.82));
-      } catch (err) {
-        done(dataUrl);
-      }
-    };
-    img.onerror = function () { toast("That image could not be read."); };
-    img.src = dataUrl;
-  }
-
-  function chatImageChange() {
-    var input = $("chat-image");
-    var file = input && input.files && input.files[0];
-    if (!file) return;
-    if (file.type && !/^image\//i.test(file.type)) {
-      toast("Choose an image file.");
-      input.value = "";
-      return;
-    }
-    if (file.size > 12 * 1024 * 1024) {
-      toast("That image is too large. Keep it under 12 MB.");
-      input.value = "";
-      return;
-    }
-    if (typeof FileReader === "undefined") {
-      toast("This browser cannot read images.");
-      return;
-    }
-
-    var reader = new FileReader();
-    reader.onerror = function () { toast("That image could not be read."); };
-    reader.onload = function () {
-      var dataUrl = String(reader.result || "");
-      if (!/^data:image\//i.test(dataUrl)) {
-        toast("That file is not an image.");
-        return;
-      }
-      downscaleImage(dataUrl, function (small) {
-        pendingImage = { dataUrl: small, at: Date.now() };
-        renderAttachment();
-      });
-    };
-    reader.readAsDataURL(file);
   }
 
   function listenChat() {
@@ -3258,8 +3168,6 @@
   });
   $("conv-back").addEventListener("click", function () {
     resetChatClear();
-    pendingImage = null;
-    renderAttachment();
     show("today");
   });
   $("chat-clear").addEventListener("click", chatClearClick);
@@ -3267,14 +3175,6 @@
     ev.preventDefault();
     sendChatTurn();
   });
-  /* the attachment controls are optional: a build without them must still boot */
-  var attachBtn = $("chat-attach");
-  var imageInput = $("chat-image");
-  if (attachBtn) attachBtn.addEventListener("click", function () {
-    var file = $("chat-image");
-    if (file) file.click();
-  });
-  if (imageInput) imageInput.addEventListener("change", chatImageChange);
   $("chat-listen").addEventListener("click", listenChat);
   $("chat-endpoint").addEventListener("change", function () {
     state.settings.chatEndpoint = cleanEndpoint(this.value);
@@ -3290,7 +3190,6 @@
   });
   $("chat-check").addEventListener("click", refreshChatEngine);
   if (SR) $("chat-listen").hidden = false;
-  if (attachBtn && typeof FileReader === "undefined") attachBtn.hidden = true;
   renderChatSettings();
   $("settings-back").addEventListener("click", function () { show("today"); });
   $("reader-back").addEventListener("click", function () { reader = null; show("today"); });

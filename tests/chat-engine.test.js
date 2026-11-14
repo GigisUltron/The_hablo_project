@@ -239,6 +239,36 @@ test("the chat store tolerates a missing or broken save", () => {
   assert.deepEqual(CE.normaliseChatStore({ chat: { es: { messages: "nope" } } }), { es: { messages: [] } });
 });
 
+test("arm then clear empties only the active language even after a render", () => {
+  const store = {
+    es: { messages: [{ role: "user", text: "hola" }], scripted: { turn: 1 } },
+    fr: { messages: [{ role: "user", text: "salut" }], scripted: null }
+  };
+  const state = { armed: false };
+
+  assert.equal(CE.clearTap(state, store, "es").action, "arm");
+  assert.equal(state.armed, true);
+
+  /* A re-render can read the state and redraw the label; it must not reset it. */
+  const redrawn = CE.clearControl(state, true);
+  assert.equal(redrawn.label, "tap again to clear");
+  assert.equal(redrawn.armed, true);
+  assert.equal(state.armed, true);
+
+  assert.equal(CE.clearTap(state, store, "es").action, "clear");
+  assert.equal(state.armed, false);
+  assert.deepEqual(store.es, { messages: [], scripted: null });
+  assert.deepEqual(store.fr.messages, [{ role: "user", text: "salut" }]);
+});
+
+test("clear does nothing on an empty conversation", () => {
+  const store = { es: { messages: [] } };
+  const state = { armed: false };
+  assert.equal(CE.clearTap(state, store, "es").action, "none");
+  assert.equal(state.armed, false);
+  assert.deepEqual(CE.clearControl(state, false), { hidden: true, armed: false, label: "clear" });
+});
+
 test("the Spanish fallback is the existing scripted responder", () => {
   const session = CE.scriptedStart("es");
   const reply = CE.scriptedRespond("es", session, "bien");

@@ -65,14 +65,18 @@ test("a non-image URL never becomes an image element", () => {
   assert.doesNotMatch(html, /bubble-img/);
 });
 
-test("the attachment preview also routes its URL and label through escape", () => {
-  const { esc, calls } = spyEsc();
-  const html = CE.attachmentHTML({ dataUrl: "data:image/png;base64,AAAA" }, esc);
-  assert.match(html, /attach-thumb/);
-  assert.match(html, /data-attach-clear/);
-  assert.ok(calls.includes("data:image/png;base64,AAAA"));
-  assert.ok(calls.includes("attached image"));
-  assert.ok(calls.includes("remove image"));
+test("the conversation view no longer offers image attachment", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.doesNotMatch(html, /id="chat-image"|id="chat-attach"|chat-attachment/);
+  assert.doesNotMatch(app, /chatImageChange|downscaleImage|pendingImage|attachmentHTML/);
+});
+
+test("the chat view passes the app's escape helper into the bubble builder", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /CE\.messageHTML\(m, esc,/, "bubbles do not use esc");
+  assert.equal(/innerHTML\s*=\s*[^;]*\+\s*m\.(text|note|image)\s*\+/.test(app), false,
+    "chat text is interpolated into innerHTML without esc");
 });
 
 test("an assistant bubble offers a per-message translation control", () => {
@@ -126,14 +130,6 @@ test("translation text and its failure note are escaped", () => {
   assert.match(failed, /translation unavailable/);
 });
 
-test("the chat view passes the app's escape helper into both builders", () => {
-  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
-  assert.match(app, /CE\.messageHTML\(m, esc,/, "bubbles do not use esc");
-  assert.match(app, /CE\.attachmentHTML\(pendingImage, esc\)/, "the attachment preview does not use esc");
-  assert.equal(/innerHTML\s*=\s*[^;]*\+\s*m\.(text|note|image)\s*\+/.test(app), false,
-    "chat text is interpolated into innerHTML without esc");
-});
-
 test("conversation state is per language and the prompt comes from the live pack", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(app, /state\.chat\[code\]/, "the chat is not keyed by the active language");
@@ -155,7 +151,6 @@ test("the view says when no local model answered", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(app, /no local model found — run ollama serve/);
   assert.match(app, /scripted/, "fallback replies are not labelled");
-  assert.match(app, /text-only model · image not sent/, "images are not marked text-only");
 });
 
 test("per-message translation is model-backed, pack-aware and cached", () => {
@@ -183,6 +178,12 @@ test("clearing the chat touches only the active language conversation", () => {
   assert.match(block, /chat\.scripted = null/);
   assert.match(block, /chatEpoch \+= 1/);
   assert.doesNotMatch(block, /state\.memory|state\.cards|byLang/);
-  assert.match(app, /tap again/);
+  assert.match(app, /CE\.clearTap\(clearState, state\.chat, ACTIVE\.code\)/);
   assert.match(block, /renderChat\(\)/, "the empty state is not rendered after clearing");
+});
+
+test("opening the chat lands at the newest message", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /renderChat\(true\)/, "entry does not force the bottom");
+  assert.match(app, /requestAnimationFrame/, "entry does not settle the scroll after layout");
 });
