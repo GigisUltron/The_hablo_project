@@ -161,3 +161,9 @@ test("no card prints null for an item's picture", () => {
     "row-pic concatenates it.emoji directly; terms have no emoji");
   assert.match(app, /it\.schema/, "the card should fall back to the schema glyph");
 });
+
+test("no item is ever built with a null emoji", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.equal(app.includes("emoji: null"), false,
+    "itemOf must give an empty string, not null - every renderer concatenates it");
+});

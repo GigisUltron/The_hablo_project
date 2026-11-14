@@ -1007,14 +1007,14 @@
     var b = basicById[id];
     if (b) {
       return {
-        id: b.id, emoji: null, article: "", text: b.text, sub: b.gloss,
+        id: b.id, emoji: "", article: "", text: b.text, sub: b.gloss,
         kind: "basic", person: b.person, of: b.of
       };
     }
     var t = termById[id];
     if (t) {
       return {
-        id: t.id, emoji: null, schema: t.schema, article: "", text: t.text,
+        id: t.id, emoji: "", schema: t.schema, article: "", text: t.text,
         sub: t.frame, frame: t.frame, contrast: t.contrast, kind: "term"
       };
     }
