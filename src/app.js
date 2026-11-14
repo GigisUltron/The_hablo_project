@@ -676,6 +676,7 @@
   function renderPersonal() {
     clearCard();
     setProgress();
+    renderSteps("warm");
 
     var p = session.personal;
     $("stage").innerHTML =
@@ -792,6 +793,23 @@
     $("bar-fill").style.width = Math.round((done / n) * 100) + "%";
   }
 
+  /* The process, made visible: a lesson is four named steps, not one long
+   * undifferentiated deck. You always know where you are and what is left. */
+  function renderSteps(active) {
+    var box = $("steps");
+    if (!box || !session) return;
+    var steps = [];
+    if (session.hasPersonal) steps.push(["warm", "Warm up"]);
+    steps.push(["learn", "Learn"], ["quiz", "Quiz"], ["done", "Done"]);
+
+    var passed = false;
+    box.innerHTML = steps.map(function (s) {
+      var cls = s[0] === active ? " is-current" : (passed ? " is-done" : "");
+      if (s[0] === active) passed = true;
+      return '<li class="step' + cls + '">' + esc(s[1]) + "</li>";
+    }).join("");
+  }
+
   function clearCard() {
     $("stage").innerHTML = "";
     $("actions").innerHTML = "";
@@ -805,6 +823,7 @@
   function renderStudy() {
     setProgress();
     clearCard();
+    renderSteps("learn");
 
     var it = itemOf(session.study[session.si]);
     var last = session.si === session.study.length - 1;
@@ -843,6 +862,7 @@
     if (session.qi >= session.quiz.length) { finishSession(); return; }
     setProgress();
     clearCard();
+    renderSteps("quiz");
 
     var id = session.quiz[session.qi];
     var card = state.cards[id];
@@ -1046,6 +1066,7 @@
     var acc = Math.round((session.firstCorrect / total) * 100);
     var missed = Object.keys(session.missed);
 
+    renderSteps("done");
     $("bar-fill").style.width = "100%";
     $("counter").textContent = String(total);
 

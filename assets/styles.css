@@ -1240,3 +1240,24 @@ h1 em {
   color: var(--ink-faint);
   margin-top: 8px;
 }
+
+/* --------------------------------------------------- the lesson as a process */
+.steps {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+}
+.steps .step {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  border: 2px solid transparent;
+  padding: 3px 7px;
+}
+.steps .step.is-current { color: var(--ink); border-color: var(--ink); background: var(--saffron); }
+.steps .step.is-done { color: var(--ink-soft); border-bottom-color: var(--ink-faint); }
