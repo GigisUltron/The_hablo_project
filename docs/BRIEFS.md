@@ -99,9 +99,9 @@ opened the page and looked at it — a no-build front end breaks in ways tests c
 - **No new dependency** unless the owner approved it in the current conversation.
 - **No personal data** in files, fixtures, commit messages or audio metadata.
 - **Never edit a file you do not own**; send the request instead.
-- **Commit locally, never push.** One concern per commit, subject prefixed with your lane
-  (`content:`, `audio:`, `ui:`), and a `Co-authored-by: <lane> agent <lane@local>` trailer so
-  the work is attributable. Pushing is the owner's call.
+- **Commit and push.** One concern per commit, subject prefixed with your lane (`content:`,
+  `audio:`, `ui:`), and a `Co-authored-by: <lane> agent <lane@local>` trailer. Never force,
+  never rewrite published history, never push while tests are red, and report the hash.
 - **`make check` is the gate**, not a suggestion.
 
 ---

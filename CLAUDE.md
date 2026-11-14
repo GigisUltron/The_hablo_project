@@ -181,25 +181,28 @@ Per session you may propose **one** non-obvious change that meaningfully improve
 experience. State the hypothesis, the metric it should move, and the cheapest way to test it.
 Then stop and wait for approval. Do not implement it silently.
 
-## Committing
+## Committing and pushing
 
-You may commit. You may **not** push.
+You may commit **and push**. The guardrails are about what you must not break, not about
+asking permission.
 
 - **One concern per commit**, subject prefixed with your lane: `ui:`, `content:`, `audio:`,
   `docs:`.
-- **Never `git push`**, never `--force`, never rewrite history, never amend a commit that is
-  already on `main`. Pushing is the owner's call, always.
-- **Attribute the lane**, because otherwise the history credits everything to whoever ran the
-  shell. End every commit with a trailer:
+- **Commit nothing while `make check` is red.** Fix or revert first.
+- **Push only what you wrote.** Your lane's commits, on `main`, after the suite is green.
+- **Never `--force`.** Never rewrite, rebase or squash published history. Never amend a commit
+  that is already on `main`. If a push is rejected, stop and report — do not "fix" it by
+  force-pushing over someone else's work.
+- **Attribute the lane** on every commit, or the history credits whoever ran the shell:
 
   ```
   Co-authored-by: interface agent <interface@local>
   ```
 
   Use `content@local`, `audio@local`, `docs@local` for the other lanes.
-- **Commit nothing while `make check` is red.** Fix or revert first.
 - **Do not commit generated binaries** (`assets/audio/**`, `docs/preview.png`) unless you ran
   the generator that produced them in this session.
+- **Report the hash** you pushed. "Pushed" without a hash is a claim, not a fact.
 
 ## Verification — do this before claiming done
 
