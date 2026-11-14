@@ -6,7 +6,7 @@ test("every text has an id, title, level and body", () => {
   for (const t of T.texts) {
     assert.match(t.id, /^tx-[a-z-]+$/);
     assert.ok(t.title.length > 2);
-    assert.ok([1, 2, 3].includes(t.level), `${t.id} bad level`);
+    assert.ok([1, 2, 3, 4].includes(t.level), `${t.id} bad level`);
     const words = t.body.split(/\s+/).length;
     assert.ok(words >= 50 && words <= 140, `${t.id} is ${words} words`);
   }

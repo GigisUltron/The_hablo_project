@@ -40,8 +40,19 @@ var SEMA_TEXTS = {
         { q: "¿Qué hace mientras escucha la lluvia?", options: ["prepara un café", "duerme", "llama a un amigo"], answer: 0 },
         { q: "¿Qué hará quizá mañana?", options: ["sol", "frío", "viento"], answer: 0 }
       ]
+    },
+    {
+      id: "tx-barrio",
+      title: "El barrio que cambia",
+      level: 4,
+      body: "Cuando llegué a este barrio, hace diez años, había una panadería en cada esquina. Ahora solo queda una, aunque el pan sigue siendo bueno. Mucha gente se queja de que los alquileres suban cada año y, sin embargo, nadie se va: el barrio está cerca del centro y las escuelas son buenas. Quizá lo que más ha cambiado sea el ruido. Antes se oían voces en la calle hasta tarde; hoy se oyen obras. Si el ayuntamiento no hiciera nada, dentro de cinco años no quedaría ningún vecino de los de antes. Aunque, pensándolo bien, eso mismo decían hace diez años.",
+      questions: [
+        { q: "¿Qué quiere decir el autor sobre el barrio?", options: ["que ha empeorado del todo", "que cambia pero conserva algo", "que ya no vive nadie"], answer: 1, why: ["reconoce cosas buenas, como el pan", "", "dice que la gente sigue viviendo allí"] },
+        { q: "¿Por qué no se marcha la gente?", options: ["por la situación y las escuelas", "porque no pueden vender", "porque no les importa el precio"], answer: 0, why: ["", "el texto no habla de ventas", "se quejan del precio: sí les importa"] },
+        { q: "¿Qué tono tiene la última frase?", options: ["irónico", "enfadado", "neutro"], answer: 0, why: ["", "no hay enfado, hay ironía", "repite una queja antigua: no es neutro"] }
+      ]
     }
-  ]
+]
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TEXTS;
