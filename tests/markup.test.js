@@ -415,7 +415,7 @@ test("a beginner's first session opens on phrases, with nothing above A2", () =>
     };
   }
 
-  function firstQueue(deck, level) {
+  function firstQueue(deck, level, seen) {
     const registry = new Map();
     const document = {
       getElementById(id) { if (!registry.has(id)) registry.set(id, node(id)); return registry.get(id); },
@@ -423,10 +423,14 @@ test("a beginner's first session opens on phrases, with nothing above A2", () =>
       createElement() { return node(); }, createElementNS() { return node(); },
       addEventListener() {}, body: node("body")
     };
+    const cards = {};
+    (seen || []).forEach(function (id) {
+      cards[id] = { last: Date.now(), due: Date.now() + 86400000, interval: 6, reps: 3, lapses: 0 };
+    });
     const save = {
       version: 1, profile: { level, lang: deck, uiLang: "en", byLang: {} },
       settings: { size: 8, translations: "on" },
-      cards: {}, confusions: {}, reviews: { good: 0, again: 0 }, sessions: 0,
+      cards, confusions: {}, reviews: { good: 0, again: 0 }, sessions: 3,
       memory: { sentences: [] }
     };
     const localStorage = {
@@ -456,8 +460,12 @@ test("a beginner's first session opens on phrases, with nothing above A2", () =>
     return { queue: captured && captured.out, A };
   }
 
-  for (const deck of ["es", "fr", "it"]) {
-    const { queue, A } = firstQueue(deck, "A1");
+  for (const deck of ["es", "fr", "it", "ja", "zh"]) {
+    const C0 = require("../src/lang/" + deck + "/concepts.js").concepts;
+    /* a script deck opens on its alphabet first; six solid concepts move the
+     * path on to the mixed lesson this test is about (solid counts concepts) */
+    const seen = ["ja", "zh"].includes(deck) ? C0.slice(0, 6).map((c) => c.id) : [];
+    const { queue, A } = firstQueue(deck, "A1", seen);
     const q = Array.from(queue || []);   // the queue is built in another realm
     const P = require("../src/lang/" + deck + "/phrases.js").phrases.map((p) => p.id);
     const T = require("../src/lang/" + deck + "/terms.js").terms.map((t) => t.id);
