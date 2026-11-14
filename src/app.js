@@ -1137,6 +1137,13 @@
       glossHTML(id);
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
+    var tile = $("stage").querySelector(".tile");
+    if (tile) {
+      tile.style.cursor = "pointer";
+      tile.setAttribute("role", "button");
+      tile.setAttribute("aria-label", "Play the audio");
+      tile.addEventListener("click", function () { sayItem(it); });
+    }
     wireGloss();
     $("actions").innerHTML = '<button class="btn btn-primary" id="gotit">Got it →</button>';
     $("gotit").addEventListener("click", function () {
@@ -1154,8 +1161,7 @@
     $("stage").innerHTML =
       '<p class="prompt">Which one fits?</p>' +
       '<p class="term-blank">' + esc(it.frame) + "</p>" +
-      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>" +
-      glossHTML(id);
+      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
 
     wireGloss();
 
@@ -1331,8 +1337,7 @@
       tileHTML(it, true) +
       wordsHTML(it) +
       contextHTML(it) +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear it again</button>' +
-      glossHTML(it.id);
+      '<button class="speak-btn" id="hear-btn">🔊 Hear it again</button>';
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
