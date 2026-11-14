@@ -151,3 +151,19 @@ test("every pack is voiced, or explicitly excused", () => {
     }
   }
 });
+
+test("the registry returns the whole pack, not just its words", () => {
+  const LANGS = require("../src/lang/index.js");
+  for (const code of codes) {
+    const pack = LANGS.load(code);
+    assert.ok(pack, `${code}: the registry cannot load it`);
+    const items = packItems(path.join(root, code));
+    assert.ok(pack.concepts.concepts.length >= 20, `${code}: concepts missing from registry`);
+    assert.ok(pack.phrases.phrases.length >= 30, `${code}: phrases missing from registry`);
+    assert.ok(pack.basics.items.length >= 8, `${code}: grammar missing from registry`);
+    const unread = items.filter((item) => !pack.levels[item.id]).map((item) => item.id);
+    assert.deepEqual(unread, [], `${code}: registry lost the level of ${unread.slice(0, 5).join(", ")}`);
+    assert.ok(pack.texts.texts.length >= 1, `${code}: texts missing from registry`);
+    assert.ok(pack.conv.dialogues.length >= 1, `${code}: conversation missing from registry`);
+  }
+});

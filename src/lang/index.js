@@ -71,7 +71,7 @@
 
   function partsFromDisk(code) {
     if (typeof require !== "function" || !/^[a-z]{2}(-[a-z]+)?$/i.test(code)) return null;
-    var names = ["concepts", "phrases", "terms", "glosses", "alphabet", "texts", "conv"];
+    var names = ["concepts", "phrases", "terms", "basics", "glosses", "levels", "alphabet", "texts", "conv"];
     var parts = {};
     var found = false;
     names.forEach(function (part) {
@@ -119,7 +119,9 @@
       concepts: concepts,
       phrases: parts.phrases && Array.isArray(parts.phrases.phrases) ? parts.phrases : { phrases: [] },
       terms: parts.terms && Array.isArray(parts.terms.terms) ? parts.terms : { terms: [] },
+      basics: parts.basics && Array.isArray(parts.basics.items) ? parts.basics : { items: [], rows: [] },
       glosses: parts.glosses || {},
+      levels: parts.levels || {},
       alphabet: parts.alphabet && Array.isArray(parts.alphabet.letters) ? parts.alphabet : { letters: [] },
       texts: parts.texts && Array.isArray(parts.texts.texts) ? parts.texts : { texts: [] },
       conv: normaliseConv(parts.conv),
@@ -154,7 +156,9 @@
       root.SEMA_DATA = pack.concepts;
       root.SEMA_PHRASES = pack.phrases;
       root.SEMA_TERMS = pack.terms;
+      root.SEMA_BASICS = pack.basics;
       root.SEMA_GLOSSES = pack.glosses;
+      root.SEMA_LEVELS = pack.levels;
       root.SEMA_ALPHABET = pack.alphabet;
       root.SEMA_TEXTS = pack.texts;
       root.SemaConv = pack.conv;
