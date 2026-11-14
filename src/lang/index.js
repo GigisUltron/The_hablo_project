@@ -53,9 +53,25 @@
   }
 
   /* Node-only fallback: read the same files the browser loads as scripts. */
+  function audioFromDisk(code) {
+    if (typeof require !== "function") return {};
+    try {
+      var fs = require("fs");
+      var path = require("path");
+      var file = code === "es"
+        ? path.join(__dirname, "..", "..", "assets", "audio", "manifest.js")
+        : path.join(__dirname, "..", "..", "assets", "audio", code, "manifest.js");
+      var source = fs.readFileSync(file, "utf8");
+      var match = source.match(/window\.SEMA_AUDIO\s*=\s*(\{[\s\S]*\})\s*;?\s*$/);
+      return match ? JSON.parse(match[1]) : {};
+    } catch (err) {
+      return {};
+    }
+  }
+
   function partsFromDisk(code) {
     if (typeof require !== "function" || !/^[a-z]{2}(-[a-z]+)?$/i.test(code)) return null;
-    var names = ["concepts", "phrases", "terms", "glosses", "alphabet", "texts", "conv", "audio"];
+    var names = ["concepts", "phrases", "terms", "glosses", "alphabet", "texts", "conv"];
     var parts = {};
     var found = false;
     names.forEach(function (part) {
@@ -66,6 +82,8 @@
         if (err && err.code !== "MODULE_NOT_FOUND") throw err;
       }
     });
+    parts.audio = audioFromDisk(code);
+    if (Object.keys(parts.audio).length) found = true;
     return found ? parts : null;
   }
 
