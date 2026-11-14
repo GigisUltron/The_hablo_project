@@ -15,6 +15,10 @@
   var UI = window.SEMA_UI;
 
   /* Chrome in the learner's interface language, not the deck's. */
+  function tr(key, fallback) {
+    return (UI && UI.t(((state.profile || {}).uiLang) || "en", key)) || fallback || key;
+  }
+
   function applyStrings() {
     if (!UI) return;
     var lang = (state.profile && state.profile.uiLang) || "en";
@@ -1591,7 +1595,7 @@
       tile.setAttribute("aria-label", "Play the audio");
       tile.addEventListener("click", function () { sayItem(it); });
     }
-    $("actions").innerHTML = '<button class="btn btn-primary" id="gotit">Got it</button>';
+    $("actions").innerHTML = '<button class="btn btn-primary" id="gotit">' + tr("gotit", "Got it") + '</button>';
     $("gotit").addEventListener("click", function () {
       session.firstCorrect += 1;   // it was taught and acknowledged, not guessed
       S.review(state, id, 2, Date.now());

@@ -18,6 +18,8 @@ var SEMA_UI = {
     translationsOff: "translations off",
     oneMore: "One more",
     leave: "done for now",
+    gotit: "Got it",
+    hearit: "Hear it",
     tabToday: "Today",
     tabMap: "Map",
     tabProgress: "Progress"
@@ -35,6 +37,8 @@ var SEMA_UI = {
     translationsOff: "traducciones desactivadas",
     oneMore: "Una más",
     leave: "por ahora no",
+    gotit: "Entendido",
+    hearit: "Escucharlo",
     tabToday: "Hoy",
     tabMap: "Mapa",
     tabProgress: "Progreso"
