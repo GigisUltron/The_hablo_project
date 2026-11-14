@@ -1118,6 +1118,7 @@
 
   function lessonPlan(opts) {
     var o = opts || {};
+    if (o.unit && o.unit.mode === "read") { startReader(); return; }
     var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
     var unit = o.custom ? null : (o.unit || (TRACK ? TRACK.currentUnit(solid) : null));
     var mode = unit ? unit.mode : (o.mode || sessionMode());

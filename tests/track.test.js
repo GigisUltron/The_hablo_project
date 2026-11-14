@@ -18,7 +18,7 @@ test("unlocks step by step with solid cards", () => {
 test("the current unit is the furthest unlocked one", () => {
   assert.equal(T.currentUnit(0).id, "u1");
   assert.equal(T.currentUnit(7).id, "u2");
-  assert.equal(T.currentUnit(99).id, "u5");
+  assert.equal(T.currentUnit(99).id, "u6");
 });
 
 test("remaining counts down to the next unlock", () => {
