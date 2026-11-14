@@ -19,7 +19,7 @@ test("levels are valid CEFR bands", () => {
 test("grammar and concrete nouns come before phrases", () => {
   for (const b of B) assert.equal(L[b.id], "A1", b.id);
   assert.ok(P.slice(10).every((p) => L[p.id] === "A2"));
-  assert.ok(T.every((t) => L[t.id] === "B1"));
+  assert.ok(T.every((t) => ["B1", "B2"].includes(L[t.id])));
 });
 
 test("every band a learner can reach has enough material to be a lesson", () => {
@@ -28,6 +28,7 @@ test("every band a learner can reach has enough material to be a lesson", () => 
   assert.ok(counts.A1 >= 60, `A1 has ${counts.A1} items, a lesson needs 60+`);
   assert.ok(counts.A2 >= 40, `A2 has ${counts.A2} items`);
   assert.ok(counts.B1 >= 12, `B1 has ${counts.B1} items`);
+  assert.ok((counts.B2 || 0) >= 3, `B2 has ${counts.B2 || 0} items`);
 });
 
 test("every graded item is voiced", () => {

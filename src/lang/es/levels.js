@@ -145,7 +145,10 @@ var SEMA_LEVELS = {
   "t-a-mi-paracer": "B1",
   "t-es-posible": "B1",
   "t-puesto-que": "B1",
-  "t-aunque-sea": "B1"
+  "t-aunque-sea": "B1",
+  "t-habria-hecho": "B2",
+  "t-si-hubiera": "B2",
+  "t-a-pesar-de": "B2"
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

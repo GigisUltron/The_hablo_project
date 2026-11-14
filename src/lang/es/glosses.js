@@ -141,6 +141,9 @@ var SEMA_GLOSSES = {
   "t-es-posible": "it is possible that",
   "t-puesto-que": "since, given that",
   "t-aunque-sea": "even if it is",
+  "t-habria-hecho": "I would have done",
+  "t-si-hubiera": "if I had known",
+  "t-a-pesar-de": "despite",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

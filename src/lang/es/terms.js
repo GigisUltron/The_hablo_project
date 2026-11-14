@@ -56,6 +56,9 @@ var SEMA_TERMS = {
     { id: "t-es-posible", text: "es posible que", gloss: "it is possible that", schema: "question", frame: "____ llueva.", contrast: null },
     { id: "t-puesto-que", text: "puesto que", gloss: "since, given that", schema: "chain", frame: "No voy, ____ llueve.", contrast: null },
     { id: "t-aunque-sea", text: "aunque sea", gloss: "even if it is", schema: "fork", frame: "Voy, ____ tarde.", contrast: null },
+    { id: "t-habria-hecho", text: "habría hecho", gloss: "I would have done", schema: "chain", frame: "____ más, pero no tenía tiempo.", level: "B2", contrast: null },
+    { id: "t-si-hubiera", text: "si hubiera sabido", gloss: "if I had known", schema: "fork", frame: "____, habría venido.", level: "B2", contrast: null },
+    { id: "t-a-pesar-de", text: "a pesar de", gloss: "despite", schema: "balance", frame: "____ la lluvia, salimos.", level: "B2", contrast: null },
 ]
 };
 
