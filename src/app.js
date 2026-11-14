@@ -1009,7 +1009,8 @@
     if ((state.settings && state.settings.translations) === "off") return "";
     var g = (window.SEMA_GLOSSES || {})[id];
     if (!g) return "";
-    return '<button class="gloss-btn" type="button" data-gloss="' + esc(g) + '">' +
+    return '<button class="gloss-btn" type="button" data-gloss="' +
+      String(g).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;") + '">' +
       tr("glossShow", "show translation") + "</button>";
   }
 

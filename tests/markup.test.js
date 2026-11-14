@@ -175,3 +175,10 @@ test("translations are rendered and can be switched off", () => {
   assert.match(app, /gloss-toggle/, "no settings toggle");
   assert.match(app, /wireGloss\(\)/, "the control is never wired");
 });
+
+test("gloss text is not double-escaped into the attribute", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  const block = app.slice(app.indexOf("function glossHTML"), app.indexOf("function explainHTML"));
+  assert.equal(/data-gloss="'\s*\+\s*esc\(/.test(block), false,
+    "esc() turns apostrophes into &#39;, which renders literally when read back");
+});
