@@ -1321,8 +1321,7 @@
     if (session.qi >= session.quiz.length) { finishSession(); return; }
     /* end on a high: a learner who is getting everything right should stop
      * while it still feels good, not grind to the eighth card. */
-    if (session.qi >= 6 && session.unique >= 6 &&
-        session.firstCorrect / session.unique >= 0.85) {
+    if (ADAPT.shouldStop(session.unique, session.firstCorrect)) {
       session.quiz.length = session.qi;   // so the bar reads finished, not cut off
       finishSession();
       return;

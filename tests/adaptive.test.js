@@ -33,3 +33,11 @@ test("sessions stay short at every level", () => {
 test("plan is deterministic", () => {
   assert.deepEqual(A.plan(9), A.plan(9));
 });
+
+test("a good session stops early, a poor one does not", () => {
+  assert.equal(A.shouldStop(6, 6), true);
+  assert.equal(A.shouldStop(6, 5), false);   // 83%
+  assert.equal(A.shouldStop(5, 5), false);   // too short to count
+  assert.equal(A.shouldStop(8, 7), true);
+  assert.equal(A.shouldStop(6, 0), false);
+});

@@ -30,7 +30,15 @@
     };
   }
 
-  var api = { LEVELS: LEVELS, level: level, plan: plan };
+  /* End on a high: enough cards to have learned something, and accuracy high
+   * enough that stopping feels like momentum rather than escape. */
+  function shouldStop(answered, correct, minimum) {
+    var min = minimum === undefined ? 6 : minimum;
+    if (answered < min) return false;
+    return correct / Math.max(1, answered) >= 0.85;
+  }
+
+  var api = { LEVELS: LEVELS, level: level, plan: plan, shouldStop: shouldStop };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.SemaAdaptive = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);
