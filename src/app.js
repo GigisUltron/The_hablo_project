@@ -1003,6 +1003,7 @@
 
   function quizType(card, i) {
     if (card.last === null) return "pick-word";
+    if (i % 3 === 2) return "write";        // production without a microphone
     if (SR && i % 2 === 1) return "say";
     return "pick-picture";
   }
@@ -1025,6 +1026,7 @@
 
     var type = quizType(card, session.qi);
     if (type === "pick-word") renderPickWord(id);
+    else if (type === "write") renderWrite(id);
     else if (type === "say" && SR) renderSay(id);
     else renderPickPicture(id);
   }
@@ -1121,6 +1123,38 @@
         answer(ok, ok ? null : picked);
       });
     });
+  }
+
+  /* Write it: the only exercise that tests production without a microphone.
+   * Fuzzy on purpose - "cafe" for "café" is not a spelling lesson, it is a
+   * recall success. */
+  function renderWrite(id) {
+    var it = itemOf(id);
+
+    $("stage").innerHTML =
+      '<p class="prompt">Write it in ' + esc(LANG.name) + "</p>" +
+      tileHTML(it) +
+      '<input class="type-input" id="type-input" type="text" autocomplete="off" ' +
+        'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
+        'aria-label="write the word" placeholder="type it" />' +
+      '<button class="btn btn-primary" id="write-check">Check</button>' +
+      glossHTML(id);
+
+    wireGloss();
+    var input = $("type-input");
+    if (input) {
+      input.focus();
+      input.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") { ev.preventDefault(); submitWrite(id, it); }
+      });
+    }
+    $("write-check").addEventListener("click", function () { submitWrite(id, it); });
+  }
+
+  function submitWrite(id, it) {
+    var input = $("type-input");
+    var score = S.similarity(input ? input.value : "", it.text);
+    answer(score >= 0.8, null);
   }
 
   function renderSay(id) {
