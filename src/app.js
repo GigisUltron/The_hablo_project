@@ -703,10 +703,27 @@
 
   var reader = null;
 
-  function startReader() {
+  /* Reading is graded like everything else: a learner reads at their own band
+   * and never above it. A1 meets level 1, A2 level 2, B1 level 3, and B2 or C1
+   * level 4. */
+  function readerLevel() {
+    var at = ADAPT.CEFR.indexOf((state.profile && state.profile.level) || "A2");
+    return Math.max(1, Math.min(4, (at === -1 ? 1 : at) + 1));
+  }
+
+  function readerShelf() {
     var texts = (window.SEMA_TEXTS && window.SEMA_TEXTS.texts) || [];
-    if (!texts.length) { toast("No texts yet."); return; }
-    reader = { text: texts[0], qi: 0, correct: 0 };
+    var max = readerLevel();
+    var open = texts.filter(function (t) { return t.level <= max; });
+    return open.length ? open : texts.slice(0, 1);
+  }
+
+  function startReader() {
+    var shelf = readerShelf();
+    if (!shelf.length) { toast("No texts in this pack yet."); return; }
+    var read = state.readTexts || [];
+    var next = shelf.filter(function (t) { return read.indexOf(t.id) === -1; })[0] || shelf[0];
+    reader = { text: next, qi: 0, correct: 0, misses: [], done: false };
     show("reader");
     renderReaderText();
   }
@@ -716,12 +733,21 @@
     $("reader-count").textContent = "level " + t.level;
     $("reader-bar").style.width = "8%";
     $("reader-feedback").textContent = "";
+    $("reader-feedback").className = "feedback";
     $("reader-stage").innerHTML =
-      '<p class="prompt">Reading</p>' +
+      '<p class="prompt">Read</p>' +
       '<h3 class="reader-title">' + esc(t.title) + "</h3>" +
       '<p class="reader-body">' + esc(t.body) + "</p>";
     $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-go">Questions</button>';
     $("reader-go").addEventListener("click", renderReaderQuestion);
+  }
+
+  /* Why that option was wrong, in the words the text ships with, and always the
+   * right answer beside it: a wrong tap must teach, not just subtract. */
+  function readerWhy(q, picked) {
+    var why = q.why && q.why[picked];
+    if (!why) return "the answer was: " + q.options[q.answer];
+    return why + " · the answer was: " + q.options[q.answer];
   }
 
   function renderReaderQuestion() {
@@ -744,35 +770,61 @@
         var picked = Number(btn.getAttribute("data-i"));
         var ok = picked === q.answer;
         if (ok) reader.correct += 1;
+        else reader.misses.push({ q: q.q, why: readerWhy(q, picked) });
         btn.classList.add(ok ? "pick-correct" : "pick-wrong");
         Array.prototype.forEach.call($("reader-stage").querySelectorAll(".option-word"), function (b) {
           b.disabled = true;
           if (Number(b.getAttribute("data-i")) === q.answer) b.classList.add("pick-correct");
         });
-        var why = !ok && q.why && q.why[picked];
-        $("reader-feedback").textContent = ok
-          ? "correct"
-          : (why ? why + " — " + q.options[q.answer] : "the answer was: " + q.options[q.answer]);
+        $("reader-feedback").textContent = ok ? "right" : readerWhy(q, picked);
         $("reader-feedback").className = "feedback " + (ok ? "good" : "bad");
         reader.qi += 1;
         $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-next">Continue</button>';
-        $("reader-next").addEventListener("click", function () {
-          $("reader-feedback").className = "feedback";
-          renderReaderQuestion();
-        });
+        $("reader-next").addEventListener("click", renderReaderQuestion);
       });
     });
   }
 
   function finishReader() {
-    var total = reader.text.questions.length;
+    var t = reader.text;
+    var total = t.questions.length;
+    state.readTexts = state.readTexts || [];
     $("reader-bar").style.width = "100%";
+    $("reader-count").textContent = "done";
+    $("reader-feedback").textContent = "";
+    $("reader-feedback").className = "feedback";
     $("reader-stage").innerHTML =
       '<p class="prompt">Text finished</p>' +
       '<div class="word">' + reader.correct + "/" + total + "</div>" +
-      '<p class="sentence">' + esc(reader.text.title) + " · level " + reader.text.level + "</p>";
-    $("reader-feedback").textContent = "";
-    $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-done">Back to today</button>';
+      '<p class="sentence">' + esc(t.title) + " · level " + t.level + "</p>" +
+      (reader.misses.length
+        ? '<ul class="reader-why">' + reader.misses.map(function (m) {
+            return "<li><b>" + esc(m.q) + "</b>" + esc(m.why) + "</li>";
+          }).join("") + "</ul>"
+        : "");
+
+    /* a lesson is a lesson: finishing a text counts like any other */
+    if (!reader.done) {
+      reader.done = true;
+      state.readTexts = (state.readTexts || []).filter(function (id) { return id !== t.id; });
+      state.readTexts.push(t.id);
+      state.history = state.history || [];
+      state.history.push(total);
+      if (state.history.length > 50) state.history = state.history.slice(-50);
+      state.sessions += 1;
+      state.lastSession = Date.now();
+      bumpStreak();
+      save();
+    }
+
+    /* never a dead end: the next text is one tap, leaving is the other */
+    var shelf = readerShelf();
+    var next = shelf.filter(function (x) { return state.readTexts.indexOf(x.id) === -1; })[0] || shelf[0];
+    var more = next && next.id !== t.id;
+    $("reader-actions").innerHTML =
+      '<button class="btn btn-primary" id="reader-again">' + (more ? "Next text" : "Read it again") + "</button>" +
+      '<button class="foot-link" id="reader-done" type="button">done for now</button>';
+    $("reader-again").addEventListener("click", startReader);
     $("reader-done").addEventListener("click", function () { reader = null; show("today"); });
   }
 
@@ -1642,12 +1694,10 @@
     var box = $("next-stack");
     var p = lessonPlan();
     var title = p.unit ? p.unit.title : lessonTitle(p);
-    var caption = p.read
-      ? "one text, three questions"
-      : [p.fresh.length ? p.fresh.length + " new" : "",
-         p.due.length ? p.due.length + " to review" : ""].filter(Boolean).join(", ");
+    var caption = [p.fresh.length ? p.fresh.length + " new" : "",
+      p.due.length ? p.due.length + " to review" : ""].filter(Boolean).join(", ");
     if (box) {
-      box.innerHTML = p.read ? "" : p.queue.slice(0, 5).map(function (id) {
+      box.innerHTML = p.queue.slice(0, 5).map(function (id) {
         return '<span class="pic">' + itemOf(id).emoji + "</span>";
       }).join("");
     }

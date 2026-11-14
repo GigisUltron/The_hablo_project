@@ -158,6 +158,35 @@ test("there is one kind of lesson, mixed and phrase first", () => {
   assert.match(app, /newSession\("mixed"/, "a lesson is not the mixed kind");
 });
 
+test("the reader turns a wrong answer into a why and a way on", () => {
+  const start = app.indexOf("function startReader");
+  const end = app.indexOf("/* --------------------------------------------------------- conversation");
+  assert.ok(start !== -1 && end > start, "reader section not found");
+  const reader = app.slice(start, end);
+  assert.match(reader, /q\.why/, "the why the text ships with is never read");
+  assert.match(reader, /reader-why/, "missed questions are not explained after the text");
+  assert.match(reader, /id="reader-again"/, "the reader ends without a next step");
+  assert.match(reader, /foot-link/, "the reader cannot be left");
+});
+
+test("the reader is graded by the learner's band", () => {
+  const start = app.indexOf("function readerLevel");
+  const end = app.indexOf("function finishReader");
+  assert.ok(start !== -1 && end > start, "reader level gate not found");
+  const gate = app.slice(start, end);
+  assert.match(gate, /ADAPT\.CEFR\.indexOf/, "text level is not derived from the band");
+  assert.match(gate, /t\.level <= max/, "texts above the band are still offered");
+});
+
+test("the read unit on the path opens the reader as a lesson", () => {
+  const start = app.indexOf("function startSession");
+  const end = app.indexOf("function startQuizOnly");
+  assert.ok(start !== -1 && end > start, "startSession not found");
+  const startSession = app.slice(start, end);
+  assert.match(startSession, /p\.read/, "the read unit is not routed");
+  assert.match(startSession, /startReader\(\)/, "the read unit does not open the reader");
+});
+
 test("every track unit has a mode the app can start", () => {
   const T = require("../src/track.js");
   const modes = new Set(T.units.map((u) => u.mode));
