@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>sema — learn by meaning, not by translation</title>
+<meta name="description" content="A language-learning demo that never shows a translation. Concepts are learned image-to-sound, then connected into a semantic web." />
+<meta name="color-scheme" content="dark" />
+<meta name="theme-color" content="#070911" />
+<link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+
+<div class="bg" aria-hidden="true"></div>
+<div class="aurora" aria-hidden="true">
+  <span class="blob b1"></span>
+  <span class="blob b2"></span>
+  <span class="blob b3"></span>
+</div>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="mark" aria-hidden="true">◑</span>
+      <span>sema</span>
+      <span class="tag">demo</span>
+    </div>
+    <nav class="tabs" aria-label="Views">
+      <button class="tab is-active" data-view="today" aria-current="page">Today</button>
+      <button class="tab" data-view="map">Map</button>
+      <button class="tab" data-view="stats">Progress</button>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ============================================================ TODAY -->
+    <section class="view is-active" id="view-today" aria-labelledby="today-title">
+
+      <div class="hero">
+        <div class="hero-copy">
+          <span class="eyebrow"><span class="dot"></span>No translations, by design</span>
+          <h1 id="today-title">Learn the <span class="grad">meaning</span>,<br />not the dictionary.</h1>
+          <p class="lede">
+            Every card anchors a <strong>sound</strong> to an <strong>image</strong> and never to an
+            English word. You recall the concept, say it, and only then see how it is written —
+            so the target language stays connected to the world instead of to your first language.
+          </p>
+          <div class="cta-row">
+            <button class="btn btn-primary" id="start-btn">
+              <span aria-hidden="true">▶</span> <span id="start-label">Start session</span>
+            </button>
+            <button class="btn btn-ghost" data-goto="map">
+              <span aria-hidden="true">◇</span> Explore the map
+            </button>
+          </div>
+        </div>
+
+        <aside class="panel panel-pad today-panel" aria-label="Your progress">
+          <p class="panel-title">Today</p>
+          <div class="ring-wrap">
+            <svg class="ring" width="180" height="180" viewBox="0 0 180 180" role="img" aria-label="Retention">
+              <defs>
+                <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#8b5cf6" />
+                  <stop offset="55%" stop-color="#6366f1" />
+                  <stop offset="100%" stop-color="#22d3ee" />
+                </linearGradient>
+              </defs>
+              <circle class="track" cx="90" cy="90" r="76" stroke-width="10" />
+              <circle class="value" id="ring-value" cx="90" cy="90" r="76" stroke-width="10"
+                      stroke-dasharray="477.5" stroke-dashoffset="477.5" />
+            </svg>
+            <div class="ring-label">
+              <b id="retention-num">—</b>
+              <span>retention</span>
+            </div>
+          </div>
+          <p class="ring-caption" id="ring-caption">Your first session sets the baseline.</p>
+          <div class="mini-stats">
+            <div class="mini"><b id="stat-due">0</b><span>due</span></div>
+            <div class="mini"><b id="stat-learned">0</b><span>known</span></div>
+            <div class="mini"><b id="stat-total">0</b><span>concepts</span></div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="principles">
+        <article class="principle">
+          <span class="k">01 / anchor</span>
+          <h3>Image → sound</h3>
+          <p>You never see an English gloss. The concept is the picture; the audio is the word. Recall is retrieval, not recognition of a translation.</p>
+        </article>
+        <article class="principle">
+          <span class="k">02 / produce</span>
+          <h3>Say it, don't just read it</h3>
+          <p>Every card ends in production. Microphone scoring when the browser supports it, a self-check when it doesn't — recognition alone doesn't transfer.</p>
+        </article>
+        <article class="principle">
+          <span class="k">03 / connect</span>
+          <h3>Words are a web</h3>
+          <p>Near-miss answers are drawn from semantic neighbours, so the confusions you make are meaningful ones — and they get recorded, not forgotten.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ========================================================== SESSION -->
+    <section class="view" id="view-session" aria-labelledby="session-title">
+      <h2 id="session-title" class="sr-only" hidden>Learning session</h2>
+
+      <div class="session-head">
+        <button class="icon-btn" id="quit-btn" aria-label="End session" title="End session">←</button>
+        <div class="bar" role="progressbar" aria-label="Session progress"><i id="bar-fill"></i></div>
+        <span class="counter" id="counter">0/0</span>
+      </div>
+
+      <article class="card" id="card" aria-live="polite">
+        <div class="stage" id="stage"></div>
+        <p class="feedback" id="feedback"></p>
+        <div class="card-actions" id="actions"></div>
+      </article>
+    </section>
+
+    <!-- ============================================================== MAP -->
+    <section class="view" id="view-map" aria-labelledby="map-title">
+      <div class="map-head">
+        <div>
+          <h2 id="map-title">The semantic web</h2>
+          <p>
+            Each concept sits with its neighbours. Learning a word together with the words it
+            touches is what makes it stick; a list of 500 unconnected words is not vocabulary.
+          </p>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="map-practice">Practise neighbours</button>
+      </div>
+
+      <div class="panel map-panel">
+        <svg class="map-svg" id="map-svg" viewBox="0 0 900 640" role="img" aria-label="Semantic map of concepts">
+          <g id="map-edges"></g>
+          <g id="map-nodes"></g>
+        </svg>
+        <div class="legend" id="map-legend"></div>
+      </div>
+
+      <div class="map-info" id="map-info">
+        <div class="hint">Tap any concept to hear it and see how it connects.</div>
+      </div>
+    </section>
+
+    <!-- ============================================================ STATS -->
+    <section class="view" id="view-stats" aria-labelledby="stats-title">
+      <div class="map-head">
+        <div>
+          <h2 id="stats-title">Progress</h2>
+          <p>What you know, and — more usefully — which concepts you keep trading for each other.</p>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="panel panel-pad">
+          <p class="panel-title">Coverage by field</p>
+          <div class="bars" id="cat-bars"></div>
+        </div>
+        <div class="panel panel-pad">
+          <p class="panel-title">Most confused pairs</p>
+          <div class="confusions" id="confusions"></div>
+        </div>
+      </div>
+
+      <div class="panel panel-pad" style="margin-top:16px">
+        <p class="panel-title">Session history</p>
+        <div class="mini-stats" style="margin-top:0">
+          <div class="mini"><b id="stat-sessions">0</b><span>sessions</span></div>
+          <div class="mini"><b id="stat-good">0</b><span>recalled</span></div>
+          <div class="mini"><b id="stat-again">0</b><span>lapses</span></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <span>sema · a demonstration of meaning-first learning · data stays in this browser</span>
+    <span><code>no dependencies · no build step</code></span>
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="src/data.js"></script>
+<script src="src/srs.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>
