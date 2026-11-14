@@ -310,7 +310,14 @@
       s.settings.fields = s.settings.fields.filter(function (f) { return D.categories[f]; });
       if (!s.settings.fields.length) s.settings.fields = Object.keys(D.categories);
     }
-    if (!s.settings.size) s.settings.size = 8;
+    /* the numeric session length became goal/short/long; keep an old choice */
+    if (!s.settings.length) {
+      s.settings.length = s.settings.size === 5 ? "short" : s.settings.size === 12 ? "long" : "goal";
+    }
+    if (["goal", "short", "long"].indexOf(s.settings.length) === -1) s.settings.length = "goal";
+    if (["on", "off"].indexOf(s.settings.audio) === -1) s.settings.audio = "on";
+    if (["on", "off"].indexOf(s.settings.ruby) === -1) s.settings.ruby = "on";
+    if (["on", "off"].indexOf(s.settings.translations) === -1) s.settings.translations = "on";
     /* There is one kind of lesson now. Older saves carried a deck mode; drop
      * it so nothing can quietly bring the chooser back. */
     delete s.settings.mode;
@@ -536,7 +543,9 @@
     var chip = $("audio-chip");
     if (!chip) return;
     var st = audioStatus();
-    chip.textContent = (st.state === "ok" ? "🔊 " : "🔇 ") + st.text;
+    chip.textContent = audioEnabled()
+      ? (st.state === "ok" ? "🔊 " : "🔇 ") + st.text
+      : "🔇 audio off";
     chip.classList.toggle("warn", st.state !== "ok");
     chip.title = st.state === "ok"
       ? "Tap to hear a test word"
@@ -562,6 +571,7 @@
    * installed voices, which is the common case on Linux. Speech synthesis is
    * the fallback, not the primary path. */
   function sayItem(it, btn) {
+    if (!audioEnabled()) return;
     var url = bundled && bundled[it.id];
     if (url) {
       try {
@@ -582,6 +592,7 @@
   var warnedNoVoice = false;
 
   function speak(text, btn) {
+    if (!audioEnabled()) return;
     if (!hasTTS) { toast("This browser has no speech synthesis."); return; }
     var synth = window.speechSynthesis;
     try {
@@ -705,6 +716,47 @@
 
   /* --------------------------------------------------------------- builder */
 
+  function renderSettingsOptions() {
+    function mark(selector, attr, value) {
+      Array.prototype.forEach.call(document.querySelectorAll(selector), function (b) {
+        var on = b.getAttribute(attr) === value;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-pressed", String(on));
+      });
+    }
+    mark("[data-length]", "data-length", (state.settings && state.settings.length) || "goal");
+    mark("[data-audio]", "data-audio", audioEnabled() ? "on" : "off");
+    mark("[data-ruby]", "data-ruby", rubyOn() ? "on" : "off");
+
+    var group = $("ruby-group");
+    if (group) group.hidden = !hasScriptLesson();
+
+    var gloss = $("gloss-toggle");
+    if (gloss) {
+      var on = (state.settings && state.settings.translations) !== "off";
+      gloss.textContent = on ? tr("translationsOn", "on") : tr("translationsOff", "off");
+      gloss.classList.toggle("is-on", on);
+      gloss.setAttribute("aria-pressed", String(on));
+    }
+  }
+
+  function applyAudioSetting() {
+    var off = !audioEnabled();
+    if (document.documentElement && document.documentElement.classList) {
+      document.documentElement.classList.toggle("audio-off", off);
+    }
+    if (off && window.speechSynthesis) {
+      try { window.speechSynthesis.cancel(); } catch (err) { /* no voice */ }
+    }
+    updateAudioChip();
+  }
+
+  /* A setting must change what is on screen now, not after a reload. */
+  function redraw() {
+    renderToday();
+    if (currentView === "session" && session) renderQuiz();
+  }
+
   function renderBuilder() {
     var box = $("fields");
     if (!box) return;
@@ -732,11 +784,7 @@
       });
     });
 
-    Array.prototype.forEach.call(document.querySelectorAll(".size"), function (b) {
-      var on = Number(b.getAttribute("data-size")) === lessonSize();
-      b.classList.toggle("is-on", on);
-      b.setAttribute("aria-pressed", String(on));
-    });
+    renderSettingsOptions();
 
     /* one kind of lesson: every session draws from the whole deck */
     var due = S.dueList(state, Date.now()).filter(function (id) {
@@ -2127,14 +2175,18 @@
   /* A word with its reading under the characters when the deck supplies one
    * that lines up; plain escaped text otherwise. Never for Latin text: the
    * helper only annotates Han characters. */
+  function rubyOn() {
+    return (state && state.settings && state.settings.ruby) !== "off";
+  }
+
   function textHTML(it) {
     if (!it) return "";
-    if (RUBY && it.sub && RUBY.aligns(it.text, it.sub)) return RUBY.html(it.text, it.sub);
+    if (RUBY && rubyOn() && it.sub && RUBY.aligns(it.text, it.sub)) return RUBY.html(it.text, it.sub);
     return esc(it.text);
   }
 
   function hasRuby(it) {
-    return !!(RUBY && it && it.sub && RUBY.aligns(it.text, it.sub));
+    return !!(RUBY && rubyOn() && it && it.sub && RUBY.aligns(it.text, it.sub));
   }
 
   function wordsHTML(it) {
@@ -2195,8 +2247,12 @@
     return f;
   }
 
+  /* null means "follow the goal": the app's own learned pace decides. */
   function lessonSize() {
-    return (state.settings && state.settings.size) || 8;
+    var mode = (state.settings && state.settings.length) || "goal";
+    if (mode === "short") return 5;
+    if (mode === "long") return 12;
+    return null;
   }
 
   function inFields(id, fields) {
@@ -2301,7 +2357,8 @@
     var plan = ADAPT ? ADAPT.plan(solid) : { fresh: 4, review: 4, production: 0, size: 8, level: 1 };
     var hist = (state.history || []).map(function (h) { return typeof h === "number" ? h : h && h.size; });
     var goal = ADAPT ? ADAPT.nextGoal(ADAPT.dailyGoal(hist), hist.slice(-3)) : 8;
-    var size = o.size || (o.custom ? lessonSize() : Math.min(plan.size + 2, goal));
+    var chosen = o.size || lessonSize();
+    var size = chosen || Math.min(plan.size + 2, goal);
     var fields = unit && unit.fields ? unit.fields : selectedFields();
     var now = Date.now();
 
@@ -2399,7 +2456,7 @@
     if (weak.length) queue = queue.slice(0, lead).concat(weak, queue.slice(lead));
 
     if (!queue.length) {
-      queue = S.shuffle(deckIds(), Math.random).slice(0, p.size || lessonSize());
+      queue = S.shuffle(deckIds(), Math.random).slice(0, p.size || lessonSize() || 8);
       toast("Nothing due here — free practice.");
     }
 
@@ -3547,11 +3604,30 @@
   $("reader-back").addEventListener("click", function () { reader = null; show("today"); });
   $("alphabet-back").addEventListener("click", function () { alphabet = null; show("today"); });
 
-  Array.prototype.forEach.call(document.querySelectorAll(".size"), function (b) {
+  Array.prototype.forEach.call(document.querySelectorAll("[data-length]"), function (b) {
     b.addEventListener("click", function () {
-      state.settings.size = Number(b.getAttribute("data-size"));
+      state.settings.length = b.getAttribute("data-length");
       save();
+      renderSettingsOptions();
       renderToday();
+    });
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll("[data-audio]"), function (b) {
+    b.addEventListener("click", function () {
+      state.settings.audio = b.getAttribute("data-audio");
+      save();
+      applyAudioSetting();
+      renderSettingsOptions();
+    });
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll("[data-ruby]"), function (b) {
+    b.addEventListener("click", function () {
+      state.settings.ruby = b.getAttribute("data-ruby");
+      save();
+      renderSettingsOptions();
+      redraw();
     });
   });
   $("quit-btn").addEventListener("click", function () {
@@ -3618,13 +3694,13 @@
   var glossBtn = $("gloss-toggle");
   if (glossBtn) {
     glossBtn.addEventListener("click", function () {
-      state.settings = state.settings || {};
       state.settings.translations = state.settings.translations === "off" ? "on" : "off";
       save();
-      glossBtn.textContent = state.settings.translations === "off"
-        ? tr("translationsOff", "translations off")
-        : tr("translationsOn", "translations on");
+      renderSettingsOptions();
+      redraw();
     });
   }
+  renderSettingsOptions();
+  applyAudioSetting();
 
 })();

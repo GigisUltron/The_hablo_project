@@ -207,7 +207,6 @@
           <h2 data-chrome="settingsTitle">Settings</h2>
           <p>What you study, how it sounds, and where else to look.</p>
         </div>
-        <button class="btn btn-ghost btn-sm" id="gloss-toggle">translations on</button>
         <button class="btn btn-ghost btn-sm" id="reset-btn" data-i18n="reset">Reset progress</button>
         <button class="btn btn-ghost btn-sm" id="settings-back" data-i18n="done">Done</button>
       </div>
@@ -236,11 +235,26 @@
             <p class="builder-note">Optional. Without a model, the chat uses a short scripted partner and says so.</p>
           </div>
 
-          <div class="builder-head">
-            <div class="size-pick" role="group" aria-label="Session length">
-              <button class="size" data-size="5" type="button">5</button>
-              <button class="size is-on" data-size="8" type="button">8</button>
-              <button class="size" data-size="12" type="button">12</button>
+          <div class="settings-options">
+            <div class="option-group" role="group" aria-label="Session length">
+              <span class="option-label">Session</span>
+              <button class="seg" data-length="goal" type="button">goal</button>
+              <button class="seg" data-length="short" type="button">short</button>
+              <button class="seg" data-length="long" type="button">long</button>
+            </div>
+            <div class="option-group" role="group" aria-label="Audio">
+              <span class="option-label">Audio</span>
+              <button class="seg" data-audio="on" type="button">on</button>
+              <button class="seg" data-audio="off" type="button">off</button>
+            </div>
+            <div class="option-group">
+              <span class="option-label">Translations</span>
+              <button class="seg" id="gloss-toggle" type="button">on</button>
+            </div>
+            <div class="option-group" id="ruby-group" role="group" aria-label="Pinyin">
+              <span class="option-label">Pinyin</span>
+              <button class="seg" data-ruby="on" type="button">on</button>
+              <button class="seg" data-ruby="off" type="button">off</button>
             </div>
           </div>
 

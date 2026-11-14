@@ -147,6 +147,39 @@ svg { flex: none; }
   font-weight: 700;
   letter-spacing: -0.01em;
 }
+/* settings options: one row of honest toggles */
+.settings-options { display: flex; flex-wrap: wrap; gap: 12px; padding: 4px 0 12px; }
+.option-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--fill);
+}
+.option-label {
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.seg {
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.seg.is-on { background: var(--card); color: var(--accent); box-shadow: 0 2px 0 var(--border-deep); }
+.audio-off .speak-btn { display: none; }
+
 /* the mark: three steps climbing, the top one solid */
 .brand-mark {
   width: 24px;

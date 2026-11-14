@@ -590,3 +590,30 @@ test("the harder exercises exist only where the data supports them", () => {
   assert.match(app, /EX\.extraKind/, "the mix ignores the exercise rule");
   assert.match(app, /S\.review\(state, id, ok \? 2 : 0/, "the new exercises bypass the SRS");
 });
+
+test("every settings option is read, applied now, and remembered", () => {
+  // session length
+  assert.match(app, /function lessonSize\(\)/, "no session-length rule");
+  assert.match(app, /mode === "short"\) return 5/, "short is not short");
+  assert.match(app, /mode === "long"\) return 12/, "long is not long");
+  assert.match(app, /data-length/, "the length control is not wired");
+  // audio
+  assert.match(app, /function audioEnabled\(\)/, "no audio setting");
+  assert.match(app, /if \(!audioEnabled\(\)\) return;/, "audio still plays when it is off");
+  const cssSettings = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(cssSettings, /\.audio-off \.speak-btn/, "speaker buttons survive audio off");
+  assert.match(app, /data-audio/, "the audio control is not wired");
+  // ruby
+  assert.match(app, /function rubyOn\(\)/, "no ruby setting");
+  assert.match(app, /rubyOn\(\) && it\.sub/, "ruby ignores its setting");
+  assert.match(app, /data-ruby/, "the pinyin control is not wired");
+  assert.match(app, /group\.hidden = !hasScriptLesson\(\)/, "pinyin is offered on Latin decks");
+  // translations
+  assert.match(app, /gloss-toggle/, "the translation control is missing");
+  // all of them persist and repaint immediately
+  assert.match(app, /function renderSettingsOptions\(\)/, "options are not painted from state");
+  assert.match(app, /function applyAudioSetting\(\)/, "audio is not applied at boot");
+  assert.match(app, /function redraw\(\)/, "a change does not repaint the screen");
+  assert.equal(/data-size=/.test(html), false, "the numeric length picker is still in the markup");
+  assert.equal(/data-mode=/.test(html), false, "a deck-mode chooser came back");
+});
