@@ -135,8 +135,13 @@ test("every pack can hold a conversation", () => {
     assert.equal(typeof conv.fits, "function", `${code}: no fits()`);
     assert.ok(conv.dialogues.length >= 1, `${code}: no dialogue`);
     for (const dialogue of conv.dialogues) {
-      assert.ok(dialogue.turns.length >= 3, `${code}/${dialogue.id}: too few turns`);
-      for (const turn of dialogue.turns) assert.ok(turn.es && turn.es.length > 2, `${code}/${dialogue.id}: empty line`);
+      assert.ok(dialogue.turns.length >= 6, `${code}/${dialogue.id}: too few turns`);
+      for (const turn of dialogue.turns) {
+        assert.ok(turn.es && turn.es.length > 2, `${code}/${dialogue.id}: empty line`);
+        assert.ok(turn.speaker && turn.speaker.length > 1, `${code}/${dialogue.id}: no speaker`);
+        assert.ok(turn.gloss && turn.gloss.length > 2, `${code}/${dialogue.id}: no gloss`);
+        assert.equal(typeof turn.audio, code === "zh" ? "object" : "string", `${code}/${dialogue.id}: bad audio`);
+      }
     }
   }
 });

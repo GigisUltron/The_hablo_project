@@ -1,16 +1,18 @@
-/* Conversations — German. */
+/* Conversations — the shape a tutor actually teaches in. */
 (function (root) {
   var DIALOGUES = [
     {
       id: "cv-first-meeting",
       title: "First meeting",
       turns: [
-        { es: "Hallo! Wie geht es dir?", expects: ["gut", "hallo"], reply: "Gut, danke." },
-        { es: "Wie heißt du?", expects: ["heiße", "name"], reply: "Ich heiße…" },
-        { es: "Woher kommst du?", expects: ["komme aus", "aus"], reply: "Ich komme aus…" },
-        { es: "Freut mich. Bis morgen.", expects: [], reply: "" },
+        { speaker: "eine Person", es: "Hallo! Wie geht es dir?", expects: ["gut", "hallo"], item: "ph-de-hello", reply: "Gut, danke.", gloss: "Hello! How are you?", audio: "ph-de-hello" },
+        { speaker: "eine Person", es: "Wie heißt du?", expects: ["heiße", "name"], item: "ph-de-my-name-is", reply: "Ich heiße…", gloss: "What's your name?", audio: "ph-de-my-name-is" },
+        { speaker: "eine Person", es: "Woher kommst du?", expects: ["komme aus", "aus"], item: "ph-de-where-from", reply: "Ich komme aus…", gloss: "Where are you from?", audio: "ph-de-where-from" },
+        { speaker: "eine Person", es: "Was ist deine Lieblingsfarbe?", expects: ["farbe", "blau"], item: "ph-de-colour", reply: "Meine Lieblingsfarbe ist Blau.", gloss: "What's your favourite colour?", audio: "ph-de-colour" },
+        { speaker: "eine Person", es: "Sprichst du Englisch?", expects: ["ja", "nein"], item: "ph-de-speak-english", reply: "Ja, ein wenig.", gloss: "Do you speak English?", audio: "ph-de-speak-english" },
+        { speaker: "eine Person", es: "Bis morgen.", expects: [], item: "ph-de-see-you", reply: "", gloss: "See you tomorrow.", audio: "ph-de-see-you" },
       ]
-    }
+    },
   ];
 
   function fold(s) {

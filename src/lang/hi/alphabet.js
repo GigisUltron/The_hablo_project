@@ -5,7 +5,7 @@ var SEMA_ALPHABET = {
   note: "Devanagari is an abugida: a consonant carries an inherent 'a' vowel, and vowel signs attach to it. Letters with no example word in this deck are omitted.",
 
   letters: [
-    { letter: "अ", name: "a", hint: "short 'a' as in about", example: "अच्छा" },
+    { letter: "अ", name: "a", hint: "short 'a' as in about", example: "अंग्रेज़ी" },
     { letter: "आ", name: "aa", hint: "long 'aa' as in father", example: "आप" },
     { letter: "इ", name: "i", hint: "short 'i' as in sit", example: "इस" },
     { letter: "ई", name: "ii", hint: "long 'ee' as in see", example: "नहीं" },

@@ -1,16 +1,18 @@
-/* Conversations — Dutch. */
+/* Conversations — the shape a tutor actually teaches in. */
 (function (root) {
   var DIALOGUES = [
     {
       id: "cv-first-meeting",
       title: "First meeting",
       turns: [
-        { es: "Hallo! Hoe gaat het?", expects: ["goed", "hallo"], reply: "Goed, dank je." },
-        { es: "Hoe heet je?", expects: ["heet", "naam"], reply: "Ik heet…" },
-        { es: "Waar kom je vandaan?", expects: ["kom uit", "uit"], reply: "Ik kom uit…" },
-        { es: "Aangenaam. Tot morgen.", expects: [], reply: "" },
+        { speaker: "een persoon", es: "Hallo! Hoe gaat het?", expects: ["goed", "hallo"], item: "ph-nl-hello", reply: "Goed, dank je.", gloss: "Hello! How are you?", audio: "ph-nl-hello" },
+        { speaker: "een persoon", es: "Hoe heet je?", expects: ["heet", "naam"], item: "ph-nl-my-name-is", reply: "Ik heet…", gloss: "What's your name?", audio: "ph-nl-my-name-is" },
+        { speaker: "een persoon", es: "Waar kom je vandaan?", expects: ["kom uit", "uit"], item: "ph-nl-where-from", reply: "Ik kom uit…", gloss: "Where are you from?", audio: "ph-nl-where-from" },
+        { speaker: "een persoon", es: "Wat is je lievelingskleur?", expects: ["kleur", "blauw"], item: "ph-nl-colour", reply: "Mijn lievelingskleur is blauw.", gloss: "What's your favourite colour?", audio: "ph-nl-colour" },
+        { speaker: "een persoon", es: "Spreek je Engels?", expects: ["ja", "nee"], item: "ph-nl-speak-english", reply: "Ja, een beetje.", gloss: "Do you speak English?", audio: "ph-nl-speak-english" },
+        { speaker: "een persoon", es: "Tot morgen.", expects: [], item: "ph-nl-see-you", reply: "", gloss: "See you tomorrow.", audio: "ph-nl-see-you" },
       ]
-    }
+    },
   ];
 
   function fold(s) {

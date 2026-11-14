@@ -1,16 +1,18 @@
-/* Conversations — Russian. */
+/* Conversations — the shape a tutor actually teaches in. */
 (function (root) {
   var DIALOGUES = [
     {
       id: "cv-first-meeting",
       title: "First meeting",
       turns: [
-        { es: "Здравствуйте! Как дела?", expects: ["хорошо", "нормально"], reply: "Хорошо, спасибо." },
-        { es: "Как вас зовут?", expects: ["зовут"], reply: "Меня зовут…" },
-        { es: "Откуда вы?", expects: ["из", "откуда"], reply: "Я из…" },
-        { es: "Очень приятно. До завтра.", expects: [], reply: "" },
+        { speaker: "человек", es: "Здравствуйте! Как вы поживаете?", expects: ["хорошо", "здравствуйте"], item: "ph-ru-hello", reply: "Хорошо, спасибо.", gloss: "Hello! How are you?", audio: "ph-ru-hello" },
+        { speaker: "человек", es: "Как вас зовут?", expects: ["зовут"], item: "ph-ru-my-name-is", reply: "Меня зовут…", gloss: "What's your name?", audio: "ph-ru-my-name-is" },
+        { speaker: "человек", es: "Откуда вы?", expects: ["из", "откуда"], item: "ph-ru-where-from", reply: "Я из…", gloss: "Where are you from?", audio: "ph-ru-where-from" },
+        { speaker: "человек", es: "Какой у вас любимый цвет?", expects: ["цвет", "синий"], item: "ph-ru-colour", reply: "Мой любимый цвет — синий.", gloss: "What's your favourite colour?", audio: "ph-ru-colour" },
+        { speaker: "человек", es: "Вы говорите по-английски?", expects: ["да", "нет"], item: "ph-ru-speak-english", reply: "Да, немного.", gloss: "Do you speak English?", audio: "ph-ru-speak-english" },
+        { speaker: "человек", es: "До завтра.", expects: [], item: "ph-ru-see-you", reply: "", gloss: "See you tomorrow.", audio: "ph-ru-see-you" },
       ]
-    }
+    },
   ];
 
   function fold(s) {
