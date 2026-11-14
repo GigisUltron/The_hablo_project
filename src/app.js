@@ -73,7 +73,9 @@
   /* Line icons drawn inline: nothing to fetch, and they take the text colour. */
   var ICON = {
     speaker: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 010 6M18.5 6.5a7.5 7.5 0 010 11"/></svg>',
-    mic: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>'
+    mic: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>',
+    check: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+    cross: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
   };
 
   function neighboursOf(id) {
@@ -708,7 +710,7 @@
     show("session");
     var hint = $("kbd-hint");
     hint.classList.add("is-demo");
-    hint.innerHTML = 'demo · miss one, it comes back<span class="keys"> · Enter → next · 1–4 → answer</span>';
+    hint.innerHTML = 'demo · miss one, it comes back<span class="keys"> · 1–4 → choose · Enter → check</span>';
     renderStudy();
     toast("Demo — starts clean; saved progress is untouched.", 3200);
   }
@@ -781,7 +783,7 @@
   function clearCard() {
     $("stage").innerHTML = "";
     $("actions").innerHTML = "";
-    $("card").classList.remove("is-summary");
+    $("card").classList.remove("is-summary", "is-answered");
     var f = $("feedback");
     f.textContent = "";
     f.className = "feedback";
@@ -875,15 +877,36 @@
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
+    chooseThenCheck(".option-word", id);
+  }
 
-    Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
+  /* A tap only selects; Check commits. A slip of the finger is not a wrong
+   * answer, and the learner gets a beat to reconsider. */
+  function chooseThenCheck(cls, id) {
+    var picked = null;
+    var opts = $("stage").querySelectorAll(cls);
+    $("actions").innerHTML = '<button class="btn btn-primary" id="check" disabled>Check</button>';
+
+    Array.prototype.forEach.call(opts, function (btn) {
       btn.addEventListener("click", function () {
-        var picked = btn.getAttribute("data-id");
-        var ok = picked === id;
-        btn.classList.add(ok ? "pick-correct" : "pick-wrong");
-        markChoices(".option-word", id);
-        answer(ok, ok ? null : picked);
+        picked = btn.getAttribute("data-id");
+        Array.prototype.forEach.call(opts, function (b) {
+          b.classList.toggle("is-selected", b === btn);
+          b.setAttribute("aria-pressed", String(b === btn));
+        });
+        $("check").disabled = false;
       });
+    });
+
+    $("check").addEventListener("click", function () {
+      if (!picked) return;
+      var ok = picked === id;
+      Array.prototype.forEach.call(opts, function (b) {
+        b.classList.remove("is-selected");
+        if (b.getAttribute("data-id") === picked) b.classList.add(ok ? "pick-correct" : "pick-wrong");
+      });
+      markChoices(cls, id);
+      answer(ok, ok ? null : picked);
     });
   }
 
@@ -893,25 +916,18 @@
 
     $("stage").innerHTML =
       '<p class="prompt">Find the picture</p>' +
-      wordsHTML(it) +
-      '<div class="options">' + set.map(function (o) {
-        return '<button class="option" data-id="' + esc(o) + '" aria-label="Choose this picture">' +
+      '<div class="say-line">' +
+        '<button class="speak-btn round" id="hear-btn" aria-label="Hear it" title="Hear it">' + ICON.speaker + "</button>" +
+        wordsHTML(it) +
+      "</div>" +
+      '<div class="options">' + set.map(function (o, i) {
+        return '<button class="option" data-id="' + esc(o) + '" aria-label="Picture ' + (i + 1) + '">' +
           '<span aria-hidden="true">' + itemOf(o).emoji + "</span></button>";
-      }).join("") + "</div>" +
-      '<button class="speak-btn" id="hear-btn">' + ICON.speaker + 'Hear it</button>';
+      }).join("") + "</div>";
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
-
-    Array.prototype.forEach.call($("stage").querySelectorAll(".option"), function (btn) {
-      btn.addEventListener("click", function () {
-        var picked = btn.getAttribute("data-id");
-        var ok = picked === id;
-        btn.classList.add(ok ? "pick-correct" : "pick-wrong");
-        markChoices(".option", id);
-        answer(ok, ok ? null : picked);
-      });
-    });
+    chooseThenCheck(".option", id);
   }
 
   function renderSay(id) {
@@ -977,20 +993,27 @@
     showAnswer(ok, it);
   }
 
+  /* The question stays on screen; the verdict rises from the bottom with
+   * the word, its sentence and the way on. */
   function showAnswer(ok, it) {
-    $("stage").innerHTML =
-      '<p class="prompt">' + (ok ? "Correct" : "Not quite") + "</p>" +
-      figureHTML(it, "Hear it again") +
-      wordsHTML(it) +
-      contextHTML(it);
     markScene(it.id, true);
-
     sayItem(it);
-    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
+    var mic = $("mic-btn");
+    if (mic) mic.disabled = true;
 
-    feedback(ok ? "got it" : "it comes back at the end", ok ? "good" : "bad");
-
-    $("actions").innerHTML = '<button class="btn btn-primary" id="next">Continue</button>';
+    $("card").classList.add("is-answered");
+    $("actions").innerHTML =
+      '<div class="sheet ' + (ok ? "good" : "bad") + '" role="status">' +
+        '<p class="sheet-title">' + (ok ? ICON.check + "Correct" : ICON.cross + "Not quite") + "</p>" +
+        '<p class="sheet-word"><span aria-hidden="true">' + it.emoji + "</span> " +
+          (it.article ? '<span class="art">' + esc(it.article) + "</span> " : "") + esc(it.text) +
+          '<button class="sheet-hear" id="hear-again" aria-label="Hear it again" title="Hear it again">' + ICON.speaker + "</button>" +
+        "</p>" +
+        contextHTML(it) +
+        (ok ? "" : '<p class="sheet-note">It comes back at the end of the lesson.</p>') +
+        '<button class="btn btn-primary" id="next">Continue</button>' +
+      "</div>";
+    $("hear-again").addEventListener("click", function () { sayItem(it, this); });
     $("next").addEventListener("click", function () {
       session.qi += 1;
       renderQuiz();
@@ -1373,9 +1396,12 @@
     if (ev.key === "Enter") {
       /* a focused button already gets its own click from Enter */
       var t = ev.target;
-      if (t && t.closest && t.closest("button, [role=button]") && t.id !== "next") return;
-      var next = $("next");
-      if (next) { ev.preventDefault(); next.click(); }
+      var choice = t && t.closest && t.closest(".option, .option-word");
+      if (!choice && t && t.closest && t.closest("button, [role=button]") && t.id !== "next" && t.id !== "check") return;
+      /* Enter checks the chosen answer, then moves on */
+      var check = $("check");
+      var go = check && !check.disabled ? check : $("next");
+      if (go) { ev.preventDefault(); go.click(); }
       return;
     }
     if (["1", "2", "3", "4"].indexOf(ev.key) !== -1) {
