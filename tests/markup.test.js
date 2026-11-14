@@ -35,9 +35,11 @@ test("every element id the script queries exists in the markup", () => {
   const templated = /id="([a-z0-9-]+)"/g;
   while ((m = templated.exec(app))) generated.add(m[1]);
 
-  // ids the script looks up — these must be static, or it will query null
+  // ids the script looks up and uses straight away. A lookup assigned to a
+  // variable may be optional (the chat controls are capability-gated); a lookup
+  // that immediately calls a method was the boot crash this test exists for.
   const looked = new Set();
-  const lookup = /\$\("([^"]+)"\)/g;
+  const lookup = /\$\("([^"]+)"\)\s*\./g;
   while ((m = lookup.exec(app))) looked.add(m[1]);
 
   const missing = [...looked].filter((id) => !markupIds.has(id) && !generated.has(id));
@@ -459,4 +461,10 @@ test("a beginner's first session opens on phrases, with nothing above A2", () =>
   assert.deepEqual(Array.from(es.queue || []).slice(0, 4),
     ["ph-hola", "ph-como-estas", "ph-color", "ph-de-donde"],
     "Spanish must open hola, how are you, colour, where from");
+});
+
+test("the gloss control does not escape text it sets via textContent", () => {
+  const block = app.slice(app.indexOf("data-gloss"), app.indexOf("function itemOf"));
+  assert.equal(/textContent\s*=\s*[^;]*esc\(/.test(block), false,
+    "esc() before textContent prints the entity, not the apostrophe");
 });

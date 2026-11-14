@@ -227,7 +227,8 @@
     speaker: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 010 6M18.5 6.5a7.5 7.5 0 010 11"/></svg>',
     mic: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>',
     check: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
-    cross: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+    cross: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    lock: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>'
   };
 
   function neighboursOf(id) {
@@ -1707,6 +1708,25 @@
     return rows;
   }
 
+  function unitRow(id) {
+    var rows = trackRows();
+    for (var i = 0; i < rows.length; i += 1) if (rows[i].id === id) return rows[i];
+    return null;
+  }
+
+  /* Locked is a session rule, not only a styling one: hash links, stale state
+   * and keyboard reaches all pass through startSession. */
+  function unitUnlocked(unit) {
+    var row = unitRow(unit && unit.id);
+    return !row || row.unlocked;
+  }
+
+  function unlockLine(row) {
+    var rows = trackRows();
+    var prev = row && row.index > 0 ? rows[row.index - 1] : null;
+    return prev ? "finish " + prev.title + " first" : "that lesson opens later";
+  }
+
   function defaultUnit() {
     var rows = trackRows();
     for (var i = rows.length - 1; i >= 0; i -= 1) if (rows[i].current) return unitById(rows[i].id) || rows[i];
@@ -1723,18 +1743,23 @@
     rows.forEach(function (r) { r.current = r.current && r.index === currentIndex; });
 
     box.innerHTML = rows.map(function (u) {
-      var cls = "step" + (u.unlocked ? "" : " locked") + (u.current ? " now" : "");
+      var done = u.unlocked && !u.current && u.index < currentIndex;
+      var cls = "step" + (u.unlocked ? "" : " locked") + (u.current ? " now" : "") + (done ? " done" : "");
+      var face = done ? ICON.check : u.unlocked ? u.index + 1 : ICON.lock;
       return '<button class="' + cls + '" type="button" data-unit="' + esc(u.id) + '"' +
-        (u.unlocked ? "" : " disabled") + ">" +
-        '<span class="step-n">' + (u.unlocked ? u.index + 1 : "·") + "</span>" +
+        (u.unlocked ? "" : ' aria-disabled="true"') + ">" +
+        '<span class="step-n">' + face + "</span>" +
         '<span class="step-t">' + esc(u.title) + "</span>" +
+        (u.unlocked ? "" : '<span class="sr-only">locked</span>') +
       "</button>";
     }).join("");
 
     Array.prototype.forEach.call(box.querySelectorAll(".step"), function (b) {
       b.addEventListener("click", function () {
         var unit = unitById(b.getAttribute("data-unit"));
-        if (unit) startSession({ unit: unit });
+        if (!unit) return;
+        if (!unitUnlocked(unit)) { toast(unlockLine(unitRow(unit.id))); return; }
+        startSession({ unit: unit });
       });
     });
   }
@@ -1819,7 +1844,8 @@
       btn.addEventListener("click", function () {
         var on = btn.getAttribute("data-on") === "1";
         btn.setAttribute("data-on", on ? "0" : "1");
-        btn.textContent = on ? tr("glossShow", "show translation") : esc(btn.getAttribute("data-gloss"));
+        /* textContent is already literal: escaping here printed &amp;#39; on screen */
+        btn.textContent = on ? tr("glossShow", "show translation") : btn.getAttribute("data-gloss");
       });
     });
   }
@@ -2124,6 +2150,12 @@
   function startSession(opts) {
     var o = opts || {};
     var now = Date.now();
+    /* a locked unit is refused here, not only at the node: a hash, a stale
+     * button or the keyboard must not skip ahead either */
+    if (o.unit && !unitUnlocked(o.unit)) {
+      toast(unlockLine(unitRow(o.unit.id)));
+      o = {};
+    }
     var p = lessonPlan(o);
 
     /* reading and the script open their own screens; both are lessons */
