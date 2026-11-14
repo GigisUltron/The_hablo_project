@@ -985,6 +985,13 @@
   /* A lesson can teach a word or a whole phrase; both present the same shape
    * to the drill, so there is one renderer to maintain instead of two. */
   function itemOf(id) {
+    var b = basicById[id];
+    if (b) {
+      return {
+        id: b.id, emoji: null, article: "", text: b.text, sub: b.gloss,
+        kind: "basic", person: b.person, of: b.of
+      };
+    }
     var t = termById[id];
     if (t) {
       return {
@@ -1521,6 +1528,7 @@
     /* a lesson that opened with study cards (a scene, the demo) has taught them already */
     if (!session.study.length && card.last === null && taught < 3) { session.taught = taught + 1; renderTeach(id); return; }
 
+    if (itemOf(id).kind === "basic") { renderPerson(id); return; }
     if (itemOf(id).kind === "term") { renderPickFrame(id); return; }
 
     var type = quizType(card, session.qi);
@@ -1572,6 +1580,37 @@
       save();
       session.qi += 1;
       renderQuiz();
+    });
+  }
+
+  /* The first question that tests a rule, not a word. */
+  var PRONOUN = { "1s": "yo", "2s": "tú", "3s": "él", "1p": "nosotros", "3p": "ellos" };
+
+  function renderPerson(id) {
+    var it = itemOf(id);
+    var correct = PRONOUN[it.person] || "yo";
+    var others = Object.keys(PRONOUN).map(function (k) { return PRONOUN[k]; })
+      .filter(function (w) { return w !== correct; });
+    var set = S.shuffle([correct].concat(others), Math.random).slice(0, 4);
+
+    $("stage").innerHTML =
+      '<p class="prompt">¿Quién?</p>' +
+      '<div class="word">' + esc(it.text) + "</div>" +
+      '<p class="sentence">' + esc(it.sub || "") + "</p>" +
+      '<div class="word-options">' + set.map(function (w) {
+        return '<button class="option-word" data-w="' + esc(w) + '">' + esc(w) + "</button>";
+      }).join("") + "</div>";
+
+    Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
+      btn.addEventListener("click", function () {
+        var ok = btn.getAttribute("data-w") === correct;
+        Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (b) {
+          b.disabled = true;
+          if (b.getAttribute("data-w") === correct) b.classList.add("pick-correct");
+        });
+        if (!ok) btn.classList.add("pick-wrong");
+        answer(ok, null);
+      });
     });
   }
 
