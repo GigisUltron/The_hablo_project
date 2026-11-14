@@ -133,15 +133,38 @@
 
     <!-- ====================================================== CONVERSATION -->
     <section class="view" id="view-conv" aria-label="Conversation">
-      <div class="session-head">
+      <div class="chat-head">
         <button class="icon-btn" id="conv-back" aria-label="Back">←</button>
-        <div class="bar"><i id="conv-bar"></i></div>
-        <span class="counter" id="conv-count"></span>
+        <span class="chat-face" id="chat-face" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <circle cx="16" cy="16" r="13" />
+            <circle class="eye" cx="11.5" cy="13" r="1.7" />
+            <circle class="eye" cx="20.5" cy="13" r="1.7" />
+            <path class="mouth" d="M11 19.5c1.5 2 3.2 3 5 3s3.5-1 5-3" />
+          </svg>
+        </span>
+        <div class="chat-who">
+          <span class="chat-name" id="chat-name">Conversation</span>
+          <span class="chat-status" id="chat-status" role="status" aria-live="polite" data-state="idle">not checked yet</span>
+        </div>
       </div>
       <article class="card conv-card">
-        <div class="chat" id="chat"></div>
-        <div class="stage" id="conv-stage"></div>
-        <p class="feedback" id="conv-feedback"></p>
+        <div class="chat" id="chat" role="log" aria-label="Conversation so far"></div>
+        <div class="stage" id="conv-stage">
+          <div class="chat-attachment" id="chat-attachment"></div>
+          <form class="chat-composer" id="chat-form">
+            <button class="icon-btn" id="chat-attach" type="button" aria-label="Attach an image" title="Attach an image">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M5 17l4.5-4.5L14 17M14.5 13.5L17 11l3 3"/></svg>
+            </button>
+            <input class="sr-only" id="chat-image" type="file" accept="image/*" tabindex="-1" />
+            <input class="type-input" id="chat-input" type="text" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="send" placeholder="say something" aria-label="your message" />
+            <button class="icon-btn" id="chat-listen" type="button" aria-label="Speak your message" title="Speak your message" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
+            </button>
+            <button class="btn btn-primary" id="chat-send" type="submit">Send</button>
+          </form>
+        </div>
+        <p class="feedback" id="conv-feedback" role="status" aria-live="polite"></p>
       </article>
     </section>
 
@@ -183,6 +206,21 @@
           <label class="settings-lang">Language
             <select id="settings-lang"></select>
           </label>
+
+          <div class="chat-settings">
+            <p class="panel-title">Chat with a local model</p>
+            <label class="chat-field">Endpoint
+              <input class="type-input" id="chat-endpoint" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="http://localhost:11434" />
+            </label>
+            <label class="chat-field">Model
+              <input class="type-input" id="chat-model" type="text" autocomplete="off" spellcheck="false" placeholder="auto" />
+            </label>
+            <div class="chat-settings-row">
+              <button class="btn btn-ghost" id="chat-check" type="button">Check model</button>
+              <span class="builder-note" id="chat-settings-status">not checked yet</span>
+            </div>
+            <p class="builder-note">Optional. Without a model, the chat uses a short scripted partner and says so.</p>
+          </div>
 
           <div class="builder-head">
             <div class="mode-pick" role="group" aria-label="What to study">
@@ -292,7 +330,7 @@
   </main>
 
   <footer class="foot">
-    <span>No accounts, no tracking. Nothing leaves this tab.</span>
+    <span>No accounts, no tracking. Chat goes only to the endpoint you set.</span>
   </footer>
 </div>
 
@@ -326,6 +364,8 @@
 <script src="src/ui-strings.js"></script>
 <script src="src/srs.js"></script>
 <script src="src/memory.js"></script>
+<script src="src/chat.js"></script>
+<script src="src/chat-engine.js"></script>
 <script src="src/app.js"></script>
 </body>
 </html>

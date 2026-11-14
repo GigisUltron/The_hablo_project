@@ -31,6 +31,7 @@
   var TRACK = window.SemaTrack;
   var ADAPT = window.SemaAdaptive;
   var CORRECT = window.SemaCorrect;
+  var CE = window.SemaChatEngine;
   var STORE_KEY = "sema.v1";
 
   /* The live pack. Everything below reads it through these bindings; switching
@@ -220,6 +221,11 @@
     }
 
     s.settings = s.settings || {};
+    if (typeof s.settings.chatEndpoint !== "string" || !s.settings.chatEndpoint.trim()) {
+      s.settings.chatEndpoint = (CE && CE.DEFAULT_ENDPOINT) || "http://localhost:11434";
+    }
+    if (typeof s.settings.chatModel !== "string") s.settings.chatModel = "";
+    s.chat = s.chat && typeof s.chat === "object" && !Array.isArray(s.chat) ? s.chat : {};
     if (!Array.isArray(s.settings.fields) || !s.settings.fields.length) {
       s.settings.fields = Object.keys(D.categories);
     } else {
@@ -364,7 +370,7 @@
     seedDeck(state);
     session = null;
     reader = null;
-    conv = null;
+    chat = null;
     placement = null;
     mapBuilt = false;
     save();
@@ -491,21 +497,30 @@
       if (synth.paused) synth.resume();
 
       var u = new SpeechSynthesisUtterance(String(text));
-      u.lang = LANG.locale;
+      u.lang = (ACTIVE && ACTIVE.locale) || LANG.locale;
       u.rate = 0.9;
       u.pitch = 1;
       if (voice) u.voice = voice;
 
-      if (btn) {
-        btn.classList.add("is-playing");
-        u.onend = function () { btn.classList.remove("is-playing"); };
-        u.onerror = function () { btn.classList.remove("is-playing"); };
-      }
+      var face = $("chat-face");
+      var stopFace = function () { if (face) face.classList.remove("is-speaking"); };
+      if (btn) btn.classList.add("is-playing");
+      u.onend = function () {
+        if (btn) btn.classList.remove("is-playing");
+        stopFace();
+      };
+      u.onerror = function () {
+        if (btn) btn.classList.remove("is-playing");
+        stopFace();
+      };
 
       var busy = synth.speaking || synth.pending;
       if (busy) synth.cancel();
       var go = function () {
-        try { synth.speak(u); } catch (err) { /* engine refused */ }
+        try {
+          if (face) face.classList.add("is-speaking");
+          synth.speak(u);
+        } catch (err) { stopFace(); }
       };
       clearTimeout(speakTimer);
       /* queuing inside the same tick as cancel() loses the utterance in Firefox */
@@ -575,6 +590,7 @@
       else t.removeAttribute("aria-current");
     });
     if (view === "today" || view === "settings") renderToday();
+    if (view === "settings") renderChatSettings();
     if (view === "stats") renderStats();
     if (view === "map" && !mapBuilt) { buildMap(); mapBuilt = true; }
     if (view === "map") {
@@ -793,71 +809,471 @@
 
   /* --------------------------------------------------------- conversation */
 
-  var conv = null;
+  /* The chat is per language. Everything below reads `chat`, which points at
+   * state.chat[ACTIVE.code]; the rest of the app never needs to know which
+   * language the conversation belongs to. */
+  var CHAT_MAX_MESSAGES = 80;
+  var chat = null;
+  var chatMeta = { status: "idle", engine: null, model: null, vision: false };
+  var chatCheck = 0;
+  var chatPending = false;
+  var chatListening = false;
+  var chatRec = null;
+  var pendingImage = null;
+
+  function chatState() {
+    if (!ACTIVE) return { messages: [], scripted: null };
+    var code = ACTIVE.code;
+    var c = state.chat[code];
+    if (!c || typeof c !== "object" || Array.isArray(c)) c = state.chat[code] = { messages: [] };
+    if (!Array.isArray(c.messages)) c.messages = [];
+    return c;
+  }
+
+  function chatEndpoint() {
+    var v = state.settings && state.settings.chatEndpoint;
+    return String(v || (CE && CE.DEFAULT_ENDPOINT) || "http://localhost:11434").trim() ||
+      "http://localhost:11434";
+  }
+
+  function cleanEndpoint(value) {
+    var v = String(value || "").trim();
+    if (!v) return (CE && CE.DEFAULT_ENDPOINT) || "http://localhost:11434";
+    if (!/^https?:\/\//i.test(v)) v = "http://" + v;
+    return v.replace(/\/+$/, "");
+  }
+
+  function chatStatusLine() {
+    if (chatMeta.status === "ready" && chatMeta.model) {
+      var what = CE && CE.isLocalEndpoint(chatEndpoint()) ? "local model" : "model";
+      return ["ready", what + " · " + chatMeta.model +
+        (chatMeta.vision ? " · sees images" : " · text only")];
+    }
+    if (chatMeta.status === "checking") return ["checking", "looking for a local model…"];
+    if (chatMeta.status === "failed") return ["missing", "the model did not answer — scripted practice"];
+    if (chatMeta.status === "missing") {
+      if (CE && !CE.isLocalEndpoint(chatEndpoint())) {
+        return ["missing", "no model answered — check the endpoint"];
+      }
+      return ["missing", "no local model found — run ollama serve"];
+    }
+    return ["idle", "not checked yet"];
+  }
+
+  function setChatStatus() {
+    var line = chatStatusLine();
+    var el = $("chat-status");
+    if (el) {
+      el.textContent = line[1];
+      el.setAttribute("data-state", line[0]);
+    }
+    var settingsEl = $("chat-settings-status");
+    if (settingsEl) settingsEl.textContent = line[1];
+  }
+
+  function renderChatSettings() {
+    var ep = $("chat-endpoint");
+    if (ep) ep.value = chatEndpoint();
+    var model = $("chat-model");
+    if (model) model.value = (state.settings && state.settings.chatModel) || "";
+    setChatStatus();
+  }
+
+  function refreshChatEngine() {
+    if (!CE) {
+      chatMeta = { status: "missing", engine: null, model: null, vision: false };
+      setChatStatus();
+      return;
+    }
+
+    var token = ++chatCheck;
+    chatMeta = { status: "checking", engine: null, model: null, vision: false };
+    setChatStatus();
+    var endpoint = chatEndpoint();
+
+    CE.discover(endpoint, undefined, 2500).then(function (found) {
+      if (token !== chatCheck) return;
+      if (!found || !found.engine) {
+        chatMeta = { status: "missing", engine: null, model: null, vision: false };
+        setChatStatus();
+        seedScriptedIfEmpty();
+        return;
+      }
+
+      var chosen = String((state.settings && state.settings.chatModel) || "").trim();
+      if (!chosen) chosen = (found.models[0] && found.models[0].name) || "";
+      if (!chosen) {
+        chatMeta = { status: "missing", engine: null, model: null, vision: false };
+        setChatStatus();
+        seedScriptedIfEmpty();
+        return;
+      }
+
+      chatMeta = { status: "checking", engine: found.engine, model: chosen, vision: false };
+      setChatStatus();
+      return CE.visionFor({
+        baseUrl: endpoint,
+        engine: found.engine,
+        model: chosen,
+        models: found.models,
+        timeoutMs: 2500
+      }).then(function (vision) {
+        if (token !== chatCheck) return;
+        chatMeta = { status: "ready", engine: found.engine, model: chosen, vision: !!vision };
+        setChatStatus();
+      });
+    }).catch(function () {
+      if (token !== chatCheck) return;
+      chatMeta = { status: "missing", engine: null, model: null, vision: false };
+      setChatStatus();
+      seedScriptedIfEmpty();
+    });
+  }
+
+  function emptyChatLine() {
+    var name = (ACTIVE && ACTIVE.name) || "the language";
+    return "Say something in " + name + ". Or attach a picture.";
+  }
+
+  function renderChatHeader() {
+    if (ACTIVE) {
+      var nm = $("chat-name");
+      if (nm) nm.textContent = ACTIVE.name + " conversation";
+      var input = $("chat-input");
+      if (input) {
+        input.placeholder = "say something in " + ACTIVE.name;
+        input.setAttribute("aria-label", "your message in " + ACTIVE.name);
+      }
+    }
+    setChatStatus();
+  }
+
+  function renderChat() {
+    if (!chat) return;
+    var log = $("chat");
+    if (!log) return;
+
+    if (!chat.messages.length) {
+      log.innerHTML = '<p class="chat-empty">' + esc(emptyChatLine()) + "</p>";
+    } else {
+      log.innerHTML = chat.messages.map(function (m, i) {
+        return CE && CE.messageHTML
+          ? CE.messageHTML(m, esc, { canSpeak: hasTTS, index: i })
+          : '<p class="bubble-text">' + esc(m.text) + "</p>";
+      }).join("");
+    }
+
+    Array.prototype.forEach.call(log.querySelectorAll("[data-hear]"), function (btn) {
+      btn.addEventListener("click", function () {
+        var m = chat.messages[Number(btn.getAttribute("data-hear"))];
+        if (m && m.text) speak(m.text, btn);
+      });
+    });
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function seedScriptedIfEmpty() {
+    if (!chat || chat.messages.length || !CE || !ACTIVE) return;
+    var opening = CE.scriptedOpening(ACTIVE.code);
+    if (!opening) return;
+    chat.scripted = chat.scripted || CE.scriptedStart(ACTIVE.code);
+    addAssistant(opening, true, "scripted", true);
+  }
+
+  function trimChat() {
+    if (!chat || chat.messages.length <= CHAT_MAX_MESSAGES) return;
+    chat.messages = chat.messages.slice(-CHAT_MAX_MESSAGES);
+  }
+
+  function addAssistant(text, scripted, note, quiet) {
+    if (!chat) return;
+    var clean = String(text == null ? "" : text).trim();
+    if (!clean) return;
+    chat.messages.push({
+      role: "assistant",
+      text: clean,
+      scripted: !!scripted,
+      note: note || "",
+      at: Date.now()
+    });
+    trimChat();
+    save();
+    renderChat();
+    if (hasTTS && !quiet) speak(clean);
+  }
+
+  function addUser(text, image) {
+    if (!chat) return;
+    var msg = {
+      role: "user",
+      text: String(text == null ? "" : text).trim(),
+      image: image || null,
+      note: "",
+      at: Date.now()
+    };
+    if (image && !(chatMeta.status === "ready" && chatMeta.vision)) {
+      msg.note = chatMeta.status === "ready"
+        ? "text-only model · image not sent"
+        : "no model · image not sent";
+    }
+    chat.messages.push(msg);
+    trimChat();
+    save();
+    renderChat();
+  }
+
+  function setChatFeedback(text, kind) {
+    var el = $("conv-feedback");
+    if (!el) return;
+    el.textContent = text || "";
+    el.className = "feedback" + (kind ? " " + kind : "");
+  }
+
+  function setChatBusy(busy) {
+    chatPending = !!busy;
+    var send = $("chat-send");
+    if (send) {
+      send.disabled = !!busy;
+      send.textContent = busy ? "Sending…" : "Send";
+    }
+    var log = $("chat");
+    if (log) log.setAttribute("aria-busy", busy ? "true" : "false");
+    setChatFeedback(busy ? "thinking…" : "", "");
+  }
+
+  function escapeRegExp(s) {
+    return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  /* Keep the learner's own line as review material, but only when it actually
+   * contains a word the pack knows: that is what makes a later cloze card
+   * possible. Lines with no deck word stay in the conversation only. */
+  function rememberChatLine(text) {
+    var t = String(text || "").replace(/\s+/g, " ").trim();
+    if (t.length < 4 || !MEM) return;
+    var hay = MEM.normalize(t);
+    var ids = deckIds().filter(function (id) {
+      var it = itemOf(id);
+      var needle = MEM.normalize(it && it.text ? it.text : "")
+        .replace(/[^a-z0-9]+/g, " ").trim();
+      if (needle.length < 2) return false;
+      var re = new RegExp("(^|[^a-z0-9])" + escapeRegExp(needle) + "([^a-z0-9]|$)");
+      return re.test(hay);
+    }).slice(0, 6);
+    if (!ids.length) return;
+    MEM.addSentence(state.memory, t, ids, Date.now());
+  }
+
+  function fallbackReply(userText, note) {
+    if (!CE || !chat || !ACTIVE) return;
+    var session = chat.scripted || CE.scriptedStart(ACTIVE.code);
+    var res = CE.scriptedRespond(ACTIVE.code, session, userText);
+    chat.scripted = session;
+
+    var reply = [res.reply, res.next].filter(Boolean).join(" ").trim();
+    if (!reply && res.done) reply = ACTIVE.code === "fr" ? "À bientôt !" : "¡Hasta pronto!";
+    if (!reply) {
+      setChatFeedback("the scripted partner has nothing more to say.", "");
+      return;
+    }
+
+    addAssistant(reply, true, "scripted");
+    if (note) setChatFeedback(note, "");
+    save();
+  }
+
+  function sendChatTurn() {
+    if (chatPending || !chat || !ACTIVE) return;
+    var input = $("chat-input");
+    var text = input ? input.value.trim() : "";
+    var image = pendingImage ? pendingImage.dataUrl : null;
+    if (!text && !image) return;
+
+    addUser(text, image);
+    rememberChatLine(text);
+    pendingImage = null;
+    renderAttachment();
+    if (input) input.value = "";
+
+    if (chatMeta.status !== "ready" || !CE) {
+      fallbackReply(text, "");
+      return;
+    }
+
+    var target = chat;
+    var code = ACTIVE.code;
+    setChatBusy(true);
+    CE.sendChat({
+      baseUrl: chatEndpoint(),
+      engine: chatMeta.engine,
+      model: chatMeta.model,
+      system: CE.buildSystemPrompt(ACTIVE, state.profile && state.profile.level),
+      history: chat.messages.slice(-CE.MAX_HISTORY),
+      vision: chatMeta.vision,
+      timeoutMs: 45000
+    }).then(function (res) {
+      if (chat !== target || !ACTIVE || ACTIVE.code !== code) return;
+      setChatBusy(false);
+      if (res && res.ok && res.text) {
+        addAssistant(res.text, false, "");
+        return;
+      }
+      chatMeta = { status: "failed", engine: null, model: null, vision: false };
+      setChatStatus();
+      fallbackReply(text, "the model did not answer — using scripted practice");
+    }).catch(function () {
+      if (chat !== target || !ACTIVE || ACTIVE.code !== code) return;
+      setChatBusy(false);
+      chatMeta = { status: "failed", engine: null, model: null, vision: false };
+      setChatStatus();
+      fallbackReply(text, "the model did not answer — using scripted practice");
+    });
+  }
 
   function startConversation() {
-    if (!CONV || !CONV.dialogues.length) { toast("No conversations in this pack yet."); return; }
-    var pick = CONV.dialogues[Math.floor(Math.random() * CONV.dialogues.length)];
-    conv = CONV.start(pick.id);
+    if (!CE) { toast("The chat engine did not load."); return; }
+    chat = chatState();
     show("conv");
-    $("chat").innerHTML = "";
-    renderTurn();
+    renderChatHeader();
+    renderChat();
+    renderAttachment();
+    setChatBusy(false);
+    refreshChatEngine();
   }
 
-  function bubble(text, mine) {
-    var el = document.createElement("p");
-    el.className = "bubble" + (mine ? " mine" : "");
-    el.textContent = text;
-    $("chat").appendChild(el);
-    $("chat").scrollTop = $("chat").scrollHeight;
-  }
-
-  function renderTurn() {
-    var t = conv.dialogue.turns[conv.turn];
-    if (!t) { finishConv(); return; }
-    bubble(t.es, false);
-    /* the tutor speaks: play the phrase's own audio when it has one */
-    if (t.item) sayItem(itemOf(t.item)); else speak(t.es);
-    $("conv-count").textContent = (conv.turn + 1) + "/" + conv.dialogue.turns.length;
-    $("conv-bar").style.width = Math.round((conv.turn / conv.dialogue.turns.length) * 100) + "%";
-    $("conv-feedback").textContent = "";
-    if (!t.expects.length) { finishConv(); return; }
-    $("conv-stage").innerHTML =
-      '<input class="type-input" id="conv-input" type="text" autocomplete="off" placeholder="reply in spanish" aria-label="your reply" />' +
-      '<button class="btn btn-primary" id="conv-send">Send</button>';
-    var input = $("conv-input");
-    input.focus();
-    input.addEventListener("keydown", function (e) { if (e.key === "Enter") sendReply(); });
-    $("conv-send").addEventListener("click", sendReply);
-  }
-
-  function sendReply() {
-    var t = conv.dialogue.turns[conv.turn];
-    var el = $("conv-input");
-    var said = el ? el.value : "";
-    if (!said.trim()) return;
-    bubble(said.trim(), true);
-    if (CONV.fits(said, t)) {
-      if (t.item) { S.review(state, t.item, 2, Date.now()); save(); }
-      $("conv-feedback").className = "feedback good";
-      $("conv-feedback").textContent = "that works";
-      conv.turn += 1;
-      setTimeout(renderTurn, 400);
-    } else {
-      conv.misses += 1;
-      if (t.item) { S.review(state, t.item, 0, Date.now()); save(); }
-      $("conv-feedback").className = "feedback bad";
-      $("conv-feedback").textContent = "try: " + t.reply;
-      if (el) { el.value = ""; el.focus(); }
+  function renderAttachment() {
+    var box = $("chat-attachment");
+    if (!box) return;
+    box.innerHTML = pendingImage && CE ? CE.attachmentHTML(pendingImage, esc) : "";
+    var clear = box.querySelector("[data-attach-clear]");
+    if (clear) {
+      clear.addEventListener("click", function () {
+        pendingImage = null;
+        renderAttachment();
+        var file = $("chat-image");
+        if (file) file.value = "";
+      });
     }
   }
 
-  function finishConv() {
-    $("conv-bar").style.width = "100%";
-    $("conv-count").textContent = "done";
-    $("conv-stage").innerHTML = "";
-    $("conv-feedback").className = "feedback good";
-    $("conv-feedback").textContent = "conversation complete · " + conv.misses + " retries";
+  function downscaleImage(dataUrl, done) {
+    var img = new Image();
+    img.onload = function () {
+      try {
+        var max = 1024;
+        var w = img.naturalWidth || img.width;
+        var h = img.naturalHeight || img.height;
+        if (!w || !h || (w <= max && h <= max)) { done(dataUrl); return; }
+
+        var scale = Math.min(max / w, max / h);
+        var canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(w * scale));
+        canvas.height = Math.max(1, Math.round(h * scale));
+        var ctx = canvas.getContext("2d");
+        if (!ctx) { done(dataUrl); return; }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        done(canvas.toDataURL("image/jpeg", 0.82));
+      } catch (err) {
+        done(dataUrl);
+      }
+    };
+    img.onerror = function () { toast("That image could not be read."); };
+    img.src = dataUrl;
+  }
+
+  function chatImageChange() {
+    var input = $("chat-image");
+    var file = input && input.files && input.files[0];
+    if (!file) return;
+    if (file.type && !/^image\//i.test(file.type)) {
+      toast("Choose an image file.");
+      input.value = "";
+      return;
+    }
+    if (file.size > 12 * 1024 * 1024) {
+      toast("That image is too large. Keep it under 12 MB.");
+      input.value = "";
+      return;
+    }
+    if (typeof FileReader === "undefined") {
+      toast("This browser cannot read images.");
+      return;
+    }
+
+    var reader = new FileReader();
+    reader.onerror = function () { toast("That image could not be read."); };
+    reader.onload = function () {
+      var dataUrl = String(reader.result || "");
+      if (!/^data:image\//i.test(dataUrl)) {
+        toast("That file is not an image.");
+        return;
+      }
+      downscaleImage(dataUrl, function (small) {
+        pendingImage = { dataUrl: small, at: Date.now() };
+        renderAttachment();
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function listenChat() {
+    if (!SR) return;
+    if (chatListening && chatRec) {
+      try { chatRec.stop(); } catch (err) { /* already stopped */ }
+      return;
+    }
+
+    var rec;
+    try { rec = new SR(); } catch (err) {
+      toast("This browser has no speech recognition.");
+      return;
+    }
+
+    rec.lang = (ACTIVE && ACTIVE.locale) || (LANG && LANG.locale) || "es-ES";
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.continuous = false;
+    chatListening = true;
+    chatRec = rec;
+
+    var btn = $("chat-listen");
+    if (btn) {
+      btn.classList.add("is-live");
+      btn.setAttribute("aria-pressed", "true");
+    }
+
+    rec.onresult = function (ev) {
+      var said = "";
+      try { said = ev.results[0][0].transcript || ""; } catch (err) { said = ""; }
+      var input = $("chat-input");
+      if (input && said) {
+        input.value = (input.value ? input.value.replace(/\s+$/, "") + " " : "") + said;
+        input.focus();
+      }
+    };
+    rec.onerror = function (ev) {
+      if (ev && (ev.error === "not-allowed" || ev.error === "service-not-allowed")) {
+        toast("Microphone permission was refused.");
+      } else if (ev && ev.error !== "no-speech") {
+        toast("Couldn't hear that — try again.");
+      }
+    };
+    rec.onend = function () {
+      chatListening = false;
+      chatRec = null;
+      if (btn) {
+        btn.classList.remove("is-live");
+        btn.setAttribute("aria-pressed", "false");
+      }
+    };
+
+    try {
+      rec.start();
+    } catch (err) {
+      chatListening = false;
+      chatRec = null;
+      if (btn) btn.classList.remove("is-live");
+    }
   }
 
   /* ------------------------------------------------------------ placement */
@@ -2366,7 +2782,37 @@
     try { localStorage.removeItem(STORE_KEY); } catch (err) { /* ignore */ }
     window.location.reload();
   });
-  $("conv-back").addEventListener("click", function () { conv = null; show("today"); });
+  $("conv-back").addEventListener("click", function () {
+    pendingImage = null;
+    renderAttachment();
+    show("today");
+  });
+  $("chat-form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    sendChatTurn();
+  });
+  $("chat-attach").addEventListener("click", function () {
+    var file = $("chat-image");
+    if (file) file.click();
+  });
+  $("chat-image").addEventListener("change", chatImageChange);
+  $("chat-listen").addEventListener("click", listenChat);
+  $("chat-endpoint").addEventListener("change", function () {
+    state.settings.chatEndpoint = cleanEndpoint(this.value);
+    this.value = state.settings.chatEndpoint;
+    save();
+    refreshChatEngine();
+  });
+  $("chat-model").addEventListener("change", function () {
+    state.settings.chatModel = String(this.value || "").trim();
+    this.value = state.settings.chatModel;
+    save();
+    refreshChatEngine();
+  });
+  $("chat-check").addEventListener("click", refreshChatEngine);
+  if (SR) $("chat-listen").hidden = false;
+  if (typeof FileReader === "undefined") $("chat-attach").hidden = true;
+  renderChatSettings();
   $("settings-back").addEventListener("click", function () { show("today"); });
   $("reader-back").addEventListener("click", function () { reader = null; show("today"); });
   Array.prototype.forEach.call(document.querySelectorAll(".mode"), function (b) {

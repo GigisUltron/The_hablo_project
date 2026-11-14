@@ -89,6 +89,8 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/ui-strings.js",
     "src/srs.js",
     "src/memory.js",
+    "src/chat.js",
+    "src/chat-engine.js",
     "src/app.js"
   ]);
 });
