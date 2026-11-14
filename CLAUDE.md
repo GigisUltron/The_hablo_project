@@ -74,6 +74,33 @@ visibly works. Concretely:
 loss-framed streaks, coins/XP/badges/leaderboards, artificial scarcity, dark-pattern defaults,
 infinite card feeds, anything that punishes a missed day.
 
+## The home screen — the only screen most people see
+
+Duolingo's home is a path and a button. Ours currently leads with a headline, an eyebrow, a
+two-line lede, five labelled boxes and a footer of links. That is a landing page, not a
+product. Rewrite it to this, above the fold and in this order:
+
+1. **One line of status**: brand, streak, solid count. Mono, small, no labels.
+2. **The track as a path**, not five boxes: nodes down the screen, current node larger and
+   filled, locked nodes muted, the next one visible. Names are one or two words, not captions.
+3. **One primary button.** `Continue`. Never a second filled control on this screen.
+
+Nothing else above the fold. No h1, no lede, no eyebrow, no principles, no marketing sentence.
+The tagline belongs on first run only, and even there it gets one line.
+
+**Hard limits, all screens:**
+
+- Two lines of instruction maximum. If it needs three, the screen is wrong.
+- One accent-filled element per screen; everything else is ink on paper.
+- Settings are a **screen**, reached by one icon — never an inline disclosure on home. The Tune
+  panel currently competes with the primary action and must move.
+- Every state change animates in 120 ms; nothing may pop into existence. Card → card, node →
+  node, answer → next.
+- First run is three taps: start, placement or fresh, first card. No tour, no questionnaire.
+
+**When choosing between deleting a feature and deleting its copy, delete the copy.** Then ask
+whether the feature survived the deletion.
+
 ## What "simple" means
 
 One primary action per screen. No dead ends: every state has a visible next step. If a screen
