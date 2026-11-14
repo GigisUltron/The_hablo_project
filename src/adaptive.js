@@ -48,8 +48,28 @@
     return i <= p;
   }
 
+  /* The pair you mix up most, if it is in scope for this session. A drill that
+   * opens on your own confusion is worth more than one that opens on alphabetical
+   * order. Confusions are "id|id" -> count. */
+  function confusionSeed(confusions, pool, minimum) {
+    if (!confusions || !pool || !pool.length) return null;
+    var min = minimum === undefined ? 2 : minimum;
+    var best = null, bestN = 0;
+    Object.keys(confusions).forEach(function (k) {
+      var n = confusions[k];
+      if (typeof n !== "number" || n < min || n <= bestN) return;
+      best = k; bestN = n;
+    });
+    if (!best) return null;
+    var ids = String(best).split("|");
+    for (var i = 0; i < ids.length; i++) {
+      if (pool.indexOf(ids[i]) !== -1) return ids[i];
+    }
+    return null;
+  }
+
   var api = { LEVELS: LEVELS, level: level, plan: plan, shouldStop: shouldStop,
-              CEFR: CEFR, within: within };
+              CEFR: CEFR, within: within, confusionSeed: confusionSeed };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.SemaAdaptive = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);

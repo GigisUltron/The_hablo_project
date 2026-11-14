@@ -49,3 +49,12 @@ test("cefr gating keeps harder items out of an easier session", () => {
   assert.equal(A.within("B2", "B1"), false);
   assert.equal(A.within(undefined, "A1"), true);   // ungraded is allowed
 });
+
+test("the session can open on the pair you actually confuse", () => {
+  const conf = { "ph-a|ph-b": 5, "ph-c|ph-d": 9 };
+  const pool = ["ph-a", "ph-b", "ph-c"];
+  assert.equal(A.confusionSeed(conf, pool), "ph-c");   // strongest, and in scope
+  assert.equal(A.confusionSeed({ "x|y": 1 }, pool), null);   // below the threshold
+  assert.equal(A.confusionSeed({ "q|r": 9 }, pool), null);   // strongest, but out of scope
+  assert.equal(A.confusionSeed(null, pool), null);
+});
