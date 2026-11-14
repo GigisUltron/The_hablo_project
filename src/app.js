@@ -17,6 +17,7 @@
    * The learner chooses an interface language once; everything below resolves
    * through these tables, never through a literal. */
   var UI_LANGS = window.SEMA_UI_LANGS || {};
+  var RUBY = window.SemaRuby;
 
   var uiCache = {};
 
@@ -789,7 +790,7 @@
           (it.schema && typeof schemaSVG === "function" ? schemaSVG(it.schema) : (it.emoji || "")) +
         "</span>" +
         '<span class="row-body">' +
-          '<span class="row-main">' + articleHTML(it.article) + esc(it.text) + "</span>" +
+          '<span class="row-main">' + articleHTML(it.article) + textHTML(it) + "</span>" +
           '<span class="row-meta">' + (due <= now ? "Now" : capital(whenFrom(due - now))) + "</span>" +
         "</span></div>";
     }).join("");
@@ -1919,11 +1920,24 @@
     return '<span class="art' + elide + '">' + esc(article) + "</span>";
   }
 
+  /* A word with its reading under the characters when the deck supplies one
+   * that lines up; plain escaped text otherwise. Never for Latin text: the
+   * helper only annotates Han characters. */
+  function textHTML(it) {
+    if (!it) return "";
+    if (RUBY && it.sub && RUBY.aligns(it.text, it.sub)) return RUBY.html(it.text, it.sub);
+    return esc(it.text);
+  }
+
+  function hasRuby(it) {
+    return !!(RUBY && it && it.sub && RUBY.aligns(it.text, it.sub));
+  }
+
   function wordsHTML(it) {
     var art = articleHTML(it.article);
     var long = it.text.length > 16 ? " long" : "";
     var kind = it.kind === "phrase" ? " phrase" : "";
-    return '<div class="word' + long + kind + '">' + art + esc(it.text) + "</div>";
+    return '<div class="word' + long + kind + '">' + art + textHTML(it) + "</div>";
   }
 
   /* The picture takes the free height of the screen; its sound button sits
@@ -1943,12 +1957,16 @@
       return '<p class="sentence">' + filled + "</p>" +
         (twin ? '<p class="term-contrast">↔ ' + esc(twin.text) + "</p>" : "");
     }
-    if (it.kind === "phrase") return it.sub ? '<p class="sentence">' + esc(it.sub) + "</p>" : "";
+    /* the phrase's own reading is already under its characters */
+    if (it.kind === "phrase") {
+      if (hasRuby(it)) return "";
+      return it.sub ? '<p class="sentence">' + esc(it.sub) + "</p>" : "";
+    }
 
     var line = it.sentence || it.sub || "";
     if (!line) return "";
     var bolded = boldFirst(line, it.text);
-    return (it.sub && it.kind === "word" ? '<p class="roman">' + esc(it.sub) + "</p>" : "") +
+    return (it.sub && it.kind === "word" && !hasRuby(it) ? '<p class="roman">' + esc(it.sub) + "</p>" : "") +
       '<p class="sentence">' + bolded + "</p>";
   }
 
@@ -2462,7 +2480,7 @@
     var long = it.kind === "phrase" ? " phrase" : it.text.length > 16 ? " long" : "";
     return '<button class="option-word' + long + '" data-id="' + esc(id) + '">' +
       '<span class="key" aria-hidden="true">' + (i + 1) + "</span>" +
-      '<span class="opt-text">' + articleHTML(it.article) + esc(it.text) + "</span></button>";
+      '<span class="opt-text">' + articleHTML(it.article) + textHTML(it) + "</span></button>";
   }
 
   function markChoices(cls, targetId) {
@@ -2820,7 +2838,7 @@
         var when = kind === "back"
           ? '<span class="row-meta">' + esc(capital(whenFrom(state.cards[id].due - now))) + "</span>"
           : "";
-        return '<li><span aria-hidden="true">' + it.emoji + "</span> " + esc(it.text) + when + "</li>";
+        return '<li><span aria-hidden="true">' + it.emoji + "</span> " + textHTML(it) + when + "</li>";
       }).join("") + "</ul></section>";
   }
 
@@ -3050,7 +3068,7 @@
           return '<button class="row" type="button" data-id="' + esc(c.id) + '">' +
             '<span class="row-pic" aria-hidden="true">' + c.emoji + "</span>" +
             '<span class="row-body">' +
-              '<span class="row-main">' + articleHTML(c.article) + esc(c.word) + "</span>" +
+              '<span class="row-main">' + articleHTML(c.article) + textHTML(itemOf(c.id)) + "</span>" +
               '<span class="row-meta">' + near + "</span>" +
             "</span></button>";
         }).join("") + "</div></section>";
@@ -3086,7 +3104,7 @@
     info.innerHTML =
       '<div class="tile" aria-hidden="true">' + c.emoji + "</div>" +
       '<div class="info-body">' +
-        '<div class="info-word">' + (c.article ? esc(c.article) + " " : "") + esc(c.word) + "</div>" +
+        '<div class="info-word">' + (c.article ? esc(c.article) + " " : "") + textHTML(itemOf(c.id)) + "</div>" +
         '<div class="info-links">' + (links || "no links yet") + "</div>" +
         '<div class="hint">' + contextHTML(itemOf(c.id)) + "</div>" +
       "</div>" +

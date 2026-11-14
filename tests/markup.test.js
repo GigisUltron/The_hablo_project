@@ -204,6 +204,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "assets/audio/en/manifest.js",
     "src/lang/en/audio.js",
     "src/ui-langs.js",
+    "src/ruby.js",
     "src/ui-strings.js",
     "src/srs.js",
     "src/memory.js",
@@ -496,4 +497,26 @@ test("the gloss control does not escape text it sets via textContent", () => {
   const block = app.slice(app.indexOf("data-gloss"), app.indexOf("function itemOf"));
   assert.equal(/textContent\s*=\s*[^;]*esc\(/.test(block), false,
     "esc() before textContent prints the entity, not the apostrophe");
+});
+
+test("pinyin sits under the character only when the syllables line up", () => {
+  const R = require("../src/ruby.js");
+
+  assert.equal(R.html("你好！", "nǐ hǎo"),
+    "<ruby>你<rt>nǐ</rt></ruby><ruby>好<rt>hǎo</rt></ruby>！", "aligned characters get ruby");
+
+  // one token for two characters: the split is unknown, so do not guess
+  assert.equal(R.html("房子", "fángzi"), "房子", "a word-spaced reading falls back to plain text");
+  assert.equal(R.html("早上好。", "zǎoshang hǎo"), "早上好。", "mismatched counts fall back");
+
+  assert.equal(R.html("casa", "ka-sa"), "casa", "Latin text never gets ruby");
+  assert.equal(R.html("你好", ""), "你好", "no reading, no ruby");
+
+  assert.equal(R.html("<你&>", "nǐ"), "&lt;<ruby>你<rt>nǐ</rt></ruby>&amp;&gt;",
+    "text around the ruby is escaped");
+  assert.equal(R.html("你", "<x>"), "<ruby>你<rt>&lt;x&gt;</rt></ruby>", "the reading is escaped too");
+
+  // the renderers use the helper and fall back to plain text
+  assert.match(app, /RUBY\.html\(it\.text, it\.sub\)/, "the reader aid is never built");
+  assert.match(app, /function textHTML\(it\)/, "no shared text renderer");
 });

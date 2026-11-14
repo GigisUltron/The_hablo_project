@@ -498,6 +498,18 @@ button.row:active { background: var(--fill); }
 /* the reading aid above the sentence: pinyin, transliteration, nothing else */
 .roman { font-size: 15px; color: var(--text-3); letter-spacing: 0.01em; }
 
+/* the reading aid under each character: pinyin, ruby position over.
+   The annotation is one fixed line per text, so heights stay put. */
+ruby { ruby-position: over; line-height: 1; }
+ruby rt {
+  font-size: 0.6em;
+  line-height: 1;
+  font-weight: 500;
+  color: var(--text-3);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .speak-btn, .mic {
   align-self: flex-start;
   border: 0;
