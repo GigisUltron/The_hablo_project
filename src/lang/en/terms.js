@@ -1,0 +1,66 @@
+/* sema — English connector deck. Each frame is an English sentence with
+ * the connector removed: meaning by the slot it fits.
+ */
+var SEMA_TERMS = {
+  terms: [
+    { id: "t-en-already", text: "already", gloss: "before now", schema: "clock",
+      frame: "I have ____ finished.", contrast: null },
+    { id: "t-en-not-yet", text: "not yet", gloss: "not before now", schema: "clock",
+      frame: "I haven't finished ____.", contrast: null },
+    { id: "t-en-always", text: "always", gloss: "every time", schema: "repeat",
+      frame: "I ____ drink coffee in the morning.", contrast: null },
+    { id: "t-en-never", text: "never", gloss: "not once", schema: "repeat",
+      frame: "I have ____ been there.", contrast: null },
+    { id: "t-en-before", text: "before", gloss: "earlier than", schema: "left",
+      frame: "____ I lived in another city.", contrast: null },
+    { id: "t-en-afterwards", text: "afterwards", gloss: "after that", schema: "right",
+      frame: "First he eats, ____ he sleeps.", contrast: null },
+    { id: "t-en-maybe", text: "maybe", gloss: "perhaps", schema: "question",
+      frame: "____ he will come tomorrow.", contrast: null },
+    { id: "t-en-however", text: "however", gloss: "but", schema: "balance",
+      frame: "It is expensive; ____, I will buy it.", contrast: null },
+    { id: "t-en-although", text: "although", gloss: "even though", schema: "fork",
+      frame: "____ it is raining, I am going out.", contrast: null },
+    { id: "t-en-while", text: "while", gloss: "at the same time as", schema: "parallel",
+      frame: "I study ____ I listen to music.", contrast: null },
+    { id: "t-en-therefore", text: "therefore", gloss: "for that reason", schema: "chain",
+      frame: "I did not sleep; ____ I am tired.", contrast: null },
+    { id: "t-en-moreover", text: "moreover", gloss: "in addition", schema: "plus",
+      frame: "It is cheap and, ____, it is close.", contrast: null },
+    { id: "t-en-besides", text: "besides", gloss: "in addition to that", schema: "plus",
+      frame: "I don't want to go; ____, it's late.", contrast: null },
+    { id: "t-en-instead", text: "instead", gloss: "in place of that", schema: "balance",
+      frame: "I didn't take the bus; I walked ____.", contrast: null },
+    { id: "t-en-otherwise", text: "otherwise", gloss: "if not", schema: "fork",
+      frame: "Hurry up; ____ we'll be late.", contrast: null },
+    { id: "t-en-unless", text: "unless", gloss: "except if", schema: "fork",
+      frame: "I won't go ____ you come.", contrast: null },
+    { id: "t-en-as-long-as", text: "as long as", gloss: "on condition that", schema: "chain",
+      frame: "You can stay ____ you are quiet.", contrast: null },
+    { id: "t-en-in-case", text: "in case", gloss: "if it happens that", schema: "fork",
+      frame: "Take an umbrella ____ it rains.", contrast: null },
+    { id: "t-en-as-soon-as", text: "as soon as", gloss: "immediately when", schema: "clock",
+      frame: "____ it arrives, we leave.", contrast: null },
+    { id: "t-en-provided-that", text: "provided that", gloss: "only if", schema: "chain",
+      frame: "You can go ____ you finish first.", contrast: null },
+    { id: "t-en-despite", text: "despite", gloss: "in spite of", schema: "balance",
+      frame: "____ the rain, we went out.", contrast: null },
+    { id: "t-en-in-spite-of", text: "in spite of", gloss: "even though there was", schema: "balance",
+      frame: "____ the rain, we went out.", contrast: null },
+    { id: "t-en-whereas", text: "whereas", gloss: "in contrast", schema: "balance",
+      frame: "I like tea, ____ she likes coffee.", contrast: null },
+    { id: "t-en-nevertheless", text: "nevertheless", gloss: "even so", schema: "balance",
+      frame: "It was late; ____, we continued.", contrast: null },
+    { id: "t-en-on-the-other-hand", text: "on the other hand", gloss: "from another point of view", schema: "balance",
+      frame: "It is cheap; ____, it is far.", contrast: null },
+    { id: "t-en-in-other-words", text: "in other words", gloss: "to say it differently", schema: "chain",
+      frame: "He is generous; ____, he gives a lot.", contrast: null },
+    { id: "t-en-by-the-way", text: "by the way", gloss: "incidentally", schema: "plus",
+      frame: "____, I saw your brother.", contrast: null },
+  ]
+};
+if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TERMS;
+if (typeof window !== "undefined") {
+  window.SEMA_TERMS = SEMA_TERMS;
+  if (window.SemaLangs) window.SemaLangs.define("en", "terms", SEMA_TERMS);
+}

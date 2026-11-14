@@ -15,9 +15,10 @@ const FLOORS = {
   es: { concepts: 40, phrases: 120, terms: 20, basics: 16, texts: 1 },
   fr: { concepts: 40, phrases: 120, terms: 20, basics: 16, texts: 1 },
   it: { concepts: 20, phrases: 120, terms: 20, basics: 16, texts: 1 },
+  en: { concepts: 40, phrases: 120, terms: 27, basics: 16, texts: 1 },
   starter: { concepts: 20, phrases: 30, terms: 8, basics: 8, texts: 1 }
 };
-const FLAGSHIP = new Set(["es", "fr", "it"]);
+const FLAGSHIP = new Set(["es", "fr", "it", "en"]);
 
 /* eSpeak-ng has no voice named "zh"; its Mandarin voice is "cmn", which this
  * pack's ids do not use. A silent pack is honest; a missing manifest is not. */
@@ -41,7 +42,7 @@ function manifestFor(code) {
 }
 
 test("every pack has the parts the app reads", () => {
-  assert.ok(codes.length >= 12, `expected at least twelve packs, found ${codes.length}`);
+  assert.ok(codes.length >= 13, `expected at least thirteen packs, found ${codes.length}`);
   for (const code of codes) {
     const have = fs.readdirSync(path.join(root, code));
     const missing = REQUIRED.filter((f) => !have.includes(f));
@@ -166,4 +167,65 @@ test("the registry returns the whole pack, not just its words", () => {
     assert.ok(pack.texts.texts.length >= 1, `${code}: texts missing from registry`);
     assert.ok(pack.conv.dialogues.length >= 1, `${code}: conversation missing from registry`);
   }
+});
+
+
+test("chinese carries tone-marked pinyin, not just characters", () => {
+  const dir = path.join(root, "zh");
+  const items = []
+    .concat(require(path.join(dir, "concepts.js")).concepts || [])
+    .concat(require(path.join(dir, "phrases.js")).phrases || []);
+  const pinyin = /^[A-Za-z\u00C0-\u024F ]+$/;
+  for (const item of items) {
+    assert.ok(item.sub && item.sub.trim(), `${item.id} has no pinyin`);
+    assert.equal(/[\u3400-\u9fff]/.test(item.sub), false, `${item.id} pinyin contains Han characters`);
+    assert.match(item.sub, pinyin, `${item.id} pinyin has punctuation: ${item.sub}`);
+    assert.match(item.sub, /[aeiouüāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]/, `${item.id} pinyin has no vowel: ${item.sub}`);
+  }
+});
+
+test("every non-Latin pack teaches its own script", () => {
+  const corpusFor = (code) => {
+    const dir = path.join(root, code);
+    return JSON.stringify([
+      require(path.join(dir, "concepts.js")),
+      require(path.join(dir, "phrases.js")),
+      require(path.join(dir, "terms.js")),
+      require(path.join(dir, "basics.js")),
+      require(path.join(dir, "texts.js")),
+      require(path.join(dir, "conv.js"))
+    ]);
+  };
+  for (const code of ["ru", "ar", "hi", "ja", "zh"]) {
+    const file = path.join(root, code, "alphabet.js");
+    assert.ok(fs.existsSync(file), `${code} has no alphabet.js`);
+    const A = require(file);
+    assert.ok(A.note && A.note.length > 20, `${code} should say what its writing system is`);
+    assert.ok(A.letters.length >= 20, `${code} has only ${A.letters.length} entries`);
+    const seen = new Set();
+    const corpus = corpusFor(code);
+    for (const entry of A.letters) {
+      assert.ok(entry.letter && !seen.has(entry.letter), `${code} duplicate letter ${entry.letter}`);
+      seen.add(entry.letter);
+      assert.ok(entry.name && entry.name.length >= 1, `${code}/${entry.letter} has no name`);
+      assert.ok(entry.hint && entry.hint.length > 8, `${code}/${entry.letter} hint too thin`);
+      const minLength = code === "zh" ? 1 : 2;
+      assert.ok(entry.example && entry.example.length >= minLength, `${code}/${entry.letter} needs an example`);
+      assert.ok(corpus.includes(entry.example), `${code}/${entry.letter} example "${entry.example}" is not in the pack`);
+    }
+  }
+  assert.match(require(path.join(root, "ja", "alphabet.js")).note, /kanji/i);
+  assert.match(require(path.join(root, "zh", "alphabet.js")).note, /Han characters/i);
+});
+
+test("english teaches idioms, not a translation of itself", () => {
+  const dir = path.join(root, "en");
+  const phrases = require(path.join(dir, "phrases.js")).phrases;
+  const glosses = require(path.join(dir, "glosses.js"));
+  assert.ok(phrases.length >= 120, `english has ${phrases.length} phrases`);
+  assert.ok(new Set(phrases.map((p) => p.topic)).size >= 30, "english has fewer than thirty situations");
+  const circular = phrases.filter((p) => glosses[p.id].toLowerCase() === p.text.toLowerCase());
+  assert.deepEqual(circular.map((p) => p.id), [], "an english gloss repeats its phrase");
+  const levels = require(path.join(dir, "levels.js"));
+  assert.ok(phrases.some((p) => levels[p.id] === "C1"), "english has no C1 phrase");
 });
