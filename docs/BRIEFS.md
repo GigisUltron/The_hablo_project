@@ -125,3 +125,22 @@ What the interface needs:
 
 Tests to add: every text renders, every question is reachable, and the completion state shows
 the right score.
+
+---
+
+## Brief: alphabet mode (interface lane, unblocked by content)
+
+`src/alphabet.js` now exists: 28 entries covering the 27 Spanish letters plus the `rr` digraph,
+each with its Spanish name, an English pronunciation hint, and an example word.
+
+Note what it is *not*: vocabulary. There is no picture for `h` and a translation actively
+misleads. So the drill shape has to change:
+
+- teach by **name → sound → example**, with the example played as audio
+- quiz the confusions that actually bite: `b/v`, `c/z/s`, `g/j`, `r/rr`, `ñ/n`, silent `h`
+- the wrong answers should be the letter that sounds the same, not a random one
+- pair it with a two-second listening check: hear the example word, name the letter it starts
+  with
+
+Placement: a sixth unit on the track (`u0`, "The letters"), unlocked from the start and
+recommended before First words, since it is the only unit that teaches you how to read.
