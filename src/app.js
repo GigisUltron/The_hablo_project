@@ -614,6 +614,9 @@
     var ratio = placement.correct / total;
     var floor = Math.min(TRACK.units.length - 1, Math.floor(ratio * TRACK.units.length));
     state.placement = { floor: floor, score: placement.correct, total: total, at: Date.now() };
+    if (state.profile) {
+      state.profile.level = floor >= 3 ? "B1" : floor >= 1 ? "A2" : "A1";
+    }
     placement = null;
     save();
 
@@ -1723,7 +1726,12 @@
       renderBuilder();
     });
   });
-  $("quit-btn").addEventListener("click", function () { session = null; show("today"); });
+  $("quit-btn").addEventListener("click", function () {
+    session = null;
+    // backing out of the placement returns to the question, not to a lesson
+    if (state.profile && state.profile.level === "?") { show("setup"); return; }
+    show("today");
+  });
   $("map-practice").addEventListener("click", function () { startSession(); });
 
   document.addEventListener("keydown", function (ev) {
