@@ -81,6 +81,15 @@
     ].join(" ");
   }
 
+  /* A translation is a separate, one-message request. It must not reuse the
+   * conversation system prompt, and it must name the pack that is live now. */
+  function buildTranslationPrompt(pack) {
+    var p = pack || {};
+    var name = String(p.name || "the message");
+    return "Translate the following " + name + " message into natural English. " +
+      "Return only the English translation, without notes, quotation marks, or the original text.";
+  }
+
   /* --------------------------------------------------------------- messages */
 
   function isImage(dataUrl) {
@@ -402,6 +411,19 @@
         '" alt="' + escValue(esc, "attached image") + '" />';
     }
     var note = m.note ? '<span class="bubble-note">' + escValue(esc, m.note) + "</span>" : "";
+
+    var translation = typeof m.translation === "string" ? m.translation : "";
+    var translating = !!o.translating;
+    var translate = "";
+    if (!mine && m.text && o.canTranslate) {
+      var label = translating
+        ? "translating…"
+        : (translation && m.showTranslation ? "hide translation" : "show translation");
+      translate = '<button class="bubble-translate" type="button" data-translate="' +
+        escValue(esc, String(o.index || 0)) + '"' + (translating ? " disabled" : "") + ">" +
+        escValue(esc, label) + "</button>";
+    }
+
     var hear = "";
     if (!mine && m.text && o.canSpeak) {
       hear = '<button class="bubble-hear" type="button" data-hear="' + escValue(esc, String(o.index || 0)) +
@@ -410,7 +432,18 @@
         '<path d="M16 9a4 4 0 010 6M18.5 6.5a7.5 7.5 0 010 11"/></svg></button>';
     }
 
-    return '<div class="bubble' + (mine ? " mine" : "") + '">' + image + text + note + hear + "</div>";
+    var actions = translate || hear
+      ? '<div class="bubble-actions">' + translate + hear + "</div>"
+      : "";
+    var translationText = translation && m.showTranslation
+      ? '<p class="bubble-translation">' + escValue(esc, translation) + "</p>"
+      : "";
+    var translationNote = m.translationError && !translation
+      ? '<span class="bubble-translation-note">' + escValue(esc, "translation unavailable") + "</span>"
+      : "";
+
+    return '<div class="bubble' + (mine ? " mine" : "") + '">' + image + text + note +
+      actions + translationText + translationNote + "</div>";
   }
 
   function attachmentHTML(pending, esc) {
@@ -426,6 +459,7 @@
     DEFAULT_MODEL: DEFAULT_MODEL,
     MAX_HISTORY: MAX_HISTORY,
     buildSystemPrompt: buildSystemPrompt,
+    buildTranslationPrompt: buildTranslationPrompt,
     buildMessages: buildMessages,
     buildRequest: buildRequest,
     normaliseBaseUrl: normaliseBaseUrl,

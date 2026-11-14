@@ -290,7 +290,7 @@ test("the read unit on the path opens the reader as a lesson", () => {
 test("every track unit has a mode the app can start", () => {
   const T = require("../src/track.js");
   const modes = new Set(T.units.map((u) => u.mode));
-  for (const m of modes) assert.ok(["words", "phrases", "terms", "read"].includes(m), "unknown mode " + m);
+  for (const m of modes) assert.ok(["words", "phrases", "terms", "read", "script"].includes(m), "unknown mode " + m);
 });
 
 test("every data-i18n key in the markup exists in every locale", () => {

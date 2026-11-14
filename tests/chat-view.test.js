@@ -75,6 +75,57 @@ test("the attachment preview also routes its URL and label through escape", () =
   assert.ok(calls.includes("remove image"));
 });
 
+test("an assistant bubble offers a per-message translation control", () => {
+  const { esc, calls } = spyEsc();
+  const hidden = CE.messageHTML(
+    { role: "assistant", text: "hola" },
+    esc,
+    { canTranslate: true, index: 4 }
+  );
+  assert.match(hidden, /data-translate="4"/);
+  assert.match(hidden, /show translation/);
+  assert.doesNotMatch(hidden, /bubble-translation"/);
+
+  const shown = CE.messageHTML(
+    { role: "assistant", text: "hola", translation: "hello", showTranslation: true },
+    esc,
+    { canTranslate: true, index: 4 }
+  );
+  assert.match(shown, /hide translation/);
+  assert.match(shown, /class="bubble-translation"/);
+  assert.ok(calls.includes("hello"));
+});
+
+test("the translation control is absent when no model is connected", () => {
+  const { esc } = spyEsc();
+  const html = CE.messageHTML(
+    { role: "assistant", text: "hola" },
+    esc,
+    { canTranslate: false, canSpeak: false }
+  );
+  assert.doesNotMatch(html, /data-translate/);
+  assert.doesNotMatch(html, /show translation/);
+});
+
+test("translation text and its failure note are escaped", () => {
+  const { esc, calls } = spyEsc();
+  const shown = CE.messageHTML(
+    { role: "assistant", text: "hola", translation: '<b>hello</b>', showTranslation: true },
+    esc,
+    { canTranslate: true, index: 1 }
+  );
+  assert.doesNotMatch(shown, /<b>hello/);
+  assert.match(shown, /&lt;b&gt;hello/);
+  assert.ok(calls.includes("<b>hello</b>"));
+
+  const failed = CE.messageHTML(
+    { role: "assistant", text: "hola", translationError: true },
+    esc,
+    { canTranslate: true, index: 1 }
+  );
+  assert.match(failed, /translation unavailable/);
+});
+
 test("the chat view passes the app's escape helper into both builders", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(app, /CE\.messageHTML\(m, esc,/, "bubbles do not use esc");
@@ -97,4 +148,33 @@ test("the view says when no local model answered", () => {
   assert.match(app, /no local model found — run ollama serve/);
   assert.match(app, /scripted/, "fallback replies are not labelled");
   assert.match(app, /text-only model · image not sent/, "images are not marked text-only");
+});
+
+test("per-message translation is model-backed, pack-aware and cached", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  const start = app.indexOf("function translateMessage");
+  const end = app.indexOf("function startConversation");
+  const block = app.slice(start, end);
+
+  assert.match(block, /CE\.buildTranslationPrompt\(ACTIVE\)/);
+  assert.match(block, /CE\.sendChat\(/);
+  assert.match(block, /target\.translation = String\(res\.text\)\.trim\(\)/);
+  assert.match(block, /history: \[\{ role: "user", text: msg\.text \}\]/);
+  assert.doesNotMatch(block, /SEMA_GLOSSES|glosses/, "translation must not come from the gloss map");
+  assert.match(app, /canTranslate: chatMeta\.status === "ready"/,
+    "translation controls must disappear when no model is ready");
+});
+
+test("clearing the chat touches only the active language conversation", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  const start = app.indexOf("function clearChat");
+  const end = app.indexOf("function translateMessage");
+  const block = app.slice(start, end);
+
+  assert.match(block, /chat\.messages = \[\]/);
+  assert.match(block, /chat\.scripted = null/);
+  assert.match(block, /chatEpoch \+= 1/);
+  assert.doesNotMatch(block, /state\.memory|state\.cards|byLang/);
+  assert.match(app, /tap again/);
+  assert.match(block, /renderChat\(\)/, "the empty state is not rendered after clearing");
 });

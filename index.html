@@ -22,19 +22,19 @@
     <nav class="tabs" aria-label="Views">
       <button class="tab is-active" data-view="today" aria-current="page">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>
-        <span>Today</span>
+        <span data-i18n="tabToday">Today</span>
       </button>
       <button class="tab" data-view="map">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="7" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="17" r="2.5"/><path d="M8.3 8.3l2.4 6.4M15.9 7.6l-2.6 7.2M8.5 7h7"/></svg>
-        <span>Map</span>
+        <span data-i18n="tabMap">Map</span>
       </button>
       <button class="tab" data-view="stats">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-8M12 20V5M19 20v-9"/></svg>
-        <span>Progress</span>
+        <span data-i18n="tabProgress">Progress</span>
       </button>
       <button class="tab" data-view="settings" id="settings-btn" type="button">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/></svg>
-        <span>Settings</span>
+        <span data-i18n="settings">Settings</span>
       </button>
     </nav>
   </header>
@@ -48,7 +48,7 @@
         <header class="today-head">
           <div>
             <p class="today-date" id="today-date"></p>
-            <h1 id="today-title">Today</h1>
+            <h1 id="today-title" data-i18n="tabToday">Today</h1>
           </div>
           <p class="streak" title="Day streak">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1.2 4.2 5.5 5.6 5.5 11a5.5 5.5 0 01-11 0c0-2.6 1.3-4.1 2.3-5.4.4 1.6 1.4 2.4 2.2 2.4 0-3.3 0-5.6 1-8z"/></svg>
@@ -59,7 +59,7 @@
         <section class="lesson-card" aria-labelledby="lesson-name">
           <div class="lesson-top">
             <h2 id="lesson-name">Next lesson</h2>
-            <span>about 1 min</span>
+            <span data-chrome="aboutMinute">about 1 min</span>
           </div>
           <div class="lesson-pics" id="next-stack" aria-hidden="true"></div>
           <p class="lesson-sub" id="start-sub"></p>
@@ -67,24 +67,24 @@
         </section>
 
         <section class="group" aria-labelledby="track-title">
-          <h2 class="group-title" id="track-title">Your path</h2>
+          <h2 class="group-title" id="track-title" data-chrome="yourPath">Your path</h2>
           <div class="track" id="track"></div>
         </section>
 
         <div class="list">
           <button class="row" id="home-conv" type="button">
             <span class="row-pic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5h14v10H10l-4 4v-4H5z"/></svg></span>
-            <span class="row-body"><span class="row-main">Have a conversation</span><span class="row-meta" aria-hidden="true">›</span></span>
+            <span class="row-body"><span class="row-main" data-i18n="converse">Have a conversation</span><span class="row-meta" aria-hidden="true">›</span></span>
           </button>
         </div>
 
         <section class="group" aria-labelledby="review-title">
-          <h2 class="group-title" id="review-title">Up for review</h2>
+          <h2 class="group-title" id="review-title" data-chrome="upForReview">Up for review</h2>
           <div class="list" id="review-list"></div>
         </section>
 
         <section class="group" aria-labelledby="words-title">
-          <h2 class="group-title" id="words-title">Your words</h2>
+          <h2 class="group-title" id="words-title" data-chrome="yourWords">Your words</h2>
           <div class="list known">
             <p class="known-line"><b id="stat-learned">0</b> of <span id="stat-total">0</span> words known</p>
             <div class="meter" aria-hidden="true"><i id="known-bar"></i></div>
@@ -131,22 +131,31 @@
       </article>
     </section>
 
+    <!-- ========================================================= ALPHABET -->
+    <section class="view" id="view-alphabet" aria-labelledby="alphabet-title">
+      <h2 id="alphabet-title" class="sr-only" hidden>Alphabet</h2>
+      <div class="session-head">
+        <button class="icon-btn" id="alphabet-back" aria-label="Back">←</button>
+        <div class="bar"><i id="alphabet-bar"></i></div>
+        <span class="counter" id="alphabet-count"></span>
+      </div>
+      <article class="card alphabet-card">
+        <div class="stage" id="alphabet-stage"></div>
+        <p class="feedback" id="alphabet-feedback"></p>
+        <div class="card-actions" id="alphabet-actions"></div>
+      </article>
+    </section>
+
     <!-- ====================================================== CONVERSATION -->
     <section class="view" id="view-conv" aria-label="Conversation">
       <div class="chat-head">
         <button class="icon-btn" id="conv-back" aria-label="Back">←</button>
-        <span class="chat-face" id="chat-face" aria-hidden="true">
-          <svg viewBox="0 0 32 32">
-            <circle cx="16" cy="16" r="13" />
-            <circle class="eye" cx="11.5" cy="13" r="1.7" />
-            <circle class="eye" cx="20.5" cy="13" r="1.7" />
-            <path class="mouth" d="M11 19.5c1.5 2 3.2 3 5 3s3.5-1 5-3" />
-          </svg>
-        </span>
+        <span class="chat-presence" id="chat-face" data-state="idle" aria-hidden="true"></span>
         <div class="chat-who">
           <span class="chat-name" id="chat-name">Conversation</span>
           <span class="chat-status" id="chat-status" role="status" aria-live="polite" data-state="idle">not checked yet</span>
         </div>
+        <button class="chat-clear" id="chat-clear" type="button" aria-label="clear this conversation" hidden>clear</button>
       </div>
       <article class="card conv-card">
         <div class="chat" id="chat" role="log" aria-label="Conversation so far"></div>
@@ -174,21 +183,18 @@
     <section class="view" id="view-setup" aria-label="Setup">
       <div class="solo">
         <p class="prompt">Before you start</p>
-        <h1 class="setup-q">Have you studied Spanish before?</h1>
+        <h1 class="setup-q">Have you studied this language before?</h1>
         <div class="cta-row">
           <button class="btn btn-primary" id="setup-new">I'm new</button>
           <button class="btn btn-ghost" id="setup-test">Test me</button>
         </div>
-        <label class="setup-lang">Language
+        <label class="setup-lang"><span data-chrome="deckLang">Language</span>
           <select id="setup-lang"></select>
         </label>
-        <label class="setup-lang">Interface
-          <select id="setup-uilang">
-            <option value="en">English</option>
-            <option value="es">Español</option>
-          </select>
+        <label class="setup-lang"><span data-chrome="interfaceLang">Interface</span>
+          <select id="setup-uilang"></select>
         </label>
-        <p class="builder-note">More languages need their own deck and audio — Spanish is the only pack so far.</p>
+        <p class="builder-note">Each deck carries its own words, audio and progress.</p>
       </div>
     </section>
 
@@ -196,7 +202,7 @@
     <section class="view" id="view-settings" aria-label="Settings">
       <div class="map-head">
         <div>
-          <h2>Settings</h2>
+          <h2 data-chrome="settingsTitle">Settings</h2>
           <p>What you study, how it sounds, and where else to look.</p>
         </div>
         <button class="btn btn-ghost btn-sm" id="gloss-toggle">translations on</button>
@@ -205,8 +211,12 @@
       </div>
       <div class="panel panel-pad">
 
-          <label class="settings-lang">Language
+          <label class="settings-lang"><span data-chrome="deckLang">Language</span>
             <select id="settings-lang"></select>
+          </label>
+
+          <label class="settings-lang"><span data-chrome="interfaceLang">Interface</span>
+            <select id="settings-uilang"></select>
           </label>
 
           <div class="chat-settings">

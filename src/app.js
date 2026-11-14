@@ -13,21 +13,89 @@
   var S = window.SemaSRS;
   var MEM = window.SemaMemory;
   var UI = window.SEMA_UI;
+  /* Extra chrome tables and extra keys for the locales in src/ui-strings.js.
+   * The learner chooses an interface language once; everything below resolves
+   * through these tables, never through a literal. */
+  var UI_LANGS = window.SEMA_UI_LANGS || {};
+
+  var uiCache = {};
+
+  function uiTable(code) {
+    var lang = String(code || "en");
+    if (uiCache[lang]) return uiCache[lang];
+    var table = {};
+    var base = (UI && UI[lang]) || {};
+    Object.keys(base).forEach(function (k) { if (k !== "t") table[k] = base[k]; });
+    var more = UI_LANGS[lang] || {};
+    Object.keys(more).forEach(function (k) {
+      if (k === "name" || k === "locale") return;
+      table[k] = more[k];
+    });
+    if (!Object.keys(table).length) return uiTable("en");
+    uiCache[lang] = table;
+    return table;
+  }
+
+  function uiLang() {
+    return (state && state.profile && state.profile.uiLang) || "en";
+  }
 
   /* Chrome in the learner's interface language, not the deck's. */
   function tr(key, fallback) {
-    return (UI && UI.t(((state.profile || {}).uiLang) || "en", key)) || fallback || key;
+    var table = uiTable(uiLang());
+    return table[key] || uiTable("en")[key] || fallback || key;
+  }
+
+  /* Locales we can actually paint: every one with a chrome table. The list is
+   * data, not a hardcoded set, so a new table appears here by itself. */
+  function uiChoices() {
+    var codes = [];
+    ["en"].concat(Object.keys(UI || {}), Object.keys(UI_LANGS)).forEach(function (code) {
+      if (!code || code === "t" || codes.indexOf(code) !== -1) return;
+      var table = uiTable(code);
+      if (table.start && table.tabToday) codes.push(code);
+    });
+    return codes;
+  }
+
+  /* A language's own name comes from its pack; without one, the code is all we
+   * honestly have. No language name is ever typed into the chrome. */
+  function uiName(code) {
+    var list = (LANGS && LANGS.list && LANGS.list()) || [];
+    for (var i = 0; i < list.length; i += 1) {
+      if (list[i].code === code) return list[i].name || code.toUpperCase();
+    }
+    var own = UI_LANGS[code] && UI_LANGS[code].name;
+    return own || String(code).toUpperCase();
+  }
+
+  function renderUiLangPickers() {
+    var choices = uiChoices();
+    var current = uiLang();
+    ["setup-uilang", "settings-uilang"].forEach(function (id) {
+      var sel = $(id);
+      if (!sel) return;
+      sel.innerHTML = choices.map(function (code) {
+        return '<option value="' + esc(code) + '">' + esc(uiName(code)) + "</option>";
+      }).join("");
+      sel.value = choices.indexOf(current) === -1 ? "en" : current;
+    });
   }
 
   function applyStrings() {
-    if (!UI) return;
-    var lang = (state.profile && state.profile.uiLang) || "en";
+    var table = uiTable(uiLang());
     Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (el) {
-      var key = el.getAttribute("data-i18n");
-      var text = UI.t(lang, key);
+      var text = table[el.getAttribute("data-i18n")];
       if (text) el.textContent = text;
     });
+    var gloss = $("gloss-toggle");
+    if (gloss) {
+      gloss.textContent = (state.settings && state.settings.translations) === "off"
+        ? tr("translationsOff", "translations off")
+        : tr("translationsOn", "translations on");
+    }
   }
+
   var TRACK = window.SemaTrack;
   var ADAPT = window.SemaAdaptive;
   var CORRECT = window.SemaCorrect;
@@ -177,6 +245,7 @@
 
   var state = boot();
   renderLangPickers();
+  renderUiLangPickers();
   updateSetupCopy();
 
   /* Progress is per language. `state.cards` and friends are the live deck for
@@ -208,6 +277,10 @@
     }
 
     s.settings = s.settings || {};
+    s.alphabet = s.alphabet && typeof s.alphabet === "object" && !Array.isArray(s.alphabet) ? s.alphabet : {};
+    if (s.profile && (!s.profile.uiLang || uiChoices().indexOf(s.profile.uiLang) === -1)) {
+      s.profile.uiLang = "en";
+    }
     if (typeof s.settings.chatEndpoint !== "string" || !s.settings.chatEndpoint.trim()) {
       s.settings.chatEndpoint = (CE && CE.DEFAULT_ENDPOINT) || "http://localhost:11434";
     }
@@ -256,6 +329,7 @@
     state.lastSession = null;
     state.placement = null;
     state.memory = fresh.memory;
+    state.alphabet = {};
   }
 
   function bucketOf(s) {
@@ -266,7 +340,8 @@
       sessions: s.sessions || 0,
       lastSession: s.lastSession || null,
       placement: s.placement || null,
-      memory: s.memory || MEM.empty()
+      memory: s.memory || MEM.empty(),
+      alphabet: s.alphabet || {}
     };
   }
 
@@ -278,6 +353,7 @@
     s.lastSession = bucket.lastSession || null;
     s.placement = bucket.placement || null;
     s.memory = bucket.memory && Array.isArray(bucket.memory.sentences) ? bucket.memory : MEM.empty();
+    s.alphabet = bucket.alphabet && typeof bucket.alphabet === "object" ? bucket.alphabet : {};
   }
 
   function seedDeck(s) {
@@ -329,6 +405,15 @@
     q.textContent = "Have you studied " + ACTIVE.name + " before?";
   }
 
+  function setUiLang(code) {
+    if (uiChoices().indexOf(code) === -1) return;
+    state.profile = state.profile || {};
+    state.profile.uiLang = code;
+    save();
+    applyStrings();
+    renderUiLangPickers();
+  }
+
   function switchLang(code) {
     if (!code || !LANGS || !LANGS.has(code)) return false;
     if (ACTIVE && ACTIVE.code === code) {
@@ -360,6 +445,8 @@
     session = null;
     reader = null;
     chat = null;
+    chatEpoch += 1;
+    resetChatClear();
     placement = null;
     mapBuilt = false;
     save();
@@ -374,8 +461,10 @@
   function beginProfile(level) {
     var code = (ACTIVE && ACTIVE.code) || "es";
     var byLang = (state.profile && state.profile.byLang) || {};
+    var ui = state.profile && state.profile.uiLang;
     byLang[code] = bucketOf(state);
     state.profile = { level: level, lang: code, byLang: byLang };
+    if (ui) state.profile.uiLang = ui;
     save();
   }
 
@@ -561,7 +650,7 @@
 
   /* ---------------------------------------------------------------- views */
 
-  var VIEWS = ["today", "session", "reader", "conv", "setup", "settings", "map", "stats"];
+  var VIEWS = ["today", "session", "reader", "alphabet", "conv", "setup", "settings", "map", "stats"];
   var currentView = "today";
   var mapBuilt = false;
 
@@ -828,6 +917,118 @@
     $("reader-done").addEventListener("click", function () { reader = null; show("today"); });
   }
 
+  /* -------------------------------------------------------------- alphabet */
+
+  /* A non-Latin pack opens on its script, one character at a time: the letter,
+   * its name, how it sounds, and a word that uses it. The lesson is a real
+   * lesson - progress is saved per language and it always ends with a way on. */
+  var alphabet = null;
+  var ALPHABET_CHUNK = 8;
+
+  function alphabetChunk() {
+    var letters = scriptLetters();
+    var known = state.alphabet || {};
+    var fresh = letters.filter(function (l) { return !known[l.letter]; });
+    return (fresh.length ? fresh : letters).slice(0, ALPHABET_CHUNK);
+  }
+
+  /* The example word is audio if the deck already voices it, otherwise the
+   * device's voice; with neither, the letter is still readable. */
+  function exampleIdFor(word) {
+    var want = String(word || "").toLowerCase();
+    if (!want) return null;
+    var ids = allIds.concat(phraseIds, termIds, basicIds);
+    for (var i = 0; i < ids.length; i += 1) {
+      if (String(itemOf(ids[i]).text).toLowerCase() === want) return ids[i];
+    }
+    return null;
+  }
+
+  function sayExample(l, btn) {
+    var id = exampleIdFor(l.example);
+    if (id) sayItem(itemOf(id), btn);
+    else if (l.example) speak(l.example, btn);
+  }
+
+  function startAlphabet() {
+    var queue = alphabetChunk();
+    if (!queue.length) { toast("This deck has no alphabet yet."); return; }
+    alphabet = { queue: queue, i: 0, startedAt: Date.now(), done: false };
+    show("alphabet");
+    renderAlphabetLetter();
+  }
+
+  function renderAlphabetLetter() {
+    if (!alphabet) return;
+    if (alphabet.i >= alphabet.queue.length) { finishAlphabet(); return; }
+
+    var l = alphabet.queue[alphabet.i];
+    var last = alphabet.i === alphabet.queue.length - 1;
+    $("alphabet-count").textContent = (alphabet.i + 1) + "/" + alphabet.queue.length;
+    $("alphabet-bar").style.width = Math.round((alphabet.i / alphabet.queue.length) * 100) + "%";
+    $("alphabet-feedback").textContent = "";
+    $("alphabet-feedback").className = "feedback";
+    $("alphabet-stage").innerHTML =
+      '<p class="prompt">' + esc(tr("theScript", "The script")) + "</p>" +
+      '<div class="letter-big" lang="' + esc((LANG && LANG.locale) || "") + '">' + esc(l.letter) + "</div>" +
+      '<p class="letter-name">' + esc(l.name) + "</p>" +
+      (l.hint ? '<p class="letter-hint">' + esc(l.hint) + "</p>" : "") +
+      (l.example
+        ? '<button class="letter-example" id="letter-hear" type="button" aria-label="' +
+            esc(tr("hearit", "Hear it")) + '">' + ICON.speaker + "<span>" + esc(l.example) + "</span></button>"
+        : "");
+
+    var hear = $("letter-hear");
+    if (hear) hear.addEventListener("click", function () { sayExample(l, hear); });
+    /* only the bundled clip plays on arrival; a synthesized voice on every
+     * letter would talk over the learner */
+    var exampleId = exampleIdFor(l.example);
+    if (exampleId && bundled && bundled[exampleId]) sayItem(itemOf(exampleId));
+
+    $("alphabet-actions").innerHTML =
+      '<button class="btn btn-primary" id="letter-next">' +
+        esc(last ? tr("finish", "Finish") : tr("nextLetter", "Next letter")) + "</button>";
+    $("letter-next").addEventListener("click", function () {
+      var known = state.alphabet || (state.alphabet = {});
+      var reps = (known[l.letter] && known[l.letter].reps) || 0;
+      known[l.letter] = { reps: reps + 1, at: Date.now() };
+      save();
+      alphabet.i += 1;
+      renderAlphabetLetter();
+    });
+  }
+
+  function finishAlphabet() {
+    var total = alphabet.queue.length;
+    state.alphabet = state.alphabet || {};
+    $("alphabet-bar").style.width = "100%";
+    $("alphabet-count").textContent = "done";
+    $("alphabet-stage").innerHTML =
+      '<p class="prompt">' + esc(tr("theScript", "The script")) + "</p>" +
+      '<div class="word">' + alphabetKnown() + "/" + scriptLetters().length + "</div>" +
+      '<p class="sentence">' + esc(tr("letters", "letters")) + "</p>";
+
+    if (!alphabet.done) {
+      alphabet.done = true;
+      state.history = state.history || [];
+      state.history.push(total);
+      if (state.history.length > 50) state.history = state.history.slice(-50);
+      state.sessions += 1;
+      state.lastSession = Date.now();
+      bumpStreak();
+      save();
+    }
+
+    /* never a dead end: more letters, or back to today */
+    var more = alphabetKnown() < scriptLetters().length;
+    $("alphabet-actions").innerHTML =
+      '<button class="btn btn-primary" id="alphabet-again">' +
+        esc(more ? tr("nextLetter", "Next letter") : tr("start", "Start lesson")) + "</button>" +
+      '<button class="foot-link" id="alphabet-done" type="button">' + esc(tr("leave", "done for now")) + "</button>";
+    $("alphabet-again").addEventListener("click", startAlphabet);
+    $("alphabet-done").addEventListener("click", function () { alphabet = null; show("today"); });
+  }
+
   /* --------------------------------------------------------- conversation */
 
   /* The chat is per language. Everything below reads `chat`, which points at
@@ -841,6 +1042,11 @@
   var chatListening = false;
   var chatRec = null;
   var pendingImage = null;
+  var chatEpoch = 0;
+  var chatTranslating = {};
+  var chatCleared = false;
+  var clearArmed = false;
+  var clearTimer = null;
 
   function chatState() {
     if (!ACTIVE) return { messages: [], scripted: null };
@@ -889,8 +1095,11 @@
       el.textContent = line[1];
       el.setAttribute("data-state", line[0]);
     }
+    var face = $("chat-face");
+    if (face) face.setAttribute("data-state", line[0]);
     var settingsEl = $("chat-settings-status");
     if (settingsEl) settingsEl.textContent = line[1];
+    if (currentView === "conv" && chat) renderChat();
   }
 
   function renderChatSettings() {
@@ -975,12 +1184,19 @@
     var log = $("chat");
     if (!log) return;
 
+    var atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 24;
+    var keepTop = log.scrollTop;
     if (!chat.messages.length) {
       log.innerHTML = '<p class="chat-empty">' + esc(emptyChatLine()) + "</p>";
     } else {
       log.innerHTML = chat.messages.map(function (m, i) {
         return CE && CE.messageHTML
-          ? CE.messageHTML(m, esc, { canSpeak: hasTTS, index: i })
+          ? CE.messageHTML(m, esc, {
+            canSpeak: hasTTS,
+            canTranslate: chatMeta.status === "ready" && !!chatMeta.model,
+            index: i,
+            translating: !!chatTranslating[i]
+          })
           : '<p class="bubble-text">' + esc(m.text) + "</p>";
       }).join("");
     }
@@ -991,11 +1207,126 @@
         if (m && m.text) speak(m.text, btn);
       });
     });
-    log.scrollTop = log.scrollHeight;
+    Array.prototype.forEach.call(log.querySelectorAll("[data-translate]"), function (btn) {
+      btn.addEventListener("click", function () {
+        translateMessage(Number(btn.getAttribute("data-translate")));
+      });
+    });
+    updateChatClear();
+    log.scrollTop = atBottom ? log.scrollHeight : keepTop;
+  }
+
+  function updateChatClear() {
+    var btn = $("chat-clear");
+    if (!btn) return;
+    var has = !!(chat && chat.messages.length);
+    btn.hidden = !has;
+    if (!has) resetChatClear();
+  }
+
+  function resetChatClear() {
+    clearArmed = false;
+    if (clearTimer) {
+      clearTimeout(clearTimer);
+      clearTimer = null;
+    }
+    var btn = $("chat-clear");
+    if (btn) {
+      btn.textContent = "clear";
+      btn.classList.remove("is-armed");
+      btn.setAttribute("aria-label", "clear this conversation");
+    }
+  }
+
+  function clearChat() {
+    if (!chat) return;
+    chat.messages = [];
+    chat.scripted = null;
+    chatCleared = true;
+    chatEpoch += 1;
+    chatTranslating = {};
+    pendingImage = null;
+    renderAttachment();
+    setChatBusy(false);
+    save();
+    renderChat();
+    setChatFeedback("conversation cleared.", "");
+    var cleared = "conversation cleared.";
+    setTimeout(function () {
+      var el = $("conv-feedback");
+      if (el && el.textContent === cleared) setChatFeedback("", "");
+    }, 2400);
+  }
+
+  function chatClearClick() {
+    if (!chat || !chat.messages.length) return;
+    if (!clearArmed) {
+      clearArmed = true;
+      var btn = $("chat-clear");
+      if (btn) {
+        btn.textContent = "tap again";
+        btn.classList.add("is-armed");
+        btn.setAttribute("aria-label", "tap again to clear this conversation");
+      }
+      clearTimer = setTimeout(resetChatClear, 4000);
+      return;
+    }
+    resetChatClear();
+    clearChat();
+  }
+
+  function translateMessage(index) {
+    if (!chat || !CE || !ACTIVE || chatMeta.status !== "ready" || !chatMeta.model) return;
+    var msg = chat.messages[index];
+    if (!msg || msg.role !== "assistant" || !msg.text) return;
+
+    if (msg.translation) {
+      msg.showTranslation = !msg.showTranslation;
+      save();
+      renderChat();
+      return;
+    }
+    if (chatTranslating[index]) return;
+
+    chatTranslating[index] = true;
+    msg.translationError = false;
+    renderChat();
+
+    var epoch = chatEpoch;
+    var code = ACTIVE.code;
+    var target = msg;
+    CE.sendChat({
+      baseUrl: chatEndpoint(),
+      engine: chatMeta.engine,
+      model: chatMeta.model,
+      system: CE.buildTranslationPrompt(ACTIVE),
+      history: [{ role: "user", text: msg.text }],
+      vision: false,
+      timeoutMs: 30000
+    }).then(function (res) {
+      delete chatTranslating[index];
+      if (!chat || chatEpoch !== epoch || !ACTIVE || ACTIVE.code !== code) return;
+      if (chat.messages.indexOf(target) === -1) return;
+      if (res && res.ok && res.text) {
+        target.translation = String(res.text).trim();
+        target.showTranslation = true;
+        target.translationError = false;
+        save();
+      } else {
+        target.translationError = true;
+      }
+      renderChat();
+    }).catch(function () {
+      delete chatTranslating[index];
+      if (!chat || chatEpoch !== epoch || !ACTIVE || ACTIVE.code !== code) return;
+      if (chat.messages.indexOf(target) === -1) return;
+      target.translationError = true;
+      renderChat();
+    });
   }
 
   function seedScriptedIfEmpty() {
-    if (!chat || chat.messages.length || !CE || !ACTIVE) return;
+    if (!chat || chat.messages.length || !CE || !ACTIVE || chatCleared) return;
     var opening = CE.scriptedOpening(ACTIVE.code);
     if (!opening) return;
     chat.scripted = chat.scripted || CE.scriptedStart(ACTIVE.code);
@@ -1111,6 +1442,8 @@
     var image = pendingImage ? pendingImage.dataUrl : null;
     if (!text && !image) return;
 
+    resetChatClear();
+    chatCleared = false;
     addUser(text, image);
     rememberChatLine(text);
     pendingImage = null;
@@ -1124,6 +1457,7 @@
 
     var target = chat;
     var code = ACTIVE.code;
+    var epoch = chatEpoch;
     setChatBusy(true);
     CE.sendChat({
       baseUrl: chatEndpoint(),
@@ -1134,7 +1468,7 @@
       vision: chatMeta.vision,
       timeoutMs: 45000
     }).then(function (res) {
-      if (chat !== target || !ACTIVE || ACTIVE.code !== code) return;
+      if (chat !== target || !ACTIVE || ACTIVE.code !== code || epoch !== chatEpoch) return;
       setChatBusy(false);
       if (res && res.ok && res.text) {
         addAssistant(res.text, false, "");
@@ -1144,7 +1478,7 @@
       setChatStatus();
       fallbackReply(text, "the model did not answer — using scripted practice");
     }).catch(function () {
-      if (chat !== target || !ACTIVE || ACTIVE.code !== code) return;
+      if (chat !== target || !ACTIVE || ACTIVE.code !== code || epoch !== chatEpoch) return;
       setChatBusy(false);
       chatMeta = { status: "failed", engine: null, model: null, vision: false };
       setChatStatus();
@@ -1155,6 +1489,10 @@
   function startConversation() {
     if (!CE) { toast("The chat engine did not load."); return; }
     chat = chatState();
+    chatCleared = false;
+    chatTranslating = {};
+    chatEpoch += 1;
+    resetChatClear();
     show("conv");
     renderChatHeader();
     renderChat();
@@ -1349,9 +1687,11 @@
 
   function finishPlacement() {
     var total = placement.queue.length;
-    var ratio = placement.correct / total;
-    var floor = Math.min(TRACK.units.length - 1, Math.floor(ratio * TRACK.units.length));
-    state.placement = { floor: floor, score: placement.correct, total: total, at: Date.now() };
+    var correct = placement.correct;
+    var units = trackUnits();
+    var ratio = correct / total;
+    var floor = Math.min(units.length - 1, Math.floor(ratio * units.length));
+    state.placement = { floor: floor, score: correct, total: total, at: Date.now() };
     if (state.profile) {
       state.profile.level = floor >= 3 ? "B1" : floor >= 1 ? "A2" : "A1";
     }
@@ -1360,36 +1700,114 @@
 
     show("today");
     toast(floor > 0
-      ? "Starting at " + TRACK.units[floor].title + " — " + placement.correct + "/" + total + " right."
+      ? "Starting at " + TRACK.title(units[floor].key, trackOpts()) + " — " + correct + "/" + total + " right."
       : "Starting from the beginning.");
     renderToday();
   }
 
   /* ---------------------------------------------------------------- track */
 
-  /* Where the learner is on the path: real progress, raised by the placement
-   * floor. The floor never caps progress; it only opens a door. */
+  function solidCount() {
+    return allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
+  }
+
+  /* ------------------------------------------------------------- the script */
+
+  function scriptLetters() {
+    var a = ACTIVE && ACTIVE.alphabet;
+    return a && Array.isArray(a.letters) ? a.letters : [];
+  }
+
+  function isLatinLetter(ch) {
+    var text = String(ch == null ? "" : ch);
+    if (!text) return true;
+    try { return /^[\p{Script=Latin}\p{M}]+$/u.test(text); }
+    catch (err) { return /^[A-Za-z\u00c0-\u024f]+$/.test(text); }
+  }
+
+  /* A pack teaches its script only when the script is not Latin. A pack may say
+   * so itself with alphabet.script (or language.script); otherwise the letters
+   * decide, so Latin decks never grow an alphabet lesson by accident. */
+  function hasScriptLesson() {
+    var letters = scriptLetters();
+    if (!letters.length) return false;
+    var declared = (ACTIVE.alphabet && ACTIVE.alphabet.script) ||
+      (ACTIVE.concepts && ACTIVE.concepts.language && ACTIVE.concepts.language.script);
+    if (declared) return String(declared).toLowerCase() !== "latin";
+    return !letters.every(function (l) { return isLatinLetter(l.letter); });
+  }
+
+  function alphabetKnown() {
+    var known = state.alphabet || {};
+    return scriptLetters().filter(function (l) { return !!known[l.letter]; }).length;
+  }
+
+  function alphabetDone() {
+    var letters = scriptLetters();
+    return !!letters.length && alphabetKnown() === letters.length;
+  }
+
+  /* Titles come from the language being learned: a pack may ship its own, the
+   * track's table fills the rest. No title names a language. */
+  function trackOpts() {
+    var titles = ACTIVE && (ACTIVE.titles || (ACTIVE.concepts && ACTIVE.concepts.titles));
+    return {
+      script: hasScriptLesson(),
+      lang: ACTIVE && ACTIVE.code,
+      titles: titles && typeof titles === "object" ? titles : null
+    };
+  }
+
+  /* The units this pack actually shows, in order. */
+  function trackUnits() {
+    return TRACK ? TRACK.unitList(hasScriptLesson()) : [];
+  }
+
+  function unitById(id) {
+    var units = trackUnits();
+    for (var i = 0; i < units.length; i += 1) if (units[i].id === id) return units[i];
+    return null;
+  }
+
+  /* Where the learner is on the path. Real progress wins; the placement floor
+   * only opens a door. A finished alphabet steps aside for the next unit. */
   function currentTrackIndex() {
-    var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
-    var rows = TRACK ? TRACK.map(solid) : [];
-    var bySolid = 0;
-    rows.forEach(function (r) { if (r.current) bySolid = r.index; });
-    return Math.max(bySolid, placementFloor());
+    var rows = trackRows();
+    for (var i = rows.length - 1; i >= 0; i -= 1) {
+      if (rows[i].current) return Math.max(i, placementFloor());
+    }
+    return placementFloor();
+  }
+
+  function trackRows() {
+    var rows = TRACK ? TRACK.map(solidCount(), trackOpts()) : [];
+    var floor = placementFloor();
+    rows.forEach(function (r) {
+      r.unlocked = r.unlocked || r.index <= floor;
+    });
+    if (alphabetDone()) {
+      var last = null;
+      rows.forEach(function (r) { if (r.mode !== "script" && r.unlocked) last = r; });
+      rows.forEach(function (r) { r.current = false; });
+      if (last) last.current = true;
+    }
+    return rows;
+  }
+
+  function defaultUnit() {
+    var rows = trackRows();
+    for (var i = rows.length - 1; i >= 0; i -= 1) if (rows[i].current) return unitById(rows[i].id) || rows[i];
+    return unitById(rows[0] && rows[0].id) || (rows[0] || null);
   }
 
   function renderTrack() {
     var box = $("track");
     if (!box || !TRACK) return;
 
-    var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
-    var rows = TRACK.map(solid);
+    var rows = trackRows();
     var currentIndex = currentTrackIndex();
-    var floor = placementFloor();
 
-    rows.forEach(function (r) {
-      r.unlocked = r.unlocked || r.index <= floor;
-      r.current = r.index === currentIndex;
-    });
+    rows.forEach(function (r) { r.current = r.current && r.index === currentIndex; });
 
     box.innerHTML = rows.map(function (u) {
       var cls = "step" + (u.unlocked ? "" : " locked") + (u.current ? " now" : "");
@@ -1402,8 +1820,7 @@
 
     Array.prototype.forEach.call(box.querySelectorAll(".step"), function (b) {
       b.addEventListener("click", function () {
-        var id = b.getAttribute("data-unit");
-        var unit = TRACK.units.filter(function (u) { return u.id === id; })[0];
+        var unit = unitById(b.getAttribute("data-unit"));
         if (unit) startSession({ unit: unit });
       });
     });
@@ -1652,8 +2069,8 @@
    * a different random draw. */
   function lessonPlan(opts) {
     var o = opts || {};
-    var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
-    var unit = o.custom ? null : (o.unit || (TRACK ? TRACK.currentUnit(solid) : null));
+    var solid = solidCount();
+    var unit = o.custom ? null : (o.unit || (TRACK ? defaultUnit() : null));
     /* the path's reading unit is opened on purpose, from the path: it must not
      * take over the one Continue button and stall the vocabulary */
     if (unit && unit.mode === "read" && !o.unit) unit = null;
@@ -1664,9 +2081,12 @@
     var fields = unit && unit.fields ? unit.fields : selectedFields();
     var now = Date.now();
 
-    /* the reading unit is a lesson too, and it has a screen of its own */
+    /* reading and the script are lessons too, each with its own screen */
     if (unit && unit.mode === "read") {
       return { unit: unit, plan: plan, size: 0, queue: [], fresh: [], due: [], read: true };
+    }
+    if (unit && unit.mode === "script") {
+      return { unit: unit, plan: plan, size: 0, queue: [], fresh: [], due: [], script: true };
     }
 
     var scopeWords = fields.length
@@ -1695,10 +2115,12 @@
     var box = $("next-stack");
     var p = lessonPlan();
     var title = p.unit ? p.unit.title : lessonTitle(p);
-    var caption = [p.fresh.length ? p.fresh.length + " new" : "",
-      p.due.length ? p.due.length + " to review" : ""].filter(Boolean).join(", ");
+    var caption = p.script
+      ? alphabetChunk().length + " " + tr("letters", "letters")
+      : [p.fresh.length ? p.fresh.length + " new" : "",
+         p.due.length ? p.due.length + " to review" : ""].filter(Boolean).join(", ");
     if (box) {
-      box.innerHTML = p.queue.slice(0, 5).map(function (id) {
+      box.innerHTML = p.script ? "" : p.queue.slice(0, 5).map(function (id) {
         return '<span class="pic">' + itemOf(id).emoji + "</span>";
       }).join("");
     }
@@ -1721,8 +2143,9 @@
     var now = Date.now();
     var p = lessonPlan(o);
 
-    /* the reading unit opens the reader; it is a lesson, not a dead end */
+    /* reading and the script open their own screens; both are lessons */
     if (p.read) { startReader(); return; }
+    if (p.script) { startAlphabet(); return; }
 
     var queue = p.queue.slice();
 
@@ -2716,9 +3139,8 @@
   });
 
   $("start-btn").addEventListener("click", function () {
-    var at = currentTrackIndex();
-    var unit = TRACK.units[Math.min(TRACK.units.length - 1, at)];
-    /* Continue is always a drill; reading is a node you choose on the path */
+    var unit = defaultUnit();
+    /* a text is chosen on the path; everything else is what Continue does */
     startSession(unit && unit.mode === "read" ? {} : { unit: unit });
   });
   $("build-start").addEventListener("click", function () { startSession({ custom: true }); });
@@ -2732,12 +3154,8 @@
     beginProfile("A1");
     show("today");
   });
-  $("setup-uilang").addEventListener("change", function () {
-    state.profile = state.profile || {};
-    state.profile.uiLang = this.value;
-    save();
-    applyStrings();
-  });
+  $("setup-uilang").addEventListener("change", function () { setUiLang(this.value); });
+  $("settings-uilang").addEventListener("change", function () { setUiLang(this.value); });
   $("setup-test").addEventListener("click", function () {
     beginProfile("?");
     startPlacement();
@@ -2755,10 +3173,12 @@
     window.location.reload();
   });
   $("conv-back").addEventListener("click", function () {
+    resetChatClear();
     pendingImage = null;
     renderAttachment();
     show("today");
   });
+  $("chat-clear").addEventListener("click", chatClearClick);
   $("chat-form").addEventListener("submit", function (ev) {
     ev.preventDefault();
     sendChatTurn();
@@ -2787,6 +3207,7 @@
   renderChatSettings();
   $("settings-back").addEventListener("click", function () { show("today"); });
   $("reader-back").addEventListener("click", function () { reader = null; show("today"); });
+  $("alphabet-back").addEventListener("click", function () { alphabet = null; show("today"); });
 
   Array.prototype.forEach.call(document.querySelectorAll(".size"), function (b) {
     b.addEventListener("click", function () {
@@ -2837,7 +3258,8 @@
   });
   updateAudioChip();
 
-  if (!state.profile) show("setup");
+  /* a chosen interface language is not onboarding: setup still asks a level */
+  if (!state.profile || !state.profile.level) show("setup");
   var initial = String(window.location.hash || "").replace("#", "");
   renderToday();
   if (initial === "practice") startSession();

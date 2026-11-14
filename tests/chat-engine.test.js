@@ -29,6 +29,17 @@ test("an unknown level does not leak into the prompt", () => {
   assert.match(CE.buildSystemPrompt({ name: "Spanish" }, "C2"), /level A2/);
 });
 
+test("the translation prompt names the active pack and asks for English only", () => {
+  const es = CE.buildTranslationPrompt({ name: "Spanish", locale: "es-ES" });
+  assert.match(es, /Spanish/);
+  assert.match(es, /English/);
+  assert.match(es, /Return only/);
+
+  const de = CE.buildTranslationPrompt({ name: "German", locale: "de-DE" });
+  assert.match(de, /German/);
+  assert.doesNotMatch(de, /Spanish/);
+});
+
 test("the ollama request carries the system turn and a user image as base64", () => {
   const req = CE.buildRequest({
     engine: "ollama",

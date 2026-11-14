@@ -1142,7 +1142,7 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .bubble {
   align-self: flex-start;
   max-width: 82%;
-  padding: 10px 14px;
+  padding: 12px 16px;
   border-radius: var(--radius) var(--radius) var(--radius-sm) var(--radius);
   background: var(--card);
   border: 2px solid var(--border);
@@ -1275,40 +1275,38 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
-.chat-face {
-  width: 44px;
-  height: 44px;
+.chat-presence {
+  width: 8px;
+  height: 8px;
   flex: none;
   border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--accent);
-  display: grid;
-  place-items: center;
+  background: var(--text-3);
 }
-.chat-face svg {
-  width: 30px;
-  height: 30px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.chat-face .eye { fill: currentColor; stroke: none; }
-.chat-face.is-speaking {
+.chat-presence[data-state="ready"] { background: var(--good); }
+.chat-presence.is-speaking {
   background: var(--accent);
-  color: var(--on-accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
-.chat-face.is-speaking .mouth {
-  transform-origin: 16px 20px;
-  animation: chat-talk 0.24s ease-out infinite;
+
+.chat-clear {
+  flex: none;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  padding: 0 0 0 8px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
 }
-@keyframes chat-talk {
-  50% { transform: scaleY(0.4); }
-}
+.chat-clear:hover { color: var(--text); }
+.chat-clear.is-armed { color: var(--accent); }
 
 .chat-who {
   flex: 1;
@@ -1400,6 +1398,48 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 }
 .bubble.mine .bubble-note { color: var(--on-accent); }
 
+.bubble-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-top: 4px;
+}
+.bubble-actions .bubble-hear { margin-top: 0; }
+.bubble-translate {
+  min-height: 44px;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+.bubble-translate:hover { color: var(--text); }
+.bubble-translate:disabled {
+  color: var(--text-3);
+  text-decoration: none;
+  cursor: default;
+}
+.bubble-translation {
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--text-2);
+}
+.bubble-translation-note {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
 .bubble-hear {
   width: 44px;
   height: 44px;
@@ -1430,6 +1470,7 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   padding-top: 16px;
   border-top: 2px solid var(--fill);
 }
+.chat-settings .panel-title { margin-bottom: 0; }
 .chat-field {
   display: grid;
   gap: 8px;
@@ -1450,6 +1491,10 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
+}
+.chat-settings-row .builder-note {
+  flex: 1;
+  min-width: 0;
 }
 
 /* Microphone live state: the same 44 px button, lit while recognition runs. */
