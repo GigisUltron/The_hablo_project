@@ -13,7 +13,8 @@ audio that ships with the app instead of depending on your operating system.
 
 ## Run it
 
-Nothing to install. No build step, no dependencies, no network calls after load.
+Nothing to install. No build step, no dependencies, and no network calls unless you open the
+chat with a local model running.
 
 ```sh
 python3 serve.py
@@ -31,7 +32,38 @@ make serve                       # same thing
 Open the printed `http://localhost:…` URL rather than the file directly: browsers gate
 microphone access behind a secure context and `file://` doesn't qualify.
 
-Deep links: `#practice` (start a lesson), `#phrases` (phrase lesson), `#quiz`, `#map`, `#stats`.
+Deep links: `#practice` (start a lesson), `#phrases` (phrase lesson), `#quiz`, `#chat`, `#map`, `#stats`.
+
+
+## Chat with a local model
+
+The conversation view can talk to a model on your own machine. Nothing is bundled and nothing
+is required: the app is fully usable without a model, and the conversation view falls back to a
+short scripted partner and says so.
+
+The one-command setup with Ollama:
+
+```sh
+ollama run llama3.2
+```
+
+That starts the server and downloads the model the first time. Leave it running, then open
+**Settings → Chat with a local model**. The endpoint defaults to `http://localhost:11434`;
+press **Check model**. To use llama.cpp server, LM Studio or another OpenAI-compatible server,
+enter its base URL there instead, for example `http://localhost:1234/v1`.
+
+- **No model found:** the view says `no local model found — run ollama serve`, and every
+  fallback reply is labelled `scripted`. It does not pretend to be a model.
+- **Speak and listen:** replies are read with the browser's speech synthesis in the active
+  pack's locale. The microphone button appears only where the browser has speech recognition.
+- **Images:** an attached image is stored with the turn. It is sent only when the selected model
+  declares vision support; otherwise the turn is marked text-only and the image stays in the
+  conversation.
+- **Privacy:** requests go only to the endpoint you set. With the default, that is your own
+  machine. There is no account, no key and no tracking.
+
+Serve the app over `http://` as described above rather than opening the file directly, so the
+browser can reach the local endpoint and the microphone.
 
 
 ## What is translated
@@ -64,7 +96,7 @@ words you know, and how many are solid.
 
 ```sh
 make check          # syntax gate + full suite
-node --test tests/  # 85 tests, stdlib only
+node --test tests/  # full suite, stdlib only
 ```
 
 ## Layout
@@ -79,7 +111,9 @@ src/data.js           42 concepts + semantic relations
 src/phrases.js        phrases, with a scene emoji instead of a translation
 src/srs.js            scheduling + matching (pure, testable)
 src/memory.js         persistent learner memory: sentences, cloze, weak items (pure)
-src/app.js            views, lesson flow, quiz, speech, map, stats
+src/chat-engine.js    model adapter, prompt and request shape (no DOM)
+src/chat.js           the scripted conversation partner used when no model answers
+src/app.js            views, lesson flow, quiz, speech, map, stats, chat UI
 tools/make_audio.py   regenerates the audio from the dataset (build time only)
 tests/                node:test suites
 docs/PARALLEL.md      how to run this with three agents at once
