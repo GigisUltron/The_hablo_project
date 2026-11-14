@@ -14,7 +14,7 @@ audio that ships with the app instead of depending on your operating system.
 ## Run it
 
 Nothing to install. No build step, no dependencies, and no network calls unless you open the
-chat with a local model running.
+chat.
 
 ```sh
 python3 serve.py
