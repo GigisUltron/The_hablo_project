@@ -2053,8 +2053,53 @@
     return LV[id];
   }
 
+  /* An old save may carry no level, or a placement abandoned at "?"; both are a
+   * beginner. Treating an unknown band as permission is how a B1 connector
+   * reached someone who had not met "hola" yet. */
+  function learnerLevel() {
+    var band = state.profile && state.profile.level;
+    return ADAPT.CEFR.indexOf(band) === -1 ? "A1" : band;
+  }
+
   function atLevel(id) {
-    return ADAPT.within(itemLevel(id), (state.profile && state.profile.level) || "A2");
+    return ADAPT.within(itemLevel(id), learnerLevel());
+  }
+
+  /* Connectors are a later stage of the track, not filler for a mixed drill. */
+  function connectorsUnlocked() {
+    return solidCount() >= 20;
+  }
+
+  /* Every deck opens on the same four ideas: hello, how are you, favourite
+   * colour, where are you from. A pack may declare its own ids (`openers` on its
+   * phrases or concepts); this table covers the decks we ship, and a deck with
+   * none still opens on its first phrases. In Spanish the order is fixed. */
+  var OPENERS_BY_DECK = {
+    es: ["ph-hola", "ph-como-estas", "ph-color", "ph-de-donde"],
+    fr: ["ph-salut", "ph-ca-va", "ph-couleur", "ph-d-ou-viens"],
+    it: ["ph-it-hola", "ph-it-como-estas", "ph-it-color", "ph-it-de-donde"],
+    en: ["ph-en-greetings-1", "ph-en-small-talk-1"],
+    de: ["ph-de-hello", "ph-de-how-are-you"],
+    nl: ["ph-nl-hello", "ph-nl-how-are-you"],
+    pt: ["ph-pt-hello", "ph-pt-how-are-you"],
+    ru: ["ph-ru-hello", "ph-ru-how-are-you"],
+    tr: ["ph-tr-hello", "ph-tr-how-are-you"],
+    ar: ["ph-ar-hello", "ph-ar-how-are-you"],
+    hi: ["ph-hi-hello", "ph-hi-how-are-you"],
+    ja: ["ph-ja-hello", "ph-ja-how-are-you"],
+    zh: ["ph-zh-hello", "ph-zh-how-are-you"]
+  };
+
+  function openersFor() {
+    var declared = (P && P.openers) || (ACTIVE && ACTIVE.concepts && ACTIVE.concepts.openers);
+    if (Array.isArray(declared) && declared.length) {
+      var fromPack = declared.filter(function (id) { return !!phraseById[id]; });
+      if (fromPack.length) return fromPack;
+    }
+    var known = (OPENERS_BY_DECK[ACTIVE && ACTIVE.code] || []).filter(function (id) {
+      return !!phraseById[id];
+    });
+    return known.length ? known : phraseIds.slice(0, 4);
   }
 
   /* The order a layer is met in: what is due comes back first, soonest due
@@ -2114,14 +2159,21 @@
       ? allIds.filter(function (id) { return inFields(id, fields); })
       : allIds.slice();
 
+    /* the four anchors open the session even when a strict band would hide one,
+     * but never above A2: a beginner meets no B1 greeting */
+    var openers = openersFor().filter(function (id) { return ADAPT.within(itemLevel(id), "A2"); });
+    var phrases = phraseIds.filter(atLevel);
+    openers.forEach(function (id) {
+      if (phraseById[id] && phrases.indexOf(id) === -1) phrases.push(id);
+    });
     var ordered = {
-      phrases: seedFirst(meetOrder(phraseIds.filter(atLevel), now)),
+      phrases: seedFirst(meetOrder(phrases, now)),
       grammar: seedFirst(meetOrder(basicIds.filter(atLevel), now)),
       words: seedFirst(meetOrder(scopeWords.filter(atLevel), now)),
-      terms: seedFirst(meetOrder(termIds.filter(atLevel), now))
+      terms: connectorsUnlocked() ? seedFirst(meetOrder(termIds.filter(atLevel), now)) : []
     };
-    var openers = ADAPT.OPENERS.filter(function (id) { return ordered.phrases.indexOf(id) !== -1; });
-    var queue = ADAPT.sessionMix(ordered, size, openers);
+    var available = openers.filter(function (id) { return ordered.phrases.indexOf(id) !== -1; });
+    var queue = ADAPT.sessionMix(ordered, size, available);
     var fresh = queue.filter(function (id) { return !state.cards[id] || state.cards[id].last === null; });
     var due = queue.filter(function (id) {
       var c = state.cards[id];
@@ -2175,7 +2227,10 @@
     var lead = 0;
     while (lead < queue.length && itemOf(queue[lead]).kind === "phrase") lead += 1;
     var weak = MEM.weakItems(state, 6).filter(function (id) {
-      return queue.indexOf(id) === -1 && state.cards[id];
+      if (queue.indexOf(id) !== -1 || !state.cards[id]) return false;
+      if (!atLevel(id)) return false;
+      if (itemOf(id).kind === "term" && !connectorsUnlocked()) return false;
+      return true;
     }).slice(0, 2);
     if (weak.length) queue = queue.slice(0, lead).concat(weak, queue.slice(lead));
 
@@ -2289,10 +2344,10 @@
   /* One queue for everything you keep getting wrong, across all three decks.
    * Memory already ranks it; this just refuses to pretend a review is a deck. */
   function reviewMistakes() {
-    var ids = MEM.weakItems(state, 12);
+    var ids = MEM.weakItems(state, 12).filter(reviewable);
 
     if (!ids.length) {
-      ids = S.topConfusions(state, 12).map(function (r) { return r.target; });
+      ids = S.topConfusions(state, 12).map(function (r) { return r.target; }).filter(reviewable);
     }
     if (!ids.length) {
       toast("Nothing to review yet — do a lesson first.");
@@ -2303,6 +2358,13 @@
     session = newSession(mode, [], S.shuffle(ids, Math.random).slice(0, 10));
     show("session");
     renderQuiz();
+  }
+
+  /* Anything that could reach a learner by any route answers the same two
+   * questions: is it in their band, and is their stage ready for a connector? */
+  function reviewable(id) {
+    if (!atLevel(id)) return false;
+    return itemOf(id).kind !== "term" || connectorsUnlocked();
   }
 
   function newSession(mode, study, quiz) {

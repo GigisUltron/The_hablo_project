@@ -75,7 +75,8 @@ test("the bands run A1 to C1, easiest first", () => {
 test("a session opens on phrases, in teaching order", () => {
   const pools = sessionPools();
   const ids = A.sessionMix(pools, 8);
-  assert.deepEqual(ids.slice(0, 3), ["ph-hola", "ph-como-estas", "ph-de-donde"]);
+  assert.deepEqual(ids.slice(0, 3), A.OPENERS.slice(0, 3));
+  assert.deepEqual(A.OPENERS, ["ph-hola", "ph-como-estas", "ph-color", "ph-de-donde"]);
 });
 
 test("at least half of a session is phrases, at every length", () => {
@@ -101,7 +102,7 @@ test("the four conversation anchors fit in a short session too", () => {
   const pools = sessionPools();
   const ids = A.sessionMix(pools, 5);
   const firstFour = ids.filter((id) => id.startsWith("ph-")).slice(0, 4);
-  assert.deepEqual(firstFour, ["ph-hola", "ph-como-estas", "ph-de-donde", "ph-color"]);
+  assert.deepEqual(firstFour, ["ph-hola", "ph-como-estas", "ph-color", "ph-de-donde"]);
 });
 
 test("a mix never invents ids and never runs past the pool", () => {

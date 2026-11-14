@@ -281,8 +281,9 @@ test("settings offer no deck mode chooser", () => {
 
 test("there is one kind of lesson, mixed and phrase first", () => {
   assert.match(app, /ADAPT\.sessionMix\(/, "the session is not composed from its layers");
-  assert.match(app, /ADAPT\.OPENERS/, "the session has no teaching order for its opening phrases");
+  assert.match(app, /function openersFor\(/, "the session has no per-deck opening phrases");
   assert.match(app, /newSession\("mixed"/, "a lesson is not the mixed kind");
+  assert.match(app, /connectorsUnlocked\(/, "connectors are not held back by stage");
 });
 
 test("the reader turns a wrong answer into a why and a way on", () => {
@@ -372,4 +373,90 @@ test("gloss text is not double-escaped into the attribute", () => {
   const block = app.slice(app.indexOf("function glossHTML"), app.indexOf("function explainHTML"));
   assert.equal(/data-gloss="'\s*\+\s*esc\(/.test(block), false,
     "esc() turns apostrophes into &#39;, which renders literally when read back");
+});
+
+test("a beginner's first session opens on phrases, with nothing above A2", () => {
+  // Boots the real scripts in a small DOM shim and reads the queue the app
+  // actually builds. A shim is enough here: the bug was in the planner, not the
+  // rendering, and the planner is reached by clicking Start.
+  const vm = require("node:vm");
+  const scripts = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((m) => m[1]);
+
+  function node(id) {
+    return {
+      id, style: {}, value: "", disabled: false, hidden: false, textContent: "", _html: "", _l: {},
+      classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
+      addEventListener(t, f) { this._l[t] = f; }, removeEventListener() {},
+      setAttribute() {}, getAttribute() { return null; }, removeAttribute() {},
+      appendChild(c) { return c; }, insertAdjacentHTML() {},
+      querySelectorAll() { return []; }, querySelector() { return null; }, closest() { return null; },
+      focus() {}, click() {},
+      set innerHTML(v) { this._html = String(v); }, get innerHTML() { return this._html; }
+    };
+  }
+
+  function firstQueue(deck, level) {
+    const registry = new Map();
+    const document = {
+      getElementById(id) { if (!registry.has(id)) registry.set(id, node(id)); return registry.get(id); },
+      querySelectorAll() { return []; }, querySelector() { return null; },
+      createElement() { return node(); }, createElementNS() { return node(); },
+      addEventListener() {}, body: node("body")
+    };
+    const save = {
+      version: 1, profile: { level, lang: deck, uiLang: "en", byLang: {} },
+      settings: { size: 8, translations: "on" },
+      cards: {}, confusions: {}, reviews: { good: 0, again: 0 }, sessions: 0,
+      memory: { sentences: [] }
+    };
+    const localStorage = {
+      getItem(k) { return k === "sema.v1" ? JSON.stringify(save) : null; },
+      setItem() {}, removeItem() {}
+    };
+    const win = {
+      document, localStorage, location: { hash: "" }, history: { replaceState() {} },
+      navigator: {}, console, setTimeout: () => 0, clearTimeout: () => {},
+      setInterval: () => 0, clearInterval: () => {},
+      confirm: () => true, scrollTo: () => {}
+    };
+    win.window = win; win.self = win; win.globalThis = win;
+    const ctx = vm.createContext(win);
+    for (const rel of scripts) {
+      vm.runInContext(fs.readFileSync(path.join(root, rel), "utf8"), ctx, { filename: rel });
+    }
+    const A = win.SemaAdaptive;
+    let captured = null;
+    const orig = A.sessionMix;
+    A.sessionMix = function (ordered, size, openers) {
+      const out = orig(ordered, size, openers);
+      captured = { out, openers };
+      return out;
+    };
+    registry.get("start-btn")._l.click();
+    return { queue: captured && captured.out, A };
+  }
+
+  for (const deck of ["es", "fr", "it"]) {
+    const { queue, A } = firstQueue(deck, "A1");
+    const q = Array.from(queue || []);   // the queue is built in another realm
+    const P = require("../src/lang/" + deck + "/phrases.js").phrases.map((p) => p.id);
+    const T = require("../src/lang/" + deck + "/terms.js").terms.map((t) => t.id);
+    const L = require("../src/lang/" + deck + "/levels.js");
+
+    assert.ok(q.length >= 4, deck + ": no queue");
+    assert.ok(P.includes(q[0]), deck + " opens on " + q[0] + ", not a phrase");
+    assert.equal(q.filter((id) => T.includes(id)).length, 0, deck + " puts a connector in a first session");
+    assert.deepEqual(q.filter((id) => !A.within(L[id], "A2")), [], deck + " queues above A2");
+    const opening = q.slice(0, 3);
+    assert.deepEqual(opening, opening.filter((id) => P.includes(id)),
+      deck + " opens with something that is not a phrase");
+    const grammar = require("../src/lang/" + deck + "/basics.js").items.map((b) => b.id);
+    assert.ok(q.filter((id) => grammar.includes(id)).length * 2 <= q.length,
+      deck + " is more grammar than language");
+  }
+
+  const es = firstQueue("es", "A1");
+  assert.deepEqual(Array.from(es.queue || []).slice(0, 4),
+    ["ph-hola", "ph-como-estas", "ph-color", "ph-de-donde"],
+    "Spanish must open hola, how are you, colour, where from");
 });

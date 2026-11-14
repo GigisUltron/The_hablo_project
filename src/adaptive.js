@@ -57,9 +57,14 @@
    * `ordered` holds each layer's ids in the order they should be met - the app
    * passes what is due first, then what is new. Pure: no schedule state is read
    * here, so the composition can be tested on its own. */
-  var OPENERS = ["ph-hola", "ph-como-estas", "ph-de-donde", "ph-color"];
-  var LAYERS = ["words", "grammar", "terms", "phrases"];
-  var LEAD = 3;   // the first cards are phrases, not a shuffle
+  /* The four phrases a session opens on, in teaching order: hello, how are you,
+   * favourite colour, where are you from. Other decks resolve their own ids from
+   * the same meanings (see the app's openersFor). */
+  var OPENERS = ["ph-hola", "ph-como-estas", "ph-color", "ph-de-donde"];
+  /* after the opening run: a word, then a phrase, then grammar, and a connector
+   * only when the app has decided the learner is ready for one */
+  var LAYERS = ["words", "phrases", "grammar", "terms"];
+  var LEAD = 4;   // the opening run is phrases, not a shuffle
 
   function sessionMix(ordered, size, openers) {
     var o = ordered || {};
@@ -69,6 +74,10 @@
     var n = Math.max(0, Math.round(Number(size) || 0));
     var list = (openers || OPENERS).slice();
     var out = [];
+
+    /* Every session opens on phrases. A deck that has not named its openers yet
+     * still may not open on a word: take the first phrases it has. */
+    if (!list.length) list = q.phrases.slice(0, LEAD);
 
     /* the opening run: the first phrases, in teaching order */
     list.slice(0, LEAD).forEach(function (id) {
