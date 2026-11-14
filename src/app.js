@@ -293,7 +293,7 @@
 
   /* ---------------------------------------------------------------- views */
 
-  var VIEWS = ["today", "session", "reader", "map", "stats"];
+  var VIEWS = ["today", "session", "reader", "settings", "map", "stats"];
   var currentView = "today";
   var mapBuilt = false;
 
@@ -309,7 +309,7 @@
       if (on) t.setAttribute("aria-current", "page");
       else t.removeAttribute("aria-current");
     });
-    if (view === "today") renderToday();
+    if (view === "today" || view === "settings") renderToday();
     if (view === "stats") renderStats();
     if (view === "map" && !mapBuilt) { buildMap(); mapBuilt = true; }
     if (view === "map") refreshMapState();
@@ -1551,6 +1551,8 @@
   $("review-missed").addEventListener("click", reviewMistakes);
   $("place-btn").addEventListener("click", startPlacement);
   $("read-btn").addEventListener("click", startReader);
+  $("settings-btn").addEventListener("click", function () { show("settings"); });
+  $("settings-back").addEventListener("click", function () { show("today"); });
   $("reader-back").addEventListener("click", function () { reader = null; show("today"); });
   $("gloss-toggle").addEventListener("click", function () {
     state.settings.translations = state.settings.translations === "off" ? "on" : "off";

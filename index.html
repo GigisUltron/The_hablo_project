@@ -25,6 +25,7 @@
       <button class="tab is-active" data-view="today" aria-current="page">Today</button>
       <button class="tab" data-view="map">Map</button>
       <button class="tab" data-view="stats">Progress</button>
+      <button class="icon-btn" id="settings-btn" type="button" aria-label="Settings">⚙</button>
     </nav>
   </header>
 
@@ -50,33 +51,6 @@
         <div class="track" id="track" aria-label="Your track"></div>
         <p class="track-note" id="track-note"></p>
 
-        <details class="tune">
-          <summary>Tune the lesson</summary>
-
-          <div class="builder-head">
-            <div class="mode-pick" role="group" aria-label="What to study">
-              <button class="mode is-on" data-mode="words" type="button">Words</button>
-              <button class="mode" data-mode="phrases" type="button">Phrases</button>
-              <button class="mode" data-mode="terms" type="button">Terms</button>
-            </div>
-            <div class="size-pick" role="group" aria-label="Session length">
-              <button class="size" data-size="5" type="button">5</button>
-              <button class="size is-on" data-size="8" type="button">8</button>
-              <button class="size" data-size="12" type="button">12</button>
-            </div>
-          </div>
-
-          <div class="fields" id="fields"></div>
-
-          <div class="builder-actions">
-            <button class="btn btn-ghost btn-sm" id="build-start">Start with these</button>
-            <button class="btn btn-ghost btn-sm" id="review-missed">Review my mistakes</button>
-            <button class="btn btn-ghost btn-sm" id="place-btn">Place me</button>
-            <button class="btn btn-ghost btn-sm" id="read-btn">Read a text</button>
-            <button class="btn btn-ghost btn-sm" id="gloss-toggle">translations on request</button>
-            <span class="builder-note" id="builder-note"></span>
-          </div>
-        </details>
       </div>
     </section>
 
@@ -114,6 +88,50 @@
         <p class="feedback" id="reader-feedback"></p>
         <div class="card-actions" id="reader-actions"></div>
       </article>
+    </section>
+
+    <!-- ========================================================== SETTINGS -->
+    <section class="view" id="view-settings" aria-label="Settings">
+      <div class="map-head">
+        <div>
+          <h2>Settings</h2>
+          <p>What you study, how it sounds, and where else to look.</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="settings-back">Done</button>
+      </div>
+      <div class="panel panel-pad">
+
+          <summary>Tune the lesson</summary>
+
+          <div class="builder-head">
+            <div class="mode-pick" role="group" aria-label="What to study">
+              <button class="mode is-on" data-mode="words" type="button">Words</button>
+              <button class="mode" data-mode="phrases" type="button">Phrases</button>
+              <button class="mode" data-mode="terms" type="button">Terms</button>
+            </div>
+            <div class="size-pick" role="group" aria-label="Session length">
+              <button class="size" data-size="5" type="button">5</button>
+              <button class="size is-on" data-size="8" type="button">8</button>
+              <button class="size" data-size="12" type="button">12</button>
+            </div>
+          </div>
+
+          <div class="fields" id="fields"></div>
+
+          <div class="builder-actions">
+            <button class="btn btn-ghost btn-sm" id="build-start">Start with these</button>
+            <button class="btn btn-ghost btn-sm" id="review-missed">Review my mistakes</button>
+            <button class="btn btn-ghost btn-sm" id="place-btn">Place me</button>
+            <button class="btn btn-ghost btn-sm" id="read-btn">Read a text</button>
+            <button class="btn btn-ghost btn-sm" id="gloss-toggle">translations on request</button>
+            <span class="builder-note" id="builder-note"></span>
+          </div>
+        <div class="settings-row">
+          <button class="audio-chip" id="audio-chip" type="button">🔊 checking audio…</button>
+          <a class="foot-link" href="#map">map</a>
+          <a class="foot-link" href="#stats">progress</a>
+        </div>
+      </div>
     </section>
 
     <!-- ============================================================== MAP -->
@@ -186,12 +204,8 @@
   </main>
 
   <footer class="foot">
-    <span class="foot-left">
-      <button class="audio-chip" id="audio-chip" type="button">🔊 checking audio…</button>
-      <a class="foot-link" href="#map">map</a>
-      <a class="foot-link" href="#stats">progress</a>
-    </span>
-    <span><code>no accounts · no tracking · nothing leaves this tab</code></span>
+    <span>sema · no accounts · nothing leaves this tab</span>
+    <span><code>no dependencies</code></span>
   </footer>
 </div>
 

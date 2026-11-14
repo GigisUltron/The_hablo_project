@@ -1320,3 +1320,16 @@ h1 em {
 .step.now { box-shadow: 5px 5px 0 var(--ink); }
 .step.now .step-n { background: var(--ink); color: var(--paper); }
 .step.locked .step-n { border-style: dashed; }
+
+/* settings screen: the controls used to live inline on home */
+.settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: var(--rule-thin);
+}
+#view-settings .builder-note { display: block; margin-top: 10px; }
+#view-settings .builder-actions { margin-bottom: 4px; }
