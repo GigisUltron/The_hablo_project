@@ -5,10 +5,10 @@
  */
 var SEMA_TRACK = {
   units: [
-    { id: "u1", title: "First words", mode: "words", fields: ["home", "food"], need: 0 },
-    { id: "u2", title: "Around you", mode: "words", fields: ["nature", "animals", "body"], need: 6 },
-    { id: "u3", title: "Out in the city", mode: "words", fields: ["city", "time"], need: 14 },
-    { id: "u4", title: "Say something", mode: "phrases", fields: null, need: 22 },
+    { id: "u1", title: "Say hello", mode: "phrases", fields: null, need: 0 },
+    { id: "u2", title: "First words", mode: "words", fields: ["home", "food"], need: 6 },
+    { id: "u3", title: "Around you", mode: "words", fields: ["nature", "animals", "body"], need: 14 },
+    { id: "u4", title: "Out in the city", mode: "words", fields: ["city", "time"], need: 22 },
     { id: "u5", title: "Connect ideas", mode: "terms", fields: null, need: 30 }
   ]
 };
