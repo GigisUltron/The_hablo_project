@@ -103,3 +103,25 @@ opened the page and looked at it — a no-build front end breaks in ways tests c
   (`content:`, `audio:`, `ui:`), and a `Co-authored-by: <lane> agent <lane@local>` trailer so
   the work is attributable. Pushing is the owner's call.
 - **`make check` is the gate**, not a suggestion.
+
+---
+
+## Brief: reading view (interface lane, unblocked by content)
+
+`src/texts.js` now exists: three graded texts (levels 1–3), each with a title, a 60–110 word
+body in Spanish, and three multiple-choice comprehension questions with `answer` as an index
+into `options`. It is content only — nothing renders it yet.
+
+What the interface needs:
+
+- a `reader` mode alongside words / phrases / terms, reaching texts by id
+- body rendered at comfortable reading size (≥ 17 px, 1.6 line height, max 60 characters per
+  line), with the title and level above it
+- questions below the text, one at a time, same feedback contract as the quiz: answer state
+  within 100 ms, correct answer visible, no colour-only signalling
+- a completion state that is short and earned: the score, and the text marked read
+- no word-level popovers yet — glossing a text properly needs per-token alignment, which is
+  the next content job, not this one
+
+Tests to add: every text renders, every question is reachable, and the completion state shows
+the right score.
