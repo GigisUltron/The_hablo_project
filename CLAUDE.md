@@ -230,6 +230,10 @@ asking permission.
 - **Do not commit generated binaries** (`assets/audio/**`, `docs/preview.png`) unless you ran
   the generator that produced them in this session.
 - **Report the hash** you pushed. "Pushed" without a hash is a claim, not a fact.
+- **Never end a session with unpushed work.** If you are out of room, commit what is green and
+  push it, even if the feature is unfinished — say so in the subject (`wip:`). Unpushed work is
+  work that does not exist for anyone else, and this repo has lost nothing to a bad commit but
+  would lose everything to a forgotten one.
 
 ## Verification — do this before claiming done
 
