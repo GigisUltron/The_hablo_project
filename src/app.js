@@ -1319,6 +1319,10 @@
 
   function renderQuiz() {
     if (session.qi >= session.quiz.length) { finishSession(); return; }
+    /* end on a high: a learner who is getting everything right should stop
+     * while it still feels good, not grind to the eighth card. */
+    if (session.qi >= 6 && session.unique >= 6 &&
+        session.firstCorrect / session.unique >= 0.85) { finishSession(); return; }
     setProgress();
     clearCard();
     renderSteps("quiz");
