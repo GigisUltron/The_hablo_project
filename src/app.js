@@ -853,13 +853,14 @@
 
   function chatEndpoint() {
     var v = state.settings && state.settings.chatEndpoint;
-    return String(v || (CE && CE.DEFAULT_ENDPOINT) || "http://localhost:11434").trim() ||
-      "http://localhost:11434";
+    if (CE && CE.normaliseBaseUrl) return CE.normaliseBaseUrl(v);
+    return String(v || "http://localhost:11434").trim() || "http://localhost:11434";
   }
 
   function cleanEndpoint(value) {
+    if (CE && CE.normaliseBaseUrl) return CE.normaliseBaseUrl(value);
     var v = String(value || "").trim();
-    if (!v) return (CE && CE.DEFAULT_ENDPOINT) || "http://localhost:11434";
+    if (!v) return "http://localhost:11434";
     if (!/^https?:\/\//i.test(v)) v = "http://" + v;
     return v.replace(/\/+$/, "");
   }

@@ -29,6 +29,18 @@
     return String(url == null ? "" : url).trim().replace(/\/+$/, "");
   }
 
+  /* One canonical base URL for the settings field. It accepts what a person
+   * is likely to paste: no scheme, a trailing slash, a /v1 base, or a full
+   * chat endpoint. The engine adds the path it needs afterwards. */
+  function normaliseBaseUrl(value) {
+    var v = String(value == null ? "" : value).trim();
+    if (!v) return DEFAULT_ENDPOINT;
+    if (!/^https?:\/\//i.test(v)) v = "http://" + v;
+    v = v.replace(/\/+$/, "");
+    v = v.replace(/\/chat\/completions$/i, "").replace(/\/api\/chat$/i, "");
+    return v || DEFAULT_ENDPOINT;
+  }
+
   function ollamaRoot(baseUrl) {
     return trimSlash(baseUrl || DEFAULT_ENDPOINT).replace(/\/api(\/chat)?$/i, "");
   }
@@ -416,6 +428,7 @@
     buildSystemPrompt: buildSystemPrompt,
     buildMessages: buildMessages,
     buildRequest: buildRequest,
+    normaliseBaseUrl: normaliseBaseUrl,
     endpointFor: endpointFor,
     isLocalEndpoint: isLocalEndpoint,
     replyText: replyText,

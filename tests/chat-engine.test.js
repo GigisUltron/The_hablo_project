@@ -148,6 +148,13 @@ test("discover reads ollama tags, then openai models", async () => {
   assert.deepEqual(calls, ["http://localhost:1234/v1/models"]);
   assert.equal(openai.engine, "openai");
   assert.deepEqual(openai.models, [{ name: "tiny-vl", vision: true }]);
+
+  const textOnly = await CE.discover("http://example.test:8080/v1", async (url) => {
+    assert.equal(url, "http://example.test:8080/v1/models");
+    return { ok: true, json: async () => ({ data: [{ id: "tiny-text", capabilities: ["completion"] }] }) };
+  });
+  assert.equal(textOnly.engine, "openai");
+  assert.deepEqual(textOnly.models, [{ name: "tiny-text", vision: false }]);
 });
 
 test("discover returns no engine when nothing answers", async () => {
@@ -212,4 +219,21 @@ test("endpoints keep the shape the user typed", () => {
   assert.equal(CE.endpointFor("http://localhost:1234", "openai"), "http://localhost:1234/v1/chat/completions");
   assert.equal(CE.isLocalEndpoint("http://localhost:11434"), true);
   assert.equal(CE.isLocalEndpoint("http://example.com/v1"), false);
+});
+
+test("a base URL is accepted with no slash, one slash, or /v1", () => {
+  const base = "http://example.test:8080";
+
+  assert.equal(CE.normaliseBaseUrl(base), base);
+  assert.equal(CE.normaliseBaseUrl(base + "/"), base);
+  assert.equal(CE.normaliseBaseUrl(base + "/v1"), base + "/v1");
+  assert.equal(CE.normaliseBaseUrl(base + "/v1/"), base + "/v1");
+  assert.equal(CE.normaliseBaseUrl(base + "/v1/chat/completions"), base + "/v1");
+  assert.equal(CE.normaliseBaseUrl(base + "/api/chat"), base);
+  assert.equal(CE.normaliseBaseUrl("example.test:8080"), "http://example.test:8080");
+  assert.equal(CE.normaliseBaseUrl(""), CE.DEFAULT_ENDPOINT);
+
+  assert.equal(CE.endpointFor(base, "openai"), base + "/v1/chat/completions");
+  assert.equal(CE.endpointFor(base + "/v1", "openai"), base + "/v1/chat/completions");
+  assert.equal(CE.endpointFor(base + "/", "ollama"), base + "/api/chat");
 });

@@ -59,6 +59,9 @@ enter its base URL there instead, for example `http://localhost:1234/v1`.
 - **Images:** an attached image is stored with the turn. It is sent only when the selected model
   declares vision support; otherwise the turn is marked text-only and the image stays in the
   conversation.
+- **Memory:** a chat line is kept for review when it contains a word from the deck. There is no
+  grammar check, so a nonsense line that happens to contain a known word can still become a
+  cloze card; only the lines you want to review should be kept.
 - **Privacy:** requests go only to the endpoint you set. With the default, that is your own
   machine. There is no account, no key and no tracking.
 
