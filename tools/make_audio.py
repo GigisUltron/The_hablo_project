@@ -164,6 +164,14 @@ def items(code="es"):
             spoken = article + " " + word
         out.append((concept_id, spoken))
 
+    terms_path = folder / "terms.js"
+    if terms_path.exists():
+        for block in _objects(terms_path.read_text(encoding="utf-8")):
+            term_id = _field(block, "id")
+            text = _field(block, "text")
+            if term_id and term_id.startswith("t-") and text:
+                out.append((term_id, text))
+
     phrases = (folder / "phrases.js").read_text(encoding="utf-8")
     for block in _objects(phrases):
         phrase_id = _field(block, "id")
