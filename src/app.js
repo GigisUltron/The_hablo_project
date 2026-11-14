@@ -382,6 +382,17 @@
     $("stat-mastered").textContent = mastered;
 
     $("start-label").textContent = due > 0 ? "Start lesson · " + due + " due" : "Start lesson";
+
+    var learned = S.learnedCount(state);
+    var stage = learned < 10 ? 1 : learned < 30 ? 2 : 3;
+    var sub = $("start-btn").querySelector("small");
+    if (sub) {
+      sub.textContent = stage === 1
+        ? "60 seconds · start with 8"
+        : stage === 2
+          ? "60 seconds · mixed review"
+          : "60 seconds · words + phrases";
+    }
   }
 
   /* --------------------------------------------------------------- streak */
@@ -443,6 +454,41 @@
     var art = it.article ? '<span class="art">' + esc(it.article) + "</span>" : "";
     var long = it.text.length > 16 ? " long" : "";
     return '<div class="word' + long + '">' + art + esc(it.text) + "</div>";
+  }
+
+  function glossHTML(id) {
+    var g = window.SEMA_GLOSSES && window.SEMA_GLOSSES[id];
+    if (!g) return "";
+    return '<div class="gloss-wrap">' +
+      '<button class="gloss-btn" type="button" data-gloss="' + esc(g) + '">show translation</button>' +
+      '<span class="gloss" hidden></span>' +
+      "</div>";
+  }
+
+  /* Translations are a deliberate escape hatch, not a crutch: they appear on
+   * request, vanish after a few seconds, and every look is counted. */
+  var glossTimer = null;
+
+  function wireGloss() {
+    Array.prototype.forEach.call($("stage").querySelectorAll(".gloss-btn"), function (btn) {
+      btn.addEventListener("click", function () {
+        var out = btn.parentNode.querySelector(".gloss");
+        if (!out) return;
+        var isOpen = !out.hidden;
+        out.hidden = isOpen;
+        btn.textContent = isOpen ? "show translation" : "hide";
+        if (!isOpen) {
+          out.textContent = btn.getAttribute("data-gloss");
+          state.memory.peeked = (state.memory.peeked || 0) + 1;
+          save();
+          clearTimeout(glossTimer);
+          glossTimer = setTimeout(function () {
+            out.hidden = true;
+            btn.textContent = "show translation";
+          }, 6000);
+        }
+      });
+    });
   }
 
   function contextHTML(it) {
@@ -676,10 +722,12 @@
       '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
       wordsHTML(it) +
       contextHTML(it) +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>';
+      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
+      glossHTML(it.id);
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
+    wireGloss();
 
     $("actions").innerHTML = '<button class="btn btn-primary" id="next">' +
       (last ? "Start the quiz →" : "Next →") + "</button>";
@@ -740,10 +788,12 @@
       '<p class="prompt">Which one is this?</p>' +
       '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
       '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
-      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
+      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>" +
+      glossHTML(it.id);
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
+    wireGloss();
 
     Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
       btn.addEventListener("click", function () {
@@ -767,10 +817,12 @@
         return '<button class="option" data-id="' + esc(o) + '" aria-label="Choose this picture">' +
           '<span aria-hidden="true">' + itemOf(o).emoji + "</span></button>";
       }).join("") + "</div>" +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>';
+      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
+      glossHTML(it.id);
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
+    wireGloss();
 
     Array.prototype.forEach.call($("stage").querySelectorAll(".option"), function (btn) {
       btn.addEventListener("click", function () {
@@ -850,10 +902,12 @@
       '<div class="tile sm" aria-hidden="true">' + it.emoji + "</div>" +
       wordsHTML(it) +
       contextHTML(it) +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear it again</button>';
+      '<button class="speak-btn" id="hear-btn">🔊 Hear it again</button>' +
+      glossHTML(it.id);
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
+    wireGloss();
 
     feedback(ok ? "got it" : "it comes back at the end", ok ? "good" : "bad");
 
@@ -1138,6 +1192,11 @@
             esc(shortDate(item.created)) + "</span></p>";
         }).join("")
       : '<div class="empty">Nothing kept yet. Finish a lesson and write one sentence with the words you just met.</div>';
+
+    var peeks = state.memory.peeked || 0;
+    $("mem-peeks").textContent = peeks
+      ? peeks + (peeks === 1 ? " translation shown" : " translations shown")
+      : "no translations used";
 
     $("stat-sessions").textContent = state.sessions;
     $("stat-good").textContent = state.reviews.good;

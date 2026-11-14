@@ -1145,3 +1145,33 @@ h1 em {
   color: var(--ink-faint);
   margin-left: 6px;
 }
+
+/* --------------------------------------------------- translation on demand */
+.gloss-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.gloss-btn {
+  border: var(--rule-thin);
+  background: transparent;
+  padding: 5px 9px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.gloss-btn:hover { background: var(--saffron); color: var(--ink); }
+.gloss {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  border-bottom: 2px dashed var(--ink-faint);
+  padding-bottom: 1px;
+}
+.gloss[hidden] { display: none; }
