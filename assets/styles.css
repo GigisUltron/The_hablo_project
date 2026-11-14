@@ -1218,3 +1218,7 @@ textarea.type-input { resize: vertical; min-height: 76px; }
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Visibility must never depend on an animation completing: headless and
+   reduced-motion both caught this skin mid-fade, leaving the page unreadable. */
+.view, .view.is-active { opacity: 1 !important; animation: none !important; }
