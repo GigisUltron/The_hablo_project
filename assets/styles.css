@@ -48,28 +48,28 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #000000;
-    --card: #1c1c1e;
-    --fill: #2c2c2e;
-    --fill-2: #3a3a3c;
-    --line: #38383a;
-    --border: #3a3a3c;
-    --text: #ffffff;
-    --text-2: #a1a1a6;
-    --text-3: #8e8e93;
-    --accent: #ff7a3d;
-    --accent-hover: #ff8f5c;
-    --accent-soft: #3a2216;
-    --on-accent: #1c0800;
-    --tint: #2c2c2e;
-    --good: #30d158;
-    --good-soft: #10301a;
-    --bad: #ff453a;
-    --bad-soft: #3a1513;
-    --accent-deep: #b4521f;
-    --good-deep: #1f8a3c;
-    --bad-deep: #b3302a;
-    --border-deep: #2a2a2c;
+    --bg: var(--text);
+    --card: var(--text);
+    --fill: var(--text);
+    --fill-2: var(--text-2);
+    --line: var(--text-2);
+    --border: var(--text-2);
+    --text: var(--card);
+    --text-2: var(--text-3);
+    --text-3: var(--text-3);
+    --accent: var(--accent);
+    --accent-hover: var(--accent);
+    --accent-soft: var(--text);
+    --on-accent: var(--text);
+    --tint: var(--text);
+    --good: var(--good);
+    --good-soft: var(--good-deep);
+    --bad: var(--bad);
+    --bad-soft: var(--bad-deep);
+    --accent-deep: var(--accent);
+    --good-deep: var(--good);
+    --bad-deep: var(--bad);
+    --border-deep: var(--text-2);
     --bar: rgba(22, 22, 24, 0.94);
     --edge: rgba(255, 255, 255, 0.18);
     --edge-dim: rgba(255, 255, 255, 0.05);
@@ -510,7 +510,7 @@ button.row:active { background: var(--fill); }
 .speak-btn.is-playing { background: var(--accent); color: var(--on-accent); }
 .mic { min-height: 50px; padding: 12px 20px 12px 16px; font-size: 17px; background: var(--accent); color: var(--on-accent); }
 .mic .ico { width: 20px; height: 20px; }
-.mic.is-live { background: var(--bad); color: #fff; animation: pulse 1.2s ease-in-out infinite; }
+.mic.is-live { background: var(--bad); color: var(--card); animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.7; } }
 .score { font-size: 15px; color: var(--text-2); min-height: 1.4em; }
 
