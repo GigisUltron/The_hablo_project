@@ -11,6 +11,7 @@
 
   var D = window.SEMA_DATA;
   var S = window.SemaSRS;
+  var MEM = window.SemaMemory;
   var STORE_KEY = "sema.v1";
   var LANG = D.language;
 
@@ -76,9 +77,11 @@
   if (!state.settings) {
     state.settings = { fields: Object.keys(D.categories), size: 8, mode: "words" };
   }
+  if (!state.memory) state.memory = MEM.empty();
 
   function load() {
     var base = S.newState(allIds.concat(phraseIds), Date.now());
+    base.memory = MEM.empty();
     try {
       var raw = localStorage.getItem(STORE_KEY);
       if (!raw) return base;
@@ -87,6 +90,7 @@
       saved.cards = saved.cards || {};
       saved.confusions = saved.confusions || {};
       saved.reviews = saved.reviews || { good: 0, again: 0 };
+      if (!saved.memory || !Array.isArray(saved.memory.sentences)) saved.memory = MEM.empty();
       saved.settings = saved.settings || {};
       if (!Array.isArray(saved.settings.fields) || !saved.settings.fields.length) {
         saved.settings.fields = Object.keys(D.categories);
@@ -494,15 +498,94 @@
 
     var quiz = S.shuffle(due.concat(fresh), Math.random).slice(0, size);
 
+    /* persistent memory, used: the pairs you keep trading come back first */
+    var weak = MEM.weakItems(state, 6).filter(function (id) {
+      return pool.indexOf(id) !== -1 && quiz.indexOf(id) === -1;
+    }).slice(0, 2);
+    if (weak.length) quiz = weak.concat(quiz);
+
     if (!quiz.length) {
       quiz = S.shuffle(pool.length ? pool : allIds, Math.random).slice(0, size);
       toast("Nothing due here — free practice.");
     }
 
     session = newSession(mode, fresh, quiz);
+
+    /* your own sentence, if one is old enough to be worth re-reading */
+    var older = MEM.nextToReview(state.memory, now, MEM.DAY_MS / 2);
+    if (older) {
+      var words = older.items.map(function (id) { return itemOf(id).text; });
+      var blanked = MEM.cloze(older.text, words);
+      if (blanked) session.personal = { sentence: older, cloze: blanked };
+    }
+    session.hasPersonal = !!session.personal;
+
     show("session");
-    if (session.study.length) renderStudy();
+    if (session.personal) renderPersonal();
+    else if (session.study.length) renderStudy();
     else renderQuiz();
+  }
+
+  /* ---- the personal card: your sentence from a previous day ------------ */
+
+  function shortDate(ts) {
+    try {
+      return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    } catch (err) { return "earlier"; }
+  }
+
+  function renderPersonal() {
+    clearCard();
+    setProgress();
+
+    var p = session.personal;
+    $("stage").innerHTML =
+      '<p class="prompt">Your own sentence · ' + esc(shortDate(p.sentence.created)) + "</p>" +
+      '<p class="personal-line">' + esc(p.cloze.blanked) + "</p>" +
+      '<input class="type-input" id="type-input" type="text" autocomplete="off" ' +
+        'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
+        'aria-label="the missing word" placeholder="the missing word" />' +
+      '<button class="btn btn-primary" id="check">Check</button>';
+
+    var input = $("type-input");
+    if (input) {
+      input.focus();
+      input.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") { ev.preventDefault(); checkPersonal(); }
+      });
+    }
+    $("check").addEventListener("click", checkPersonal);
+  }
+
+  function checkPersonal() {
+    var p = session.personal;
+    var input = $("type-input");
+    var value = input ? input.value : "";
+    var score = S.similarity(value, p.cloze.answer);
+    var ok = score >= 0.7;
+
+    MEM.markReviewed(state.memory, p.sentence.id, Date.now());
+    MEM.recordAttempt(state.memory, ok, 0);
+    save();
+
+    var answer = esc(p.cloze.answer);
+    var full = esc(p.sentence.text).replace(
+      new RegExp("\\b" + answer + "\\b", "i"), "<b>$&</b>"
+    );
+
+    $("stage").innerHTML =
+      '<p class="prompt">' + (ok ? "Correct" : "Not quite") + "</p>" +
+      '<p class="personal-line">' + full + "</p>" +
+      '<p class="sentence">your own words, from ' + esc(shortDate(p.sentence.created)) + "</p>";
+
+    feedback(ok ? "that was yours" : "the word was “" + p.cloze.answer + "”", ok ? "good" : "bad");
+
+    $("actions").innerHTML = '<button class="btn btn-primary" id="next">Continue →</button>';
+    $("next").addEventListener("click", function () {
+      session.personal = null;
+      if (session.study.length) renderStudy();
+      else renderQuiz();
+    });
   }
 
   function startQuizOnly() {
@@ -552,12 +635,15 @@
   }
 
   function totalSteps() {
-    return session.study.length + Math.max(session.unique, session.quiz.length);
+    var extra = session.hasPersonal ? 1 : 0;
+    return extra + session.study.length + Math.max(session.unique, session.quiz.length);
   }
 
   function doneSteps() {
-    if (session.phase === "study") return session.si;
-    return session.study.length + session.qi;
+    var extra = session.hasPersonal ? 1 : 0;
+    if (session.personal) return 0;
+    if (session.phase === "study") return extra + session.si;
+    return extra + session.study.length + session.qi;
   }
 
   function setProgress() {
@@ -813,6 +899,28 @@
       "</p>" + list;
 
     feedback("", "");
+    $("stage").insertAdjacentHTML("beforeend",
+      '<div class="compose">' +
+        '<label class="prompt" for="compose-input">one sentence with today\'s words</label>' +
+        '<textarea class="type-input" id="compose-input" rows="2" maxlength="160" ' +
+          'placeholder="escribe una frase"></textarea>' +
+        '<button class="btn btn-ghost btn-sm" id="compose-save">keep it</button>' +
+      "</div>");
+
+    $("compose-save").addEventListener("click", function () {
+      var field = $("compose-input");
+      var text = field ? field.value : "";
+      var kept = MEM.addSentence(state.memory, text, Object.keys(session.answered), Date.now());
+      if (!kept) { toast("A few more words, in Spanish."); return; }
+      save();
+      var form = document.querySelector(".compose");
+      if (form) {
+        form.innerHTML = '<p class="sentence">kept — “' + esc(kept.text) +
+          '”. It comes back as a card tomorrow.</p>';
+      }
+      toast("Saved to your memory.");
+    });
+
     $("actions").innerHTML =
       '<button class="btn btn-primary" id="again">One more</button>' +
       '<button class="btn btn-ghost" id="back">Done for now</button>';
@@ -1016,6 +1124,20 @@
         "</div>";
       }).join("");
     }
+
+    var mem = state.memory;
+    var prof = MEM.profile(mem);
+    $("mem-sentences").textContent = prof.sentences;
+    $("mem-acc").textContent = prof.accuracy === null ? "—" : Math.round(prof.accuracy * 100) + "%";
+    $("mem-days").textContent = prof.days;
+
+    var recent = mem.sentences.slice(-3).reverse();
+    $("mem-list").innerHTML = recent.length
+      ? recent.map(function (item) {
+          return '<p class="mem-line">“' + esc(item.text) + "” <span>" +
+            esc(shortDate(item.created)) + "</span></p>";
+        }).join("")
+      : '<div class="empty">Nothing kept yet. Finish a lesson and write one sentence with the words you just met.</div>';
 
     $("stat-sessions").textContent = state.sessions;
     $("stat-good").textContent = state.reviews.good;

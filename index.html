@@ -148,6 +148,16 @@
       </div>
 
       <div class="panel panel-pad" style="margin-top:16px">
+        <p class="panel-title">What the app remembers</p>
+        <div class="mini-stats" style="margin-top:0">
+          <div class="mini"><b id="mem-sentences">0</b><span>sentences</span></div>
+          <div class="mini"><b id="mem-acc">—</b><span>accuracy</span></div>
+          <div class="mini"><b id="mem-days">0</b><span>days written</span></div>
+        </div>
+        <div class="mem-list" id="mem-list"></div>
+      </div>
+
+      <div class="panel panel-pad" style="margin-top:16px">
         <p class="panel-title">Session history</p>
         <div class="mini-stats" style="margin-top:0">
           <div class="mini"><b id="stat-sessions">0</b><span>sessions</span></div>
@@ -175,6 +185,7 @@
 <script src="src/phrases.js"></script>
 <script src="assets/audio/manifest.js"></script>
 <script src="src/srs.js"></script>
+<script src="src/memory.js"></script>
 <script src="src/app.js"></script>
 </body>
 </html>

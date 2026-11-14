@@ -65,6 +65,7 @@ test("scripts load in dependency order (data, audio manifest, srs, app)", () => 
     "src/phrases.js",
     "assets/audio/manifest.js",
     "src/srs.js",
+    "src/memory.js",
     "src/app.js"
   ]);
 });
