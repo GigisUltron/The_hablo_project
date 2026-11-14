@@ -520,13 +520,13 @@ button.row:active { background: var(--fill); }
   --edge-c: var(--border-deep);
   border: 2px solid var(--border);
   background: var(--card);
-  box-shadow: 0 4px 0 var(--edge-c);
+  box-shadow: 0 4px 0 var(--border);
   cursor: pointer;
   transition: border-color 0.12s ease, background 0.12s ease, transform 0.08s ease, box-shadow 0.08s ease;
 }
 .option-word:active:not(:disabled), .option:active:not(:disabled) {
   transform: translateY(3px);
-  box-shadow: 0 1px 0 var(--edge-c);
+  box-shadow: 0 1px 0 var(--border);
 }
 .option-word {
   min-height: 58px;
@@ -591,7 +591,7 @@ button.row:active { background: var(--fill); }
 .btn-primary, .btn-ghost {
   --edge-c: var(--accent-deep);
   border-radius: 14px;
-  box-shadow: 0 4px 0 var(--edge-c);
+  box-shadow: 0 4px 0 var(--border);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-size: 16px;
@@ -601,7 +601,7 @@ button.row:active { background: var(--fill); }
 .btn-ghost { --edge-c: var(--border-deep); background: var(--card); border: 2px solid var(--border); color: var(--accent); }
 .btn-ghost:hover { background: var(--accent-soft); }
 .btn-sm { font-size: 13px; }
-.btn-primary:active:not(:disabled), .btn-ghost:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge-c); opacity: 1; }
+.btn-primary:active:not(:disabled), .btn-ghost:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--border); opacity: 1; }
 .btn-primary:disabled {
   --edge-c: var(--border-deep);
   background: var(--fill);
@@ -1230,12 +1230,12 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   padding: 2px 0;
   font: inherit;
   font-size: 13px;
-  color: var(--ink-faint, #7a6a5c);
+  color: var(--text-2);
   border-bottom: 1px solid currentColor;
   cursor: pointer;
 }
-.gloss-btn:hover, .explain-btn:hover { color: var(--ink, #171009); }
-.gloss-text, .explain-text { display: block; font-size: 14px; color: var(--ink-soft, #4a3b2c); margin-top: 4px; }
+.gloss-btn:hover, .explain-btn:hover { color: var(--text); }
+.gloss-text, .explain-text { display: block; font-size: 14px; color: var(--text-2); margin-top: 4px; }
 
 /* the two aids, styled like the rest of look E: quiet secondary text, no chrome */
 .gloss-btn, .explain-btn {
