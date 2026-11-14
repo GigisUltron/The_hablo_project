@@ -60,7 +60,11 @@ test("a text-only model never receives the image", () => {
     history: [{ role: "user", text: "hola", image: "data:image/png;base64,AAAA" }]
   });
 
-  assert.deepEqual(req.body.messages[1], { role: "user", content: "hola" });
+  assert.deepEqual(req.body.messages[1], {
+    role: "user",
+    content: "hola (the learner attached an image; this model is text-only)"
+  });
+  assert.equal(req.body.messages[1].images, undefined);
 });
 
 test("the openai request uses an image_url part, and /v1 is not doubled", () => {

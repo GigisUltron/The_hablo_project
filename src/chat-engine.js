@@ -97,6 +97,11 @@
     cleanHistory(history, o.maxHistory).forEach(function (m) {
       var text = String(m.text == null ? "" : m.text);
       var image = m.role === "user" && o.vision && isImage(m.image) ? m.image : null;
+      if (m.role === "user" && m.image && !o.vision) {
+        text = text
+          ? text + " (the learner attached an image; this model is text-only)"
+          : "(the learner attached an image; this model is text-only)";
+      }
       out.push({ role: m.role, text: text, image: image });
     });
     return out;
