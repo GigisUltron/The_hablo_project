@@ -410,6 +410,7 @@
     $("start-sub").textContent = scene
       ? "60 seconds · " + scene.emoji + " " + scene.title
       : "60 seconds · " + lessonSize() + " cards";
+    renderNextStack();
   }
 
   /* --------------------------------------------------------------- streak */
@@ -504,15 +505,13 @@
     return !!c && fields.indexOf(c.cat) !== -1;
   }
 
-  function startSession(opts) {
-    var o = opts || {};
-    var mode = o.mode || sessionMode();
-    var size = o.size || lessonSize();
+  /* The new concepts of the next lesson are drawn once and kept until it
+   * starts, so the stack on the Today view shows the cards that will
+   * actually be taught, not a different random draw. */
+  var planned = null;
+
+  function lessonPlan(mode, size, now) {
     var fields = selectedFields();
-    var now = Date.now();
-
-    if (mode === "phrases" && SCENES.length) { startScene(nextScene()); return; }
-
     var pool = mode === "phrases"
       ? phraseIds.slice()
       : allIds.filter(function (id) { return inFields(id, fields); });
@@ -521,10 +520,58 @@
       return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
     }).slice(0, size);
 
-    var freshCap = Math.max(1, Math.min(6, Math.round(size / 2)));
-    var fresh = S.shuffle(pool.filter(function (id) {
-      return state.cards[id].last === null;
-    }), Math.random).slice(0, freshCap);
+    var key = mode + "|" + size + "|" + pool.join(",");
+    if (!planned || planned.key !== key) {
+      var freshCap = Math.max(1, Math.min(6, Math.round(size / 2)));
+      planned = {
+        key: key,
+        fresh: S.shuffle(pool.filter(function (id) {
+          return state.cards[id].last === null;
+        }), Math.random).slice(0, freshCap)
+      };
+    }
+    return { pool: pool, due: due, fresh: planned.fresh };
+  }
+
+  function renderNextStack() {
+    var box = $("next-stack");
+    if (!box) return;
+    var ids, caption;
+    var scene = sessionMode() === "phrases" && nextScene();
+    if (scene) {
+      ids = scene.lines;
+      caption = scene.emoji + " " + esc(scene.title);
+    } else {
+      var plan = lessonPlan(sessionMode(), lessonSize(), Date.now());
+      /* new cards are always taught; reviews can be trimmed to the lesson size */
+      ids = plan.fresh.length ? plan.fresh : plan.due;
+      caption = [plan.fresh.length ? plan.fresh.length + " new" : "",
+        plan.due.length ? plan.due.length + " to review" : ""].filter(Boolean).join(" · ");
+    }
+    ids = ids.slice(0, 3);
+    if (!ids.length) { box.innerHTML = ""; return; }
+
+    /* back to front, so the first card of the lesson sits on top */
+    box.innerHTML = ids.slice().reverse().map(function (id, i, all) {
+      var top = i === all.length - 1;
+      return '<div class="peek' + (top ? " top" : "") + '" style="--i:' + (all.length - 1 - i) + '">' +
+        '<span class="peek-tile">' + itemOf(id).emoji + "</span>" +
+        (top ? '<span class="peek-cap">In this lesson</span><span class="peek-sub">' + caption + "</span>" : "") +
+      "</div>";
+    }).join("");
+  }
+
+  function startSession(opts) {
+    var o = opts || {};
+    var mode = o.mode || sessionMode();
+    var size = o.size || lessonSize();
+    var now = Date.now();
+
+    if (mode === "phrases" && SCENES.length) { startScene(nextScene()); return; }
+
+    var plan = lessonPlan(mode, size, now);
+    var pool = plan.pool, due = plan.due, fresh = plan.fresh;
+    planned = null;
 
     var quiz = S.shuffle(due.concat(fresh), Math.random).slice(0, size);
 
