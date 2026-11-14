@@ -1,22 +1,24 @@
 # `make_audio.py` — pre-rendered pronunciation
 
 The app plays ordinary WAV files, so it needs no installed system voice at
-runtime. This tool renders one clip per item in `src/data.js` and
-`src/phrases.js` and writes the manifest the app loads.
+runtime. This tool renders one clip per item in `src/lang/<code>/concepts.js`
+and `src/lang/<code>/phrases.js`, and writes the manifest the app loads.
 
 ```sh
-python3 tools/make_audio.py --engine espeak   # fallback, no network needed
-python3 tools/make_audio.py                   # auto: Piper if available, else eSpeak
-python3 tools/make_audio.py --check           # verify without rendering
+python3 tools/make_audio.py --engine espeak        # fallback, no network needed
+python3 tools/make_audio.py --lang fr --engine espeak
+python3 tools/make_audio.py                        # auto: Piper if available, else eSpeak
+python3 tools/make_audio.py --check                # verify without rendering
+python3 tools/make_audio.py --lang fr --check
 ```
 
 | | |
 |---|---|
 | Backend | `espeak` (libespeak-ng via ctypes) or `piper` (neural TTS) |
-| Output | `assets/audio/<slug>.wav`, one clip per item |
+| Output | `assets/audio/<code>/<slug>.wav`, one clip per item (Spanish stays flat in `assets/audio/`) |
 | Format | mono, 16-bit PCM, 16 kHz |
 | Processing | silence-trimmed, edge-faded, peak-normalised |
-| Manifest | `assets/audio/manifest.js` — `window.SEMA_AUDIO = { "<id>": "assets/audio/<slug>.wav", ... }` |
+| Manifest | `assets/audio/<code>/manifest.js` — `window.SEMA_AUDIO = { "<id>": "assets/audio/<code>/<slug>.wav", ... }` |
 
 The output contract is deliberately the same for both backends. `index.html`
 and `tests/phrases.test.js` depend on it; changing the format means changing
@@ -100,10 +102,13 @@ quality target. If voice quality matters, use Piper.
 ## CLI
 
 ```
-python3 tools/make_audio.py [--engine auto|espeak|piper]
+python3 tools/make_audio.py [--lang CODE] [--engine auto|espeak|piper]
                             [--voice PATH|NAME] [--piper-bin PATH]
                             [--check]
 ```
+
+- `--lang CODE` — pack under `src/lang/` (default `es`). Spanish keeps its
+  historical flat output; every other pack writes `assets/audio/<code>/`.
 
 - `--engine auto` (default) — Piper when both a Piper backend (CLI or Python
   package) and a voice are found; otherwise eSpeak, with a one-line reason.
@@ -113,7 +118,7 @@ python3 tools/make_audio.py [--engine auto|espeak|piper]
 - `--voice PATH|NAME` — the `.onnx` model, or a bare name from the search path.
 - `--piper-bin PATH` — use a specific `piper` executable instead of `piper` on
   `PATH`.
-- `--check` — read the two decks and the manifest, then verify that every item
+- `--check` — read the pack's two decks and manifest, then verify that every item
   id has an entry, every referenced file exists and is larger than 2 KB, and
   every file is mono 16-bit PCM at 16 kHz. It renders nothing. It exits `0`
   when complete and `1` with a list of gaps otherwise.
@@ -130,12 +135,13 @@ make_audio --check: OK
 ```
 
 The item count follows the decks; it changes when content changes. Regenerate
-after editing `src/data.js` or `src/phrases.js`.
+after editing the pack's `concepts.js` or `phrases.js`.
 
 ## What gets generated
 
-`src/data.js` concepts are spoken as `article + word` (`la casa`, `el agua`);
-phrases are spoken as their `text`. Ids become ASCII-safe file names:
+Concepts are spoken as `article + word` (`la casa`, `el agua`). A French
+elided article is joined without a space (`l'eau`, not `l' eau`). Phrases are
+spoken as their `text`. Ids become ASCII-safe file names:
 `café` → `cafe.wav`, `ph-como-estas` → `ph-como-estas.wav`. The manifest key
 remains the original id.
 

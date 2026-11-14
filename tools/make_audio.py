@@ -11,13 +11,19 @@ Two backends produce the same output contract:
     piper   neural TTS through the Piper CLI or the piper-tts Python package
     espeak  formant synthesis through libespeak-ng (ctypes, as before)
 
-    python3 tools/make_audio.py                 # auto: Piper if installed, else eSpeak
+    python3 tools/make_audio.py                          # auto: Piper if installed, else eSpeak
+    python3 tools/make_audio.py --lang fr --engine espeak
     python3 tools/make_audio.py --engine piper --voice es_ES-sharvard-medium
-    python3 tools/make_audio.py --engine espeak
-    python3 tools/make_audio.py --check         # verify without rendering
+    python3 tools/make_audio.py --check
+    python3 tools/make_audio.py --lang fr --check
+
+A pack is read from src/lang/<code>/ and written to assets/audio/<code>/ with
+its own manifest.js. Spanish is the historical exception: it keeps the existing
+assets/audio/*.wav and assets/audio/manifest.js so its clips are never rewritten
+by accident.
 
 Every clip is mono 16-bit PCM at 16 kHz, silence-trimmed, edge-faded and
-peak-normalised, and assets/audio/manifest.js maps every item id to its file.
+peak-normalised, and the pack's manifest.js maps every item id to its file.
 That contract is what index.html and the tests consume; both backends must
 keep it identical.
 
@@ -62,6 +68,15 @@ MIN_BYTES = 2 * 1024
 PIPER_INSTALL = "python3 -m pip install piper-tts"
 PIPER_EXAMPLE_VOICE = "es_ES-sharvard-medium"
 PREFERRED_VOICES = ("es_ES-sharvard-medium.onnx", "es_ES-davefx-medium.onnx")
+
+# Pack code -> eSpeak voice name. eSpeak has fr; Mandarin is poor and should
+# go through Piper instead (see docs/ONBOARDING.md).
+ESPEAK_VOICES = {"es": "es", "fr": "fr"}
+
+# Pack code -> Piper voice filenames to look for when --voice is omitted.
+PIPER_VOICES = {"es": PREFERRED_VOICES, "fr": ()}
+
+LANG_NAMES = {"es": "Spanish", "fr": "French", "it": "Italian", "ru": "Russian", "en": "English", "zh": "Chinese"}
 
 CANDIDATES = [
     "libespeak-ng.so.1",
@@ -112,20 +127,44 @@ def _field(block, name):
     return match.group(1) if match else None
 
 
-def items():
+def pack_dir(code="es"):
+    return ROOT / "src" / "lang" / code
+
+
+def audio_dir(code="es"):
+    """Spanish keeps its historical flat folder; every other pack is nested."""
+    return OUT if code == "es" else OUT / code
+
+
+def manifest_path(code="es"):
+    return OUT / "manifest.js" if code == "es" else audio_dir(code) / "manifest.js"
+
+
+def language_name(code):
+    return LANG_NAMES.get(code, code)
+
+
+def items(code="es"):
     """(id, spoken text) for concepts and phrases, without a JS parser."""
     out = []
+    folder = pack_dir(code)
 
-    data = (ROOT / "src" / "data.js").read_text(encoding="utf-8")
+    data = (folder / "concepts.js").read_text(encoding="utf-8")
     for block in _objects(data):
         word = _field(block, "word")
         article = _field(block, "article")
         concept_id = _field(block, "id")
         if not concept_id or not word or article is None:
             continue
-        out.append((concept_id, ("%s %s" % (article, word)) if article else word))
+        if not article:
+            spoken = word
+        elif article.endswith("'"):
+            spoken = article + word
+        else:
+            spoken = article + " " + word
+        out.append((concept_id, spoken))
 
-    phrases = (ROOT / "src" / "phrases.js").read_text(encoding="utf-8")
+    phrases = (folder / "phrases.js").read_text(encoding="utf-8")
     for block in _objects(phrases):
         phrase_id = _field(block, "id")
         text = _field(block, "text")
@@ -236,7 +275,8 @@ def read_wav(source):
 class EspeakBackend:
     name = "espeak"
 
-    def __init__(self):
+    def __init__(self, code="es"):
+        self.code = code
         self.lib = load_lib()
         self.lib.espeak_Initialize.restype = ctypes.c_int
         self.lib.espeak_Initialize.argtypes = [
@@ -261,8 +301,9 @@ class EspeakBackend:
         self.lib.espeak_SetSynthCallback(self._callback)
 
         self.lib.espeak_SetVoiceByName.argtypes = [ctypes.c_char_p]
-        if self.lib.espeak_SetVoiceByName(b"es") != 0:
-            raise AudioError("no Spanish voice in espeak")
+        voice_name = ESPEAK_VOICES.get(code, code).encode()
+        if self.lib.espeak_SetVoiceByName(voice_name) != 0:
+            raise AudioError("no %s voice in espeak" % language_name(code))
 
         self.lib.espeak_SetParameter(ESP_RATE, 125, 0)   # slower than the 175 default
         self.lib.espeak_SetParameter(ESP_PITCH, 52, 0)   # a touch above flat
@@ -305,18 +346,19 @@ def voice_dirs():
     return unique
 
 
-def locate_voice(value=None):
+def locate_voice(value=None, code="es"):
     """Resolve --voice (a path or a bare name) to a .onnx file, or None."""
+    preferred = PIPER_VOICES.get(code, ())
     if value:
         raw = pathlib.Path(value).expanduser()
         if raw.is_file() and raw.suffix.lower() == ".onnx":
             return raw
         if raw.is_dir():
-            for name in PREFERRED_VOICES:
+            for name in preferred:
                 candidate = raw / name
                 if candidate.is_file():
                     return candidate
-            matches = sorted(raw.glob("es_*.onnx"))
+            matches = sorted(raw.glob(code + "_*.onnx"))
             return matches[0] if matches else None
 
         name = raw.name if raw.suffix.lower() == ".onnx" else raw.name + ".onnx"
@@ -331,12 +373,12 @@ def locate_voice(value=None):
         return None
 
     for directory in voice_dirs():
-        for name in PREFERRED_VOICES:
+        for name in preferred:
             candidate = directory / name
             if candidate.is_file():
                 return candidate
     for directory in voice_dirs():
-        matches = sorted(directory.glob("es_*.onnx"))
+        matches = sorted(directory.glob(code + "_*.onnx"))
         if matches:
             return matches[0]
     return None
@@ -371,23 +413,23 @@ def piper_missing_message():
     return (
         "Piper is not installed. Install it with:\n"
         "  %s\n"
-        "Then download a Spanish voice and run:\n"
-        "  python3 tools/make_audio.py --engine piper --voice %s\n"
-        "Model URLs are in tools/README.md." % (PIPER_INSTALL, PIPER_EXAMPLE_VOICE)
+        "Then download a voice for the target language and run:\n"
+        "  python3 tools/make_audio.py --lang <code> --engine piper --voice <model.onnx>\n"
+        "Model URLs are in tools/README.md." % PIPER_INSTALL
     )
 
 
-def voice_missing_message(value=None):
+def voice_missing_message(value=None, code="es"):
     if value:
         lead = "Piper voice %r was not found." % value
     else:
-        lead = "No Spanish Piper voice was found."
+        lead = "No %s Piper voice was found." % language_name(code)
     return (
         "%s Pass --voice /path/to/<voice>.onnx, or put the model in one of the "
         "searched directories (see tools/README.md).\n"
-        "Download a voice such as %s (.onnx and .onnx.json), then run:\n"
-        "  python3 tools/make_audio.py --engine piper --voice %s"
-        % (lead, PIPER_EXAMPLE_VOICE, PIPER_EXAMPLE_VOICE)
+        "Then run:\n"
+        "  python3 tools/make_audio.py --lang %s --engine piper --voice <model.onnx>"
+        % (lead, code)
     )
 
 
@@ -494,15 +536,15 @@ class PiperBackend:
         out.write_bytes(data)
 
 
-def auto_backend(args):
+def auto_backend(args, code="es"):
     binary = find_piper_binary(args.piper_bin)
     module = piper_module_available()
-    model = locate_voice(args.voice)
+    model = locate_voice(args.voice, code)
 
     if not binary and not module:
         reason = "piper-tts not installed — install: %s" % PIPER_INSTALL
     elif model is None:
-        reason = "no Spanish Piper voice found (pass --voice <model.onnx>)"
+        reason = "no %s Piper voice found (pass --voice <model.onnx>)" % language_name(code)
     elif not voice_config(model).is_file():
         reason = "Piper voice config missing (%s.json)" % model.name
     else:
@@ -512,21 +554,21 @@ def auto_backend(args):
         return backend
 
     print("audio: engine=espeak (%s)" % reason)
-    return EspeakBackend()
+    return EspeakBackend(code)
 
 
-def choose_backend(args):
+def choose_backend(args, code="es"):
     if args.engine == "espeak":
         print("audio: engine=espeak (requested)")
-        return EspeakBackend()
+        return EspeakBackend(code)
 
     if args.engine == "piper":
         binary = find_piper_binary(args.piper_bin)
         if not binary and not piper_module_available():
             raise AudioError(piper_missing_message())
-        model = locate_voice(args.voice)
+        model = locate_voice(args.voice, code)
         if model is None:
-            raise AudioError(voice_missing_message(args.voice))
+            raise AudioError(voice_missing_message(args.voice, code))
         require_voice_config(model)
         print(
             "audio: engine=piper (voice %s, via %s)"
@@ -534,18 +576,22 @@ def choose_backend(args):
         )
         return PiperBackend(model, binary)
 
-    return auto_backend(args)
+    return auto_backend(args, code)
 
 
-def render(backend):
-    OUT.mkdir(parents=True, exist_ok=True)
+def render(backend, code="es"):
+    out = audio_dir(code)
+    out.mkdir(parents=True, exist_ok=True)
     manifest = {}
     total = 0
     seen_slugs = {}
+    prefix = "assets/audio/" if code == "es" else "assets/audio/%s/" % code
 
-    all_items = items()
+    all_items = items(code)
     if not all_items:
-        raise AudioError("no items found in src/data.js or src/phrases.js")
+        raise AudioError(
+            "no items found in %s" % (pack_dir(code) / "concepts.js").relative_to(ROOT)
+        )
 
     for item_id, spoken in all_items:
         name = slug(item_id) + ".wav"
@@ -563,14 +609,14 @@ def render(backend):
             print("  ! empty audio for", item_id)
             continue
 
-        path = OUT / name
+        path = out / name
         write_wav(samples, path)
 
-        manifest[item_id] = "assets/audio/" + name
+        manifest[item_id] = prefix + name
         total += path.stat().st_size
         print("  %-12s %5d bytes  %s" % (item_id, path.stat().st_size, spoken))
 
-    (OUT / "manifest.js").write_text(
+    manifest_path(code).write_text(
         "/* generated by tools/make_audio.py — do not edit by hand */\n"
         "window.SEMA_AUDIO = " + json.dumps(manifest, ensure_ascii=False).replace(", ", ",") + ";\n",
         encoding="utf-8",
@@ -579,8 +625,8 @@ def render(backend):
     print("\n%d files, %.0f KB total at %d Hz" % (len(manifest), total / 1024, TARGET_RATE))
 
 
-def load_manifest():
-    path = OUT / "manifest.js"
+def load_manifest(code="es"):
+    path = manifest_path(code)
     if not path.is_file():
         raise AudioError("%s is missing; run the generator first." % path.relative_to(ROOT))
     source = path.read_text(encoding="utf-8")
@@ -596,13 +642,13 @@ def load_manifest():
     return manifest
 
 
-def run_check():
-    all_items = items()
-    manifest = load_manifest()
+def run_check(code="es"):
+    all_items = items(code)
+    manifest = load_manifest(code)
 
     problems = []
     if not all_items:
-        problems.append("no items found in src/data.js or src/phrases.js")
+        problems.append("no items found in %s" % (pack_dir(code) / "concepts.js").relative_to(ROOT))
 
     seen = set()
     for item_id, _spoken in all_items:
@@ -612,7 +658,7 @@ def run_check():
         if item_id not in manifest:
             problems.append('no manifest entry for "%s"' % item_id)
 
-    audio_root = OUT.resolve()
+    audio_root = audio_dir(code).resolve()
     total = 0
     for item_id, relative in manifest.items():
         if not isinstance(relative, str) or not relative:
@@ -675,6 +721,12 @@ def run_check():
     return 0
 
 
+def lang_code(value):
+    if not re.fullmatch(r"[a-z]{2}", value or ""):
+        raise argparse.ArgumentTypeError("--lang must be a two-letter pack code, e.g. es or fr")
+    return value
+
+
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description="Pre-render the Python-free audio for the sema demo.",
@@ -703,6 +755,10 @@ def parse_args(argv=None):
         "--piper-bin", metavar="PATH", help="path to the piper executable",
     )
     parser.add_argument(
+        "--lang", metavar="CODE", type=lang_code, default="es",
+        help="pack code under src/lang/ (default: es)",
+    )
+    parser.add_argument(
         "--check", action="store_true",
         help="verify manifest coverage and WAVs without rendering",
     )
@@ -713,9 +769,9 @@ def main(argv=None):
     args = parse_args(argv)
     try:
         if args.check:
-            return run_check()
-        backend = choose_backend(args)
-        render(backend)
+            return run_check(args.lang)
+        backend = choose_backend(args, args.lang)
+        render(backend, args.lang)
     except AudioError as exc:
         print("make_audio: %s" % exc, file=sys.stderr)
         return 1
