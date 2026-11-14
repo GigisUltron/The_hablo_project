@@ -68,6 +68,7 @@ test("scripts load in dependency order (data, audio manifest, srs, app)", () => 
     "src/texts.js",
     "src/adaptive.js",
     "src/correct.js",
+    "src/conv.js",
     "src/glosses.js",
     "assets/audio/manifest.js",
     "src/srs.js",
