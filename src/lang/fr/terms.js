@@ -40,8 +40,19 @@ var SEMA_TERMS = {
       frame: "C'est bon marché et, ____, c'est près.", contrast: "t-cependant" },
 
     { id: "t-donc", text: "donc", gloss: "so / that's why", schema: "chain",
-      frame: "Je n'ai pas dormi ; ____ je suis fatigué.", contrast: "t-meme-si" }
-  ]
+      frame: "Je n'ai pas dormi ; ____ je suis fatigué.", contrast: "t-meme-si" },
+    { id: "t-fr-bien-que", text: "bien que", gloss: "although", schema: "fork", frame: "____ il pleuve, je sors.", contrast: null },
+    { id: "t-fr-pour-que", text: "pour que", gloss: "so that", schema: "chain", frame: "Je parle lentement ____ tu comprennes.", contrast: null },
+    { id: "t-fr-a-condition", text: "à condition que", gloss: "provided that", schema: "fork", frame: "Viens ____ tu préviennes.", contrast: null },
+    { id: "t-fr-des-que", text: "dès que", gloss: "as soon as", schema: "clock", frame: "____ il arrive, on part.", contrast: null },
+    { id: "t-fr-au-cas-ou", text: "au cas où", gloss: "in case", schema: "fork", frame: "Prends un parapluie ____ il pleuvrait.", contrast: null },
+    { id: "t-fr-j-aurais", text: "j'aurais fait", gloss: "I would have done", schema: "chain", frame: "____ autrement, mais je n'ai pas pu.", contrast: null },
+    { id: "t-fr-si-j-avais", text: "si j'avais su", gloss: "if I had known", schema: "fork", frame: "____, je serais venu.", contrast: null },
+    { id: "t-fr-malgre", text: "malgré", gloss: "despite", schema: "balance", frame: "____ la pluie, nous sortons.", contrast: null },
+    { id: "t-fr-en-revanche", text: "en revanche", gloss: "on the other hand", schema: "balance", frame: "C'est cher ; ____, c'est solide.", contrast: null },
+    { id: "t-fr-par-contre", text: "par contre", gloss: "by contrast", schema: "balance", frame: "Il est rapide ; ____, il est bavard.", contrast: null },
+    { id: "t-fr-en-effet", text: "en effet", gloss: "indeed", schema: "chain", frame: "____, tu as raison.", contrast: null },
+]
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TERMS;

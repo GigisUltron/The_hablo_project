@@ -130,7 +130,18 @@ var SEMA_GLOSSES = {
   "t-pendant-que": "while",
   "t-peut-etre": "maybe",
   "t-en-plus": "moreover",
-  "t-donc": "so / that's why"
+  "t-donc": "so / that's why",
+  "t-fr-bien-que": "although",
+  "t-fr-pour-que": "so that",
+  "t-fr-a-condition": "provided that",
+  "t-fr-des-que": "as soon as",
+  "t-fr-au-cas-ou": "in case",
+  "t-fr-j-aurais": "I would have done",
+  "t-fr-si-j-avais": "if I had known",
+  "t-fr-malgre": "despite",
+  "t-fr-en-revanche": "on the other hand",
+  "t-fr-par-contre": "by contrast",
+  "t-fr-en-effet": "indeed",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
