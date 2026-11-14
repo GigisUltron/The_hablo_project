@@ -122,3 +122,11 @@ test("no concept carries a translation field", () => {
     }
   }
 });
+
+test("the session summary offers exactly one filled control", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  const summary = app.slice(app.indexOf("function finishSession"), app.indexOf("function feedback"));
+  const filled = (summary.match(/btn btn-primary/g) || []).length;
+  assert.equal(filled, 1, `summary has ${filled} filled buttons`);
+  assert.match(summary, /foot-link/);
+});
