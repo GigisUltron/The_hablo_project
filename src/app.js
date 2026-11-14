@@ -851,8 +851,13 @@
     /* basics first: words, then phrases, then connectors. Terms are advanced
      * material and stay out of a lesson until there is something to connect. */
     var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
-    var pool = scopeWords.concat(phraseIds);
-    if (solid >= 10) pool = pool.concat(termIds);
+    var pool;
+    if (unit && unit.mode === "phrases") pool = phraseIds.slice();
+    else if (unit && unit.mode === "terms") pool = termIds.slice();
+    else {
+      pool = scopeWords.concat(phraseIds);
+      if (solid >= 10) pool = pool.concat(termIds);
+    }
 
     var due = S.dueList(state, now).filter(function (id) {
       return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
