@@ -1907,6 +1907,7 @@
   $("read-btn").addEventListener("click", startReader);
   $("settings-btn").addEventListener("click", function () { show("settings"); });
   $("conv-btn").addEventListener("click", startConversation);
+  $("settings-start").addEventListener("click", function () { startSession(); });
   $("setup-new").addEventListener("click", function () {
     beginProfile("A1");
     show("today");
