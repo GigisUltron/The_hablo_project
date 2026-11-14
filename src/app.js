@@ -594,7 +594,8 @@
     $("stage").innerHTML =
       '<p class="prompt">How much do you know?</p>' +
       tileHTML(it) +
-      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
+      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>" +
+      glossHTML(id);
 
     Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
       btn.addEventListener("click", function () {
@@ -1359,7 +1360,8 @@
       tileHTML(it, true) +
       wordsHTML(it) +
       contextHTML(it) +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear it again</button>';
+      '<button class="speak-btn" id="hear-btn">🔊 Hear it again</button>' +
+      glossHTML(it.id);
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });

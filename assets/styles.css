@@ -1419,3 +1419,5 @@ button.brand { background: none; border: 0; padding: 0; cursor: pointer; }
 }
 #view-setup .cta-row { margin: 0 0 22px; }
 #view-setup .builder-note { margin: 0; }
+#view-setup .setup-lang { display: grid; gap: 6px; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-faint); margin: 0 0 10px; }
+#view-setup select { font: inherit; font-family: var(--font); font-size: 15px; text-transform: none; letter-spacing: 0; padding: 10px 12px; border: var(--rule-thin); background: var(--card); color: var(--ink); box-shadow: 2px 2px 0 var(--ink); max-width: 220px; }
