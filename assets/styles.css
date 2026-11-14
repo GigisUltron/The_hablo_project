@@ -1368,3 +1368,8 @@ h1 em {
 
 /* at 1280 the whole column hugged the left edge, leaving half the page empty */
 .solo { margin: 0 auto; }
+
+/* the lesson page carries one action; the keyboard legend is a desktop note */
+@media (max-width: 900px) {
+  .kbd-hint { display: none; }
+}
