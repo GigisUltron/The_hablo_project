@@ -410,6 +410,70 @@
     }
   }
 
+  /* ------------------------------------------------------------ placement */
+
+  var placement = null;
+
+  /* Eight questions, mixed decks, hardest last. The result is a floor on the
+   * track: a false beginner should not be made to click through "casa". */
+  function startPlacement() {
+    var queue = S.shuffle(allIds, Math.random).slice(0, 4)
+      .concat(S.shuffle(phraseIds, Math.random).slice(0, 2))
+      .concat(S.shuffle(termIds, Math.random).slice(0, 2));
+
+    placement = { queue: queue, i: 0, correct: 0 };
+    show("session");
+    renderPlaceItem();
+  }
+
+  function placementFloor() {
+    return (state.placement && state.placement.floor) || 0;
+  }
+
+  function renderPlaceItem() {
+    if (!placement) return;
+    if (placement.i >= placement.queue.length) { finishPlacement(); return; }
+
+    clearCard();
+    var id = placement.queue[placement.i];
+    var it = itemOf(id);
+    var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
+
+    $("counter").textContent = (placement.i + 1) + "/" + placement.queue.length;
+    $("bar-fill").style.width = Math.round((placement.i / placement.queue.length) * 100) + "%";
+
+    $("stage").innerHTML =
+      '<p class="prompt">How much do you know?</p>' +
+      tileHTML(it) +
+      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
+
+    Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
+      btn.addEventListener("click", function () {
+        var ok = btn.getAttribute("data-id") === id;
+        if (ok) placement.correct += 1;
+        btn.classList.add(ok ? "pick-correct" : "pick-wrong");
+        markChoices(".option-word", id);
+        placement.i += 1;
+        setTimeout(renderPlaceItem, ok ? 220 : 700);
+      });
+    });
+  }
+
+  function finishPlacement() {
+    var total = placement.queue.length;
+    var ratio = placement.correct / total;
+    var floor = Math.min(TRACK.units.length - 1, Math.floor(ratio * TRACK.units.length));
+    state.placement = { floor: floor, score: placement.correct, total: total, at: Date.now() };
+    placement = null;
+    save();
+
+    show("today");
+    toast(floor > 0
+      ? "Starting at " + TRACK.units[floor].title + " — " + placement.correct + "/" + total + " right."
+      : "Starting from the beginning.");
+    renderToday();
+  }
+
   /* ---------------------------------------------------------------- track */
 
   function renderTrack() {
@@ -418,7 +482,17 @@
 
     var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
     var rows = TRACK.map(solid);
-    var cur = TRACK.currentUnit(solid);
+
+    /* the placement floor is a floor, not a ceiling: real progress still wins */
+    var bySolid = 0;
+    rows.forEach(function (r) { if (r.current) bySolid = r.index; });
+    var currentIndex = Math.max(bySolid, placementFloor());
+    var floor = placementFloor();
+
+    rows.forEach(function (r) {
+      r.unlocked = r.unlocked || r.index <= floor;
+      r.current = r.index === currentIndex;
+    });
 
     box.innerHTML = rows.map(function (u) {
       var cls = "step" + (u.unlocked ? "" : " locked") + (u.current ? " now" : "");
@@ -437,7 +511,8 @@
       });
     });
 
-    var next = rows.filter(function (u) { return !u.unlocked; })[0];
+    var cur = rows[currentIndex];
+    var next = rows.filter(function (r) { return !r.unlocked; })[0];
     $("track-note").textContent = next
       ? cur.title + " · " + next.remaining + " solid cards to " + next.title
       : "every unit open · keep them solid";
@@ -1354,11 +1429,11 @@
   });
 
   $("start-btn").addEventListener("click", function () {
-    var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
-    startSession({ unit: TRACK.currentUnit(solid) });
+    startSession({ unit: TRACK.units[Math.min(TRACK.units.length - 1, placementFloor())] });
   });
   $("build-start").addEventListener("click", function () { startSession(); });
   $("review-missed").addEventListener("click", reviewMistakes);
+  $("place-btn").addEventListener("click", startPlacement);
   $("gloss-toggle").addEventListener("click", function () {
     state.settings.translations = state.settings.translations === "off" ? "on" : "off";
     save();
@@ -1415,6 +1490,7 @@
   if (initial === "practice") startSession();
   else if (initial === "phrases") { state.settings.mode = "phrases"; save(); startSession(); }
   else if (initial === "terms") { state.settings.mode = "terms"; save(); startSession(); }
+  else if (initial === "placement") startPlacement();
   else if (initial === "quiz") startQuizOnly();
   else if (VIEWS.indexOf(initial) !== -1 && initial !== "today") show(initial);
 })();
