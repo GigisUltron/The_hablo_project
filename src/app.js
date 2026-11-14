@@ -292,7 +292,7 @@
 
   /* ---------------------------------------------------------------- views */
 
-  var VIEWS = ["today", "session", "map", "stats"];
+  var VIEWS = ["today", "session", "reader", "map", "stats"];
   var currentView = "today";
   var mapBuilt = false;
 
@@ -408,6 +408,80 @@
       var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
       sub.textContent = "60 seconds · " + TRACK.currentUnit(solid).title.toLowerCase();
     }
+  }
+
+  /* -------------------------------------------------------------- reader */
+
+  var reader = null;
+
+  function startReader() {
+    var texts = (window.SEMA_TEXTS && window.SEMA_TEXTS.texts) || [];
+    if (!texts.length) { toast("No texts yet."); return; }
+    reader = { text: texts[0], qi: 0, correct: 0 };
+    show("reader");
+    renderReaderText();
+  }
+
+  function renderReaderText() {
+    var t = reader.text;
+    $("reader-count").textContent = "level " + t.level;
+    $("reader-bar").style.width = "8%";
+    $("reader-feedback").textContent = "";
+    $("reader-stage").innerHTML =
+      '<p class="prompt">Reading</p>' +
+      '<h3 class="reader-title">' + esc(t.title) + "</h3>" +
+      '<p class="reader-body">' + esc(t.body) + "</p>";
+    $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-go">Questions →</button>';
+    $("reader-go").addEventListener("click", renderReaderQuestion);
+  }
+
+  function renderReaderQuestion() {
+    if (!reader) return;
+    if (reader.qi >= reader.text.questions.length) { finishReader(); return; }
+
+    var q = reader.text.questions[reader.qi];
+    $("reader-bar").style.width = Math.round(((reader.qi + 1) / reader.text.questions.length) * 100) + "%";
+    $("reader-count").textContent = (reader.qi + 1) + "/" + reader.text.questions.length;
+    $("reader-stage").innerHTML =
+      '<p class="prompt">' + esc(reader.text.title) + "</p>" +
+      '<p class="reader-q">' + esc(q.q) + "</p>" +
+      '<div class="word-options">' + q.options.map(function (o, i) {
+        return '<button class="option-word" data-i="' + i + '">' + esc(o) + "</button>";
+      }).join("") + "</div>";
+    $("reader-actions").innerHTML = "";
+
+    Array.prototype.forEach.call($("reader-stage").querySelectorAll(".option-word"), function (btn) {
+      btn.addEventListener("click", function () {
+        var picked = Number(btn.getAttribute("data-i"));
+        var ok = picked === q.answer;
+        if (ok) reader.correct += 1;
+        btn.classList.add(ok ? "pick-correct" : "pick-wrong");
+        Array.prototype.forEach.call($("reader-stage").querySelectorAll(".option-word"), function (b) {
+          b.disabled = true;
+          if (Number(b.getAttribute("data-i")) === q.answer) b.classList.add("pick-correct");
+        });
+        $("reader-feedback").textContent = ok ? "correct" : "the answer was: " + q.options[q.answer];
+        $("reader-feedback").className = "feedback " + (ok ? "good" : "bad");
+        reader.qi += 1;
+        $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-next">Continue →</button>';
+        $("reader-next").addEventListener("click", function () {
+          $("reader-feedback").className = "feedback";
+          renderReaderQuestion();
+        });
+      });
+    });
+  }
+
+  function finishReader() {
+    var total = reader.text.questions.length;
+    $("reader-bar").style.width = "100%";
+    $("reader-stage").innerHTML =
+      '<p class="prompt">Text finished</p>' +
+      '<div class="word">' + reader.correct + "/" + total + "</div>" +
+      '<p class="sentence">' + esc(reader.text.title) + " · level " + reader.text.level + "</p>";
+    $("reader-feedback").textContent = "";
+    $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-done">Back to today</button>';
+    $("reader-done").addEventListener("click", function () { reader = null; show("today"); });
   }
 
   /* ------------------------------------------------------------ placement */
@@ -1434,6 +1508,8 @@
   $("build-start").addEventListener("click", function () { startSession(); });
   $("review-missed").addEventListener("click", reviewMistakes);
   $("place-btn").addEventListener("click", startPlacement);
+  $("read-btn").addEventListener("click", startReader);
+  $("reader-back").addEventListener("click", function () { reader = null; show("today"); });
   $("gloss-toggle").addEventListener("click", function () {
     state.settings.translations = state.settings.translations === "off" ? "on" : "off";
     save();
@@ -1491,6 +1567,7 @@
   else if (initial === "phrases") { state.settings.mode = "phrases"; save(); startSession(); }
   else if (initial === "terms") { state.settings.mode = "terms"; save(); startSession(); }
   else if (initial === "placement") startPlacement();
+  else if (initial === "read") startReader();
   else if (initial === "quiz") startQuizOnly();
   else if (VIEWS.indexOf(initial) !== -1 && initial !== "today") show(initial);
 })();

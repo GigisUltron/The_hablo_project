@@ -81,6 +81,7 @@
             <button class="btn btn-ghost btn-sm" id="build-start">Start with these</button>
             <button class="btn btn-ghost btn-sm" id="review-missed">Review my mistakes</button>
             <button class="btn btn-ghost btn-sm" id="place-btn">Place me</button>
+            <button class="btn btn-ghost btn-sm" id="read-btn">Read a text</button>
             <button class="btn btn-ghost btn-sm" id="gloss-toggle">translations on request</button>
             <span class="builder-note" id="builder-note"></span>
           </div>
@@ -106,6 +107,21 @@
         <div class="stage" id="stage"></div>
         <p class="feedback" id="feedback"></p>
         <div class="card-actions" id="actions"></div>
+      </article>
+    </section>
+
+    <!-- =========================================================== READER -->
+    <section class="view" id="view-reader" aria-labelledby="reader-title">
+      <h2 id="reader-title" class="sr-only" hidden>Reading</h2>
+      <div class="session-head">
+        <button class="icon-btn" id="reader-back" aria-label="Back">←</button>
+        <div class="bar"><i id="reader-bar"></i></div>
+        <span class="counter" id="reader-count"></span>
+      </div>
+      <article class="card reader-card">
+        <div class="stage" id="reader-stage"></div>
+        <p class="feedback" id="reader-feedback"></p>
+        <div class="card-actions" id="reader-actions"></div>
       </article>
     </section>
 
@@ -194,6 +210,7 @@
 <script src="src/phrases.js"></script>
 <script src="src/terms.js"></script>
 <script src="src/track.js"></script>
+<script src="src/texts.js"></script>
 <script src="src/glosses.js"></script>
 <script src="assets/audio/manifest.js"></script>
 <script src="src/srs.js"></script>

@@ -1261,3 +1261,29 @@ h1 em {
 }
 .steps .step.is-current { color: var(--ink); border-color: var(--ink); background: var(--saffron); }
 .steps .step.is-done { color: var(--ink-soft); border-bottom-color: var(--ink-faint); }
+
+/* ---------------------------------------------------------------- reader */
+.reader-card { max-width: 680px; min-height: 0; padding: 28px 26px 24px; display: block; }
+.reader-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 6px 0 14px;
+}
+.reader-body {
+  font-size: 17.5px;
+  line-height: 1.6;
+  max-width: 60ch;
+  color: var(--ink);
+  text-align: left;
+}
+.reader-q {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+  max-width: 26ch;
+  text-align: center;
+}
+.reader-card .stage { align-items: flex-start; }
+.reader-card .card-actions { justify-content: flex-start; margin-top: 18px; }
