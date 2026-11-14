@@ -1087,6 +1087,9 @@
     if (currentView !== "session" || !session) return;
     if (ev.key === "Escape") { session = null; show("today"); return; }
     if (ev.key === "Enter") {
+      /* a focused button already gets its own click from Enter */
+      var t = ev.target;
+      if (t && t.closest && t.closest("button, [role=button]") && t.id !== "next") return;
       var next = $("next");
       if (next) { ev.preventDefault(); next.click(); }
       return;
