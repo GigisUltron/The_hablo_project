@@ -1194,7 +1194,7 @@
     var mode = unit ? unit.mode : (o.mode || sessionMode());
     var plan = ADAPT ? ADAPT.plan(solid) : { fresh: 4, review: 4, production: 0, size: 8, level: 1 };
     var hist = (state.history || []).map(function (h) { return typeof h === "number" ? h : h && h.size; });
-    var goal = ADAPT ? ADAPT.dailyGoal(hist) : 8;
+    var goal = ADAPT ? ADAPT.nextGoal(ADAPT.dailyGoal(hist), hist.slice(-3)) : 8;
     var size = o.size || (o.custom ? lessonSize() : Math.min(plan.size + 2, goal));
     var fields = unit && unit.fields ? unit.fields : selectedFields();
     var now = Date.now();
