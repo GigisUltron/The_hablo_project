@@ -24,7 +24,9 @@ test("every phrase has a gloss", () => {
 test("glosses are non-empty english-ish text", () => {
   for (const [id, value] of Object.entries(G)) {
     assert.equal(typeof value, "string", `${id} is not a string`);
-    assert.ok(value.trim().length >= 2, `${id} gloss too short`);
+    // "I" is a complete English gloss; two characters is not what makes it useful.
+    const SHORT_OK = new Set(["I"]);
+    assert.ok(value.trim().length >= 2 || SHORT_OK.has(value.trim()), `${id} gloss too short`);
   }
 });
 
