@@ -1,0 +1,31 @@
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const B = require("../src/lang/es/basics.js");
+
+test("every item is complete and typed", () => {
+  for (const b of B.items) {
+    assert.match(b.id, /^b-[a-z]+$/);
+    assert.ok(b.text && b.text.length > 1, b.id);
+    assert.ok(b.gloss && b.gloss.length > 0, b.id);
+    assert.ok(["pronoun", "verb"].includes(b.kind), b.id);
+    assert.ok(["1s", "2s", "3s", "1p", "3p"].includes(b.person), b.id);
+  }
+});
+
+test("ids and texts are unique", () => {
+  assert.equal(new Set(B.items.map((i) => i.id)).size, B.items.length);
+  assert.equal(new Set(B.items.map((i) => i.text)).size, B.items.length);
+});
+
+test("ser and estar are complete for the persons taught", () => {
+  for (const row of B.rows) {
+    assert.equal(row.forms.length, 5, row.verb);
+    const verbs = B.items.filter((i) => i.of === row.verb).map((i) => i.text);
+    assert.deepEqual(verbs.sort(), row.forms.slice().sort(), row.verb);
+  }
+});
+
+test("no pronouns or forms collide with the phrase deck", () => {
+  const P = require("../src/lang/es/phrases.js").phrases.map((p) => p.text.toLowerCase());
+  for (const b of B.items) assert.equal(P.includes(b.text.toLowerCase()), false, b.text);
+});
