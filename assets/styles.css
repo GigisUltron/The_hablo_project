@@ -1203,3 +1203,40 @@ h1 em {
 }
 .gloss-btn { font-size: 9px; padding: 4px 7px; opacity: 0.75; }
 .gloss-btn:hover { opacity: 1; }
+
+/* ------------------------------------------------------------ the track */
+.track {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 26px;
+  max-width: 720px;
+}
+.step {
+  flex: 1 1 120px;
+  min-height: 52px;
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  border: var(--rule-thin);
+  background: var(--card);
+  padding: 7px 10px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--ink);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+.step:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+.step .step-n { font-family: var(--mono); font-size: 9px; color: var(--ink-faint); }
+.step .step-t { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; }
+.step.now { background: var(--saffron); }
+.step.locked { opacity: 0.45; cursor: default; box-shadow: none; }
+.step.locked:hover { transform: none; }
+.track-note {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-top: 8px;
+}

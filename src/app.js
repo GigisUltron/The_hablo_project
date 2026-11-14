@@ -12,6 +12,7 @@
   var D = window.SEMA_DATA;
   var S = window.SemaSRS;
   var MEM = window.SemaMemory;
+  var TRACK = window.SemaTrack;
   var STORE_KEY = "sema.v1";
   var LANG = D.language;
 
@@ -386,6 +387,7 @@
 
   function renderToday() {
     renderBuilder();
+    renderTrack();
 
     var due = S.dueList(state, Date.now()).filter(function (id) {
       return state.cards[id] && state.cards[id].last !== null;
@@ -401,16 +403,44 @@
 
     $("start-label").textContent = due > 0 ? "Start lesson · " + due + " due" : "Start lesson";
 
-    var learned = S.learnedCount(state);
-    var stage = learned < 10 ? 1 : learned < 30 ? 2 : 3;
     var sub = $("start-btn").querySelector("small");
-    if (sub) {
-      sub.textContent = stage === 1
-        ? "60 seconds · start with 8"
-        : stage === 2
-          ? "60 seconds · mixed review"
-          : "60 seconds · words + phrases";
+    if (sub && TRACK) {
+      var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
+      sub.textContent = "60 seconds · " + TRACK.currentUnit(solid).title.toLowerCase();
     }
+  }
+
+  /* ---------------------------------------------------------------- track */
+
+  function renderTrack() {
+    var box = $("track");
+    if (!box || !TRACK) return;
+
+    var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
+    var rows = TRACK.map(solid);
+    var cur = TRACK.currentUnit(solid);
+
+    box.innerHTML = rows.map(function (u) {
+      var cls = "step" + (u.unlocked ? "" : " locked") + (u.current ? " now" : "");
+      return '<button class="' + cls + '" type="button" data-unit="' + esc(u.id) + '"' +
+        (u.unlocked ? "" : " disabled") + ">" +
+        '<span class="step-n">' + (u.unlocked ? u.index + 1 : "·") + "</span>" +
+        '<span class="step-t">' + esc(u.title) + "</span>" +
+      "</button>";
+    }).join("");
+
+    Array.prototype.forEach.call(box.querySelectorAll(".step"), function (b) {
+      b.addEventListener("click", function () {
+        var id = b.getAttribute("data-unit");
+        var unit = TRACK.units.filter(function (u) { return u.id === id; })[0];
+        if (unit) startSession({ unit: unit });
+      });
+    });
+
+    var next = rows.filter(function (u) { return !u.unlocked; })[0];
+    $("track-note").textContent = next
+      ? cur.title + " · " + next.remaining + " solid cards to " + next.title
+      : "every unit open · keep them solid";
   }
 
   /* --------------------------------------------------------------- streak */
@@ -584,9 +614,10 @@
 
   function startSession(opts) {
     var o = opts || {};
-    var mode = o.mode || sessionMode();
+    var unit = o.unit || null;
+    var mode = unit ? unit.mode : (o.mode || sessionMode());
     var size = o.size || lessonSize();
-    var fields = selectedFields();
+    var fields = unit && unit.fields ? unit.fields : selectedFields();
     var now = Date.now();
 
     var pool = mode === "phrases"
@@ -1301,7 +1332,10 @@
     b.addEventListener("click", function () { show(b.getAttribute("data-goto")); });
   });
 
-  $("start-btn").addEventListener("click", function () { startSession(); });
+  $("start-btn").addEventListener("click", function () {
+    var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
+    startSession({ unit: TRACK.currentUnit(solid) });
+  });
   $("build-start").addEventListener("click", function () { startSession(); });
   $("review-missed").addEventListener("click", reviewMistakes);
   $("gloss-toggle").addEventListener("click", function () {
