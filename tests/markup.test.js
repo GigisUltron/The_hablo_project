@@ -554,3 +554,13 @@ test("writing practice only reaches a deck whose script is not Latin", () => {
     assert.ok(count(code) > 0, code + " should have writing material");
   }
 });
+
+test("the map shows the reading where there is room, and keeps nodes plain", () => {
+  // The list and the info panel route through the shared helper...
+  assert.match(app, /textHTML\(itemOf\(c\.id\)\)/, "the map list/info bypass the ruby helper");
+  // ...the SVG node is a fixed circle, so its label stays plain text and the
+  // reading rides along in the accessible name and the tooltip instead.
+  assert.match(app, /aria-label", c\.word \+ \(c\.sub/, "map nodes lose the reading for screen readers");
+  assert.match(app, /createElementNS\(svgNS, "title"\)/, "no tooltip reading on the node");
+  assert.match(app, /ruby would overflow/, "the reason nodes stay plain is not written down");
+});

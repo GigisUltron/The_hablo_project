@@ -3187,7 +3187,13 @@
       g.setAttribute("data-id", c.id);
       g.setAttribute("tabindex", "0");
       g.setAttribute("role", "button");
-      g.setAttribute("aria-label", c.word);
+      /* a node is a fixed 21px circle: ruby would overflow it, so the label stays
+       * plain and the reading rides along in the accessible name and the tooltip.
+       * The list and the info panel, where there is room, do use ruby. */
+      g.setAttribute("aria-label", c.word + (c.sub ? " — " + c.sub : ""));
+      var tip = document.createElementNS(svgNS, "title");
+      tip.textContent = c.word + (c.sub ? " (" + c.sub + ")" : "");
+      g.appendChild(tip);
 
       var halo = document.createElementNS(svgNS, "circle");
       halo.setAttribute("class", "halo");
