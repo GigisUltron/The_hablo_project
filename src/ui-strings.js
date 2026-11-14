@@ -17,7 +17,10 @@ var SEMA_UI = {
     translationsOn: "translations on request",
     translationsOff: "translations off",
     oneMore: "One more",
-    leave: "done for now"
+    leave: "done for now",
+    tabToday: "Today",
+    tabMap: "Map",
+    tabProgress: "Progress"
   },
   es: {
     start: "Empezar lección",
@@ -31,7 +34,10 @@ var SEMA_UI = {
     translationsOn: "traducciones a petición",
     translationsOff: "traducciones desactivadas",
     oneMore: "Una más",
-    leave: "por ahora no"
+    leave: "por ahora no",
+    tabToday: "Hoy",
+    tabMap: "Mapa",
+    tabProgress: "Progreso"
   }
 };
 
