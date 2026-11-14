@@ -205,6 +205,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/lang/en/audio.js",
     "src/ui-langs.js",
     "src/ruby.js",
+    "src/writing.js",
     "src/ui-strings.js",
     "src/srs.js",
     "src/memory.js",
@@ -519,4 +520,37 @@ test("pinyin sits under the character only when the syllables line up", () => {
   // the renderers use the helper and fall back to plain text
   assert.match(app, /RUBY\.html\(it\.text, it\.sub\)/, "the reader aid is never built");
   assert.match(app, /function textHTML\(it\)/, "no shared text renderer");
+});
+
+test("writing grades the characters, not the drawing", () => {
+  const W = require("../src/writing.js");
+
+  assert.equal(W.grade("你好", "你好").ok, true, "exact characters pass");
+  assert.equal(W.grade("  你 好 ！ ", "你好").ok, true, "spacing and punctuation are not the answer");
+  assert.equal(W.grade("你好。", "你好").ok, true, "a full stop is not the answer either");
+  assert.equal(W.grade("你号", "你好").ok, false, "a different character fails");
+  assert.equal(W.grade("ni hao", "你好").reason, "latin-only", "letters are not the characters");
+  assert.equal(W.grade("", "你好").reason, "empty");
+  assert.equal(W.grade("nǐ hǎo", "你好").reason, "latin-only", "pinyin is not the characters");
+
+  assert.match(app, /function startWriting\(/, "no writing lesson");
+  assert.match(app, /function startScriptLesson\(/, "the script unit does not lead to writing");
+  assert.match(app, /S\.review\(state, it\.id, ok \? 2 : 0/, "writing never reaches the SRS");
+  assert.equal(/<canvas/i.test(app + html), false, "no undrawable trace practice");
+});
+
+test("writing practice only reaches a deck whose script is not Latin", () => {
+  const W = require("../src/writing.js");
+
+  function count(code) {
+    const C = require("../src/lang/" + code + "/concepts.js").concepts.map((c) => ({ text: c.word, sub: c.sub }));
+    const P = require("../src/lang/" + code + "/phrases.js").phrases.map((p) => ({ text: p.text, sub: p.sub }));
+    return W.candidates(C.concat(P)).length;
+  }
+
+  assert.equal(count("es"), 0, "a Latin deck has nothing to recall here");
+  assert.equal(count("fr"), 0, "a Latin deck has nothing to recall here");
+  for (const code of ["zh", "ja", "ru", "ar", "hi"]) {
+    assert.ok(count(code) > 0, code + " should have writing material");
+  }
 });

@@ -510,6 +510,11 @@ ruby rt {
   text-transform: none;
 }
 
+/* writing practice: the reading to produce, then the meaning */
+.writing-pinyin { font-size: clamp(30px, 7vw, 40px); font-weight: 700; color: var(--text-3); letter-spacing: 0; }
+.writing-gloss { font-size: 17px; color: var(--text-2); }
+.writing-hint { font-size: 13px; color: var(--text-3); }
+
 .speak-btn, .mic {
   align-self: flex-start;
   border: 0;
@@ -1393,6 +1398,12 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.bubble-pinyin {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-2);
+}
+.bubble.mine .bubble-pinyin { color: var(--on-accent); }
 .bubble-img {
   display: block;
   width: 100%;

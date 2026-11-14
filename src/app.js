@@ -18,6 +18,7 @@
    * through these tables, never through a literal. */
   var UI_LANGS = window.SEMA_UI_LANGS || {};
   var RUBY = window.SemaRuby;
+  var WRITING = window.SemaWriting;
 
   var uiCache = {};
 
@@ -1031,14 +1032,212 @@
       save();
     }
 
-    /* never a dead end: more letters, or back to today */
+    /* never a dead end: more letters, then writing, or back to today */
     var more = alphabetKnown() < scriptLetters().length;
+    var canWrite = !more && writingPool().length > 0;
     $("alphabet-actions").innerHTML =
       '<button class="btn btn-primary" id="alphabet-again">' +
-        esc(more ? tr("nextLetter", "Next letter") : tr("start", "Start lesson")) + "</button>" +
+        esc(more ? tr("nextLetter", "Next letter") : canWrite ? "Write the characters" : tr("start", "Start lesson")) + "</button>" +
       '<button class="btn btn-ghost btn-sm" id="alphabet-done" type="button">' + esc(tr("leave", "done for now")) + "</button>";
-    $("alphabet-again").addEventListener("click", startAlphabet);
+    $("alphabet-again").addEventListener("click", function () {
+      if (canWrite) startWriting();
+      else startAlphabet();
+    });
     $("alphabet-done").addEventListener("click", function () { alphabet = null; show("today"); });
+  }
+
+  /* --------------------------------------------------------------- writing */
+
+  /* Writing practice exists only where the script does: the pool is built from
+   * items whose text is not Latin and that carry a reading. A Latin deck has no
+   * candidates, so the lesson cannot appear there by accident. Nothing here
+   * grades how a character is drawn - only whether it was produced. */
+  var writing = null;
+  var WRITING_SIZE = 6;
+
+  /* Only items whose `sub` is a reading, never a gloss: a concept's word or a
+   * phrase's text. Basics carry an English gloss in `sub`, terms a frame, so
+   * they are not writing material. */
+  function writingItem(id) {
+    var c = conceptById[id];
+    var p = phraseById[id];
+    var text = c ? c.word : p ? p.text : "";
+    var sub = c ? c.sub : p ? p.sub : "";
+    return {
+      id: id,
+      text: text || "",
+      sub: sub || "",
+      gloss: (ACTIVE && ACTIVE.glosses && ACTIVE.glosses[id]) || ""
+    };
+  }
+
+  function writingPool() {
+    if (!WRITING) return [];
+    var items = allIds.concat(phraseIds).map(writingItem);
+    return WRITING.candidates(items).filter(function (it) { return atLevel(it.id); });
+  }
+
+  /* The script lesson: letters first, writing once they are all known. */
+  function startScriptLesson() {
+    if (alphabetDone() && writingPool().length) { startWriting(); return; }
+    startAlphabet();
+  }
+
+  function writingQueue() {
+    var pool = writingPool();
+    var fresh = [], seen = [];
+    S.shuffle(pool, Math.random).forEach(function (it) {
+      var card = state.cards[it.id];
+      (card && card.reps > 0 ? seen : fresh).push(it);
+    });
+    return fresh.concat(seen).slice(0, WRITING_SIZE);
+  }
+
+  function startWriting() {
+    var queue = writingQueue();
+    if (!queue.length) { toast("This deck has no writing practice yet."); return; }
+    writing = {
+      queue: queue, i: 0, firstCorrect: 0, missed: {}, done: false,
+      answers: S.shuffle(queue.map(function (it) { return it.sub; }), Math.random),
+      startedAt: Date.now()
+    };
+    show("session");
+    renderWritingCard();
+  }
+
+  function writingGloss(it) {
+    return it.gloss || "";
+  }
+
+  function renderWritingCard() {
+    if (!writing) return;
+    if (writing.i >= writing.queue.length) { finishWriting(); return; }
+
+    var it = writing.queue[writing.i];
+    clearCard();
+    $("counter").textContent = (writing.i + 1) + " of " + writing.queue.length;
+    $("bar-fill").style.width = Math.round((writing.i / writing.queue.length) * 100) + "%";
+
+    /* recognise first: reading the script has to come before producing it */
+    if (writing.i % 2 === 0 || !WRITING.canRecall(it)) renderWritingRecognise(it);
+    else renderWritingRecall(it);
+  }
+
+  function renderWritingRecall(it) {
+    $("stage").innerHTML =
+      '<p class="prompt">Write it</p>' +
+      '<div class="writing-pinyin">' + esc(it.sub) + "</div>" +
+      (writingGloss(it) ? '<p class="writing-gloss">' + esc(writingGloss(it)) + "</p>" : "") +
+      '<input class="type-input" id="type-input" type="text" autocomplete="off" ' +
+        'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
+        'aria-label="the characters" placeholder="the characters" />' +
+      '<p class="writing-hint">type or paste the characters</p>' +
+      '<button class="btn btn-primary" id="write-check">Check</button>';
+
+    var input = $("type-input");
+    if (input) {
+      input.focus();
+      input.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") { ev.preventDefault(); checkWriting(it, input.value); }
+      });
+    }
+    $("write-check").addEventListener("click", function () {
+      checkWriting(it, input ? input.value : "");
+    });
+  }
+
+  function checkWriting(it, answer) {
+    var result = WRITING.grade(answer, it.text);
+    if (result.reason === "empty") { toast("Type or paste the characters."); return; }
+    if (result.reason === "latin-only") {
+      toast("These characters are not on a Latin keyboard — paste them.");
+      return;
+    }
+    if (!result.ok) {
+      $("stage").innerHTML += '<p class="sentence">the answer was ' + textHTML(it) + "</p>";
+    }
+    writingResult(it, result.ok, result.ok ? "correct" : "not quite");
+  }
+
+  function renderWritingRecognise(it) {
+    var seen = {};
+    var set = [it.sub];
+    seen[it.sub] = true;
+    writing.answers.forEach(function (sub) {
+      if (set.length >= 4 || seen[sub]) return;
+      seen[sub] = true;
+      set.push(sub);
+    });
+    if (set.length < 4) {
+      writingPool().forEach(function (other) {
+        if (set.length >= 4 || seen[other.sub]) return;
+        seen[other.sub] = true;
+        set.push(other.sub);
+      });
+    }
+
+    $("stage").innerHTML =
+      '<p class="prompt">Which reading?</p>' +
+      '<div class="word">' + esc(it.text) + "</div>" +
+      '<div class="word-options">' + S.shuffle(set, Math.random).map(function (sub) {
+        return '<button class="option-word" data-sub="' + esc(sub) + '">' + esc(sub) + "</button>";
+      }).join("") + "</div>";
+    $("actions").innerHTML = "";
+
+    Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
+      btn.addEventListener("click", function () {
+        var ok = btn.getAttribute("data-sub") === it.sub;
+        Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (b) {
+          b.disabled = true;
+          if (b.getAttribute("data-sub") === it.sub) b.classList.add("pick-correct");
+        });
+        if (!ok) btn.classList.add("pick-wrong");
+        writingResult(it, ok, ok ? "correct" : "the answer was " + it.sub);
+      });
+    });
+  }
+
+  function writingResult(it, ok, message) {
+    if (ok) writing.firstCorrect += 1;
+    else writing.missed[it.id] = true;
+    S.review(state, it.id, ok ? 2 : 0, Date.now());
+    save();
+
+    $("feedback").textContent = message;
+    $("feedback").className = "feedback " + (ok ? "good" : "bad");
+    $("actions").innerHTML = '<button class="btn btn-primary" id="next">Continue</button>';
+    $("next").addEventListener("click", function () {
+      writing.i += 1;
+      renderWritingCard();
+    });
+  }
+
+  function finishWriting() {
+    var total = writing.queue.length;
+    var good = writing.firstCorrect;
+    state.history = state.history || [];
+    state.history.push(total);
+    if (state.history.length > 50) state.history = state.history.slice(-50);
+    state.sessions += 1;
+    state.lastSession = Date.now();
+    bumpStreak();
+    save();
+
+    $("bar-fill").style.width = "100%";
+    $("counter").textContent = String(total);
+    $("card").classList.add("is-summary");
+    $("feedback").textContent = "";
+    $("feedback").className = "feedback";
+    $("stage").innerHTML =
+      '<p class="prompt">Writing done</p>' +
+      '<p class="sum-big">' + good + "/" + total + "</p>" +
+      '<p class="sum-line">' + (total === 1 ? "character" : "characters") + " written</p>" +
+      '<p class="sum-meta">each one comes back as a card, exactly like a word</p>';
+    $("actions").innerHTML =
+      '<button class="btn btn-primary" id="writing-again">Write more</button>' +
+      '<button class="btn btn-ghost btn-sm" id="writing-done" type="button">done for now</button>';
+    $("writing-again").addEventListener("click", startWriting);
+    $("writing-done").addEventListener("click", function () { writing = null; show("today"); });
   }
 
   /* --------------------------------------------------------- conversation */
@@ -2178,7 +2377,7 @@
 
     /* reading and the script open their own screens; both are lessons */
     if (p.read) { startReader(); return; }
-    if (p.script) { startAlphabet(); return; }
+    if (p.script) { startScriptLesson(); return; }
 
     var queue = p.queue.slice();
 
@@ -3301,6 +3500,7 @@
   if (initial === "practice") startSession();
   else if (initial === "placement") startPlacement();
   else if (initial === "read") startReader();
+  else if (initial === "writing") startScriptLesson();
   else if (initial === "chat" || initial === "conv") startConversation();
   else if (initial === "write") {
     session = newSession("words", [], S.shuffle(allIds, Math.random).slice(0, 6));
