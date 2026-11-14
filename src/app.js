@@ -2331,4 +2331,5 @@
   else if (initial === "quiz") startQuizOnly();
   else if (DEMO) startDemo();
   else if (VIEWS.indexOf(initial) !== -1 && initial !== "today") show(initial);
+  applyStrings();
 })();
