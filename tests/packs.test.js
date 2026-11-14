@@ -108,12 +108,20 @@ test("every pack reads a text and can answer two questions about it", () => {
     assert.ok(texts.length >= 1, `${code} has no text`);
     for (const text of texts) {
       assert.ok(text.id && text.title && text.body, `${code}: incomplete text`);
-      assert.ok(text.questions.length >= 2, `${code}/${text.id}: only ${text.questions.length} questions`);
+      assert.ok(text.questions.length >= 3, `${code}/${text.id}: only ${text.questions.length} questions`);
+      const length = ["ja", "zh"].includes(code)
+        ? text.body.replace(/\s+/g, "").length
+        : text.body.trim().split(/\s+/).length;
+      assert.ok(length >= 60 && length <= 200, `${code}/${text.id}: ${length} units, expected 60-200`);
       for (const q of text.questions) {
         assert.match(q.q, /[?？؟。]\s*$/, `${code}/${text.id}: question must end with a question mark`);
         assert.ok(q.options.length >= 2, `${code}/${text.id}: too few options`);
         assert.equal(new Set(q.options).size, q.options.length, `${code}/${text.id}: duplicate options`);
         assert.ok(q.answer >= 0 && q.answer < q.options.length, `${code}/${text.id}: answer out of range`);
+        assert.equal(q.why.length, q.options.length, `${code}/${text.id}: one why per option`);
+        for (let i = 0; i < q.options.length; i += 1) {
+          if (i !== q.answer) assert.ok(q.why[i], `${code}/${text.id}: no why for wrong option ${i}`);
+        }
       }
     }
   }
