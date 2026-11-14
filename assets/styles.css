@@ -1381,3 +1381,12 @@ h1 em {
    so the three step chips were saying it a third time */
 .steps { display: none; }
 button.brand { background: none; border: 0; padding: 0; cursor: pointer; }
+
+/* ------------------------------------------------------- conversation */
+.conv-card { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; }
+.chat { display: flex; flex-direction: column; gap: 8px; max-height: 46vh; overflow-y: auto; width: 100%; padding: 4px 2px; }
+.bubble { max-width: 82%; padding: 10px 14px; border: var(--rule-thin); background: var(--paper); box-shadow: 2px 2px 0 var(--ink); font-size: 16px; }
+.bubble.mine { align-self: flex-end; background: var(--saffron); }
+#conv-stage { display: flex; gap: 8px; width: 100%; margin-top: 12px; }
+#conv-stage .type-input { flex: 1; max-width: none; }
+#conv-stage .btn { white-space: nowrap; }

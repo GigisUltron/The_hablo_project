@@ -15,6 +15,7 @@
   var TRACK = window.SemaTrack;
   var ADAPT = window.SemaAdaptive;
   var CORRECT = window.SemaCorrect;
+  var CONV = window.SemaConv;
   var STORE_KEY = "sema.v1";
   var LANG = D.language;
 
@@ -294,7 +295,7 @@
 
   /* ---------------------------------------------------------------- views */
 
-  var VIEWS = ["today", "session", "reader", "settings", "map", "stats"];
+  var VIEWS = ["today", "session", "reader", "conv", "settings", "map", "stats"];
   var currentView = "today";
   var mapBuilt = false;
 
@@ -485,6 +486,69 @@
     $("reader-feedback").textContent = "";
     $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-done">Back to today</button>';
     $("reader-done").addEventListener("click", function () { reader = null; show("today"); });
+  }
+
+  /* --------------------------------------------------------- conversation */
+
+  var conv = null;
+
+  function startConversation() {
+    conv = CONV.start("cv-first-meeting");
+    show("conv");
+    $("chat").innerHTML = "";
+    renderTurn();
+  }
+
+  function bubble(text, mine) {
+    var el = document.createElement("p");
+    el.className = "bubble" + (mine ? " mine" : "");
+    el.textContent = text;
+    $("chat").appendChild(el);
+    $("chat").scrollTop = $("chat").scrollHeight;
+  }
+
+  function renderTurn() {
+    var t = conv.dialogue.turns[conv.turn];
+    if (!t) { finishConv(); return; }
+    bubble(t.es, false);
+    $("conv-count").textContent = (conv.turn + 1) + "/" + conv.dialogue.turns.length;
+    $("conv-bar").style.width = Math.round((conv.turn / conv.dialogue.turns.length) * 100) + "%";
+    $("conv-feedback").textContent = "";
+    if (!t.expects.length) { finishConv(); return; }
+    $("conv-stage").innerHTML =
+      '<input class="type-input" id="conv-input" type="text" autocomplete="off" placeholder="reply in spanish" aria-label="your reply" />' +
+      '<button class="btn btn-primary" id="conv-send">Send</button>';
+    var input = $("conv-input");
+    input.focus();
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") sendReply(); });
+    $("conv-send").addEventListener("click", sendReply);
+  }
+
+  function sendReply() {
+    var t = conv.dialogue.turns[conv.turn];
+    var el = $("conv-input");
+    var said = el ? el.value : "";
+    if (!said.trim()) return;
+    bubble(said.trim(), true);
+    if (CONV.fits(said, t)) {
+      $("conv-feedback").className = "feedback good";
+      $("conv-feedback").textContent = "that works";
+      conv.turn += 1;
+      setTimeout(renderTurn, 400);
+    } else {
+      conv.misses += 1;
+      $("conv-feedback").className = "feedback bad";
+      $("conv-feedback").textContent = "try: " + t.reply;
+      if (el) { el.value = ""; el.focus(); }
+    }
+  }
+
+  function finishConv() {
+    $("conv-bar").style.width = "100%";
+    $("conv-count").textContent = "done";
+    $("conv-stage").innerHTML = "";
+    $("conv-feedback").className = "feedback good";
+    $("conv-feedback").textContent = "conversation complete · " + conv.misses + " retries";
   }
 
   /* ------------------------------------------------------------ placement */
@@ -1559,6 +1623,8 @@
   $("place-btn").addEventListener("click", startPlacement);
   $("read-btn").addEventListener("click", startReader);
   $("settings-btn").addEventListener("click", function () { show("settings"); });
+  $("conv-btn").addEventListener("click", startConversation);
+  $("conv-back").addEventListener("click", function () { conv = null; show("today"); });
   $("settings-back").addEventListener("click", function () { show("today"); });
   $("reader-back").addEventListener("click", function () { reader = null; show("today"); });
   $("gloss-toggle").addEventListener("click", function () {
@@ -1619,6 +1685,7 @@
   else if (initial === "terms") { state.settings.mode = "terms"; save(); startSession(); }
   else if (initial === "placement") startPlacement();
   else if (initial === "read") startReader();
+  else if (initial === "chat") startConversation();
   else if (initial === "write") {
     session = newSession("words", [], S.shuffle(allIds, Math.random).slice(0, 6));
     session.forceWrite = true;
