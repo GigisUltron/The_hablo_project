@@ -70,6 +70,12 @@
     });
   }
 
+  /* Line icons drawn inline: nothing to fetch, and they take the text colour. */
+  var ICON = {
+    speaker: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 010 6M18.5 6.5a7.5 7.5 0 010 11"/></svg>',
+    mic: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>'
+  };
+
   function neighboursOf(id) {
     return (neighbours[id] || []).map(function (n) { return n.id; });
   }
@@ -409,9 +415,43 @@
     $("stat-total").textContent = allIds.length;
     $("stat-streak").textContent = currentStreak();
     $("stat-mastered").textContent = mastered;
+    $("known-bar").style.width = Math.round((known / Math.max(allIds.length, 1)) * 100) + "%";
+    $("today-date").textContent = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
-    var caption = renderNextStack();
-    $("start-sub").textContent = (caption ? caption + " · " : "") + "about a minute";
+    var next = renderNextStack();
+    $("lesson-name").textContent = next.title;
+    $("start-sub").textContent = next.caption || "Nothing new or due. Practise anything.";
+    renderReviewList();
+  }
+
+  /* What the schedule brings back next, soonest first. */
+  function renderReviewList() {
+    var box = $("review-list");
+    var now = Date.now();
+    var ids = allIds.concat(phraseIds).filter(function (id) {
+      return state.cards[id] && state.cards[id].last !== null;
+    }).sort(function (a, b) {
+      return state.cards[a].due - state.cards[b].due;
+    }).slice(0, 4);
+
+    if (!ids.length) {
+      box.innerHTML = '<p class="list-empty">Words you learn come back here when they are due.</p>';
+      return;
+    }
+    box.innerHTML = ids.map(function (id) {
+      var it = itemOf(id);
+      var due = state.cards[id].due;
+      return '<div class="row">' +
+        '<span class="row-pic" aria-hidden="true">' + it.emoji + "</span>" +
+        '<span class="row-body">' +
+          '<span class="row-main">' + (it.article ? '<span class="art">' + esc(it.article) + "</span> " : "") + esc(it.text) + "</span>" +
+          '<span class="row-meta">' + (due <= now ? "Now" : capital(whenFrom(due - now))) + "</span>" +
+        "</span></div>";
+    }).join("");
+  }
+
+  function capital(s) {
+    return s.charAt(0).toUpperCase() + s.slice(1);
   }
 
   /* --------------------------------------------------------------- streak */
@@ -535,28 +575,39 @@
     return { pool: pool, due: due, fresh: planned.fresh };
   }
 
-  /* The start card shows the pictures the next lesson opens with, and
-   * returns a line saying what is in it. */
+  /* The lesson card shows the pictures the next lesson opens with, and
+   * returns its name and a line saying what is in it. */
   function renderNextStack() {
     var box = $("next-stack");
-    var ids, caption;
+    var ids, title, caption;
     var scene = sessionMode() === "phrases" && nextScene();
     if (scene) {
       ids = scene.lines;
-      caption = scene.title;
+      title = scene.title;
+      caption = scene.lines.length + " lines of one conversation";
     } else {
       var plan = lessonPlan(sessionMode(), lessonSize(), Date.now());
       /* new cards are always taught; reviews can be trimmed to the lesson size */
-      ids = plan.fresh.length ? plan.fresh : plan.due;
-      caption = [plan.fresh.length ? plan.fresh.length + " new" : "",
-        plan.due.length ? plan.due.length + " to review" : ""].filter(Boolean).join(" · ");
+      ids = plan.fresh.concat(plan.due);
+      title = lessonTitle(plan);
+      caption = [plan.fresh.length ? plan.fresh.length + " new word" + (plan.fresh.length === 1 ? "" : "s") : "",
+        plan.due.length ? plan.due.length + " to review" : ""].filter(Boolean).join(", ");
     }
     if (box) {
-      box.innerHTML = ids.slice(0, 3).map(function (id) {
+      box.innerHTML = ids.slice(0, 5).map(function (id) {
         return '<span class="pic">' + itemOf(id).emoji + "</span>";
       }).join("");
     }
-    return caption;
+    return { title: title, caption: caption };
+  }
+
+  /* Named after the field its new words come from, the way a course names a unit. */
+  function lessonTitle(plan) {
+    if (sessionMode() === "phrases") return "Phrases";
+    if (!plan.fresh.length) return plan.due.length ? "Review" : "Practice";
+    var cats = plan.fresh.map(function (id) { return conceptById[id] && conceptById[id].cat; });
+    var same = cats.every(function (c) { return c === cats[0]; });
+    return same && D.categories[cats[0]] ? D.categories[cats[0]].label : "New words";
   }
 
   function startSession(opts) {
@@ -714,7 +765,7 @@
   function setProgress() {
     var n = Math.max(totalSteps(), 1);
     var done = Math.min(doneSteps(), n);
-    $("counter").textContent = Math.min(done + 1, n) + "/" + n;
+    $("counter").textContent = Math.min(done + 1, n) + " of " + n;
     $("bar-fill").style.width = Math.round((done / n) * 100) + "%";
   }
 
@@ -742,14 +793,14 @@
       '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
       wordsHTML(it) +
       contextHTML(it) +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>';
+      '<button class="speak-btn" id="hear-btn">' + ICON.speaker + 'Hear it</button>';
     markScene(it.id, true);
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
 
     $("actions").innerHTML = '<button class="btn btn-primary" id="next">' +
-      (last ? "Start the quiz →" : "Next →") + "</button>";
+      (last ? "Start the quiz" : "Next") + "</button>";
     $("next").addEventListener("click", function () {
       session.si += 1;
       if (session.si < session.study.length) renderStudy();
@@ -786,13 +837,16 @@
     markScene(id, type !== "pick-picture");
   }
 
-  function optionHTML(id) {
+  /* The number on each option is also its key: 1–4 answer from the keyboard. */
+  function optionHTML(id, i) {
     var it = itemOf(id);
     /* phrases share one size, so four options never look like four fonts */
     var long = it.kind === "phrase" ? " phrase" : it.text.length > 16 ? " long" : "";
     return '<button class="option-word' + long + '" data-id="' + esc(id) + '">' +
-      (it.article ? '<span class="art">' + esc(it.article) + "</span>" : "") +
-      esc(it.text) + "</button>";
+      '<span class="key" aria-hidden="true">' + (i + 1) + "</span>" +
+      '<span class="opt-text">' +
+        (it.article ? '<span class="art">' + esc(it.article) + "</span> " : "") +
+        esc(it.text) + "</span></button>";
   }
 
   function markChoices(cls, targetId) {
@@ -809,7 +863,7 @@
     $("stage").innerHTML =
       '<p class="prompt">Which one is this?</p>' +
       '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
+      '<button class="speak-btn" id="hear-btn">' + ICON.speaker + 'Hear it</button>' +
       '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
 
     sayItem(it);
@@ -837,7 +891,7 @@
         return '<button class="option" data-id="' + esc(o) + '" aria-label="Choose this picture">' +
           '<span aria-hidden="true">' + itemOf(o).emoji + "</span></button>";
       }).join("") + "</div>" +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>';
+      '<button class="speak-btn" id="hear-btn">' + ICON.speaker + 'Hear it</button>';
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
@@ -859,8 +913,8 @@
     $("stage").innerHTML =
       '<p class="prompt">Say it in ' + esc(LANG.name) + "</p>" +
       '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
-      (SR ? '<button class="mic" id="mic-btn">🎙 Say it aloud</button>' : "") +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
+      (SR ? '<button class="mic" id="mic-btn">' + ICON.mic + 'Say it aloud</button>' : "") +
+      '<button class="speak-btn" id="hear-btn">' + ICON.speaker + 'Hear it</button>' +
       '<p class="score" id="score"></p>';
 
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
@@ -875,12 +929,12 @@
       });
       if (started) {
         btn.classList.add("is-live");
-        btn.textContent = "🎙 Listening…";
+        btn.innerHTML = ICON.mic + "Listening…";
         var reset = setInterval(function () {
           if (!listening) {
             clearInterval(reset);
             btn.classList.remove("is-live");
-            btn.textContent = "🎙 Say it aloud";
+            btn.innerHTML = ICON.mic + "Say it aloud";
           }
         }, 400);
       }
@@ -923,7 +977,7 @@
       '<div class="tile sm" aria-hidden="true">' + it.emoji + "</div>" +
       wordsHTML(it) +
       contextHTML(it) +
-      '<button class="speak-btn" id="hear-btn">🔊 Hear it again</button>';
+      '<button class="speak-btn" id="hear-btn">' + ICON.speaker + 'Hear it again</button>';
     markScene(it.id, true);
 
     sayItem(it);
@@ -931,7 +985,7 @@
 
     feedback(ok ? "got it" : "it comes back at the end", ok ? "good" : "bad");
 
-    $("actions").innerHTML = '<button class="btn btn-primary" id="next">Continue →</button>';
+    $("actions").innerHTML = '<button class="btn btn-primary" id="next">Continue</button>';
     $("next").addEventListener("click", function () {
       session.qi += 1;
       renderQuiz();
@@ -961,38 +1015,37 @@
     var secs = Math.max(1, Math.round((now - session.startedAt) / 1000));
     var took = secs < 120 ? secs + " second" + (secs === 1 ? "" : "s") : Math.round(secs / 60) + " minutes";
 
-    var soonest = missed.reduce(function (t, id) {
-      return Math.min(t, state.cards[id].due);
-    }, Infinity);
-
     $("card").classList.add("is-summary");
     $("stage").innerHTML =
-      '<p class="prompt">' + (session.scene ? session.scene.emoji + " " + esc(session.scene.title) + " · " : "") +
-        "Lesson done</p>" +
+      '<p class="prompt">' + (session.scene ? esc(session.scene.title) + " · " : "") + "Lesson done</p>" +
       '<p class="sum-big">' + total + "</p>" +
       '<p class="sum-line">' + noun + (total === 1 ? "" : "s") + " in " + took + "</p>" +
       '<div class="sum-cols">' +
-        (kept.length ? sumGroup("kept", "Remembered", kept) : "") +
-        (missed.length ? sumGroup("back", "Comes back " + whenFrom(soonest - now), missed) : "") +
+        (kept.length ? sumGroup("kept", "Remembered · " + kept.length, kept, now) : "") +
+        (missed.length ? sumGroup("back", "Comes back · " + missed.length, missed, now) : "") +
       "</div>" +
-      '<p class="sum-meta">' + session.firstCorrect + " of " + total + " first try · " +
-        days + " day streak</p>";
+      '<p class="sum-meta">' + session.firstCorrect + " of " + total + " right the first time · " +
+        days + "-day streak</p>";
 
     feedback("", "");
     $("actions").innerHTML =
-      '<button class="btn btn-primary" id="again">One more</button>' +
-      '<button class="btn btn-ghost" id="back">Done for now</button>';
+      '<button class="btn btn-primary" id="back">Done</button>' +
+      '<button class="btn btn-ghost" id="again">One more lesson</button>';
 
     $("back").addEventListener("click", function () { session = null; show("today"); });
     $("again").addEventListener("click", function () { startSession(); });
   }
 
-  function sumGroup(kind, title, ids) {
+  /* What stuck is a plain run of words; what comes back says when. */
+  function sumGroup(kind, title, ids, now) {
     return '<section class="sum-col ' + kind + '">' +
       "<h3>" + esc(title) + "</h3>" +
       '<ul class="sum-chips">' + ids.map(function (id) {
         var it = itemOf(id);
-        return '<li><span aria-hidden="true">' + it.emoji + "</span> " + esc(it.text) + "</li>";
+        var when = kind === "back"
+          ? '<span class="row-meta">' + esc(capital(whenFrom(state.cards[id].due - now))) + "</span>"
+          : "";
+        return '<li><span aria-hidden="true">' + it.emoji + "</span> " + esc(it.text) + when + "</li>";
       }).join("") + "</ul></section>";
   }
 
@@ -1187,7 +1240,7 @@
         '<div class="info-links">' + (links || "no links yet") + "</div>" +
         '<div class="hint">' + contextHTML(itemOf(c.id)) + "</div>" +
       "</div>" +
-      '<button class="speak-btn" id="info-hear" style="margin-left:auto">🔊 Again</button>';
+      '<button class="speak-btn" id="info-hear">' + ICON.speaker + 'Again</button>';
 
     var hear = $("info-hear");
     if (hear) hear.addEventListener("click", function () { speak(c.sentence, this); });

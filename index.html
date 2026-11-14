@@ -6,8 +6,8 @@
 <title>sema — learn by meaning, not by translation</title>
 <meta name="description" content="A language-learning demo that never shows a translation. Concepts are learned image-to-sound, then connected into a semantic web." />
 <meta name="color-scheme" content="light dark" />
-<meta name="theme-color" content="#f2f4f2" media="(prefers-color-scheme: light)" />
-<meta name="theme-color" content="#0f1412" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 <link rel="stylesheet" href="assets/styles.css" />
 </head>
 <body>
@@ -20,9 +20,18 @@
       <span>sema</span>
     </div>
     <nav class="tabs" aria-label="Views">
-      <button class="tab is-active" data-view="today" aria-current="page">Today</button>
-      <button class="tab" data-view="map">Map</button>
-      <button class="tab" data-view="stats">Progress</button>
+      <button class="tab is-active" data-view="today" aria-current="page">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>
+        <span>Today</span>
+      </button>
+      <button class="tab" data-view="map">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="7" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="17" r="2.5"/><path d="M8.3 8.3l2.4 6.4M15.9 7.6l-2.6 7.2M8.5 7h7"/></svg>
+        <span>Map</span>
+      </button>
+      <button class="tab" data-view="stats">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-8M12 20V5M19 20v-9"/></svg>
+        <span>Progress</span>
+      </button>
     </nav>
   </header>
 
@@ -33,25 +42,39 @@
     <section class="view is-active" id="view-today" aria-labelledby="today-title">
       <div class="today">
         <header class="today-head">
-          <h1 id="today-title">Today</h1>
-          <p class="lede">Picture and word together, then the quiz takes one away. No translations, ever.</p>
+          <div>
+            <p class="today-date" id="today-date"></p>
+            <h1 id="today-title">Today</h1>
+          </div>
+          <p class="streak" title="Day streak">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1.2 4.2 5.5 5.6 5.5 11a5.5 5.5 0 01-11 0c0-2.6 1.3-4.1 2.3-5.4.4 1.6 1.4 2.4 2.2 2.4 0-3.3 0-5.6 1-8z"/></svg>
+            <b id="stat-streak">0</b><span class="sr-only"> day streak</span>
+          </p>
         </header>
 
-        <button class="start-card" id="start-btn" type="button">
-          <span class="start-pics" id="next-stack" aria-hidden="true"></span>
-          <span class="start-text">
-            <span class="start-label" id="start-label">Start lesson</span>
-            <span class="start-sub" id="start-sub">about a minute</span>
-          </span>
-          <span class="start-go" aria-hidden="true">›</span>
-        </button>
+        <section class="lesson-card" aria-labelledby="lesson-name">
+          <div class="lesson-top">
+            <h2 id="lesson-name">Next lesson</h2>
+            <span>about 1 min</span>
+          </div>
+          <div class="lesson-pics" id="next-stack" aria-hidden="true"></div>
+          <p class="lesson-sub" id="start-sub"></p>
+          <button class="btn btn-primary btn-block" id="start-btn" type="button"><span id="start-label">Start lesson</span></button>
+        </section>
 
-        <div class="today-stats">
-          <div class="stat"><b id="stat-due">0</b><span>to review</span></div>
-          <div class="stat"><b id="stat-streak">0</b><span>day streak</span></div>
-          <div class="stat"><b><span id="stat-learned">0</span><small>/<span id="stat-total">0</span></small></b><span>known</span></div>
-          <div class="stat"><b id="stat-mastered">0</b><span>solid</span></div>
-        </div>
+        <section class="group" aria-labelledby="review-title">
+          <h2 class="group-title" id="review-title">Up for review</h2>
+          <div class="list" id="review-list"></div>
+        </section>
+
+        <section class="group" aria-labelledby="words-title">
+          <h2 class="group-title" id="words-title">Your words</h2>
+          <div class="list known">
+            <p class="known-line"><b id="stat-learned">0</b> of <span id="stat-total">0</span> words known</p>
+            <div class="meter" aria-hidden="true"><i id="known-bar"></i></div>
+            <p class="known-meta"><span><b id="stat-due">0</b> to review</span><span><b id="stat-mastered">0</b> solid</span></p>
+          </div>
+        </section>
 
         <details class="tune">
           <summary>Customize the lesson</summary>
@@ -84,7 +107,7 @@
       <h2 id="session-title" class="sr-only" hidden>Learning session</h2>
 
       <div class="session-head">
-        <button class="icon-btn" id="quit-btn" aria-label="End session" title="End session">✕</button>
+        <button class="icon-btn" id="quit-btn" aria-label="End session" title="End session"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
         <div class="bar" role="progressbar" aria-label="Session progress"><i id="bar-fill"></i></div>
         <span class="counter" id="counter">0/0</span>
       </div>
