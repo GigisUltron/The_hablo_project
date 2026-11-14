@@ -515,6 +515,8 @@
     var t = conv.dialogue.turns[conv.turn];
     if (!t) { finishConv(); return; }
     bubble(t.es, false);
+    /* the tutor speaks: play the phrase's own audio when it has one */
+    if (t.item) sayItem(itemOf(t.item)); else speak(t.es);
     $("conv-count").textContent = (conv.turn + 1) + "/" + conv.dialogue.turns.length;
     $("conv-bar").style.width = Math.round((conv.turn / conv.dialogue.turns.length) * 100) + "%";
     $("conv-feedback").textContent = "";
