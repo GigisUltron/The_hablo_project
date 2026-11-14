@@ -1205,7 +1205,7 @@
      * material and stay out of a lesson until there is something to connect. */
     /* the level decides what can appear at all; a session never shows material
        two bands above the learner. */
-    var LV = window.SEMA_LEVELS || {};
+    var LV = (ACTIVE && ACTIVE.levels) || window.SEMA_LEVELS || {};
     var atLevel = function (id) { return ADAPT.within(LV[id], (state.profile && state.profile.level) || "A2"); };
     var pool;
     var withSeed = function (list) {

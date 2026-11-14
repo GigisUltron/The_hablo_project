@@ -1,4 +1,4 @@
-/* CEFR level per item, generated from the decks. */
+/* CEFR level per item. */
 var SEMA_LEVELS = {
   "b-yo": "A1",
   "b-tu": "A1",
@@ -152,4 +152,7 @@ var SEMA_LEVELS = {
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
-if (typeof window !== "undefined") window.SEMA_LEVELS = SEMA_LEVELS;
+if (typeof window !== "undefined") {
+  window.SEMA_LEVELS = SEMA_LEVELS;
+  if (window.SemaLangs) window.SemaLangs.define("es", "levels", SEMA_LEVELS);
+}

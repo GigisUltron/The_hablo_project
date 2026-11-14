@@ -40,3 +40,13 @@ test("every graded item is voiced", () => {
   const silent = Object.keys(L).filter((id) => !audio[id]);
   assert.deepEqual(silent, [], "no audio for: " + silent.join(", "));
 });
+
+test("every pack grades its own items", () => {
+  const F = require("../src/lang/fr/levels.js");
+  const FI = require("../src/lang/fr/basics.js").items;
+  const FP = require("../src/lang/fr/phrases.js").phrases;
+  for (const it of FI) assert.equal(F[it.id], "A1", it.id);
+  const missing = FP.filter((p) => !F[p.id]);
+  assert.deepEqual(missing.map((p) => p.id), [], "ungraded french phrases");
+  assert.ok(Object.keys(F).length >= 140, `only ${Object.keys(F).length} french items graded`);
+});

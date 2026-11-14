@@ -80,6 +80,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/lang/fr/phrases.js",
     "src/lang/fr/basics.js",
     "src/lang/fr/texts.js",
+    "src/lang/fr/levels.js",
     "src/lang/fr/terms.js",
     "src/lang/fr/glosses.js",
     "src/lang/fr/alphabet.js",
