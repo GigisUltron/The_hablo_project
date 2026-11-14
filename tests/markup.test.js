@@ -167,3 +167,11 @@ test("no item is ever built with a null emoji", () => {
   assert.equal(app.includes("emoji: null"), false,
     "itemOf must give an empty string, not null - every renderer concatenates it");
 });
+
+test("translations are rendered and can be switched off", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /function glossHTML/, "no gloss renderer");
+  assert.match(app, /glossHTML\(id\)/, "the gloss is never called from the card");
+  assert.match(app, /gloss-toggle/, "no settings toggle");
+  assert.match(app, /wireGloss\(\)/, "the control is never wired");
+});

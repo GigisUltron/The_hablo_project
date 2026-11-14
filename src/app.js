@@ -1003,6 +1003,25 @@
 
   /* A lesson can teach a word or a whole phrase; both present the same shape
    * to the drill, so there is one renderer to maintain instead of two. */
+  /* The English meaning, on request. Hidden by default in settings, and never
+   * on the answer state, where the Spanish is already visible. */
+  function glossHTML(id) {
+    if ((state.settings && state.settings.translations) === "off") return "";
+    var g = (window.SEMA_GLOSSES || {})[id];
+    if (!g) return "";
+    return '<button class="gloss-btn" type="button" data-gloss="' + esc(g) + '">show translation</button>';
+  }
+
+  function wireGloss() {
+    Array.prototype.forEach.call(document.querySelectorAll(".gloss-btn"), function (btn) {
+      btn.addEventListener("click", function () {
+        var on = btn.getAttribute("data-on") === "1";
+        btn.setAttribute("data-on", on ? "0" : "1");
+        btn.textContent = on ? "show translation" : esc(btn.getAttribute("data-gloss"));
+      });
+    });
+  }
+
   function itemOf(id) {
     var b = basicById[id];
     if (b) {
@@ -1597,7 +1616,9 @@
       tile.setAttribute("aria-label", "Play the audio");
       tile.addEventListener("click", function () { sayItem(it); });
     }
-    $("actions").innerHTML = '<button class="btn btn-primary" id="gotit">' + tr("gotit", "Got it") + '</button>';
+    $("actions").innerHTML = glossHTML(id) +
+      '<button class="btn btn-primary" id="gotit">' + tr("gotit", "Got it") + '</button>';
+    wireGloss();
     $("gotit").addEventListener("click", function () {
       session.firstCorrect += 1;   // it was taught and acknowledged, not guessed
       S.review(state, id, 2, Date.now());
@@ -2345,4 +2366,14 @@
   else if (DEMO) startDemo();
   else if (VIEWS.indexOf(initial) !== -1 && initial !== "today") show(initial);
   applyStrings();
+  var glossBtn = $("gloss-toggle");
+  if (glossBtn) {
+    glossBtn.addEventListener("click", function () {
+      state.settings = state.settings || {};
+      state.settings.translations = state.settings.translations === "off" ? "on" : "off";
+      save();
+      glossBtn.textContent = state.settings.translations === "off" ? "translations off" : "translations on";
+    });
+  }
+
 })();
