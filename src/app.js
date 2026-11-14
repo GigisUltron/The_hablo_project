@@ -28,7 +28,7 @@
     Object.keys(base).forEach(function (k) { if (k !== "t") table[k] = base[k]; });
     var more = UI_LANGS[lang] || {};
     Object.keys(more).forEach(function (k) {
-      if (k === "name" || k === "locale") return;
+      if (k === "name" || k === "locale" || k === "keys") return;
       table[k] = more[k];
     });
     if (!Object.keys(table).length) return uiTable("en");
@@ -61,12 +61,13 @@
   /* A language's own name comes from its pack; without one, the code is all we
    * honestly have. No language name is ever typed into the chrome. */
   function uiName(code) {
+    var own = UI_LANGS[code] && UI_LANGS[code].name;
+    if (own) return own;
     var list = (LANGS && LANGS.list && LANGS.list()) || [];
     for (var i = 0; i < list.length; i += 1) {
       if (list[i].code === code) return list[i].name || code.toUpperCase();
     }
-    var own = UI_LANGS[code] && UI_LANGS[code].name;
-    return own || String(code).toUpperCase();
+    return String(code).toUpperCase();
   }
 
   function renderUiLangPickers() {
@@ -86,6 +87,13 @@
     var table = uiTable(uiLang());
     Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (el) {
       var text = table[el.getAttribute("data-i18n")];
+      if (text) el.textContent = text;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-chrome]"), function (el) {
+      /* A key with no translation keeps the text already in the markup: printing
+       * the key name is the one failure mode a learner cannot read. */
+      var key = el.getAttribute("data-chrome");
+      var text = table[key];
       if (text) el.textContent = text;
     });
     var gloss = $("gloss-toggle");
@@ -1718,23 +1726,16 @@
     return a && Array.isArray(a.letters) ? a.letters : [];
   }
 
-  function isLatinLetter(ch) {
-    var text = String(ch == null ? "" : ch);
-    if (!text) return true;
-    try { return /^[\p{Script=Latin}\p{M}]+$/u.test(text); }
-    catch (err) { return /^[A-Za-z\u00c0-\u024f]+$/.test(text); }
-  }
-
   /* A pack teaches its script only when the script is not Latin. A pack may say
    * so itself with alphabet.script (or language.script); otherwise the letters
    * decide, so Latin decks never grow an alphabet lesson by accident. */
+  function declaredScript() {
+    return (ACTIVE && ACTIVE.alphabet && ACTIVE.alphabet.script) ||
+      (ACTIVE && ACTIVE.concepts && ACTIVE.concepts.language && ACTIVE.concepts.language.script) || null;
+  }
+
   function hasScriptLesson() {
-    var letters = scriptLetters();
-    if (!letters.length) return false;
-    var declared = (ACTIVE.alphabet && ACTIVE.alphabet.script) ||
-      (ACTIVE.concepts && ACTIVE.concepts.language && ACTIVE.concepts.language.script);
-    if (declared) return String(declared).toLowerCase() !== "latin";
-    return !letters.every(function (l) { return isLatinLetter(l.letter); });
+    return TRACK ? TRACK.scriptNeeded(scriptLetters(), declaredScript()) : false;
   }
 
   function alphabetKnown() {
