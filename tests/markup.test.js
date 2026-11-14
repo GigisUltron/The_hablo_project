@@ -92,7 +92,7 @@ test("every bundled audio file exists and matches the manifest", () => {
 test("every data-view tab has a matching section", () => {
   const views = [...html.matchAll(/data-view="([^"]+)"/g)].map((x) => x[1]);
   const ids = idsIn(html);
-  assert.ok(views.length >= 2);
+  assert.ok(views.length >= 3);
   for (const v of new Set(views)) {
     assert.ok(ids.has(`view-${v}`), `no #view-${v} section for tab "${v}"`);
   }
