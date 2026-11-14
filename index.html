@@ -46,9 +46,9 @@
           <span class="eyebrow"><span class="dot"></span>No translations, by design</span>
           <h1 id="today-title">Learn the <span class="grad">meaning</span>,<br />not the dictionary.</h1>
           <p class="lede">
-            Every card anchors a <strong>sound</strong> to an <strong>image</strong> and never to an
-            English word. You recall the concept, say it, and only then see how it is written —
-            so the target language stays connected to the world instead of to your first language.
+            Each concept arrives as a pair: the <strong>picture</strong>, the <strong>word</strong>
+            and the <strong>sound</strong> — never an English gloss. Then the quiz hides half of the
+            pair and asks you for it, so what you recall is the world itself instead of a translation.
           </p>
           <div class="cta-row">
             <button class="btn btn-primary" id="start-btn">
@@ -91,14 +91,14 @@
 
       <div class="principles">
         <article class="principle">
-          <span class="k">01 / anchor</span>
-          <h3>Image → sound</h3>
-          <p>You never see an English gloss. The concept is the picture; the audio is the word. Recall is retrieval, not recognition of a translation.</p>
+          <span class="k">01 / learn</span>
+          <h3>Meet the pair</h3>
+          <p>A new concept is shown whole: picture, word and sound together. Nothing is translated; the image is what the word hangs on.</p>
         </article>
         <article class="principle">
-          <span class="k">02 / produce</span>
-          <h3>Say it, don't just read it</h3>
-          <p>Every card ends in production. Microphone scoring when the browser supports it, a self-check when it doesn't — recognition alone doesn't transfer.</p>
+          <span class="k">02 / quiz</span>
+          <h3>Then hide one half</h3>
+          <p>Picture → word, word → picture, or say it aloud. Anything you miss returns before the session ends, not tomorrow.</p>
         </article>
         <article class="principle">
           <span class="k">03 / connect</span>
@@ -184,7 +184,10 @@
   </main>
 
   <footer class="foot">
-    <span>sema · a demonstration of meaning-first learning · data stays in this browser</span>
+    <span class="foot-left">
+      <button class="audio-chip" id="audio-chip" type="button">🔊 checking audio…</button>
+      <span>sema · learn the pair, then get quizzed · data stays in this browser</span>
+    </span>
     <span><code>no dependencies · no build step</code></span>
   </footer>
 </div>

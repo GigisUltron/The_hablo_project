@@ -92,31 +92,98 @@
   var voice = null;
   var hasTTS = "speechSynthesis" in window;
 
+  function esVoices() {
+    if (!hasTTS) return [];
+    var voices = window.speechSynthesis.getVoices() || [];
+    return voices.filter(function (v) {
+      var lang = String(v.lang || "").toLowerCase();
+      return lang.indexOf(LANG.code) === 0 || /spanish|español|espanol/i.test(v.name || "");
+    });
+  }
+
   function pickVoice() {
     if (!hasTTS) return;
-    var voices = window.speechSynthesis.getVoices() || [];
-    voice = voices.filter(function (v) { return v.lang && v.lang.toLowerCase().indexOf(LANG.code) === 0; })[0] || null;
+    var voices = esVoices();
+    voice = voices[0] || null;
+    updateAudioChip();
+  setTimeout(updateAudioChip, 1600);
+  setTimeout(updateAudioChip, 4000);
   }
+
+  /* Audio is a bonus, not a dependency: if the device has no Spanish voice the
+   * whole app still works, and it says so instead of failing silently. */
+  var audioCheckedAt = Date.now();
+
+  /* Some platforms expose the API with an empty voice list and never populate
+   * it. Waiting forever is why a silent device looks identical to a loading
+   * one, so after a short grace period "no voices" becomes a definite answer. */
+  function audioStatus() {
+    if (!hasTTS) return { state: "none", text: "no speech support" };
+    var all = window.speechSynthesis.getVoices() || [];
+    if (!all.length) {
+      if (Date.now() - audioCheckedAt < 1500) return { state: "idle", text: "checking audio" };
+      return { state: "none", text: "no voice on this device" };
+    }
+    var es = esVoices();
+    if (es.length) return { state: "ok", text: es.length + " Spanish voice" + (es.length > 1 ? "s" : "") };
+    return { state: "no-es", text: "no Spanish voice" };
+  }
+
+  function updateAudioChip() {
+    var chip = $("audio-chip");
+    if (!chip) return;
+    var st = audioStatus();
+    chip.textContent = (st.state === "ok" ? "🔊 " : "🔇 ") + st.text;
+    chip.classList.toggle("warn", st.state !== "ok");
+    chip.title = st.state === "ok"
+      ? "Tap to hear a test word"
+      : "No usable speech voice here. The demo is fully usable without audio.";
+  }
+
   if (hasTTS) {
     pickVoice();
-    window.speechSynthesis.onvoiceschanged = pickVoice;
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = pickVoice;
+    }
+    try { window.speechSynthesis.addEventListener("voiceschanged", pickVoice); } catch (err) { /* older engines */ }
   }
+
+  var speakTimer = null;
+
+  var warnedNoVoice = false;
 
   function speak(text, btn) {
     if (!hasTTS) { toast("This browser has no speech synthesis."); return; }
+    var synth = window.speechSynthesis;
     try {
-      window.speechSynthesis.cancel();
-      var u = new SpeechSynthesisUtterance(text);
+      if (!voice) pickVoice();
+      if (!esVoices().length && !synth.speaking && !warnedNoVoice && audioStatus().state === "none") {
+        warnedNoVoice = true;
+        toast("No speech voice on this device — everything else still works.");
+      }
+      if (synth.paused) synth.resume();
+
+      var u = new SpeechSynthesisUtterance(String(text));
       u.lang = LANG.locale;
-      u.rate = 0.92;
+      u.rate = 0.9;
       u.pitch = 1;
       if (voice) u.voice = voice;
+
       if (btn) {
         btn.classList.add("is-playing");
         u.onend = function () { btn.classList.remove("is-playing"); };
         u.onerror = function () { btn.classList.remove("is-playing"); };
       }
-      window.speechSynthesis.speak(u);
+
+      var busy = synth.speaking || synth.pending;
+      if (busy) synth.cancel();
+      var go = function () {
+        try { synth.speak(u); } catch (err) { /* engine refused */ }
+      };
+      clearTimeout(speakTimer);
+      /* queuing inside the same tick as cancel() loses the utterance in Firefox */
+      if (busy) speakTimer = setTimeout(go, 90);
+      else go();
     } catch (err) { /* ignore */ }
   }
 
@@ -193,9 +260,9 @@
 
   function renderToday() {
     var due = S.dueList(state, Date.now()).filter(function (id) {
-      return state.cards[id].reps > 0;
+      return state.cards[id].last !== null;
     }).length;
-    var young = allIds.filter(function (id) { return state.cards[id].reps === 0; }).length;
+    var young = allIds.filter(function (id) { return state.cards[id].last === null; }).length;
     var ret = S.retention(state);
 
     $("stat-due").textContent = due;
@@ -216,7 +283,7 @@
     $("start-btn").setAttribute("aria-label",
       due > 0 ? "Start a session, " + due + " cards due" : "Start a new session");
     if (young === 0 && due === 0) {
-      $("start-label").textContent = "Free practice";
+      $("start-label").textContent = "Quiz me";
     }
   }
 
@@ -225,20 +292,60 @@
   var session = null;
 
   function startSession() {
-    var queue = S.buildQueue(state, Date.now(), { maxItems: 8, newLimit: 4 });
-    if (!queue.length) {
-      queue = S.shuffle(allIds, Math.random).slice(0, 5);
-      toast("Nothing due — free practice with 5 concepts.");
+    var now = Date.now();
+    var due = S.dueList(state, now).filter(function (id) {
+      return state.cards[id].last !== null;   // seen before, including lapses
+    });
+    var fresh = S.shuffle(allIds.filter(function (id) {
+      return state.cards[id].last === null;   // genuinely new
+    }), Math.random).slice(0, 4);
+
+    if (!due.length && !fresh.length) {
+      due = S.shuffle(allIds, Math.random).slice(0, 6);
     }
-    session = { queue: queue, index: 0, results: [] };
+
+    session = newSession(fresh, S.shuffle(due.concat(fresh), Math.random));
     show("session");
-    renderCard();
+    if (session.study.length) renderStudy();
+    else renderQuiz();
+  }
+
+  /* Shareable "just quiz me" link (#quiz): no teaching, straight to questions. */
+  function startQuizOnly() {
+    session = newSession([], S.shuffle(allIds, Math.random).slice(0, 6));
+    show("session");
+    renderQuiz();
+  }
+
+  function newSession(study, quiz) {
+    return {
+      phase: "study",
+      study: study,
+      si: 0,
+      quiz: quiz,
+      qi: 0,
+      requeued: {},
+      missed: {},
+      answered: {},
+      firstCorrect: 0,
+      unique: 0
+    };
+  }
+
+  function totalSteps() {
+    return session.study.length + Math.max(session.unique, session.quiz.length);
+  }
+
+  function doneSteps() {
+    if (session.phase === "study") return session.si;
+    return session.study.length + session.qi;
   }
 
   function setProgress() {
-    var n = session.queue.length;
-    $("counter").textContent = Math.min(session.index + 1, n) + "/" + n;
-    $("bar-fill").style.width = Math.round((session.index / n) * 100) + "%";
+    var n = Math.max(totalSteps(), 1);
+    var done = Math.min(doneSteps(), n);
+    $("counter").textContent = Math.min(done + 1, n) + "/" + n;
+    $("bar-fill").style.width = Math.round((done / n) * 100) + "%";
   }
 
   function clearCard() {
@@ -249,104 +356,149 @@
     f.className = "feedback";
   }
 
-  function renderCard() {
-    if (!session) return;
-    if (session.index >= session.queue.length) { finishSession(); return; }
+  /* ---- phase 1: form the association, both halves visible at once -------- */
+
+  function renderStudy() {
     setProgress();
     clearCard();
 
-    var id = session.queue[session.index];
-    var concept = conceptById[id];
-    var card = state.cards[id];
-    if (card.reps === 0) renderReceptive(concept);
-    else renderProductive(concept);
+    var c = conceptById[session.study[session.si]];
+    var last = session.si === session.study.length - 1;
+
+    $("stage").innerHTML =
+      '<p class="prompt">Learn the pair · ' + (session.si + 1) + " of " + session.study.length + "</p>" +
+      '<div class="tile" aria-hidden="true">' + c.emoji + "</div>" +
+      '<div class="word study">' +
+        (c.article ? '<span class="art">' + esc(c.article) + "</span>" : "") + esc(c.word) +
+      "</div>" +
+      '<p class="sentence">' + highlightSentence(c) + "</p>" +
+      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>';
+
+    speak(c.word);
+    $("hear-btn").addEventListener("click", function () { speak(c.word, this); });
+
+    $("actions").innerHTML = '<button class="btn btn-primary" id="next">' +
+      (last ? "Start the quiz →" : "Next →") + "</button>";
+    $("next").addEventListener("click", function () {
+      session.si += 1;
+      if (session.si < session.study.length) renderStudy();
+      else { session.phase = "quiz"; renderQuiz(); }
+    });
   }
 
-  /* Step 1 for a brand-new concept: hear the word, choose the picture.
-   * Text appears nowhere in this step — that is the whole point. */
-  function renderReceptive(concept) {
-    var stage = $("stage");
-    var options = S.pickDistractors(concept.id, allIds, neighboursOf(concept.id), 3, Math.random);
-    var set = S.shuffle([concept.id].concat(options), Math.random);
+  /* ---- phase 2: hide one half, ask for the other ------------------------ */
 
-    options = set.map(function (id) {
-      var c = conceptById[id];
-      return '<button class="option" data-id="' + esc(id) + '" aria-label="Choose this picture">' +
-        '<span aria-hidden="true">' + c.emoji + "</span></button>";
-    }).join("");
+  function quizType(card, i) {
+    if (card.last === null) return "pick-word";
+    if (SR && i % 2 === 1) return "say";
+    return "pick-picture";
+  }
 
-    stage.innerHTML =
-      '<p class="prompt">Which picture is it?</p>' +
-      '<div class="options">' + options + "</div>" +
-      '<button class="speak-btn" id="replay">🔊 Hear it again</button>';
+  function renderQuiz() {
+    if (session.qi >= session.quiz.length) { finishSession(); return; }
+    setProgress();
+    clearCard();
 
-    speak(concept.word);
-    $("replay").addEventListener("click", function () { speak(concept.word, this); });
+    var id = session.quiz[session.qi];
+    var c = conceptById[id];
+    var card = state.cards[id];
 
-    Array.prototype.forEach.call(stage.querySelectorAll(".option"), function (btn) {
+    if (!session.answered[id]) {
+      session.answered[id] = true;
+      session.unique += 1;
+    }
+
+    var type = quizType(card, session.qi);
+    if (type === "pick-word") renderPickWord(c);
+    else if (type === "say" && SR) renderSay(c);
+    else renderPickPicture(c);
+  }
+
+  function optionWord(id) {
+    var o = conceptById[id];
+    return '<button class="option-word" data-id="' + esc(id) + '">' +
+      (o.article ? '<span class="art">' + esc(o.article) + "</span>" : "") +
+      esc(o.word) + "</button>";
+  }
+
+  function renderPickWord(c) {
+    var near = S.pickDistractors(c.id, allIds, neighboursOf(c.id), 3, Math.random);
+    var set = S.shuffle([c.id].concat(near), Math.random);
+
+    $("stage").innerHTML =
+      '<p class="prompt">Which word is this?</p>' +
+      '<div class="tile" aria-hidden="true">' + c.emoji + "</div>" +
+      '<button class="speak-btn" id="hear-btn">🔊 Hear it</button>' +
+      '<div class="word-options">' + set.map(optionWord).join("") + "</div>";
+
+    speak(c.word);
+    $("hear-btn").addEventListener("click", function () { speak(c.word, this); });
+
+    Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
       btn.addEventListener("click", function () {
         var picked = btn.getAttribute("data-id");
-        if (picked === concept.id) {
-          btn.classList.add("pick-correct");
-          feedback("That's it.", "good");
-          speak(concept.word);
-          lockOptions(stage);
-          setTimeout(function () { renderProductive(concept); }, 750);
-        } else {
-          S.recordConfusion(state, concept.id, picked);
-          save();
-          btn.classList.add("pick-wrong");
-          Array.prototype.forEach.call(stage.querySelectorAll(".option"), function (o) {
-            if (o.getAttribute("data-id") === concept.id) o.classList.add("reveal-right");
-          });
-          feedback("Not that one — " + concept.emoji + " is “" + concept.word + "”.", "bad");
-          speak(concept.word);
-          lockOptions(stage);
-          setTimeout(function () { renderProductive(concept); }, 1500);
-        }
+        var ok = picked === c.id;
+        if (ok) btn.classList.add("pick-correct");
+        else btn.classList.add("pick-wrong");
+        Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (b) {
+          b.disabled = true;
+          if (b.getAttribute("data-id") === c.id) b.classList.add("pick-correct");
+        });
+        answer(ok, ok ? null : picked);
       });
     });
   }
 
-  function lockOptions(stage) {
-    Array.prototype.forEach.call(stage.querySelectorAll(".option"), function (b) {
-      b.disabled = true;
-      b.style.pointerEvents = "none";
+  function renderPickPicture(c) {
+    var near = S.pickDistractors(c.id, allIds, neighboursOf(c.id), 3, Math.random);
+    var set = S.shuffle([c.id].concat(near), Math.random);
+
+    $("stage").innerHTML =
+      '<p class="prompt">Find the picture</p>' +
+      '<div class="word small">' +
+        (c.article ? '<span class="art">' + esc(c.article) + "</span>" : "") + esc(c.word) +
+      "</div>" +
+      '<div class="options">' + set.map(function (id) {
+        return '<button class="option" data-id="' + esc(id) + '" aria-label="Choose this picture">' +
+          '<span aria-hidden="true">' + conceptById[id].emoji + "</span></button>";
+      }).join("") + "</div>" +
+      '<button class="speak-btn" id="hear-btn">🔊 Hear the word</button>';
+
+    speak(c.word);
+    $("hear-btn").addEventListener("click", function () { speak(c.word, this); });
+
+    Array.prototype.forEach.call($("stage").querySelectorAll(".option"), function (btn) {
+      btn.addEventListener("click", function () {
+        var picked = btn.getAttribute("data-id");
+        var ok = picked === c.id;
+        if (ok) btn.classList.add("pick-correct");
+        else btn.classList.add("pick-wrong");
+        Array.prototype.forEach.call($("stage").querySelectorAll(".option"), function (b) {
+          b.disabled = true;
+          if (b.getAttribute("data-id") === c.id) b.classList.add("reveal-right");
+        });
+        answer(ok, ok ? null : picked);
+      });
     });
   }
 
-  /* Step 2: picture only. Recall, then produce. The written word is the last
-   * thing revealed, after the recall attempt — never before it. */
-  function renderProductive(concept) {
-    var stage = $("stage");
-    feedback("", "");
-    $("actions").innerHTML = "";
-    stage.innerHTML =
+  function renderSay(c) {
+    $("stage").innerHTML =
       '<p class="prompt">Say it in ' + esc(LANG.name) + "</p>" +
-      '<div class="tile" aria-hidden="true">' + concept.emoji + "</div>" +
+      '<div class="tile" aria-hidden="true">' + c.emoji + "</div>" +
       '<button class="mic" id="mic-btn">🎙 Say it aloud</button>' +
       '<button class="speak-btn" id="hear-btn">🔊 Hear the word</button>' +
       '<p class="score" id="score"></p>';
 
-    $("hear-btn").addEventListener("click", function () { speak(concept.word, this); });
+    $("hear-btn").addEventListener("click", function () { speak(c.word, this); });
 
     var mic = $("mic-btn");
-    if (!SR) {
-      mic.textContent = "🎙 Not available in this browser";
-      mic.disabled = true;
-      mic.style.opacity = "0.5";
-    }
     mic.addEventListener("click", function () {
       var btn = this;
-      var started = listen(concept.word, function (score, said) {
-        var pct = Math.round(score * 100);
+      var started = listen(c.word, function (score, said) {
         var el = $("score");
-        if (!el) return;
-        el.textContent = "heard “" + said + "” · match " + pct + "%";
-        if (score > 0.75) feedback("Good — that would be understood.", "good");
-        else if (score > 0.45) feedback("Close. Listen once more, then try again.", "");
-        else feedback("Not recognisable yet — hear it, then retry.", "bad");
-        beat(function () { revealWord(concept); });
+        if (el) el.textContent = "heard “" + said + "” · match " + Math.round(score * 100) + "%";
+        answer(score > 0.6, null);
       });
       if (started) {
         btn.classList.add("is-live");
@@ -361,55 +513,52 @@
       }
     });
 
-    var actions = $("actions");
-    actions.innerHTML = '<button class="btn btn-ghost" id="reveal">Show the word</button>';
-    $("reveal").addEventListener("click", function () { revealWord(concept); });
+    $("actions").innerHTML = '<button class="btn btn-ghost" id="reveal">Show the answer</button>';
+    $("reveal").addEventListener("click", function () { answer(false, null); });
   }
 
-  var beatTimer = null;
-  function beat(fn, ms) {
-    clearTimeout(beatTimer);
-    beatTimer = setTimeout(fn, ms || 1400);
+  /* One answer, one scheduling update, one step forward. A miss is pushed to
+   * the back of the same quiz instead of being forgotten until tomorrow. */
+  function answer(ok, chosenId) {
+    var id = session.quiz[session.qi];
+    var c = conceptById[id];
+
+    if (ok) {
+      if (!session.missed[id]) session.firstCorrect += 1;
+    } else {
+      if (chosenId) S.recordConfusion(state, id, chosenId);
+      session.missed[id] = true;
+      if (!session.requeued[id] && session.quiz.length < 40) {
+        session.requeued[id] = true;
+        session.quiz.push(id);
+      }
+    }
+
+    S.review(state, id, ok ? 2 : 0, Date.now());
+    save();
+    showAnswer(ok, c);
   }
 
-  function revealWord(concept) {
-    clearTimeout(beatTimer);
-    var stage = $("stage");
-    stage.innerHTML =
-      '<div class="tile sm" aria-hidden="true">' + concept.emoji + "</div>" +
-      '<p class="word">' +
-        (concept.article ? '<span class="art">' + esc(concept.article) + "</span>" : "") +
-        esc(concept.word) +
-      "</p>" +
-      '<p class="sentence">' + highlightSentence(concept) + "</p>" +
+  function showAnswer(ok, c) {
+    $("stage").innerHTML =
+      '<p class="prompt">' + (ok ? "Correct" : "Not quite") + "</p>" +
+      '<div class="tile sm" aria-hidden="true">' + c.emoji + "</div>" +
+      '<div class="word">' +
+        (c.article ? '<span class="art">' + esc(c.article) + "</span>" : "") + esc(c.word) +
+      "</div>" +
+      '<p class="sentence">' + highlightSentence(c) + "</p>" +
       '<button class="speak-btn" id="hear-btn">🔊 Hear it in a sentence</button>';
 
-    speak(concept.sentence);
-    $("hear-btn").addEventListener("click", function () { speak(concept.sentence, this); });
+    speak(c.sentence);
+    $("hear-btn").addEventListener("click", function () { speak(c.sentence, this); });
 
-    var actions = $("actions");
-    actions.innerHTML =
-      '<button class="grade" data-grade="0">Again<small>didn\u2019t come</small></button>' +
-      '<button class="grade" data-grade="2">Good<small>recalled it</small></button>' +
-      '<button class="grade" data-grade="3">Easy<small>instant</small></button>';
+    feedback(ok ? "got it" : "it comes back at the end of the quiz", ok ? "good" : "bad");
 
-    Array.prototype.forEach.call(actions.querySelectorAll(".grade"), function (b) {
-      b.addEventListener("click", function () { grade(concept, Number(b.getAttribute("data-grade"))); });
+    $("actions").innerHTML = '<button class="btn btn-primary" id="next">Continue →</button>';
+    $("next").addEventListener("click", function () {
+      session.qi += 1;
+      renderQuiz();
     });
-  }
-
-  function highlightSentence(concept) {
-    var txt = esc(concept.sentence);
-    var w = esc(concept.word);
-    return txt.replace(new RegExp("\\b(" + w + ")\\b", "i"), "<b>$1</b>");
-  }
-
-  function grade(concept, g) {
-    S.review(state, concept.id, g, Date.now());
-    session.results.push({ id: concept.id, grade: g });
-    save();
-    session.index += 1;
-    renderCard();
   }
 
   function finishSession() {
@@ -417,24 +566,20 @@
     state.lastSession = Date.now();
     save();
 
-    var good = session.results.filter(function (r) { return r.grade >= 2; }).length;
-    var total = session.results.length || 1;
+    var total = session.unique || 1;
+    var acc = Math.round((session.firstCorrect / total) * 100);
 
     $("bar-fill").style.width = "100%";
-    $("counter").textContent = total + "/" + total;
+    $("counter").textContent = String(total);
 
     $("stage").innerHTML =
-      '<p class="prompt">Session complete</p>' +
-      '<div class="ring-wrap" style="padding:0">' +
-        '<div class="ring-label" style="position:static">' +
-          "<b>" + Math.round((good / total) * 100) + "%</b>" +
-          "<span>recalled</span>" +
-        "</div>" +
-      "</div>" +
-      '<p class="sentence">' + good + " of " + total + " concepts came back without help. " +
-        "The ones that didn\u2019t are scheduled to return in this session." + "</p>";
+      '<p class="prompt">Quiz complete</p>' +
+      '<div class="word">' + acc + "%</div>" +
+      '<p class="sentence">' + session.firstCorrect + " of " + total +
+        " right on the first try. The rest will come back sooner, and everything " +
+        "you got right is scheduled further out.</p>";
 
-    $("feedback").textContent = "";
+    feedback("", "");
     $("actions").innerHTML =
       '<button class="btn btn-primary" id="back">Back to today</button>' +
       '<button class="btn btn-ghost" id="again">Another round</button>';
@@ -447,6 +592,12 @@
     var f = $("feedback");
     f.textContent = msg;
     f.className = "feedback" + (kind ? " " + kind : "");
+  }
+
+  function highlightSentence(c) {
+    var txt = esc(c.sentence);
+    var w = esc(c.word);
+    return txt.replace(new RegExp("\\b(" + w + ")\\b", "i"), "<b>$1</b>");
   }
 
   /* ------------------------------------------------------------------ map */
@@ -661,17 +812,25 @@
   document.addEventListener("keydown", function (ev) {
     if (currentView !== "session" || !session) return;
     if (ev.key === "Escape") { session = null; show("today"); return; }
-    var gradeBtns = document.querySelectorAll("#actions .grade");
-    if (gradeBtns.length && ["1", "2", "3"].indexOf(ev.key) !== -1) {
-      var idx = Number(ev.key) - 1;
-      if (gradeBtns[idx]) gradeBtns[idx].click();
+    if (ev.key === "Enter") {
+      var next = $("next");
+      if (next) { ev.preventDefault(); next.click(); }
     }
   });
 
   /* Deep links: #map, #stats and #practice are shareable — useful for a demo,
    * and they let the views be driven without a click. */
+  $("audio-chip").addEventListener("click", function () {
+    speak(conceptById["noche"] ? conceptById["noche"].word : "hola");
+    toast(audioStatus().state === "ok"
+      ? "That was the synthesized voice — if you heard nothing, check the system volume."
+      : "No Spanish voice on this device; the demo still works without audio.");
+  });
+  updateAudioChip();
+
   var initial = String(window.location.hash || "").replace("#", "");
   renderToday();
   if (initial === "practice") startSession();
+  else if (initial === "quiz") startQuizOnly();
   else if (VIEWS.indexOf(initial) !== -1 && initial !== "today") show(initial);
 })();

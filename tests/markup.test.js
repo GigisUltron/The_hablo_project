@@ -28,22 +28,19 @@ function idsIn(markup) {
 
 test("every element id the script queries exists in the markup", () => {
   const markupIds = idsIn(html);
-  const runtimeIds = new Set();
 
-  // $("x") lookups
+  // ids the script creates itself, in template strings
+  const generated = new Set();
   let m;
-  const lookup = /\$\("([^"]+)"\)/g;
-  while ((m = lookup.exec(app))) runtimeIds.add(m[1]);
-
-  // template-literal ids that get inserted into the DOM
   const templated = /id="([a-z0-9-]+)"/g;
-  while ((m = templated.exec(app))) runtimeIds.add(m[1]);
+  while ((m = templated.exec(app))) generated.add(m[1]);
 
-  const generated = new Set([
-    "replay", "mic-btn", "hear-btn", "score", "reveal", "info-hear", "back", "again"
-  ]);
+  // ids the script looks up — these must be static, or it will query null
+  const looked = new Set();
+  const lookup = /\$\("([^"]+)"\)/g;
+  while ((m = lookup.exec(app))) looked.add(m[1]);
 
-  const missing = [...runtimeIds].filter((id) => !markupIds.has(id) && !generated.has(id));
+  const missing = [...looked].filter((id) => !markupIds.has(id) && !generated.has(id));
   assert.deepEqual(missing, [], `script looks up ids that do not exist: ${missing.join(", ")}`);
 });
 
