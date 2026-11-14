@@ -37,8 +37,8 @@ var SEMA_PHRASES = {
     { id: "ph-pt-no", emoji: "❌", text: "Não.", sub: "Negando.", cat: "phrase" },
     { id: "ph-pt-this-please", emoji: "👉", text: "Este, por favor.", sub: "Apontando um item.", cat: "phrase" },
     { id: "ph-pt-hotel", emoji: "🛎️", text: "Onde fica o hotel?", sub: "Procurando hospedagem.", cat: "phrase" },
-    { id: "ph-pt-colour", emoji: "🎨", text: "Qual é a tua cor preferida?", sub: "Falando de gostos.", cat: "phrase" },
-    { id: "ph-pt-where-from", emoji: "🏳️", text: "De onde és?", sub: "Perguntando pela origem.", cat: "phrase" },
+    { id: "ph-pt-colour", emoji: "🎨", text: "Qual é a sua cor preferida?", sub: "Falando de gostos.", cat: "phrase" },
+    { id: "ph-pt-where-from", emoji: "🏳️", text: "De onde você é?", sub: "Perguntando pela origem.", cat: "phrase" },
   ]
 };
 
