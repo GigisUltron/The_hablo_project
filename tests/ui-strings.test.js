@@ -31,3 +31,11 @@ test("the session prompt and correction use the table, not literals", () => {
   assert.match(app, /tr\("whichOne"/);
   assert.match(app, /tr\("notQuite"/);
 });
+
+test("translation only moves forward", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  const calls = (app.match(/\btr\(/g) || []).length;
+  assert.ok(calls >= 3, `app.js makes ${calls} tr() calls; it once made 3 - did one revert?`);
+});

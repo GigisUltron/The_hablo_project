@@ -33,6 +33,14 @@ microphone access behind a secure context and `file://` doesn't qualify.
 
 Deep links: `#practice` (start a lesson), `#phrases` (phrase lesson), `#quiz`, `#map`, `#stats`.
 
+
+## What is translated
+
+The **content** is translated: every card shows its English gloss by default, and the setting
+turns that off. The **interface** is partially translated — navigation, setup, settings and the
+four highest-frequency card strings exist in English and Spanish (`src/ui-strings.js`, chosen
+with `profile.uiLang`), while session summaries, toasts and reader copy are still English only.
+
 ## How it teaches
 
 1. **Meet the pair.** Picture, word, article, sentence and sound together — that is where the
