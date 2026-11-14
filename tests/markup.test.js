@@ -145,6 +145,19 @@ test("the path's read unit is actually routed", () => {
   assert.match(app, /startReader\(\)/, "route does not open the reader");
 });
 
+test("settings offer no deck mode chooser", () => {
+  assert.equal(/data-mode="/.test(html), false, "settings still render mode buttons");
+  assert.equal(/settings\.mode\s*=/.test(app), false, "a session mode is still written");
+  assert.equal(/sessionMode/.test(app), false, "a session mode is still read");
+  assert.match(app, /delete s\.settings\.mode/, "old saves keep the retired setting");
+});
+
+test("there is one kind of lesson, mixed and phrase first", () => {
+  assert.match(app, /ADAPT\.sessionMix\(/, "the session is not composed from its layers");
+  assert.match(app, /ADAPT\.OPENERS/, "the session has no teaching order for its opening phrases");
+  assert.match(app, /newSession\("mixed"/, "a lesson is not the mixed kind");
+});
+
 test("every track unit has a mode the app can start", () => {
   const T = require("../src/track.js");
   const modes = new Set(T.units.map((u) => u.mode));

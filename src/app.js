@@ -132,22 +132,9 @@
     return pack;
   }
 
-  /* Scenes: a phrase lesson is one short exchange from one situation, in the
-   * order it happens, instead of a shuffled deck. The grouping lives here
-   * until the phrase file carries a scene field of its own. */
-  var SCENE_DEFS = [
-    { emoji: "👋", title: "Saludar", lines: ["ph-dias", "ph-hola", "ph-gusto", "ph-adios"] },
-    { emoji: "☕", title: "En el café", lines: ["ph-cafe", "ph-agua", "ph-rico", "ph-cuenta"] },
-    { emoji: "🚉", title: "En la estación", lines: ["ph-estacion", "ph-hora", "ph-tarda", "ph-precio"] },
-    { emoji: "🔁", title: "Si no entiendes", lines: ["ph-perdon", "ph-repetir", "ph-despacio"] }
-  ];
-
-  /* only the lines the live language pack actually has */
-  function scenes() {
-    return SCENE_DEFS.map(function (s) {
-      return { emoji: s.emoji, title: s.title, lines: s.lines.filter(function (id) { return phraseById[id]; }) };
-    }).filter(function (s) { return s.lines.length >= 2; });
-  }
+  /* Scenes are gone with the deck chooser: a lesson is no longer "the phrase
+   * lesson". A session mixes phrases, words, grammar and connectors, and it
+   * opens on the phrases a person needs first. */
 
   /* ------------------------------------------------------------ utilities */
 
@@ -233,7 +220,9 @@
       if (!s.settings.fields.length) s.settings.fields = Object.keys(D.categories);
     }
     if (!s.settings.size) s.settings.size = 8;
-    if (["words", "phrases", "terms"].indexOf(s.settings.mode) === -1) s.settings.mode = "words";
+    /* There is one kind of lesson now. Older saves carried a deck mode; drop
+     * it so nothing can quietly bring the chooser back. */
+    delete s.settings.mode;
 
     seedDeck(s);
     return s;
@@ -642,35 +631,15 @@
       b.setAttribute("aria-pressed", String(on));
     });
 
-    var mode = sessionMode();
-    Array.prototype.forEach.call(document.querySelectorAll(".mode"), function (b) {
-      var on = b.getAttribute("data-mode") === mode;
-      b.classList.toggle("is-on", on);
-      b.setAttribute("aria-pressed", String(on));
-    });
-    box.style.display = mode === "words" ? "flex" : "none";
-    /* a scene sets its own length */
-    var sizes = document.querySelector(".size-pick");
-    if (sizes) sizes.style.visibility = mode === "phrases" && scenes().length ? "hidden" : "";
-
-    var pool = mode === "phrases" ? phraseIds
-      : mode === "terms" ? termIds
-      : allIds.filter(function (id) { return inFields(id, fields); });
+    /* one kind of lesson: every session draws from the whole deck */
     var due = S.dueList(state, Date.now()).filter(function (id) {
-      return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
+      return state.cards[id].last !== null;
     }).length;
 
-
     var note = $("builder-note");
-    var scene = mode === "phrases" && nextScene();
-    if (note && scene) {
-      note.textContent = "next: " + scene.emoji + " " + scene.title + " · " +
-        scene.lines.length + " lines · " + due + " due";
-    } else if (note) {
+    if (note) {
       var goalNow = ADAPT ? ADAPT.dailyGoal((state.history || [])) : lessonSize();
-      note.textContent = goalNow + " today · " + pool.length +
-        (mode === "phrases" ? " phrases" : mode === "terms" ? " terms" : " concepts") +
-        " · " + due + " due";
+      note.textContent = goalNow + " today · " + deckIds().length + " cards · " + due + " due";
     }
   }
 
@@ -1345,17 +1314,23 @@
 
   /* ---------------------------------------------------------------- track */
 
+  /* Where the learner is on the path: real progress, raised by the placement
+   * floor. The floor never caps progress; it only opens a door. */
+  function currentTrackIndex() {
+    var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
+    var rows = TRACK ? TRACK.map(solid) : [];
+    var bySolid = 0;
+    rows.forEach(function (r) { if (r.current) bySolid = r.index; });
+    return Math.max(bySolid, placementFloor());
+  }
+
   function renderTrack() {
     var box = $("track");
     if (!box || !TRACK) return;
 
     var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
     var rows = TRACK.map(solid);
-
-    /* the placement floor is a floor, not a ceiling: real progress still wins */
-    var bySolid = 0;
-    rows.forEach(function (r) { if (r.current) bySolid = r.index; });
-    var currentIndex = Math.max(bySolid, placementFloor());
+    var currentIndex = currentTrackIndex();
     var floor = placementFloor();
 
     rows.forEach(function (r) {
@@ -1379,10 +1354,6 @@
         if (unit) startSession({ unit: unit });
       });
     });
-
-    var cur = rows[currentIndex];
-    var next = rows.filter(function (r) { return !r.unlocked; })[0];
-
   }
 
   /* --------------------------------------------------------------- streak */
@@ -1520,13 +1491,6 @@
     return '<div class="' + cls + '" aria-hidden="true">' + it.emoji + "</div>";
   }
 
-  function poolFor(mode) {
-    if (mode === "phrases") return phraseIds.slice();
-    if (mode === "terms") return termIds.slice();
-    if (mode === "mixed") return allIds.concat(phraseIds, termIds);
-    return allIds.slice();
-  }
-
   function distractorsFor(id, count) {
     var it = itemOf(id);
     if (it.kind === "phrase") return S.pickDistractors(id, phraseIds, [], count, Math.random);
@@ -1586,28 +1550,60 @@
     return (state.settings && state.settings.size) || 8;
   }
 
-  function sessionMode() {
-    return (state.settings && state.settings.mode) || "words";
-  }
-
   function inFields(id, fields) {
     var c = conceptById[id];
     return !!c && fields.indexOf(c.cat) !== -1;
   }
 
-  /* What the next lesson holds: the track's current unit (or the one asked
-   * for), its pool, what is due in it and the new items. `custom` skips the
-   * track and uses the lesson settings instead. The new items are drawn once
-   * and kept until the lesson starts, so the Today card shows the cards that
-   * will actually be taught, not a different random draw. */
-  var planned = null;
+  /* The learner's band gates every layer: a session never shows material above
+   * it, whatever the deck holds. */
+  function itemLevel(id) {
+    var LV = (ACTIVE && ACTIVE.levels) || window.SEMA_LEVELS || {};
+    return LV[id];
+  }
 
+  function atLevel(id) {
+    return ADAPT.within(itemLevel(id), (state.profile && state.profile.level) || "A2");
+  }
+
+  /* The order a layer is met in: what is due comes back first, soonest due
+   * first; then what is new, in the deck's own order; then what is still
+   * resting. Pure enough to reason about, and never a dice roll. */
+  function meetOrder(ids, now) {
+    var due = [], fresh = [], later = [];
+    ids.forEach(function (id) {
+      var c = state.cards[id];
+      if (!c || c.last === null) fresh.push(id);
+      else if (c.due <= now) due.push(id);
+      else later.push(id);
+    });
+    var byDue = function (a, b) { return state.cards[a].due - state.cards[b].due; };
+    return due.sort(byDue).concat(fresh, later.sort(byDue));
+  }
+
+  /* The pair you keep trading leads its own layer, because a drill that opens
+   * on your confusion is worth more than one that opens on alphabetical order. */
+  function seedFirst(ids) {
+    var seed = ADAPT.confusionSeed(state.confusions, ids);
+    if (!seed) return ids;
+    return [seed].concat(ids.filter(function (id) { return id !== seed; }));
+  }
+
+  /* What the next lesson holds. There is one kind of lesson: it opens on the
+   * phrases a person needs first, at least half of it is phrases, and the rest
+   * mixes words, grammar and connectors. The track only decides which words are
+   * in scope; `custom` skips the track and uses the lesson settings.
+   *
+   * The deal is deterministic - due items first, then new ones in the deck's own
+   * order - so the Today card shows the cards that will actually be taught, not
+   * a different random draw. */
   function lessonPlan(opts) {
     var o = opts || {};
-    if (o.unit && o.unit.mode === "read") { startReader(); return; }
     var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
     var unit = o.custom ? null : (o.unit || (TRACK ? TRACK.currentUnit(solid) : null));
-    var mode = unit ? unit.mode : (o.mode || sessionMode());
+    /* the path's reading unit is opened on purpose, from the path: it must not
+     * take over the one Continue button and stall the vocabulary */
+    if (unit && unit.mode === "read" && !o.unit) unit = null;
     var plan = ADAPT ? ADAPT.plan(solid) : { fresh: 4, review: 4, production: 0, size: 8, level: 1 };
     var hist = (state.history || []).map(function (h) { return typeof h === "number" ? h : h && h.size; });
     var goal = ADAPT ? ADAPT.nextGoal(ADAPT.dailyGoal(hist), hist.slice(-3)) : 8;
@@ -1615,61 +1611,43 @@
     var fields = unit && unit.fields ? unit.fields : selectedFields();
     var now = Date.now();
 
-    /* a lesson is not a deck: words, phrases and terms together, scoped only by
-     * the unit's fields. The mode picker becomes emphasis, not exclusion. */
+    /* the reading unit is a lesson too, and it has a screen of its own */
+    if (unit && unit.mode === "read") {
+      return { unit: unit, plan: plan, size: 0, queue: [], fresh: [], due: [], read: true };
+    }
+
     var scopeWords = fields.length
       ? allIds.filter(function (id) { return inFields(id, fields); })
       : allIds.slice();
-    /* basics first: words, then phrases, then connectors. Terms are advanced
-     * material and stay out of a lesson until there is something to connect. */
-    /* the level decides what can appear at all; a session never shows material
-       two bands above the learner. */
-    var LV = (ACTIVE && ACTIVE.levels) || window.SEMA_LEVELS || {};
-    var atLevel = function (id) { return ADAPT.within(LV[id], (state.profile && state.profile.level) || "A2"); };
-    var pool;
-    var withSeed = function (list) {
-      var seed = ADAPT.confusionSeed(state.confusions, list);
-      if (!seed) return list;
-      return [seed].concat(list.filter(function (x) { return x !== seed; }));
+
+    var ordered = {
+      phrases: seedFirst(meetOrder(phraseIds.filter(atLevel), now)),
+      grammar: seedFirst(meetOrder(basicIds.filter(atLevel), now)),
+      words: seedFirst(meetOrder(scopeWords.filter(atLevel), now)),
+      terms: seedFirst(meetOrder(termIds.filter(atLevel), now))
     };
-    if (mode === "phrases") pool = withSeed(phraseIds.filter(atLevel));
-    else if (mode === "terms") pool = withSeed(termIds.filter(atLevel));
-    else if (!unit) pool = withSeed(basicIds.concat(scopeWords).filter(atLevel));
-    else {
-      pool = withSeed(basicIds.concat(scopeWords, phraseIds).filter(atLevel));
-      if (solid >= 10) pool = pool.concat(termIds);
-    }
-
-    var due = S.dueList(state, now).filter(function (id) {
-      return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
-    }).slice(0, size);
-
-    var freshCap = Math.max(0, Math.min(6, unit ? plan.fresh : Math.round(size / 2)));
-    var key = (unit ? unit.id : mode) + "|" + size + "|" + state.sessions + "|" + pool.join(",");
-    if (!planned || planned.key !== key) {
-      var unseen = pool.filter(function (id) { return state.cards[id].last === null; });
-      /* the very first lesson follows the deck's own order - the deck is authored
-       * greetings first - instead of a shuffle, so a beginner meets hola. */
-      planned = {
-        key: key,
-        fresh: state.sessions === 0 ? unseen.slice(0, freshCap) : S.shuffle(unseen, Math.random).slice(0, freshCap)
-      };
-    }
-    return { unit: unit, mode: mode, plan: plan, size: size, pool: pool, due: due, fresh: planned.fresh };
+    var openers = ADAPT.OPENERS.filter(function (id) { return ordered.phrases.indexOf(id) !== -1; });
+    var queue = ADAPT.sessionMix(ordered, size, openers);
+    var fresh = queue.filter(function (id) { return !state.cards[id] || state.cards[id].last === null; });
+    var due = queue.filter(function (id) {
+      var c = state.cards[id];
+      return c && c.last !== null && c.due <= now;
+    });
+    return { unit: unit, plan: plan, size: size, queue: queue, fresh: fresh, due: due, read: false };
   }
 
   /* The lesson card shows the pictures the next lesson opens with, and
    * returns its name and a line saying what is in it. */
   function renderNextStack() {
     var box = $("next-stack");
-    var ids, title, caption;
     var p = lessonPlan();
-    ids = p.fresh.concat(p.due);
-    title = p.unit ? p.unit.title : lessonTitle(p);
-    caption = [p.fresh.length ? p.fresh.length + " new" : "",
-      p.due.length ? p.due.length + " to review" : ""].filter(Boolean).join(", ");
+    var title = p.unit ? p.unit.title : lessonTitle(p);
+    var caption = p.read
+      ? "one text, three questions"
+      : [p.fresh.length ? p.fresh.length + " new" : "",
+         p.due.length ? p.due.length + " to review" : ""].filter(Boolean).join(", ");
     if (box) {
-      box.innerHTML = ids.slice(0, 5).map(function (id) {
+      box.innerHTML = p.read ? "" : p.queue.slice(0, 5).map(function (id) {
         return '<span class="pic">' + itemOf(id).emoji + "</span>";
       }).join("");
     }
@@ -1678,11 +1656,12 @@
 
   /* Named after the field its new words come from, the way a course names a unit. */
   function lessonTitle(p) {
-    if (p.mode === "phrases") return "Phrases";
-    if (p.mode === "terms") return "Connectors";
     if (!p.fresh.length) return p.due.length ? "Review" : "Practice";
-    var cats = p.fresh.map(function (id) { return conceptById[id] && conceptById[id].cat; });
-    var same = cats.every(function (c) { return c === cats[0]; });
+    var kinds = p.fresh.map(function (id) { return itemOf(id).kind; });
+    var phrases = kinds.filter(function (k) { return k === "phrase"; }).length;
+    if (phrases * 2 > kinds.length) return "Phrases";
+    var cats = p.fresh.map(function (id) { return conceptById[id] && conceptById[id].cat; }).filter(Boolean);
+    var same = cats.length && cats.every(function (c) { return c === cats[0]; });
     return same && D.categories[cats[0]] ? D.categories[cats[0]].label : "New words";
   }
 
@@ -1690,30 +1669,30 @@
     var o = opts || {};
     var now = Date.now();
     var p = lessonPlan(o);
-    planned = null;
 
-    /* phrases chosen in the settings play as a scene, one exchange in order */
-    if (!p.unit && p.mode === "phrases" && scenes().length) { startScene(nextScene()); return; }
+    /* the reading unit opens the reader; it is a lesson, not a dead end */
+    if (p.read) { startReader(); return; }
 
-    var mode = p.mode, plan = p.plan, size = p.size, pool = p.pool, due = p.due, fresh = p.fresh;
+    var queue = p.queue.slice();
 
-    var quiz = S.shuffle(due.concat(fresh), Math.random).slice(0, size);
-
-    /* persistent memory, used: the pairs you keep trading come back first */
+    /* persistent memory, used: the pairs you keep trading come back first, but
+     * never before the phrases that open every lesson */
+    var lead = 0;
+    while (lead < queue.length && itemOf(queue[lead]).kind === "phrase") lead += 1;
     var weak = MEM.weakItems(state, 6).filter(function (id) {
-      return pool.indexOf(id) !== -1 && quiz.indexOf(id) === -1;
+      return queue.indexOf(id) === -1 && state.cards[id];
     }).slice(0, 2);
-    if (weak.length) quiz = weak.concat(quiz);
+    if (weak.length) queue = queue.slice(0, lead).concat(weak, queue.slice(lead));
 
-    if (!quiz.length) {
-      quiz = S.shuffle(pool.length ? pool : allIds, Math.random).slice(0, size);
+    if (!queue.length) {
+      queue = S.shuffle(deckIds(), Math.random).slice(0, p.size || lessonSize());
       toast("Nothing due here — free practice.");
     }
 
     /* one card per item: the study step is gone, so a new item is taught by
      * being asked, and the answer is shown the moment it is missed. */
-    session = newSession(mode, [], quiz);
-    session.plan = plan;
+    session = newSession("mixed", [], queue);
+    session.plan = p.plan;
 
     /* your own sentence, if one is old enough to be worth re-reading */
     var older = MEM.nextToReview(state.memory, now, MEM.DAY_MS / 2);
@@ -1728,63 +1707,6 @@
     if (session.personal) renderPersonal();
     else if (session.study.length) renderStudy();
     else renderQuiz();
-  }
-
-  /* Reviews first, as in a word lesson: the scene with the most lines due,
-   * then the first scene still holding a new line, then whichever is due soonest. */
-  function nextScene() {
-    var now = Date.now();
-    var best = null, bestDue = 0;
-    scenes().forEach(function (s) {
-      var due = s.lines.filter(function (id) {
-        var c = state.cards[id];
-        return c.last !== null && c.due <= now;
-      }).length;
-      if (due > bestDue) { best = s; bestDue = due; }
-    });
-    if (best) return best;
-    var fresh = scenes().filter(function (s) {
-      return s.lines.some(function (id) { return state.cards[id].last === null; });
-    })[0];
-    if (fresh) return fresh;
-    return scenes().sort(function (a, b) { return soonestDue(a) - soonestDue(b); })[0];
-  }
-
-  function soonestDue(scene) {
-    return Math.min.apply(null, scene.lines.map(function (id) { return state.cards[id].due; }));
-  }
-
-  function startScene(scene) {
-    var fresh = scene.lines.filter(function (id) { return state.cards[id].last === null; });
-    session = newSession("phrases", fresh, scene.lines.slice());
-    session.scene = scene;
-    show("session");
-    if (fresh.length) renderStudy();
-    else renderQuiz();
-  }
-
-  /* The thread of the exchange above the card. Lines already through show
-   * their scene emoji; the current one shows it only when the card does,
-   * so the strip never gives away a "find the picture" answer. */
-  function sceneHTML(id, reveal) {
-    var s = session && session.scene;
-    if (!s) return "";
-    var at = s.lines.indexOf(id);
-    var steps = s.lines.map(function (lid, i) {
-      var done = session.phase === "study" ? i < at : !!session.answered[lid] && lid !== id;
-      var now = i === at;
-      var face = done || (now && reveal) ? itemOf(lid).emoji : now ? "?" : "";
-      return '<li class="' + (done ? "done" : now ? "now" : "") + '">' + face + "</li>";
-    }).join("");
-    return '<div class="scene">' +
-      '<span class="scene-title">' + s.emoji + " " + esc(s.title) + "</span>" +
-      '<ol class="scene-steps" aria-label="line ' + (at + 1) + " of " + s.lines.length + '">' + steps + "</ol>" +
-    "</div>";
-  }
-
-  function markScene(id, reveal) {
-    var html = sceneHTML(id, reveal);
-    if (html) $("stage").insertAdjacentHTML("afterbegin", html);
   }
 
   function startDemo() {
@@ -1863,8 +1785,8 @@
   }
 
   function startQuizOnly() {
-    var pool = poolFor(sessionMode());
-    session = newSession(sessionMode(), [], S.shuffle(pool, Math.random).slice(0, 6));
+    var p = lessonPlan({ custom: true, size: 6 });
+    session = newSession("mixed", [], p.queue);
     show("session");
     renderQuiz();
   }
@@ -1897,7 +1819,6 @@
       quiz: quiz,
       qi: 0,
       types: null,
-      scene: null,
       startedAt: Date.now(),
       requeued: {},
       missed: {},
@@ -1970,7 +1891,6 @@
       figureHTML(it, "Hear it") +
       wordsHTML(it) +
       contextHTML(it);
-    markScene(it.id, true);
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
@@ -2023,7 +1943,7 @@
     /* teach the first few, then ask: a session of eight brand-new items used to
      * be eight teach cards and zero questions, and every answer counted zero. */
     var taught = session.taught || 0;
-    /* a lesson that opened with study cards (a scene, the demo) has taught them already */
+    /* a lesson that opened with study cards (the demo) has taught them already */
     if (!session.study.length && card.last === null && taught < 3) { session.taught = taught + 1; renderTeach(id); return; }
 
     if (itemOf(id).kind === "basic") { renderPerson(id); return; }
@@ -2034,7 +1954,6 @@
     else if (type === "write") renderWrite(id);
     else if (type === "say") renderSay(id);
     else renderPickPicture(id);
-    markScene(id, type !== "pick-picture");
   }
 
   /* The number on each option is also its key: 1–4 answer from the keyboard. */
@@ -2305,7 +2224,6 @@
   /* The question stays on screen; the verdict rises from the bottom with
    * the word, its sentence and the way on. */
   function showAnswer(ok, it) {
-    markScene(it.id, true);
     sayItem(it);
     var mic = $("mic-btn");
     if (mic) mic.disabled = true;
@@ -2347,13 +2265,13 @@
 
     /* This screen gets shown to other people, across a room: one number,
      * then what stuck and what is coming back. Nothing else competes. */
-    var noun = session.mode === "phrases" ? "phrase" : "word";
+    var noun = session.mode === "words" ? "word" : "card";
     var secs = Math.max(1, Math.round((now - session.startedAt) / 1000));
     var took = secs < 120 ? secs + " second" + (secs === 1 ? "" : "s") : Math.round(secs / 60) + " minutes";
 
     $("card").classList.add("is-summary");
     $("stage").innerHTML =
-      '<p class="prompt">' + (session.scene ? esc(session.scene.title) + " · " : "") + "Lesson done</p>" +
+      '<p class="prompt">Lesson done</p>' +
       '<p class="sum-big">' + total + "</p>" +
       '<p class="sum-line">' + noun + (total === 1 ? "" : "s") + " in " + took + "</p>" +
       '<div class="sum-cols">' +
@@ -2747,7 +2665,10 @@
   });
 
   $("start-btn").addEventListener("click", function () {
-    startSession({ unit: TRACK.units[Math.min(TRACK.units.length - 1, placementFloor())] });
+    var at = currentTrackIndex();
+    var unit = TRACK.units[Math.min(TRACK.units.length - 1, at)];
+    /* Continue is always a drill; reading is a node you choose on the path */
+    startSession(unit && unit.mode === "read" ? {} : { unit: unit });
   });
   $("build-start").addEventListener("click", function () { startSession({ custom: true }); });
   $("review-missed").addEventListener("click", reviewMistakes);
@@ -2815,13 +2736,6 @@
   renderChatSettings();
   $("settings-back").addEventListener("click", function () { show("today"); });
   $("reader-back").addEventListener("click", function () { reader = null; show("today"); });
-  Array.prototype.forEach.call(document.querySelectorAll(".mode"), function (b) {
-    b.addEventListener("click", function () {
-      state.settings.mode = b.getAttribute("data-mode");
-      save();
-      renderToday();
-    });
-  });
 
   Array.prototype.forEach.call(document.querySelectorAll(".size"), function (b) {
     b.addEventListener("click", function () {
@@ -2876,8 +2790,6 @@
   var initial = String(window.location.hash || "").replace("#", "");
   renderToday();
   if (initial === "practice") startSession();
-  else if (initial === "phrases") { state.settings.mode = "phrases"; save(); startSession({ custom: true }); }
-  else if (initial === "terms") { state.settings.mode = "terms"; save(); startSession({ custom: true }); }
   else if (initial === "placement") startPlacement();
   else if (initial === "read") startReader();
   else if (initial === "chat") startConversation();

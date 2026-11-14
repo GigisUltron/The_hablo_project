@@ -2,6 +2,20 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const A = require("../src/adaptive.js");
 
+/* synthetic layers: the composition rules are tested without the real deck */
+function sessionPools(over) {
+  const o = over || {};
+  const base = {
+    phrases: ["ph-hola", "ph-como-estas", "ph-de-donde", "ph-color"]
+      .concat(Array.from({ length: 12 }, (_, i) => "ph-x" + i)),
+    words: Array.from({ length: 24 }, (_, i) => "w-" + i),
+    grammar: Array.from({ length: 8 }, (_, i) => "g-" + i),
+    terms: Array.from({ length: 6 }, (_, i) => "t-" + i)
+  };
+  for (const k of Object.keys(o)) base[k] = o[k];
+  return base;
+}
+
 test("level rises with solid cards", () => {
   assert.equal(A.level(0), 1);
   assert.equal(A.level(5), 1);
@@ -56,6 +70,49 @@ test("the bands run A1 to C1, easiest first", () => {
   assert.equal(A.within("C1", "B2"), false);       // C1 is above B2
   assert.equal(A.within("B2", "C1"), true);
   assert.equal(A.within("A1", "C1"), true);
+});
+
+test("a session opens on phrases, in teaching order", () => {
+  const pools = sessionPools();
+  const ids = A.sessionMix(pools, 8);
+  assert.deepEqual(ids.slice(0, 3), ["ph-hola", "ph-como-estas", "ph-de-donde"]);
+});
+
+test("at least half of a session is phrases, at every length", () => {
+  const pools = sessionPools();
+  for (const size of [5, 8, 12]) {
+    const ids = A.sessionMix(pools, size);
+    const phrases = ids.filter((id) => pools.phrases.includes(id)).length;
+    assert.equal(ids.length, size, `size ${size} came back as ${ids.length}`);
+    assert.ok(phrases * 2 >= size, `size ${size} has ${phrases} phrases`);
+    assert.equal(new Set(ids).size, ids.length, `size ${size} repeats a card`);
+  }
+});
+
+test("a session mixes words, grammar and connectors", () => {
+  const pools = sessionPools();
+  const ids = A.sessionMix(pools, 8);
+  for (const layer of ["words", "grammar", "terms"]) {
+    assert.ok(ids.some((id) => pools[layer].includes(id)), `no ${layer} in ${ids.join(", ")}`);
+  }
+});
+
+test("the four conversation anchors fit in a short session too", () => {
+  const pools = sessionPools();
+  const ids = A.sessionMix(pools, 5);
+  const firstFour = ids.filter((id) => id.startsWith("ph-")).slice(0, 4);
+  assert.deepEqual(firstFour, ["ph-hola", "ph-como-estas", "ph-de-donde", "ph-color"]);
+});
+
+test("a mix never invents ids and never runs past the pool", () => {
+  const pools = sessionPools({
+    phrases: ["ph-hola", "ph-como-estas", "ph-de-donde", "ph-color"],
+    words: ["casa"], grammar: [], terms: []
+  });
+  const ids = A.sessionMix(pools, 8);
+  const known = [].concat(pools.phrases, pools.words, pools.grammar, pools.terms);
+  for (const id of ids) assert.ok(known.includes(id), "invented " + id);
+  assert.equal(ids.length, 5, "only four phrases and one word exist");
 });
 
 test("the session can open on the pair you actually confuse", () => {

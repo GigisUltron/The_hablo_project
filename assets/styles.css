@@ -363,14 +363,14 @@ button.row:active { background: var(--fill); }
   justify-content: space-between;
   gap: 12px;
 }
-.mode-pick, .size-pick {
+.size-pick {
   display: flex;
   gap: 2px;
   padding: 2px;
   background: var(--fill);
   border-radius: var(--radius-sm);
 }
-.mode, .size {
+.size {
   border: 0;
   background: transparent;
   border-radius: var(--radius-sm);
@@ -381,7 +381,7 @@ button.row:active { background: var(--fill); }
   cursor: pointer;
 }
 .size { min-width: 40px; font-variant-numeric: tabular-nums; }
-.mode.is-on, .size.is-on { background: var(--card); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+.size.is-on { background: var(--card); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
 
 .fields { display: flex; flex-wrap: wrap; gap: 8px; }
 .field {
@@ -997,9 +997,9 @@ button.row:active { background: var(--fill); }
 button.row:active .row-pic { transform: scale(0.92); }
 
 /* segmented controls: the chosen part lights up and stands raised */
-.mode-pick, .size-pick, .map-mode { padding: 3px; gap: 3px; border-radius: var(--radius-sm); }
-.mode, .size, .map-mode button { border-radius: var(--radius-sm); font-weight: 700; }
-.mode.is-on, .size.is-on, .map-mode button.is-on {
+.size-pick, .map-mode { padding: 3px; gap: 3px; border-radius: var(--radius-sm); }
+.size, .map-mode button { border-radius: var(--radius-sm); font-weight: 700; }
+.size.is-on, .map-mode button.is-on {
   background: var(--card);
   color: var(--accent);
   box-shadow: 0 2px 0 var(--border-deep);
@@ -1160,6 +1160,8 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 #conv-stage { flex: none; flex-direction: row; align-items: stretch; gap: 8px; }
 #conv-stage .type-input { flex: 1; min-width: 0; }
 #conv-stage .btn { flex: none; }
+/* the attachment preview and the composer stack, whatever #conv-stage does */
+.chat-stage { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 
 /* ----------------------------------------------------------------- reading */
 .reader-card { min-height: 0; }

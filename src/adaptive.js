@@ -49,6 +49,64 @@
     return i <= p;
   }
 
+  /* One kind of lesson. It opens on the phrases a person actually needs first,
+   * in the order they would meet them, and at least half of it is phrases; the
+   * rest mixes the grammar that holds a sentence up, the words it is made of and
+   * the connectors that join two sentences.
+   *
+   * `ordered` holds each layer's ids in the order they should be met - the app
+   * passes what is due first, then what is new. Pure: no schedule state is read
+   * here, so the composition can be tested on its own. */
+  var OPENERS = ["ph-hola", "ph-como-estas", "ph-de-donde", "ph-color"];
+  var LAYERS = ["words", "grammar", "terms", "phrases"];
+  var LEAD = 3;   // the first cards are phrases, not a shuffle
+
+  function sessionMix(ordered, size, openers) {
+    var o = ordered || {};
+    var q = {};
+    LAYERS.forEach(function (kind) { q[kind] = (o[kind] || []).slice(); });
+
+    var n = Math.max(0, Math.round(Number(size) || 0));
+    var list = (openers || OPENERS).slice();
+    var out = [];
+
+    /* the opening run: the first phrases, in teaching order */
+    list.slice(0, LEAD).forEach(function (id) {
+      var at = q.phrases.indexOf(id);
+      if (at === -1 || out.indexOf(id) !== -1) return;
+      q.phrases.splice(at, 1);
+      out.push(id);
+    });
+
+    /* every opener still belongs in the session, even a short one, and at
+     * least half of it must be phrases */
+    var stillDue = list.filter(function (id) { return q.phrases.indexOf(id) !== -1; }).length;
+    var target = Math.max(Math.ceil(n / 2), Math.min(n, out.length + stillDue));
+    target = Math.min(target, out.length + q.phrases.length);
+
+    var have = out.length;
+    var turn = 0;
+    while (out.length < n) {
+      /* a session this short can only stay half phrases if the gap is filled
+       * with them now */
+      if (target - have >= n - out.length && q.phrases.length) {
+        out.push(q.phrases.shift());
+        have += 1;
+        continue;
+      }
+      var pick = null;
+      for (var tries = 0; tries < LAYERS.length && !pick; tries += 1) {
+        var kind = LAYERS[(turn + tries) % LAYERS.length];
+        if (q[kind].length) pick = kind;
+      }
+      turn += 1;
+      if (!pick) break;
+      out.push(q[pick].shift());
+      if (pick === "phrases") have += 1;
+    }
+    return out;
+  }
+
   /* The pair you mix up most, if it is in scope for this session. A drill that
    * opens on your own confusion is worth more than one that opens on alphabetical
    * order. Confusions are "id|id" -> count. */
@@ -99,7 +157,8 @@
   }
 
   var api = { LEVELS: LEVELS, level: level, plan: plan, shouldStop: shouldStop,
-              CEFR: CEFR, within: within, confusionSeed: confusionSeed, dailyGoal: dailyGoal, nextGoal: nextGoal };
+              CEFR: CEFR, within: within, OPENERS: OPENERS, sessionMix: sessionMix,
+              confusionSeed: confusionSeed, dailyGoal: dailyGoal, nextGoal: nextGoal };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.SemaAdaptive = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);

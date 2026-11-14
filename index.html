@@ -151,18 +151,20 @@
       <article class="card conv-card">
         <div class="chat" id="chat" role="log" aria-label="Conversation so far"></div>
         <div class="stage" id="conv-stage">
-          <div class="chat-attachment" id="chat-attachment"></div>
-          <form class="chat-composer" id="chat-form">
-            <button class="icon-btn" id="chat-attach" type="button" aria-label="Attach an image" title="Attach an image">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M5 17l4.5-4.5L14 17M14.5 13.5L17 11l3 3"/></svg>
-            </button>
-            <input class="sr-only" id="chat-image" type="file" accept="image/*" tabindex="-1" />
-            <input class="type-input" id="chat-input" type="text" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="send" placeholder="say something" aria-label="your message" />
-            <button class="icon-btn" id="chat-listen" type="button" aria-label="Speak your message" title="Speak your message" hidden>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
-            </button>
-            <button class="btn btn-primary" id="chat-send" type="submit">Send</button>
-          </form>
+          <div class="chat-stage">
+            <div class="chat-attachment" id="chat-attachment"></div>
+            <form class="chat-composer" id="chat-form">
+              <button class="icon-btn" id="chat-attach" type="button" aria-label="Attach an image" title="Attach an image">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M5 17l4.5-4.5L14 17M14.5 13.5L17 11l3 3"/></svg>
+              </button>
+              <input class="sr-only" id="chat-image" type="file" accept="image/*" tabindex="-1" />
+              <input class="type-input" id="chat-input" type="text" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="send" placeholder="say something" aria-label="your message" />
+              <button class="icon-btn" id="chat-listen" type="button" aria-label="Speak your message" title="Speak your message" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
+              </button>
+              <button class="btn btn-primary" id="chat-send" type="submit">Send</button>
+            </form>
+          </div>
         </div>
         <p class="feedback" id="conv-feedback" role="status" aria-live="polite"></p>
       </article>
@@ -223,11 +225,6 @@
           </div>
 
           <div class="builder-head">
-            <div class="mode-pick" role="group" aria-label="What to study">
-              <button class="mode is-on" data-mode="words" type="button">Words</button>
-              <button class="mode" data-mode="phrases" type="button">Phrases</button>
-              <button class="mode" data-mode="terms" type="button">Terms</button>
-            </div>
             <div class="size-pick" role="group" aria-label="Session length">
               <button class="size" data-size="5" type="button">5</button>
               <button class="size is-on" data-size="8" type="button">8</button>
