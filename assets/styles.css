@@ -1390,3 +1390,8 @@ button.brand { background: none; border: 0; padding: 0; cursor: pointer; }
 #conv-stage { display: flex; gap: 8px; width: 100%; margin-top: 12px; }
 #conv-stage .type-input { flex: 1; max-width: none; }
 #conv-stage .btn { white-space: nowrap; }
+
+/* the conversation is a chat, not a form: keep the composer on one line and
+   let the card size to its content instead of inheriting the drill's height */
+#conv-stage { flex-wrap: nowrap; }
+.conv-card { min-height: 0; }
