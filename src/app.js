@@ -13,6 +13,7 @@
   var S = window.SemaSRS;
   var MEM = window.SemaMemory;
   var TRACK = window.SemaTrack;
+  var ADAPT = window.SemaAdaptive;
   var STORE_KEY = "sema.v1";
   var LANG = D.language;
 
@@ -765,7 +766,9 @@
     var o = opts || {};
     var unit = o.unit || null;
     var mode = unit ? unit.mode : (o.mode || sessionMode());
-    var size = o.size || lessonSize();
+    var solid = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
+    var plan = ADAPT ? ADAPT.plan(solid) : { fresh: 4, review: 4, production: 0, size: 8, level: 1 };
+    var size = o.size || plan.size;
     var fields = unit && unit.fields ? unit.fields : selectedFields();
     var now = Date.now();
 
@@ -779,7 +782,7 @@
       return pool.indexOf(id) !== -1 && state.cards[id].last !== null;
     }).slice(0, size);
 
-    var freshCap = Math.max(1, Math.min(6, Math.round(size / 2)));
+    var freshCap = Math.max(0, Math.min(6, plan.fresh));
     var fresh = S.shuffle(pool.filter(function (id) {
       return state.cards[id].last === null;
     }), Math.random).slice(0, freshCap);
@@ -798,6 +801,7 @@
     }
 
     session = newSession(mode, fresh, quiz);
+    session.plan = plan;
 
     /* your own sentence, if one is old enough to be worth re-reading */
     var older = MEM.nextToReview(state.memory, now, MEM.DAY_MS / 2);
@@ -1003,7 +1007,9 @@
 
   function quizType(card, i) {
     if (card.last === null) return "pick-word";
-    if (i % 3 === 2) return "write";        // production without a microphone
+    var prod = (session.plan && session.plan.production) || 0;
+    if (prod >= 2 && i % 2 === 1) return "write";
+    if (prod >= 1 && i % 3 === 2) return "write";   // production without a microphone
     if (SR && i % 2 === 1) return "say";
     return "pick-picture";
   }
