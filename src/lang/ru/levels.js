@@ -83,6 +83,8 @@ var SEMA_LEVELS = {
   "b-ru-govorit": "A1",
   "b-ru-govorim": "A1",
   "b-ru-govoryat": "A1",
+  "ph-ru-colour": "A1",
+  "ph-ru-where-from": "A1",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

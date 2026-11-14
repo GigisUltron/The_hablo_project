@@ -90,6 +90,8 @@ var SEMA_GLOSSES = {
   "b-ar-yurid": "he wants",
   "b-ar-nurid": "we want",
   "b-ar-yuridun": "they want",
+  "ph-ar-colour": "what is your favourite colour?",
+  "ph-ar-where-from": "where are you from?",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

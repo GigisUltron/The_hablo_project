@@ -5,6 +5,7 @@
  * every item is graded in levels.js.
  */
 var SEMA_PHRASES = {
+  openers: ["ph-tr-hello", "ph-tr-how-are-you", "ph-tr-colour", "ph-tr-where-from"],
   phrases: [
     { id: "ph-tr-hello", emoji: "👋", text: "Merhaba!", sub: "Bir yere girerken.", cat: "phrase" },
     { id: "ph-tr-good-morning", emoji: "🌅", text: "Günaydın.", sub: "Sabahları.", cat: "phrase" },
@@ -36,6 +37,8 @@ var SEMA_PHRASES = {
     { id: "ph-tr-no", emoji: "❌", text: "Hayır.", sub: "Reddederken.", cat: "phrase" },
     { id: "ph-tr-this-please", emoji: "👉", text: "Bu, lütfen.", sub: "Bir şeyi gösterirken.", cat: "phrase" },
     { id: "ph-tr-hotel", emoji: "🛎️", text: "Otel nerede?", sub: "Kalacak yer ararken.", cat: "phrase" },
+    { id: "ph-tr-colour", emoji: "🎨", text: "En sevdiğiniz renk ne?", sub: "Tanışırken.", cat: "phrase" },
+    { id: "ph-tr-where-from", emoji: "🏳️", text: "Nerelisiniz?", sub: "Nereli olduğunu sormak için.", cat: "phrase" },
   ]
 };
 

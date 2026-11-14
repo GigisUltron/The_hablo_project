@@ -229,3 +229,19 @@ test("english teaches idioms, not a translation of itself", () => {
   const levels = require(path.join(dir, "levels.js"));
   assert.ok(phrases.some((p) => levels[p.id] === "C1"), "english has no C1 phrase");
 });
+
+test("every pack names four opening phrases that exist", () => {
+  const seen = new Map();
+  for (const code of codes) {
+    const phrases = require(path.join(root, code, "phrases.js"));
+    const ids = new Set((phrases.phrases || []).map((p) => p.id));
+    assert.ok(Array.isArray(phrases.openers), `${code}: no openers array`);
+    assert.equal(phrases.openers.length, 4, `${code}: expected four openers`);
+    assert.equal(new Set(phrases.openers).size, 4, `${code}: duplicate opener`);
+    for (const id of phrases.openers) {
+      assert.ok(ids.has(id), `${code}: opener "${id}" is not a phrase in the pack`);
+      assert.equal(seen.has(id), false, `opener "${id}" is also used by ${seen.get(id)}`);
+      seen.set(id, code);
+    }
+  }
+});

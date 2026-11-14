@@ -5,6 +5,7 @@
  * every item is graded in levels.js.
  */
 var SEMA_PHRASES = {
+  openers: ["ph-ru-hello", "ph-ru-how-are-you", "ph-ru-colour", "ph-ru-where-from"],
   phrases: [
     { id: "ph-ru-hello", emoji: "👋", text: "Здравствуйте!", sub: "Zdravstvuyte!", cat: "phrase" },
     { id: "ph-ru-good-morning", emoji: "🌅", text: "Доброе утро.", sub: "Dobroye utro.", cat: "phrase" },
@@ -36,6 +37,8 @@ var SEMA_PHRASES = {
     { id: "ph-ru-no", emoji: "❌", text: "Нет.", sub: "Net.", cat: "phrase" },
     { id: "ph-ru-this-please", emoji: "👉", text: "Это, пожалуйста.", sub: "Eto, pozhaluysta.", cat: "phrase" },
     { id: "ph-ru-hotel", emoji: "🛎️", text: "Где гостиница?", sub: "Gde gostinitsa?", cat: "phrase" },
+    { id: "ph-ru-colour", emoji: "🎨", text: "Какой у вас любимый цвет?", sub: "Kakoy u vas lyubimyy tsvet?", cat: "phrase" },
+    { id: "ph-ru-where-from", emoji: "🏳️", text: "Откуда вы?", sub: "Otkuda vy?", cat: "phrase" },
   ]
 };
 

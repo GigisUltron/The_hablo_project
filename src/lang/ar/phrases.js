@@ -5,6 +5,7 @@
  * every item is graded in levels.js.
  */
 var SEMA_PHRASES = {
+  openers: ["ph-ar-hello", "ph-ar-how-are-you", "ph-ar-colour", "ph-ar-where-from"],
   phrases: [
     { id: "ph-ar-hello", emoji: "👋", text: "مرحباً!", sub: "Marhaban!", cat: "phrase" },
     { id: "ph-ar-good-morning", emoji: "🌅", text: "صباح الخير.", sub: "Sabah al-khayr.", cat: "phrase" },
@@ -36,6 +37,8 @@ var SEMA_PHRASES = {
     { id: "ph-ar-no", emoji: "❌", text: "لا.", sub: "La.", cat: "phrase" },
     { id: "ph-ar-this-please", emoji: "👉", text: "هذا، من فضلك.", sub: "Hadha, min fadlik.", cat: "phrase" },
     { id: "ph-ar-hotel", emoji: "🛎️", text: "أين الفندق؟", sub: "Ayna al-funduq?", cat: "phrase" },
+    { id: "ph-ar-colour", emoji: "🎨", text: "ما لونك المفضل؟", sub: "Ma lawnuka al-mufaddal?", cat: "phrase" },
+    { id: "ph-ar-where-from", emoji: "🏳️", text: "من أين أنت؟", sub: "Min ayna anta?", cat: "phrase" },
   ]
 };
 

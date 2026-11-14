@@ -205,6 +205,8 @@ var SEMA_GLOSSES = {
   "b-en-has": "a form of the verb 'have'",
   "b-en-have-we": "a form of the verb 'have'",
   "b-en-have-they": "a form of the verb 'have'",
+  "ph-en-colour": "asking which colour someone likes best",
+  "ph-en-where-from": "asking about someone's home country or town",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {

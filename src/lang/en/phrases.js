@@ -5,6 +5,7 @@
  * paraphrase, not a translation of English into English.
  */
 var SEMA_PHRASES = {
+  openers: ["ph-en-greetings-1", "ph-en-small-talk-1", "ph-en-colour", "ph-en-where-from"],
   phrases: [
     { id: "ph-en-greetings-1", emoji: "🤙", text: "How's it going?", sub: "Casual, between friends.", cat: "phrase", topic: "greetings" },
     { id: "ph-en-greetings-2", emoji: "🙋", text: "Long time no see.", sub: "Meeting someone after a long time.", cat: "phrase", topic: "greetings" },
@@ -126,6 +127,8 @@ var SEMA_PHRASES = {
     { id: "ph-en-hobbies-2", emoji: "🩹", text: "I've taken up running.", sub: "A new hobby.", cat: "phrase", topic: "hobbies" },
     { id: "ph-en-hobbies-3", emoji: "🏛️", text: "I'm a bit of a bookworm.", sub: "Describing a reading habit.", cat: "phrase", topic: "hobbies" },
     { id: "ph-en-hobbies-4", emoji: "💵", text: "It's not my cup of tea.", sub: "Politely disliking something.", cat: "phrase", topic: "hobbies" },
+    { id: "ph-en-colour", emoji: "🌈", text: "What's your favourite colour?", sub: "Asking about preferences.", cat: "phrase", topic: "small-talk" },
+    { id: "ph-en-where-from", emoji: "🏡", text: "Where are you from?", sub: "Asking where someone comes from.", cat: "phrase", topic: "introductions" },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_PHRASES;

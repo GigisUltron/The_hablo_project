@@ -82,6 +82,8 @@ var SEMA_GLOSSES = {
   "b-zh-tamen": "they",
   "b-zh-shi": "to be",
   "b-zh-bushi": "to not be",
+  "ph-zh-colour": "what is your favourite colour?",
+  "ph-zh-where-from": "where are you from?",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

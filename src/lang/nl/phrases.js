@@ -5,6 +5,7 @@
  * every item is graded in levels.js.
  */
 var SEMA_PHRASES = {
+  openers: ["ph-nl-hello", "ph-nl-how-are-you", "ph-nl-colour", "ph-nl-where-from"],
   phrases: [
     { id: "ph-nl-hello", emoji: "👋", text: "Hallo!", sub: "Als je ergens binnenkomt.", cat: "phrase" },
     { id: "ph-nl-good-morning", emoji: "🌅", text: "Goedemorgen.", sub: "In de ochtend.", cat: "phrase" },
@@ -36,6 +37,8 @@ var SEMA_PHRASES = {
     { id: "ph-nl-no", emoji: "❌", text: "Nee.", sub: "Weigeren.", cat: "phrase" },
     { id: "ph-nl-this-please", emoji: "👉", text: "Dit, alstublieft.", sub: "Naar iets wijzen.", cat: "phrase" },
     { id: "ph-nl-hotel", emoji: "🛎️", text: "Waar is het hotel?", sub: "Een onderkomen zoeken.", cat: "phrase" },
+    { id: "ph-nl-colour", emoji: "🎨", text: "Wat is je lievelingskleur?", sub: "Bij het kennismaken.", cat: "phrase" },
+    { id: "ph-nl-where-from", emoji: "🏳️", text: "Waar kom je vandaan?", sub: "Naar de herkomst vragen.", cat: "phrase" },
   ]
 };
 

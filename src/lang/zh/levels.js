@@ -75,6 +75,8 @@ var SEMA_LEVELS = {
   "b-zh-tamen": "A1",
   "b-zh-shi": "A1",
   "b-zh-bushi": "A1",
+  "ph-zh-colour": "A1",
+  "ph-zh-where-from": "A1",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

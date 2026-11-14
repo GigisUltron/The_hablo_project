@@ -90,6 +90,8 @@ var SEMA_GLOSSES = {
   "b-pt-tem": "he / she has",
   "b-pt-temos": "we have",
   "b-pt-tem-3p": "they have",
+  "ph-pt-colour": "what is your favourite colour?",
+  "ph-pt-where-from": "where are you from?",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

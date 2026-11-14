@@ -90,6 +90,8 @@ var SEMA_GLOSSES = {
   "b-ru-govorit": "he / she speaks",
   "b-ru-govorim": "we speak",
   "b-ru-govoryat": "they speak",
+  "ph-ru-colour": "what is your favourite colour?",
+  "ph-ru-where-from": "where are you from?",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

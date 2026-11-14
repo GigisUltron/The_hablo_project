@@ -83,6 +83,8 @@ var SEMA_LEVELS = {
   "b-tr-istiyor": "A1",
   "b-tr-istiyoruz": "A1",
   "b-tr-istiyorlar": "A1",
+  "ph-tr-colour": "A1",
+  "ph-tr-where-from": "A1",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

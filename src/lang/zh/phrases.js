@@ -4,6 +4,7 @@
  * the reading a learner needs before the characters are familiar.
  */
 var SEMA_PHRASES = {
+  openers: ["ph-zh-hello", "ph-zh-how-are-you", "ph-zh-colour", "ph-zh-where-from"],
   phrases: [
     { id: "ph-zh-hello", emoji: "👋", text: "你好！", sub: "nǐ hǎo", cat: "phrase" },
     { id: "ph-zh-good-morning", emoji: "🌅", text: "早上好。", sub: "zǎoshang hǎo", cat: "phrase" },
@@ -35,6 +36,8 @@ var SEMA_PHRASES = {
     { id: "ph-zh-no", emoji: "❌", text: "不。", sub: "bù", cat: "phrase" },
     { id: "ph-zh-this-please", emoji: "👉", text: "请给我这个。", sub: "qǐng gěi wǒ zhège", cat: "phrase" },
     { id: "ph-zh-hotel", emoji: "🛎️", text: "酒店在哪里？", sub: "jiǔdiàn zài nǎlǐ", cat: "phrase" },
+    { id: "ph-zh-colour", emoji: "🎨", text: "你最喜欢什么颜色？", sub: "Nǐ zuì xǐhuan shénme yánsè", cat: "phrase" },
+    { id: "ph-zh-where-from", emoji: "🏳️", text: "你是哪里人？", sub: "Nǐ shì nǎlǐ rén", cat: "phrase" },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_PHRASES;

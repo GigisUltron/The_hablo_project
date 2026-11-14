@@ -82,6 +82,8 @@ var SEMA_GLOSSES = {
   "b-ja-karera": "they",
   "b-ja-desu": "to be (polite)",
   "b-ja-dewa-nai": "to not be (polite)",
+  "ph-ja-colour": "what is your favourite colour?",
+  "ph-ja-where-from": "where are you from?",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

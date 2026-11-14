@@ -4,6 +4,7 @@
  * the same 30+ situations; harder items carry B1, B2 or C1 in levels.js.
  */
 var SEMA_PHRASES = {
+  openers: ["ph-salut", "ph-ca-va", "ph-couleur", "ph-d-ou-viens"],
   phrases: [
     { id: "ph-quoi-de-neuf", emoji: "🤙", text: "Quoi de neuf ?", sub: "Entre amis.", cat: "phrase", topic: "greetings" },
     { id: "ph-ton-nom", emoji: "🙋", text: "Comment tu t'appelles ?", sub: "Pour faire connaissance.", cat: "phrase", topic: "introductions" },

@@ -83,6 +83,8 @@ var SEMA_LEVELS = {
   "b-ar-yurid": "A1",
   "b-ar-nurid": "A1",
   "b-ar-yuridun": "A1",
+  "ph-ar-colour": "A1",
+  "ph-ar-where-from": "A1",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

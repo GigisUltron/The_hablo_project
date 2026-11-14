@@ -83,6 +83,8 @@ var SEMA_LEVELS = {
   "b-nl-heeft": "A1",
   "b-nl-hebben": "A1",
   "b-nl-hebben-3p": "A1",
+  "ph-nl-colour": "A1",
+  "ph-nl-where-from": "A1",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

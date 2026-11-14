@@ -90,6 +90,8 @@ var SEMA_GLOSSES = {
   "b-tr-istiyor": "he / she wants",
   "b-tr-istiyoruz": "we want",
   "b-tr-istiyorlar": "they want",
+  "ph-tr-colour": "what is your favourite colour?",
+  "ph-tr-where-from": "where are you from?",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

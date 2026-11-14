@@ -83,6 +83,8 @@ var SEMA_LEVELS = {
   "b-pt-tem": "A1",
   "b-pt-temos": "A1",
   "b-pt-tem-3p": "A1",
+  "ph-pt-colour": "A1",
+  "ph-pt-where-from": "A1",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

@@ -90,6 +90,8 @@ var SEMA_GLOSSES = {
   "b-hi-khata-hai": "he eats",
   "b-hi-khate-hain": "we eat",
   "b-hi-khate-hain-3p": "they eat",
+  "ph-hi-colour": "what is your favourite colour?",
+  "ph-hi-where-from": "where are you from?",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

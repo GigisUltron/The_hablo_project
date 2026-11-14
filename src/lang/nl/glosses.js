@@ -90,6 +90,8 @@ var SEMA_GLOSSES = {
   "b-nl-heeft": "he / she has",
   "b-nl-hebben": "we have",
   "b-nl-hebben-3p": "they have",
+  "ph-nl-colour": "what is your favourite colour?",
+  "ph-nl-where-from": "where are you from?",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

@@ -5,6 +5,7 @@
  * every item is graded in levels.js.
  */
 var SEMA_PHRASES = {
+  openers: ["ph-ja-hello", "ph-ja-how-are-you", "ph-ja-colour", "ph-ja-where-from"],
   phrases: [
     { id: "ph-ja-hello", emoji: "👋", text: "こんにちは。", sub: "Konnichiwa.", cat: "phrase" },
     { id: "ph-ja-good-morning", emoji: "🌅", text: "おはようございます。", sub: "Ohayou gozaimasu.", cat: "phrase" },
@@ -36,6 +37,8 @@ var SEMA_PHRASES = {
     { id: "ph-ja-no", emoji: "❌", text: "いいえ。", sub: "Iie.", cat: "phrase" },
     { id: "ph-ja-this-please", emoji: "👉", text: "これをください。", sub: "Kore o kudasai.", cat: "phrase" },
     { id: "ph-ja-hotel", emoji: "🛎️", text: "ホテルはどこですか。", sub: "Hoteru wa doko desu ka.", cat: "phrase" },
+    { id: "ph-ja-colour", emoji: "🎨", text: "好きな色は何ですか。", sub: "Suki na iro wa nan desu ka.", cat: "phrase" },
+    { id: "ph-ja-where-from", emoji: "🏳️", text: "ご出身はどちらですか。", sub: "Goshusshin wa dochira desu ka.", cat: "phrase" },
   ]
 };
 

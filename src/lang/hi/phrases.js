@@ -5,6 +5,7 @@
  * every item is graded in levels.js.
  */
 var SEMA_PHRASES = {
+  openers: ["ph-hi-hello", "ph-hi-how-are-you", "ph-hi-colour", "ph-hi-where-from"],
   phrases: [
     { id: "ph-hi-hello", emoji: "👋", text: "नमस्ते।", sub: "Namaste.", cat: "phrase" },
     { id: "ph-hi-good-morning", emoji: "🌅", text: "सुप्रभात।", sub: "Suprabhat.", cat: "phrase" },
@@ -36,6 +37,8 @@ var SEMA_PHRASES = {
     { id: "ph-hi-no", emoji: "❌", text: "नहीं।", sub: "Nahin.", cat: "phrase" },
     { id: "ph-hi-this-please", emoji: "👉", text: "यह, कृपया।", sub: "Yeh, kripya.", cat: "phrase" },
     { id: "ph-hi-hotel", emoji: "🛎️", text: "होटल कहाँ है?", sub: "Hotel kahan hai?", cat: "phrase" },
+    { id: "ph-hi-colour", emoji: "🎨", text: "आपका पसंदीदा रंग कौन सा है?", sub: "Aapka pasandida rang kaun sa hai?", cat: "phrase" },
+    { id: "ph-hi-where-from", emoji: "🏳️", text: "आप कहाँ से हैं?", sub: "Aap kahan se hain?", cat: "phrase" },
   ]
 };
 
