@@ -38,7 +38,7 @@ Judge yourself by these, not by how it looks in a screenshot:
 | One-handed use at 390 px | everything reachable, targets ≥ 44 px |
 | Keyboard-only use | every action reachable, focus always visible |
 | `prefers-reduced-motion` | no motion that carries meaning is lost |
-| `make check` | green, 31 tests, never fewer |
+| `make check` | green, 85 tests today, never fewer |
 
 ## What "professional" means here
 
@@ -252,28 +252,10 @@ unverified UI. The rule now is: if it can be asserted, assert it.
 
 If a test cannot express the risk, say so in the report — do not silently skip verification.
 
-```sh
-python3 serve.py --no-open      # then open the printed URL
-```
-
-Render and inspect, at minimum, 390×844 and 1280×900:
-
-- Today, with a fresh profile
-- a study card and a quiz card, mid-session
-- the answer state, correct and incorrect
-- the session summary
-- the phrase deck (`#phrases`)
-- the Tune panel open
-- keyboard focus moving through the session
-
-Check for: overlap, clipping, contrast, alignment drift between viewport widths, and anything
-that jumps when content changes length (a 3-word card and a 12-word phrase must both sit
-still).
-
 ## Definition of done
 
 - `make check` green, `--check` green
-- every state above implemented and inspected at both widths
+- every state above implemented, and any invariant it implies covered by a test
 - no new dependency, no new file outside your ownership
 - the one-button Today screen is still one button
 - a short report: what changed, what you verified, what you deliberately did not change and why
