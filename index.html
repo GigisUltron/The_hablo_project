@@ -228,7 +228,6 @@
         <div>
           <h2 data-chrome="settingsTitle">Settings</h2>
         </div>
-        <button class="btn btn-ghost btn-sm" id="reset-btn" data-i18n="reset">Reset progress</button>
         <button class="btn btn-ghost btn-sm" id="settings-back" data-i18n="done">Done</button>
       </div>
       <div class="panel panel-pad">
@@ -292,6 +291,11 @@
         <div class="settings-row">
           <button class="audio-chip" id="audio-chip" type="button">🔊 checking audio…</button>
           <button class="foot-link" type="button" data-goto="stats" data-i18n="tabProgress">progress</button>
+        </div>
+        <div class="danger-zone">
+          <p class="panel-title" data-i18n="reset">Reset progress</p>
+          <p class="builder-note" data-i18n="resetHint">This permanently clears progress in every language on this device.</p>
+          <button class="btn btn-ghost btn-sm danger-btn" id="reset-btn" data-i18n="reset">Reset progress</button>
         </div>
       </div>
     </section>

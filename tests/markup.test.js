@@ -899,6 +899,14 @@ test("every settings option is read, applied now, and remembered", () => {
   assert.equal(/data-mode=/.test(html), false, "a deck-mode chooser came back");
 });
 
+test("reset lives in a separated danger zone and Progress is a link", () => {
+  assert.match(html, /class="danger-zone"/, "no separated destructive area");
+  assert.match(app, /askConfirm\(/, "reset is not using the sema dialog");
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(css, /\.foot-link \{[\s\S]*background: transparent;/, "footer Progress still has a browser button background");
+  assert.match(css, /\.danger-zone \{/, "danger zone is unstyled");
+});
+
 test("no settings link goes nowhere", () => {
   const gotos = [...html.matchAll(/data-goto="([^"]+)"/g)].map((m) => m[1]);
   const ids = idsIn(html);
