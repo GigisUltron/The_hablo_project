@@ -269,4 +269,4 @@ docs/                      preview image and project notes
 
 MIT — see [LICENSE](LICENSE).
 
-More design notes and honest limits are in [DEMO.md](DEMO.md). The gamification proposal, with its approval checklist, is in [docs/GAMIFICATION.md](docs/GAMIFICATION.md).
+More design notes and honest limits are in [DEMO.md](DEMO.md). The gamification proposal, with its approval checklist, is in [docs/GAMIFICATION.md](docs/GAMIFICATION.md). The demo-video shot list, script and recording checklist are in [docs/DEMO-VIDEO.md](docs/DEMO-VIDEO.md).
