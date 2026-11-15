@@ -35,7 +35,7 @@ var SEMA_DATA = {
    * `emoji` is the anchor; the sentence supplies the context a translation
    * would otherwise provide. */
   concepts: [
-    { id: "maison",   emoji: "🏠", word: "maison",   article: "la", cat: "home",     sentence: "Ma maison est près de la mer." },
+    { id: "maison",   emoji: "🏠", word: "maison",   article: "la", cat: "home",     sentence: "Ma maison est près de la mer.", synonyms: ["demeure"] },
     { id: "porte",    emoji: "🚪", word: "porte",    article: "la", cat: "home",     sentence: "La porte est ouverte." },
     { id: "fenetre",  emoji: "🪟", word: "fenêtre",  article: "la", cat: "home",     sentence: "J'ouvre la fenêtre le matin." },
     { id: "lit",      emoji: "🛏️", word: "lit",      article: "le", cat: "home",     sentence: "Je dors dans mon lit." },
@@ -65,9 +65,9 @@ var SEMA_DATA = {
 
     { id: "ville",    emoji: "🏙️", word: "ville",    article: "la", cat: "city",     sentence: "La ville est grande." },
     { id: "rue",      emoji: "🛣️", word: "rue",      article: "la", cat: "city",     sentence: "J'habite dans cette rue." },
-    { id: "voiture",  emoji: "🚗", word: "voiture",  article: "la", cat: "city",     sentence: "La voiture est rouge." },
+    { id: "voiture",  emoji: "🚗", word: "voiture",  article: "la", cat: "city",     sentence: "La voiture est rouge.", synonyms: ["auto"] },
     { id: "train",    emoji: "🚆", word: "train",    article: "le", cat: "city",     sentence: "Le train arrive en retard." },
-    { id: "argent",   emoji: "💰", word: "argent",   article: "l'", cat: "city",     sentence: "Je n'ai pas d'argent." },
+    { id: "argent",   emoji: "💰", word: "argent",   article: "l'", cat: "city",     sentence: "Je n'ai pas d'argent.", synonyms: ["fric"] },
 
     { id: "jour",     emoji: "📅", word: "jour",     article: "le", cat: "time",     sentence: "Le jour est long." },
     { id: "nuit",     emoji: "🌃", word: "nuit",     article: "la", cat: "time",     sentence: "La nuit est calme." },

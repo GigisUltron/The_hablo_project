@@ -32,7 +32,7 @@ var SEMA_DATA = {
   },
 
   concepts: [
-    { id: "ja-house", emoji: "🏠", word: "家", article: "", cat: "home", sentence: "私の家は海の近くにあります。" },
+    { id: "ja-house", emoji: "🏠", word: "家", article: "", cat: "home", sentence: "私の家は海の近くにあります。", synonyms: ["住宅"] },
     { id: "ja-door", emoji: "🚪", word: "ドア", article: "", cat: "home", sentence: "ドアは開いています。" },
     { id: "ja-water", emoji: "💧", word: "水", article: "", cat: "food", sentence: "毎日、水を飲みます。" },
     { id: "ja-bread", emoji: "🍞", word: "パン", article: "", cat: "food", sentence: "パンは焼きたてです。" },
@@ -49,7 +49,7 @@ var SEMA_DATA = {
     { id: "ja-eye", emoji: "👁️", word: "目", article: "", cat: "body", sentence: "片目を閉じます。" },
     { id: "ja-heart", emoji: "❤️", word: "心臓", article: "", cat: "body", sentence: "心臓が速く鼓動しています。" },
     { id: "ja-city", emoji: "🏙️", word: "町", article: "", cat: "city", sentence: "町は大きいです。" },
-    { id: "ja-car", emoji: "🚗", word: "車", article: "", cat: "city", sentence: "車は赤いです。" },
+    { id: "ja-car", emoji: "🚗", word: "車", article: "", cat: "city", sentence: "車は赤いです。", synonyms: ["自動車"] },
     { id: "ja-train", emoji: "🚆", word: "電車", article: "", cat: "city", sentence: "電車は遅れています。" },
     { id: "ja-street", emoji: "🛣️", word: "通り", article: "", cat: "city", sentence: "私はこの通りに住んでいます。" },
     { id: "ja-night", emoji: "🌃", word: "夜", article: "", cat: "time", sentence: "夜は静かです。" },

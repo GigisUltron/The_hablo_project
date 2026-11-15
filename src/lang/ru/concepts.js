@@ -32,7 +32,7 @@ var SEMA_DATA = {
   },
 
   concepts: [
-    { id: "ru-house", emoji: "🏠", word: "дом", article: "", cat: "home", sentence: "Мой дом стоит у моря." },
+    { id: "ru-house", emoji: "🏠", word: "дом", article: "", cat: "home", sentence: "Мой дом стоит у моря.", synonyms: ["жилище"] },
     { id: "ru-door", emoji: "🚪", word: "дверь", article: "", cat: "home", sentence: "Дверь открыта." },
     { id: "ru-water", emoji: "💧", word: "вода", article: "", cat: "food", sentence: "Я пью воду каждый день." },
     { id: "ru-bread", emoji: "🍞", word: "хлеб", article: "", cat: "food", sentence: "Хлеб свежий." },
@@ -49,7 +49,7 @@ var SEMA_DATA = {
     { id: "ru-eye", emoji: "👁️", word: "глаз", article: "", cat: "body", sentence: "Я закрываю один глаз." },
     { id: "ru-heart", emoji: "❤️", word: "сердце", article: "", cat: "body", sentence: "Сердце бьётся быстро." },
     { id: "ru-city", emoji: "🏙️", word: "город", article: "", cat: "city", sentence: "Город большой." },
-    { id: "ru-car", emoji: "🚗", word: "машина", article: "", cat: "city", sentence: "Машина красная." },
+    { id: "ru-car", emoji: "🚗", word: "машина", article: "", cat: "city", sentence: "Машина красная.", synonyms: ["автомобиль"] },
     { id: "ru-train", emoji: "🚆", word: "поезд", article: "", cat: "city", sentence: "Поезд опаздывает." },
     { id: "ru-street", emoji: "🛣️", word: "улица", article: "", cat: "city", sentence: "Я живу на этой улице." },
     { id: "ru-night", emoji: "🌃", word: "ночь", article: "", cat: "time", sentence: "Ночь тихая." },

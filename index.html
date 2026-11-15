@@ -65,6 +65,12 @@
           </div>
         </header>
 
+        <div class="goal-line" id="goal-line">
+          <span class="goal-copy" data-i18n="today">Today</span>
+          <span class="goal-count"><b id="goal-done">0</b>/<span id="goal-target">0</span></span>
+          <span class="goal-track" aria-hidden="true"><i id="goal-fill"></i></span>
+        </div>
+
         <section class="lesson-card" aria-labelledby="lesson-name">
           <div class="lesson-top">
             <div>
@@ -269,6 +275,7 @@
         <p class="vocab-count" id="vocab-count"></p>
         <div class="vocab-bar" role="progressbar" aria-label="Vocabulary progress"><i id="vocab-bar"></i></div>
         <div id="vocab-stage" class="vocab-stage" aria-live="polite"></div>
+        <p class="vocab-feedback" id="vocab-feedback" role="status" aria-live="polite"></p>
         <p class="vocab-stats" id="vocab-stats"></p>
       </div>
     </section>
@@ -610,6 +617,7 @@
 <script src="src/exercises.js"></script>
 <script src="src/ai-tools.js"></script>
 <script src="src/economy.js"></script>
+<script src="src/synonyms.js"></script>
 <script src="src/wordset.js"></script>
 <script src="src/ui-strings.js"></script>
 <script src="src/ui-extra.js"></script>

@@ -32,7 +32,7 @@ var SEMA_DATA = {
   },
 
   concepts: [
-    { id: "de-house", emoji: "🏠", word: "Haus", article: "das", cat: "home", sentence: "Mein Haus ist nah am Meer." },
+    { id: "de-house", emoji: "🏠", word: "Haus", article: "das", cat: "home", sentence: "Mein Haus ist nah am Meer.", synonyms: ["Zuhause"] },
     { id: "de-door", emoji: "🚪", word: "Tür", article: "die", cat: "home", sentence: "Die Tür ist offen." },
     { id: "de-water", emoji: "💧", word: "Wasser", article: "das", cat: "food", sentence: "Ich trinke jeden Tag Wasser." },
     { id: "de-bread", emoji: "🍞", word: "Brot", article: "das", cat: "food", sentence: "Das Brot ist frisch." },
@@ -49,7 +49,7 @@ var SEMA_DATA = {
     { id: "de-eye", emoji: "👁️", word: "Auge", article: "das", cat: "body", sentence: "Ich schließe ein Auge." },
     { id: "de-heart", emoji: "❤️", word: "Herz", article: "das", cat: "body", sentence: "Das Herz schlägt schnell." },
     { id: "de-city", emoji: "🏙️", word: "Stadt", article: "die", cat: "city", sentence: "Die Stadt ist groß." },
-    { id: "de-car", emoji: "🚗", word: "Auto", article: "das", cat: "city", sentence: "Das Auto ist rot." },
+    { id: "de-car", emoji: "🚗", word: "Auto", article: "das", cat: "city", sentence: "Das Auto ist rot.", synonyms: ["Wagen"] },
     { id: "de-train", emoji: "🚆", word: "Zug", article: "der", cat: "city", sentence: "Der Zug kommt zu spät." },
     { id: "de-street", emoji: "🛣️", word: "Straße", article: "die", cat: "city", sentence: "Ich wohne in dieser Straße." },
     { id: "de-night", emoji: "🌃", word: "Nacht", article: "die", cat: "time", sentence: "Die Nacht ist ruhig." },

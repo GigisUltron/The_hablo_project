@@ -211,6 +211,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/exercises.js",
     "src/ai-tools.js",
     "src/economy.js",
+    "src/synonyms.js",
     "src/wordset.js",
     "src/ui-strings.js",
     "src/ui-extra.js",
@@ -385,6 +386,39 @@ test("typing has a visible skip and a non-Latin transliteration path", () => {
   assert.match(app, /acceptedAnswers/);
   assert.match(app, /WRITING\.hasScript\(it\.text\)/);
   assert.match(app, /tr\("skipTyping"/);
+});
+
+test("the daily goal is visible and a level-up is earned, not invented", () => {
+  assert.match(html, /id="goal-line"/);
+  assert.match(html, /id="goal-fill"/);
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /var goal = dailyGoalTarget\(\)/);
+  assert.match(app, /classList\.toggle\("is-done", doneToday >= goal\)/);
+  assert.match(app, /var levelLine = newLevel > oldLevel/);
+  assert.match(app, /tr\("levelUp"/);
+});
+
+test("vocabulary expansion tests synonyms and does not unlock the path", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /SYNONYMS\.forItem/);
+  assert.match(app, /function renderVocabSynonym/);
+  assert.match(app, /vocabSame/);
+  assert.match(app, /vocab-feedback/);
+  const seen = app.slice(app.indexOf("function seenDeckCount"), app.indexOf("function scriptLetters"));
+  assert.match(seen, /state\.trackMet/, "the path still counts SRS reps");
+  assert.doesNotMatch(seen, /reps > 0/, "vocabulary still advances the path");
+  const start = app.indexOf("function startVocab");
+  const end = app.indexOf("function vocabHarder");
+  assert.doesNotMatch(app.slice(start, end), /trackMet/, "vocabulary writes path progress");
+  const pool = app.slice(app.indexOf("function vocabPool"), app.indexOf("function startVocab"));
+  assert.match(pool, /learnerLevel/);
+  assert.match(pool, /rank\(id\) >= me - 1/);
+});
+
+test("the word-set icon is styled like the other quiet rows", () => {
+  const css = fs.readFileSync(path.join(__dirname, "..", "assets", "styles.css"), "utf8");
+  assert.match(css, /#home-wordset \.row-pic svg/);
+  assert.match(css, /#home-wordset \.row-meta/);
 });
 
 test("vocabulary expansion keeps audio, context and a way back to misses", () => {

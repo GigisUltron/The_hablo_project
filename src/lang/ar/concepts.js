@@ -32,7 +32,7 @@ var SEMA_DATA = {
   },
 
   concepts: [
-    { id: "ar-house", emoji: "🏠", word: "بيت", article: "", cat: "home", sentence: "بيتي قريب من البحر." },
+    { id: "ar-house", emoji: "🏠", word: "بيت", article: "", cat: "home", sentence: "بيتي قريب من البحر.", synonyms: ["منزل"] },
     { id: "ar-door", emoji: "🚪", word: "باب", article: "", cat: "home", sentence: "الباب مفتوح." },
     { id: "ar-water", emoji: "💧", word: "ماء", article: "", cat: "food", sentence: "أشرب الماء كل يوم." },
     { id: "ar-bread", emoji: "🍞", word: "خبز", article: "", cat: "food", sentence: "الخبز طازج." },
@@ -49,7 +49,7 @@ var SEMA_DATA = {
     { id: "ar-eye", emoji: "👁️", word: "عين", article: "", cat: "body", sentence: "أغمض عيناً واحدة." },
     { id: "ar-heart", emoji: "❤️", word: "قلب", article: "", cat: "body", sentence: "ينبض القلب بسرعة." },
     { id: "ar-city", emoji: "🏙️", word: "مدينة", article: "", cat: "city", sentence: "المدينة كبيرة." },
-    { id: "ar-car", emoji: "🚗", word: "سيارة", article: "", cat: "city", sentence: "السيارة حمراء." },
+    { id: "ar-car", emoji: "🚗", word: "سيارة", article: "", cat: "city", sentence: "السيارة حمراء.", synonyms: ["مركبة"] },
     { id: "ar-train", emoji: "🚆", word: "قطار", article: "", cat: "city", sentence: "القطار متأخر." },
     { id: "ar-street", emoji: "🛣️", word: "شارع", article: "", cat: "city", sentence: "أسكن في هذا الشارع." },
     { id: "ar-night", emoji: "🌃", word: "ليلة", article: "", cat: "time", sentence: "الليلة هادئة." },

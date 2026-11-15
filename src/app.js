@@ -25,6 +25,7 @@
   var WORDSET = window.SemaWordSet;
   var ECON = window.SemaEconomy;
   var AITOOLS = window.SemaAiTools;
+  var SYNONYMS = window.SemaSynonyms;
 
   function audioEnabled() {
     return (state && state.settings && state.settings.audio) !== "off";
@@ -491,6 +492,16 @@
     delete s.settings.mode;
 
     seedDeck(s);
+    /* Path progress is lesson progress. Vocabulary review feeds the SRS but
+     * must not unlock the next lesson by itself, or "Got it" replaces the
+     * course. Older saves are migrated from their existing card history so a
+     * path already earned does not relock. */
+    if (!s.trackMet || typeof s.trackMet !== "object" || Array.isArray(s.trackMet)) {
+      s.trackMet = {};
+      Object.keys(s.cards || {}).forEach(function (id) {
+        if (s.cards[id] && s.cards[id].reps > 0) s.trackMet[id] = true;
+      });
+    }
     return s;
   }
 
@@ -536,7 +547,8 @@
       lastSession: s.lastSession || null,
       placement: s.placement || null,
       memory: s.memory || MEM.empty(),
-      alphabet: s.alphabet || {}
+      alphabet: s.alphabet || {},
+      trackMet: s.trackMet || {}
     };
   }
 
@@ -549,6 +561,17 @@
     s.placement = bucket.placement || null;
     s.memory = bucket.memory && Array.isArray(bucket.memory.sentences) ? bucket.memory : MEM.empty();
     s.alphabet = bucket.alphabet && typeof bucket.alphabet === "object" ? bucket.alphabet : {};
+    if (bucket.trackMet && typeof bucket.trackMet === "object" && !Array.isArray(bucket.trackMet)) {
+      s.trackMet = bucket.trackMet;
+    } else {
+      /* Old per-language archives predate trackMet: adopt their cards once so
+       * an already-earned path does not relock, then keep vocabulary review out
+       * of it from here on. */
+      s.trackMet = {};
+      Object.keys(bucket.cards || {}).forEach(function (id) {
+        if (bucket.cards[id] && bucket.cards[id].reps > 0) s.trackMet[id] = true;
+      });
+    }
   }
 
   function seedDeck(s) {
@@ -1246,6 +1269,14 @@
     var next = renderNextStack();
     $("lesson-meta").textContent = tr("aboutMinutes", "about {n} min")
       .replace("{n}", String(next.minutes));
+
+    var goal = dailyGoalTarget();
+    var doneToday = (state.daily && state.daily.cards) || 0;
+    $("goal-done").textContent = String(Math.min(doneToday, goal));
+    $("goal-target").textContent = String(goal);
+    $("goal-fill").style.width = Math.min(100, Math.round((doneToday / Math.max(goal, 1)) * 100)) + "%";
+    $("goal-line").classList.toggle("is-done", doneToday >= goal);
+    $("goal-line").setAttribute("aria-label", tr("today", "Today") + " " + doneToday + "/" + goal);
     $("lesson-name").textContent = next.title;
     $("start-sub").textContent = next.caption || tr("nothingDue", "Nothing new or due. Practise anything.");
     $("lesson-goal").textContent = next.goal || "";
@@ -2726,9 +2757,8 @@
    * learner sees the next lesson after a session rather than after six days of
    * spaced repetition. Solidity still drives the adaptive session below. */
   function seenDeckCount() {
-    return deckIds().filter(function (id) {
-      return state.cards[id] && state.cards[id].reps > 0;
-    }).length;
+    var met = state.trackMet || {};
+    return deckIds().filter(function (id) { return !!met[id]; }).length;
   }
 
   /* ------------------------------------------------------------- the script */
@@ -3040,7 +3070,8 @@
      * transliteration); the example sentence is a separate field */
     return {
       id: c.id, emoji: c.emoji, article: c.article, text: c.word,
-      sub: c.sub || "", sentence: c.sentence || "", kind: "word", why: c.why || ""
+      sub: c.sub || "", sentence: c.sentence || "", kind: "word", why: c.why || "",
+      synonyms: c.synonyms || []
     };
   }
 
@@ -3833,11 +3864,23 @@
       if (!card) fresh.push(id);
       else if (!card.due || card.due <= now) due.push(id);
     });
-    return due.concat(fresh);
+    var pool = due.concat(fresh);
+    /* After a placement, recall should start near the learner's band. The
+     * old pool ignored the band once every item was within the ceiling, so a
+     * C1 learner still opened with casa and pan. */
+    var me = ADAPT ? ADAPT.CEFR.indexOf(learnerLevel()) : 0;
+    function rank(id) {
+      var at = ADAPT ? ADAPT.CEFR.indexOf(itemLevel(id)) : 0;
+      return at < 0 ? 0 : at;
+    }
+    pool.sort(function (a, b) { return rank(b) - rank(a); });
+    var near = pool.filter(function (id) { return rank(id) >= me - 1; });
+    if (near.length >= 6) pool = near;
+    return S.shuffle(pool, Math.random);
   }
 
   function startVocab() {
-    var ids = S.shuffle(vocabPool(), Math.random).slice(0, 12);
+    var ids = vocabPool().slice(0, 12);
     if (!ids.length) {
       ids = S.shuffle(allIds.filter(function (id) {
         return atLevel(id) && itemOf(id).kind !== "term";
@@ -3932,6 +3975,45 @@
     $("vocab-stats").textContent = "";
   }
 
+  function renderVocabSynonym(it, syn, meaning) {
+    var correct = syn[0];
+    var pool = allIds.map(function (id) { return itemOf(id).text; }).filter(function (word) {
+      return word && word !== it.text && word !== correct;
+    });
+    var options = SYNONYMS.options(correct, pool, 4, Math.random);
+    $("vocab-feedback").textContent = "";
+    $("vocab-stage").innerHTML =
+      '<p class="prompt">' + esc(tr("vocabSame", "Which word means the same?")) + "</p>" +
+      '<p class="vocab-word">' + esc(it.text) + "</p>" +
+      '<div class="word-options">' + options.map(function (word) {
+        return '<button class="option-word" type="button" data-synonym="' + esc(word) + '">' +
+          esc(word) + "</button>";
+      }).join("") + "</div>";
+    var buttons = $("vocab-stage").querySelectorAll("[data-synonym]");
+    Array.prototype.forEach.call(buttons, function (btn) {
+      btn.addEventListener("click", function () {
+        var ok = btn.getAttribute("data-synonym") === correct;
+        Array.prototype.forEach.call(buttons, function (b) {
+          b.disabled = true;
+          if (b.getAttribute("data-synonym") === correct) b.classList.add("pick-correct");
+        });
+        if (!ok) btn.classList.add("pick-wrong");
+        $("vocab-feedback").innerHTML = esc(ok ? tr("correct", "Correct") : tr("notQuite", "Not quite")) +
+          " · " + esc(meaning);
+        $("vocab-stage").insertAdjacentHTML("beforeend",
+          '<div class="vocab-actions"><button class="btn btn-primary" id="vocab-syn-continue" type="button">' +
+          esc(tr("continue", "Continue")) + "</button></div>");
+        var next = $("vocab-syn-continue");
+        next.addEventListener("click", function () { answerVocab(ok); });
+        try { next.focus({ preventScroll: true }); } catch (err) { next.focus(); }
+      });
+    });
+    var first = $("vocab-stage").querySelector("[data-synonym]");
+    if (first) {
+      try { first.focus({ preventScroll: true }); } catch (err) { first.focus(); }
+    }
+  }
+
   function renderVocab() {
     if (!vocab) return;
     if (vocab.done) return;
@@ -3941,9 +4023,16 @@
     var meaning = translationFor(id) || glossFor(id) || "";
     var reveal = vocab.revealed;
     var anchor = state.anchors[id] || vocab.anchorDraft || "";
-    $("vocab-count").textContent = (vocab.i + 1) + "/" + vocab.queue.length;
+    $("vocab-count").textContent = (vocab.i + 1) + "/" + vocab.queue.length +
+      " · " + learnerLevel();
     $("vocab-bar").style.width = Math.round((vocab.i / Math.max(vocab.queue.length, 1)) * 100) + "%";
     $("vocab-stats").textContent = vocab.correct + " ✓ · " + vocab.again + " ↺";
+    $("vocab-feedback").textContent = "";
+    var syn = SYNONYMS ? SYNONYMS.forItem(it) : [];
+    if (syn.length && vocab.i > 0 && vocab.i % 3 === 2) {
+      renderVocabSynonym(it, syn, meaning);
+      return;
+    }
     var context = it.sentence || (it.kind === "phrase" ? it.sub : "");
     $("vocab-stage").innerHTML =
       '<p class="prompt">' + esc(tr("vocabHint", "Recall the meaning before revealing")) + "</p>" +
@@ -4998,7 +5087,7 @@
       if (v && out.indexOf(v) === -1) out.push(v);
     }
     if (it.sub && WRITING && WRITING.hasScript(it.text) && !WRITING.hasScript(it.sub)) add(it.sub);
-    ["accept", "alternatives", "answers"].forEach(function (key) {
+    ["accept", "alternatives", "answers", "synonyms"].forEach(function (key) {
       if (Array.isArray(it[key])) it[key].forEach(add);
     });
     return out.filter(Boolean);
@@ -5217,6 +5306,7 @@
         }
       }
       S.review(state, id, ok ? 2 : 0, Date.now());
+      state.trackMet[id] = true;
     }
     var wasReplay = replay;
     session.replaying = null;
@@ -5334,7 +5424,12 @@
     var now = Date.now();
     var total = session.unique || 1;
     var xpEarned = Math.max(3, total * 3 + (session.firstCorrect || 0) * 2);
+    var oldLevel = Math.floor((state.xp || 0) / 100) + 1;
     state.xp = (state.xp || 0) + xpEarned;
+    var newLevel = Math.floor((state.xp || 0) / 100) + 1;
+    var levelLine = newLevel > oldLevel
+      ? '<p class="level-up">' + esc(tr("levelUp", "Level {n}").replace("{n}", String(newLevel))) + "</p>"
+      : "";
     save();
     var seen = Object.keys(session.answered);
     var missed = Object.keys(session.missed);
@@ -5363,6 +5458,7 @@
       '<p class="sum-line">' + esc(noun) + " · " + took + "</p>" +
       '<p class="xp-line">+' + xpEarned + " XP · +" + coinGain + " " +
         esc(tr("coins", "coins")) + "</p>" +
+      levelLine +
       '<div class="sum-cols">' +
         (kept.length ? sumGroup("kept", tr("remembered", "Remembered") + " · " + kept.length, kept, now) : "") +
         (missed.length ? sumGroup("back", tr("comesBack", "Comes back") + " · " + missed.length, missed, now) : "") +

@@ -340,6 +340,30 @@ svg { flex: none; }
   min-height: 1.4em;
 }
 .today-head h1 { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+.goal-line { display: flex; align-items: center; gap: 8px; padding: 0 4px; }
+.goal-copy {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.goal-count { font-size: 12px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.goal-track {
+  flex: 1 1 auto;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--fill);
+  overflow: hidden;
+}
+.goal-track i {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--accent);
+  transition: width 240ms ease-out;
+}
+.goal-line.is-done .goal-track i { background: var(--good); }
 .streak {
   display: flex;
   align-items: center;
@@ -821,6 +845,7 @@ ruby rt {
 
 /* lesson summary: meant to be read from across a room */
 .card.is-summary .feedback { display: none; }
+.level-up { color: var(--accent); font-size: 15px; font-weight: 800; }
 .card.is-summary .prompt { font-size: 15px; font-weight: 600; color: var(--text-2); }
 .card.is-summary .stage { gap: 4px; }
 .sum-big {
@@ -1302,7 +1327,7 @@ button.row:active .row-pic { transform: scale(0.92); }
 .group-action { justify-self: start; margin: 0 16px; }
 
 /* the quiet rows' line icons */
-#home-conv .row-pic svg, #home-read .row-pic svg, #home-vocab .row-pic svg {
+#home-conv .row-pic svg, #home-read .row-pic svg, #home-vocab .row-pic svg, #home-wordset .row-pic svg {
   width: 22px;
   height: 22px;
   fill: none;
@@ -1311,7 +1336,7 @@ button.row:active .row-pic { transform: scale(0.92); }
   stroke-linejoin: round;
   stroke-linecap: round;
 }
-#home-conv .row-meta, #home-read .row-meta, #home-vocab .row-meta { font-size: 22px; color: var(--text-3); }
+#home-conv .row-meta, #home-read .row-meta, #home-vocab .row-meta, #home-wordset .row-meta { font-size: 22px; color: var(--text-3); }
 
 /* ------------------------------------------------------------ text inputs */
 .type-input {
@@ -2424,6 +2449,7 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .vocab-actions { display: flex; gap: 10px; width: 100%; max-width: 360px; }
 .vocab-actions .btn { flex: 1 1 0; }
 .vocab-stats { text-align: center; color: var(--text-2); font-size: 13px; }
+.vocab-feedback { min-height: 20px; text-align: center; font-size: 14px; color: var(--text-2); }
 .vocab-summary { display: grid; justify-items: center; gap: 12px; }
 .vocab-bar {
   height: 4px;

@@ -40,7 +40,7 @@ var SEMA_DATA = {
    * `emoji` is the anchor. It is the only thing shown before you recall the
    * word, which is what forces an image -> sound link instead of word -> word. */
   concepts: [
-    { id: "casa",     emoji: "🏠", word: "casa",     article: "la", cat: "home",     sentence: "Mi casa está cerca del mar." },
+    { id: "casa",     emoji: "🏠", word: "casa",     article: "la", cat: "home",     sentence: "Mi casa está cerca del mar.", synonyms: ["hogar"] },
     { id: "puerta",   emoji: "🚪", word: "puerta",   article: "la", cat: "home",     sentence: "La puerta está abierta." },
     { id: "ventana",  emoji: "🪟", word: "ventana",  article: "la", cat: "home",     sentence: "Abro la ventana por la mañana." },
     { id: "cama",     emoji: "🛏️", word: "cama",     article: "la", cat: "home",     sentence: "Duermo en mi cama." },
@@ -70,9 +70,9 @@ var SEMA_DATA = {
 
     { id: "ciudad",   emoji: "🏙️", word: "ciudad",   article: "la", cat: "city",     sentence: "La ciudad es grande." },
     { id: "calle",    emoji: "🛣️", word: "calle",    article: "la", cat: "city",     sentence: "Vivo en esta calle." },
-    { id: "coche",    emoji: "🚗", word: "coche",    article: "el", cat: "city",     sentence: "El coche es rojo." },
+    { id: "coche",    emoji: "🚗", word: "coche",    article: "el", cat: "city",     sentence: "El coche es rojo.", synonyms: ["auto"] },
     { id: "tren",     emoji: "🚆", word: "tren",     article: "el", cat: "city",     sentence: "El tren llega tarde." },
-    { id: "dinero",   emoji: "💰", word: "dinero",   article: "el", cat: "city",     sentence: "No tengo dinero." },
+    { id: "dinero",   emoji: "💰", word: "dinero",   article: "el", cat: "city",     sentence: "No tengo dinero.", synonyms: ["plata"] },
 
     { id: "día",      emoji: "📅", word: "día",      article: "el", cat: "time",     sentence: "El día es largo." },
     { id: "noche",    emoji: "🌃", word: "noche",    article: "la", cat: "time",     sentence: "La noche es tranquila." },

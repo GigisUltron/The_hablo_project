@@ -32,7 +32,7 @@ var SEMA_DATA = {
   },
 
   concepts: [
-    { id: "tr-house", emoji: "🏠", word: "ev", article: "", cat: "home", sentence: "Evim deniz kenarında." },
+    { id: "tr-house", emoji: "🏠", word: "ev", article: "", cat: "home", sentence: "Evim deniz kenarında.", synonyms: ["konut"] },
     { id: "tr-door", emoji: "🚪", word: "kapı", article: "", cat: "home", sentence: "Kapı açık." },
     { id: "tr-water", emoji: "💧", word: "su", article: "", cat: "food", sentence: "Her gün su içerim." },
     { id: "tr-bread", emoji: "🍞", word: "ekmek", article: "", cat: "food", sentence: "Ekmek taze." },
@@ -49,7 +49,7 @@ var SEMA_DATA = {
     { id: "tr-eye", emoji: "👁️", word: "göz", article: "", cat: "body", sentence: "Bir gözümü kapatıyorum." },
     { id: "tr-heart", emoji: "❤️", word: "kalp", article: "", cat: "body", sentence: "Kalp hızlı atıyor." },
     { id: "tr-city", emoji: "🏙️", word: "şehir", article: "", cat: "city", sentence: "Şehir büyük." },
-    { id: "tr-car", emoji: "🚗", word: "araba", article: "", cat: "city", sentence: "Araba kırmızı." },
+    { id: "tr-car", emoji: "🚗", word: "araba", article: "", cat: "city", sentence: "Araba kırmızı.", synonyms: ["otomobil"] },
     { id: "tr-train", emoji: "🚆", word: "tren", article: "", cat: "city", sentence: "Tren geç kalıyor." },
     { id: "tr-street", emoji: "🛣️", word: "sokak", article: "", cat: "city", sentence: "Bu sokakta oturuyorum." },
     { id: "tr-night", emoji: "🌃", word: "gece", article: "", cat: "time", sentence: "Gece sessiz." },

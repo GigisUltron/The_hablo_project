@@ -32,9 +32,9 @@ var SEMA_DATA = {
   },
 
   concepts: [
-    { id: "hi-house", emoji: "🏠", word: "घर", article: "", cat: "home", sentence: "मेरा घर समुद्र के पास है।" },
+    { id: "hi-house", emoji: "🏠", word: "घर", article: "", cat: "home", sentence: "मेरा घर समुद्र के पास है।", synonyms: ["मकान"] },
     { id: "hi-door", emoji: "🚪", word: "दरवाज़ा", article: "", cat: "home", sentence: "दरवाज़ा खुला है।" },
-    { id: "hi-water", emoji: "💧", word: "पानी", article: "", cat: "food", sentence: "मैं हर दिन पानी पीता हूँ।" },
+    { id: "hi-water", emoji: "💧", word: "पानी", article: "", cat: "food", sentence: "मैं हर दिन पानी पीता हूँ।", synonyms: ["जल"] },
     { id: "hi-bread", emoji: "🍞", word: "रोटी", article: "", cat: "food", sentence: "रोटी ताज़ी है।" },
     { id: "hi-apple", emoji: "🍎", word: "सेब", article: "", cat: "food", sentence: "सेब लाल है।" },
     { id: "hi-coffee", emoji: "☕", word: "कॉफ़ी", article: "", cat: "food", sentence: "मैं सुबह कॉफ़ी पीता हूँ।" },

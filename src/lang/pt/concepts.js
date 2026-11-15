@@ -32,7 +32,7 @@ var SEMA_DATA = {
   },
 
   concepts: [
-    { id: "pt-house", emoji: "🏠", word: "casa", article: "a", cat: "home", sentence: "A minha casa é perto do mar." },
+    { id: "pt-house", emoji: "🏠", word: "casa", article: "a", cat: "home", sentence: "A minha casa é perto do mar.", synonyms: ["moradia"] },
     { id: "pt-door", emoji: "🚪", word: "porta", article: "a", cat: "home", sentence: "A porta está aberta." },
     { id: "pt-water", emoji: "💧", word: "água", article: "a", cat: "food", sentence: "Eu bebo água todos os dias." },
     { id: "pt-bread", emoji: "🍞", word: "pão", article: "o", cat: "food", sentence: "O pão está fresco." },
@@ -49,7 +49,7 @@ var SEMA_DATA = {
     { id: "pt-eye", emoji: "👁️", word: "olho", article: "o", cat: "body", sentence: "Eu fecho um olho." },
     { id: "pt-heart", emoji: "❤️", word: "coração", article: "o", cat: "body", sentence: "O coração bate rápido." },
     { id: "pt-city", emoji: "🏙️", word: "cidade", article: "a", cat: "city", sentence: "A cidade é grande." },
-    { id: "pt-car", emoji: "🚗", word: "carro", article: "o", cat: "city", sentence: "O carro é vermelho." },
+    { id: "pt-car", emoji: "🚗", word: "carro", article: "o", cat: "city", sentence: "O carro é vermelho.", synonyms: ["automóvel"] },
     { id: "pt-train", emoji: "🚆", word: "trem", article: "o", cat: "city", sentence: "O trem chega atrasado." },
     { id: "pt-street", emoji: "🛣️", word: "rua", article: "a", cat: "city", sentence: "Eu moro nesta rua." },
     { id: "pt-night", emoji: "🌃", word: "noite", article: "a", cat: "time", sentence: "A noite é tranquila." },
