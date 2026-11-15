@@ -37,6 +37,13 @@ test("mini chat always returns target-language text", () => {
   }
 });
 
+test("mini chat follows recent context and matches CJK by character", () => {
+  const m = M.build(pack);
+  assert.match(m.reply("", { context: "pizza" }), /pizza|Hola|dónde|llamo/);
+  const cjk = M.build({ phrases: { phrases: [{ text: "你好吗" }, { text: "我想要披萨" }] }, terms: { terms: [] }, basics: { items: [] }, concepts: { concepts: [] }, texts: { texts: [] }, conv: { dialogues: [] } });
+  assert.match(cjk.reply("披萨"), /披萨/);
+});
+
 test("tokenizer keeps non-Latin words", () => {
   assert.ok(M.words("Привет 你好 こんにちは").length >= 3);
 });

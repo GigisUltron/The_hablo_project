@@ -794,7 +794,12 @@ test("the lesson progress bar advances in a normal quiz", () => {
 test("typed translation is a real routed exercise", () => {
   assert.match(app, /function renderTypeTranslation/, "no typed translation renderer");
   assert.match(app, /type === "type-translation"/, "typed translation is not routed");
-  assert.match(app, /i % 7 === 5\) return "type-translation"/, "typed translation is unreachable");
+  assert.match(app, /tick % 7 === 5\) return "type-translation"/, "typed translation is unreachable");
+});
+
+test("quiz task phase is randomized per session", () => {
+  assert.match(app, /taskShift: Math\.floor\(Math\.random\(\) \* 4\)/, "no task phase shift");
+  assert.match(app, /var tick = i \+ \(session\.taskShift \|\| 0\)/, "task rules do not use the shift");
 });
 
 test("the offline conversation has a local mini predictor", () => {

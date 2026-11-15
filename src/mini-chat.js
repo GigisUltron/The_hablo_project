@@ -11,11 +11,21 @@
 
   function words(text) {
     var value = String(text == null ? "" : text).toLowerCase();
+    var raw;
     try {
-      return value.match(/[\p{L}\p{N}]+/gu) || [];
+      raw = value.match(/[\p{L}\p{N}]+/gu) || [];
     } catch (err) {
-      return value.match(/[a-z0-9\u00c0-\u024f\u0400-\u04ff\u0600-\u06ff\u0900-\u097f\u3040-\u30ff\u3400-\u9fff]+/g) || [];
+      raw = value.match(/[a-z0-9\u00c0-\u024f\u0400-\u04ff\u0600-\u06ff\u0900-\u097f\u3040-\u30ff\u3400-\u9fff]+/g) || [];
     }
+    var out = [];
+    raw.forEach(function (token) {
+      if (hasCjk(token)) {
+        Array.from(token).forEach(function (ch) { out.push(ch); });
+      } else {
+        out.push(token);
+      }
+    });
+    return out;
   }
 
   function hasCjk(text) {
@@ -82,13 +92,17 @@
       return greeting ? greeting.text : (candidates[0] ? candidates[0].text : "");
     }
 
-    function score(candidate, userTokens) {
-      if (!userTokens.length) return 0;
+    function score(candidate, userTokens, contextTokens) {
+      if (!userTokens.length && !contextTokens.length) return 0;
       var overlap = 0;
       userTokens.forEach(function (w) {
         if (candidate.tokens.indexOf(w) !== -1) overlap += 1;
       });
-      return overlap * 10 - Math.min(4, Math.floor(candidate.tokens.length / 8));
+      var context = 0;
+      contextTokens.forEach(function (w) {
+        if (candidate.tokens.indexOf(w) !== -1) context += 1;
+      });
+      return overlap * 10 + context * 2 - Math.min(4, Math.floor(candidate.tokens.length / 8));
     }
 
     function generate(userTokens) {
@@ -110,13 +124,25 @@
     function reply(text, opts) {
       var o = opts || {};
       var userTokens = words(text);
+      var contextTokens = words(o.context || "");
+      var lower = String(text || "").toLowerCase();
+      var greeting = /^(hi|hello|hey|hola|bonjour|ciao|hallo|olá|привет|merhaba|مرحبا|नमस्ते|こんにちは|你好)/i.test(lower);
+      var thanks = /thank|thanks|gracias|merci|grazie|obrigad|спасибо|teşekk|شكر|धन्यवाद|ありがとう|谢谢/i.test(lower);
       var ranked = candidates.slice().sort(function (a, b) {
-        return score(b, userTokens) - score(a, userTokens);
+        return score(b, userTokens, contextTokens) - score(a, userTokens, contextTokens);
       });
-      var best = ranked.filter(function (c) { return score(c, userTokens) > 0; });
+      var best = ranked.filter(function (c) { return score(c, userTokens, contextTokens) > 0; });
       var choice = "";
       if (best.length) {
         var pool = best.slice(0, Math.min(4, best.length)).filter(function (c) { return c.text !== (o.last || ""); });
+        if (greeting) {
+          var hello = pool.filter(function (c) { return /^(hi|hello|hey|hola|bonjour|ciao|hallo|olá|привет|merhaba|مرحبا|नमस्ते|こんにちは|你好)/i.test(c.text); });
+          if (hello.length) pool = hello;
+        }
+        if (thanks) {
+          var warm = pool.filter(function (c) { return !c.question; });
+          if (warm.length) pool = warm;
+        }
         choice = (pool.length ? pick(pool) : best[0]).text;
       } else if (userTokens.length) {
         choice = generate(userTokens);

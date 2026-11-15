@@ -1914,6 +1914,17 @@
     MEM.addSentence(state.memory, t, ids, Date.now());
   }
 
+  function miniAnswer(text) {
+    if (!miniChat) return "";
+    var context = (chat.miniContext || []).slice(-3).join(" ");
+    var reply = miniChat.reply(text, { last: chat.lastMini || "", context: context });
+    if (reply) {
+      chat.lastMini = reply;
+      chat.miniContext = (chat.miniContext || []).concat([text, reply]).slice(-4);
+    }
+    return reply;
+  }
+
   function fallbackReply(userText, note) {
     if (!chat || !ACTIVE) return;
     var d = null;
@@ -1931,10 +1942,9 @@
       if (!fits) {
         chat.scripted.misses = (chat.scripted.misses || 0) + 1;
         if (chat.scripted.misses >= 2 && miniChat) {
-          var miniMiss = miniChat.reply(userText, { last: chat.lastMini || "" });
+          var miniMiss = miniAnswer(userText);
           if (miniMiss) {
             chat.scripted.misses = 0;
-            chat.lastMini = miniMiss;
             addAssistant(miniMiss, true, "mini");
             setChatFeedback(tr("notQuite", "Not quite"), "");
             return;
@@ -1948,9 +1958,8 @@
       var next = d.turns[chat.scripted.turn];
       if (!next) {
         if (miniChat) {
-          var freeReply = miniChat.reply(userText, { last: chat.lastMini || "" });
+          var freeReply = miniAnswer(userText);
           if (freeReply) {
-            chat.lastMini = freeReply;
             addAssistant(freeReply, true, "mini");
             setChatFeedback(tr("lessonDone", "Lesson done"), "");
             return;
@@ -1964,9 +1973,8 @@
       return;
     }
     if (!d && miniChat) {
-      var miniReply = miniChat.reply(userText, { last: chat.lastMini || "" });
+      var miniReply = miniAnswer(userText);
       if (miniReply) {
-        chat.lastMini = miniReply;
         addAssistant(miniReply, true, "mini");
         return;
       }
@@ -3327,6 +3335,7 @@
       answered: {},
       counted: {},
       replaying: null,
+      taskShift: Math.floor(Math.random() * 4),
       history: [],
       viewing: null,
       advanceTimer: 0,
@@ -3474,11 +3483,12 @@
     /* harder cards arrive as a minority: one in four, gated on the pack's own
      * sentences and clips */
     var link = session.quiz[i];
+    var tick = i + (session.taskShift || 0);
     var concept = conceptById[link];
     if (concept && ["abstract", "emotion", "time"].indexOf(concept.cat) !== -1 && translationFor(link)) {
-      return i % 2 ? "translate" : "translate-out";
+      return tick % 2 ? "translate" : "translate-out";
     }
-    var extra = EX ? EX.extraKind(i, {
+    var extra = EX ? EX.extraKind(tick, {
       listen: listenable(link),
       build: buildable(link),
       gap: !!gapFor(link)
@@ -3486,13 +3496,13 @@
     if (extra) return extra;
     /* reviewed cards alternate both directions: target → UI meaning, and
      * UI meaning → target. No emoji matching, no English under a non-English UI. */
-    if (itemOf(link).kind === "phrase" && gapFor(link) && i % 6 === 4) return "message";
+    if (itemOf(link).kind === "phrase" && gapFor(link) && tick % 6 === 4) return "message";
     if (translationFor(link)) {
-      if (itemOf(link).kind === "word" && i % 7 === 5) return "type-translation";
+      if (itemOf(link).kind === "word" && tick % 7 === 5) return "type-translation";
       /* A clean session can stop at six; both directions must appear before
        * the stop rule, so they alternate in the first four reviewed cards. */
-      if (i % 4 === 1) return "translate";
-      if (i % 4 === 3) return "translate-out";
+      if (tick % 4 === 1) return "translate";
+      if (tick % 4 === 3) return "translate-out";
     }
     /* A whole sentence cannot be guessed from a copied emoji. Phrases are
      * built, translated or listened to; pictures stay with concrete words. */
@@ -3501,9 +3511,9 @@
       return "translate-out";
     }
     var prod = (session.plan && session.plan.production) || 0;
-    if (prod >= 2 && i % 2 === 1) return "write";
-    if (prod >= 1 && i % 3 === 2) return "write";   // production without a microphone
-    if (SR && i % 2 === 1) return "say";
+    if (prod >= 2 && tick % 2 === 1) return "write";
+    if (prod >= 1 && tick % 3 === 2) return "write";   // production without a microphone
+    if (SR && tick % 2 === 1) return "say";
     return "pick-picture";
   }
 
