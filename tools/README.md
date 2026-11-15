@@ -1,8 +1,8 @@
 # `make_audio.py` — pre-rendered pronunciation
 
 The app plays ordinary WAV files, so it needs no installed system voice at
-runtime. This tool renders one clip per item in `src/lang/<code>/concepts.js`
-and `src/lang/<code>/phrases.js`, and writes the manifest the app loads.
+runtime. This tool renders one clip per item in `src/lang/<code>/concepts.js`,
+`phrases.js`, `terms.js` and `basics.js`, and writes the manifest the app loads.
 
 ```sh
 python3 tools/make_audio.py --engine espeak        # fallback, no network needed
@@ -21,8 +21,42 @@ python3 tools/make_audio.py --lang fr --check
 | Manifest | `assets/audio/<code>/manifest.js` — `window.SEMA_AUDIO = { "<id>": "assets/audio/<code>/<slug>.wav", ... }` |
 
 The output contract is deliberately the same for both backends. `index.html`
-and `tests/phrases.test.js` depend on it; changing the format means changing
+and `tests/packs.test.js` depend on it; changing the format means changing
 the app, which is out of scope for this tool.
+
+## Voices used for the shipped clips
+
+The clips in `assets/audio/` were generated from the pack data with these
+Piper voices (models from `rhasspy/piper-voices`, not committed):
+
+| pack | voice |
+|---|---|
+| `es` | `es_ES-sharvard-medium` |
+| `fr` | `fr_FR-siwis-medium` |
+| `it` | `it_IT-paola-medium` |
+| `en` | `en_GB-cori-high` |
+| `de` | `de_DE-thorsten-high` |
+| `nl` | `nl_NL-alex-medium` |
+| `pt` | `pt_PT-tugão-medium` |
+| `ru` | `ru_RU-dmitri-medium` |
+| `tr` | `tr_TR-dfki-medium` |
+| `ar` | `ar_JO-kareem-medium` |
+| `hi` | `hi_IN-pratham-medium` |
+| `ja` | `ja_JP-hi_fi_captain-medium` |
+| `zh` | `zh_CN-huayan-medium` |
+
+The Python module from `piper-tts==1.8.0` was used, not the 2023 standalone
+binary: that binary predates the current phoneme maps and fails on these
+voices with `aɪ is not a single codepoint`. Japanese needs the extra
+phonemizer (`python3 -m pip install pyopenjtalk-plus`); without it Piper
+reports `No module named 'pyopenjtalk'`.
+
+Example, for one pack:
+
+```sh
+python3 tools/make_audio.py --lang ja --engine piper --voice /path/to/ja_JP-hi_fi_captain-medium.onnx
+python3 tools/make_audio.py --lang ja --check
+```
 
 ## The neural path (a machine with internet)
 
