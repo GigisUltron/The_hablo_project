@@ -2,7 +2,7 @@
 
 **Learn a language by using it, not by memorising a catalogue of translations.**
 
-hablo is a dependency-free, local-first language app with **13 language packs**. Spanish, French, Italian and English are the full courses; German, Dutch, Portuguese, Russian, Turkish, Arabic, Hindi, Japanese and Chinese are starter courses that use the same learning engine.
+hablo is a dependency-free, local-first language app with **13 language packs**. Spanish, French, English and Italian are the flagship courses, with full phrase decks; German, Dutch, Portuguese, Russian, Turkish, Arabic, Hindi, Japanese and Chinese are starter courses that use the same learning engine.
 
 There are no accounts, no analytics, no server and no model required. Progress lives in your browser.
 
@@ -85,7 +85,7 @@ Each full course has eight reading texts across A1–B2. Starter courses have fi
 
 A **transfer mission** appears above the conversation. It asks you to use two or three weak/due phrases in the conversation. A phrase counts only when you actually write it; completing the mission gives a small XP award.
 
-A local model is optional. Open **Settings → Conversation engine → Local model**, set an endpoint such as `http://localhost:11434`, and check the model. Without one, no network request is made for conversation.
+A local model is optional. Open **Settings → Conversation engine → Local model**, set an endpoint, and check the model. Both Ollama (`http://localhost:11434`) and an OpenAI-compatible server such as llama.cpp's `llama-server` (`http://localhost:8080`) work; the app detects which is answering. Without one, no network request is made for conversation.
 
 ### Planned lessons
 
@@ -111,10 +111,23 @@ The interface-language selector is separate and does not change when you switch 
 
 - Progress, XP, levels, streaks, statistics, vocabulary anchors, custom lessons and chat history use `localStorage`.
 - The storage key is intentionally `sema.v1` for compatibility with older saves.
-- Audio ships with the app as pre-rendered WAV files; browser speech synthesis is a fallback.
+- Audio ships with the app as pre-rendered WAV files, generated with Piper neural voices; browser speech synthesis is the fallback.
 - No account, no analytics, no tracking.
 - Offline conversation never contacts a server.
 - A configured local model receives only the conversation and prompt needed for chat/translation.
+
+## Audio
+
+Every item ships as a pre-rendered WAV clip, so playback does not depend on a voice installed in the operating system. The clips are generated from the pack data with Piper neural voices, one voice per language, then trimmed, edge-faded, peak-normalised and resampled to the app's 16 kHz mono contract. Spanish keeps its historical flat `assets/audio/` folder; every other pack lives in `assets/audio/<code>/`.
+
+The model files are **not** in the repository. To regenerate a pack on a machine with Piper installed:
+
+```sh
+python3 tools/make_audio.py --lang fr --engine piper --voice /path/to/fr_FR-siwis-medium.onnx
+python3 tools/make_audio.py --lang fr --check
+```
+
+`--check` verifies manifest coverage, that every clip exists, and that it is mono 16-bit PCM at 16 kHz. The app never loads Piper or a model at runtime; it only plays the WAV files, and falls back to the browser's speech synthesis if a clip is missing.
 
 ## Verify it
 
@@ -152,4 +165,4 @@ docs/                      preview image and project notes
 
 MIT — see [LICENSE](LICENSE).
 
-More design notes and honest limits are in [DEMO.md](DEMO.md).
+More design notes and honest limits are in [DEMO.md](DEMO.md). The gamification proposal, with its approval checklist, is in [docs/GAMIFICATION.md](docs/GAMIFICATION.md).

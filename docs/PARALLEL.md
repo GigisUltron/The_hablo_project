@@ -1,3 +1,8 @@
+> **Status (2026-11-15).** The ownership lanes below still hold. Two details are
+> historical: the browser loads 13 packs (not one) and the canonical script order
+> is the one in `index.html`/`tests/markup.test.js`; playback still lives in
+> `src/app.js`, so the `src/audio.js` extraction described here was never done.
+
 # Running this repo with three agents in parallel
 
 The constraint that makes or breaks parallel work here is **file ownership**, not task size.

@@ -7,12 +7,23 @@ answer changes what the next session contains.
 
 | code | name | concepts | phrases | terms | texts | conversations | audio |
 |---|---|---|---|---|---|---|---|
-| `es` | Spanish | 42 | 68 | 12 | 3 | 2 | 110 |
-| `fr` | French | 42 | 68 | 12 | — | — | 110 |
+| `es` | Spanish | 42 | 138 | 28 | 8 | 3 | 224 |
+| `fr` | French | 42 | 138 | 28 | 8 | 3 | 224 |
+| `en` | English | 40 | 149 | 28 | 8 | 3 | 233 |
+| `it` | Italian | 24 | 138 | 21 | 8 | 3 | 199 |
+| `de` | German | 24 | 41 | 8 | 5 | 2 | 89 |
+| `nl` | Dutch | 24 | 41 | 8 | 5 | 2 | 89 |
+| `pt` | Portuguese | 24 | 41 | 8 | 5 | 2 | 89 |
+| `ru` | Russian | 24 | 51 | 8 | 5 | 1 | 99 |
+| `tr` | Turkish | 24 | 41 | 8 | 5 | 1 | 89 |
+| `ar` | Arabic | 24 | 40 | 8 | 5 | 1 | 88 |
+| `hi` | Hindi | 24 | 40 | 8 | 5 | 1 | 88 |
+| `ja` | Japanese | 24 | 40 | 8 | 5 | 1 | 85 |
+| `zh` | Chinese | 24 | 40 | 8 | 5 | 1 | 85 |
 
-French has no reading texts or conversations yet. That is a supported state:
-the loader treats a missing part as an empty deck, and the reader and chat
-buttons say so instead of crashing.
+Every pack now ships reading texts and at least one authored conversation. The
+loader still treats a missing part as an empty deck, so a pack can grow one
+piece at a time without crashing the reader or the chat button.
 
 `state.profile.lang` is the active code. Progress is archived per language under
 `state.profile.byLang[code]` (cards, reviews, placement, sessions, memory), so
@@ -72,7 +83,7 @@ src/lang/<code>/conv.js         optional
 src/lang/<code>/audio.js        required once audio exists
 ```
 
-### 2. Concepts — 42 items
+### 2. Concepts — 24 starter / 42 flagship items
 
 Each entry is
 `{ id, emoji, word, article, cat, sentence }`.
@@ -90,11 +101,12 @@ Each entry is
   the word and ends in `.`, `?` or `!`.
 
 Keep `categories` and `relationTypes` identical to the other packs. Translate
-the 43 `edges` id for id so distractors remain meaningful neighbours, and keep
-every edge pointing at a real concept, with no duplicate pairs. Use exactly 42
-concepts so the track thresholds and 4-option drills behave the same.
+the `edges` id for id so distractors remain meaningful neighbours, and keep
+every edge pointing at a real concept, with no duplicate pairs. Stay consistent
+with the other packs of the same tier: 42 concepts in a flagship deck, 24 in a
+starter deck.
 
-### 3. Phrases — 68 items
+### 3. Phrases — 40 starter / 138 flagship items
 
 Each entry is `{ id, emoji, text, sub, cat }`, with `cat: "phrase"`. `text` is
 what is spoken and displayed; `sub` is one line of context in the target
@@ -102,7 +114,7 @@ language. Mirror the Spanish situations exactly, in the register a native
 speaker would actually use. Ids are `ph-…`, ASCII, unique, and must not collide
 with concept ids. Scene emoji are unique within the deck.
 
-### 4. Terms — 12 items
+### 4. Terms — 8 starter / 28 flagship items
 
 Each entry is `{ id, text, gloss, schema, frame, contrast }`.
 
@@ -282,6 +294,6 @@ food/travel, B1 connectors and abstracts.
 | Placement test | exists |
 | Profile and first-run flow in `state` | exists |
 | Per-language progress (`profile.byLang`) | exists |
-| Second language pack | **exists** — French |
-| French texts and conversations | **not built** — content only |
-| Per-item level | **not built** — no data |
+| Language packs | **13** — four flagship, nine starter |
+| Reading texts and conversations | **exist in every pack** |
+| Per-item level | **exists** — every item is graded in `levels.js` |

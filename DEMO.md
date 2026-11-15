@@ -1,3 +1,8 @@
+> **Archived snapshot (2026-11-15).** This document describes the original
+> one-language demo. The current app ships 13 packs, neural audio, reading,
+> conversation and planned lessons. [README.md](README.md) is the current source
+> of truth; the history below is kept for the design rationale and honest limits.
+
 # hablo — meaning-first language learning
 
 A working front-end demo of a language app that teaches the target first, then checks it.

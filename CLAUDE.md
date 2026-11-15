@@ -4,6 +4,18 @@ This file is the standing instruction for Claude working on `sema`. Read `AGENTS
 those rules are binding and this file does not override them. Where the two touch the same
 subject, `AGENTS.md` wins.
 
+> **Status (2026-11-15).** The product has moved on from the poster skin and the
+> single-screen home described below: it is now `hablo`, with 13 packs and an
+> iOS-style light/dark interface. `README.md` and `tests/design.test.js` are the
+> current interface truth; the visual and home-screen specifics below are
+> historical, while the product principles (speed, one obvious action, no
+> compulsion, no runtime dependency) still bind. The owner lifted the
+> gamification ban on this date for a proposal only: see
+> [docs/GAMIFICATION.md](docs/GAMIFICATION.md), and implement nothing from it
+> until the checklist is approved. Content, audio and docs were explicitly opened
+> for the current pass.
+
+
 ## Your role
 
 You are the **interface, UX and visual owner** of this project. Your job is to make `sema`
@@ -38,7 +50,7 @@ Judge yourself by these, not by how it looks in a screenshot:
 | One-handed use at 390 px | everything reachable, targets ≥ 44 px |
 | Keyboard-only use | every action reachable, focus always visible |
 | `prefers-reduced-motion` | no motion that carries meaning is lost |
-| `make check` | green, 85 tests today, never fewer |
+| `make check` | green, the full suite (300+ tests today), never fewer |
 
 ## What "professional" means here
 
@@ -257,7 +269,7 @@ If a test cannot express the risk, say so in the report — do not silently skip
 - `make check` green, `--check` green
 - every state above implemented, and any invariant it implies covered by a test
 - no new dependency, no new file outside your ownership
-- the one-button Today screen is still one button
+- the Today screen still has one primary filled control
 - a short report: what changed, what you verified, what you deliberately did not change and why
 
 ## If you are unsure
