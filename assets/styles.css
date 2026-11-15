@@ -2048,3 +2048,11 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .modal-card p { font-size: 16px; line-height: 1.45; color: var(--text-2); }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
 .modal-actions .btn { width: auto; min-height: 44px; }
+
+/* hidden must beat the flex container, as with the other sections */
+.lang-switch[hidden] { display: none; }
+/* sit the recent flags next to the tabs, not floating in the middle */
+.topbar .lang-switch { margin-left: auto; margin-right: 6px; flex: none; }
+@media (max-width: 560px) {
+  .topbar .lang-switch { margin-left: auto; margin-right: 0; }
+}

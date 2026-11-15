@@ -718,6 +718,15 @@ test("saved lessons can be deleted only after confirmation", () => {
   assert.match(app, /askConfirm\(/, "delete is not confirmed in sema UI");
 });
 
+test("recent-language flags keep the old language and cap at three", () => {
+  assert.match(app, /rememberLang\(ACTIVE && ACTIVE\.code\)/, "the language being left is not remembered");
+  assert.match(app, /recentLangs = \[code\]\.concat\(recent\)\.slice\(0, 3\)/, "recent list is not capped");
+  assert.match(app, /Array\.isArray\(s\.profile\.recentLangs\)/, "recent list is not seeded at boot");
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(css, /\.lang-switch\[hidden\] \{ display: none; \}/, "hidden flag row is still painted");
+  assert.match(css, /\.topbar \.lang-switch \{ margin-left: auto;/, "flag row is not positioned next to tabs");
+});
+
 test("recent languages and XP are wired into the lesson loop", () => {
   assert.match(html, /id="lang-switch"/, "no recent-language switcher");
   assert.match(app, /function renderLangSwitch/, "no recent-language renderer");

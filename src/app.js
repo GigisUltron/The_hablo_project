@@ -359,6 +359,9 @@
     if (s.profile) {
       s.profile.lang = code;
       s.profile.byLang = s.profile.byLang || {};
+      if (!Array.isArray(s.profile.recentLangs) || !s.profile.recentLangs.length) {
+        s.profile.recentLangs = [code];
+      }
       /* Levels are per language: leaving Spanish at B1 must not make a brand
        * new Arabic deck report B1 too. Older saves carry one global level, so
        * adopt it for the language they were on and start others at A1. */
@@ -541,6 +544,10 @@
       if (state.profile) state.profile.lang = code;
       return false;
     }
+
+    /* Remember the language being left before switching, so the flag row can
+     * actually become a row instead of only ever containing the new one. */
+    rememberLang(ACTIVE && ACTIVE.code);
 
     /* Choosing an interface language on first run creates a profile before it
      * has a deck or a byLang archive. Do not assume either exists. */
