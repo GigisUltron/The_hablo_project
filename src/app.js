@@ -133,6 +133,10 @@
       var text = table[el.getAttribute("data-i18n")];
       if (text) el.textContent = text;
     });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-ph]"), function (el) {
+      var text = table[el.getAttribute("data-i18n-ph")];
+      if (text) el.setAttribute("placeholder", text);
+    });
     Array.prototype.forEach.call(document.querySelectorAll("[data-chrome]"), function (el) {
       /* A key with no translation keeps the text already in the markup: printing
        * the key name is the one failure mode a learner cannot read. */
@@ -2676,6 +2680,17 @@
     var fields = unit && unit.fields ? unit.fields : selectedFields();
     var now = Date.now();
 
+    /* A requested lesson is an explicit list of ids, not a whole track unit. */
+    if (o.ids && o.ids.length) {
+      var wanted = o.ids.filter(function (id) { return !!itemOf(id); }).slice(0, o.size || o.ids.length);
+      return {
+        unit: null, plan: plan, size: wanted.length, queue: wanted,
+        fresh: wanted.filter(function (id) { return !state.cards[id] || state.cards[id].last === null; }),
+        due: wanted.filter(function (id) { var c = state.cards[id]; return c && c.last !== null && c.due <= now; }),
+        read: false, custom: true, title: o.title || ""
+      };
+    }
+
     /* reading and the script are lessons too, each with its own screen */
     if (unit && unit.mode === "read") {
       return { unit: unit, plan: plan, size: 0, queue: [], fresh: [], due: [], read: true };
@@ -2756,6 +2771,80 @@
     var cats = p.fresh.map(function (id) { return conceptById[id] && conceptById[id].cat; }).filter(Boolean);
     var same = cats.length && cats.every(function (c) { return c === cats[0]; });
     return same && D.categories[cats[0]] ? catLabel(cats[0]) : "New words";
+  }
+
+  /* A small, honest planner: it chooses real pack phrases for the situation
+   * the learner describes. It cannot invent a town dialect that is not in the
+   * data, so it says so and teaches the standard language instead. */
+  var WISH_PLACES = [
+    ["italy", "it"], ["italian", "it"], ["rome", "it"], ["florence", "it"], ["venice", "it"], ["milan", "it"],
+    ["spain", "es"], ["spanish", "es"], ["madrid", "es"], ["barcelona", "es"],
+    ["france", "fr"], ["french", "fr"], ["paris", "fr"],
+    ["germany", "de"], ["german", "de"], ["berlin", "de"],
+    ["portugal", "pt"], ["portuguese", "pt"], ["lisbon", "pt"],
+    ["netherlands", "nl"], ["dutch", "nl"], ["amsterdam", "nl"],
+    ["russia", "ru"], ["russian", "ru"], ["moscow", "ru"],
+    ["turkey", "tr"], ["turkish", "tr"], ["istanbul", "tr"],
+    ["japan", "ja"], ["japanese", "ja"], ["tokyo", "ja"],
+    ["china", "zh"], ["chinese", "zh"], ["beijing", "zh"],
+    ["india", "hi"], ["hindi", "hi"], ["delhi", "hi"],
+    ["arabic", "ar"], ["morocco", "ar"], ["egypt", "ar"],
+    ["england", "en"], ["english", "en"], ["london", "en"]
+  ];
+
+  function wishLesson(text) {
+    var raw = String(text || "").toLowerCase();
+    var code = "";
+    WISH_PLACES.forEach(function (pair) {
+      if (!code && new RegExp("\\b" + pair[0] + "\\b").test(raw)) code = pair[1];
+    });
+    var switched = false;
+    if (code && LANGS && LANGS.has(code) && ACTIVE && ACTIVE.code !== code) {
+      switched = switchLang(code) !== false;
+    }
+
+    var topics = [];
+    if (/restaurant|dinner|lunch|eat|food|menu|pizza|pasta|meal|cafe|café/.test(raw)) topics.push("restaurant", "café");
+    if (/hotel|stay|room|check.?in/.test(raw)) topics.push("hotel");
+    if (/train|station|platform|ticket/.test(raw)) topics.push("station", "tickets");
+    if (/airport|flight|plane/.test(raw)) topics.push("airport");
+    if (/doctor|pharmacy|hurt|pain|sick/.test(raw)) topics.push("emergency", "pharmacy", "doctor");
+    if (/shop|market|buy|clothes/.test(raw)) topics.push("shopping", "market", "clothes");
+
+    var words = raw.match(/[a-zà-ÿā-ž]+/g) || [];
+    var contentWords = words.filter(function (w) { return w.length > 3; });
+    var phrases = phraseIds.filter(function (id) {
+      var p = phraseById[id];
+      if (topics.length && topics.indexOf(CURR.topicOf(p)) === -1) return false;
+      return true;
+    });
+    var foodIds = phraseIds.filter(function (id) {
+      var p = phraseById[id];
+      var hay = (p.text + " " + (glossFor(id) || "")).toLowerCase();
+      return contentWords.some(function (w) { return hay.indexOf(w) !== -1; });
+    });
+    var picked = [];
+    function add(id) { if (id && picked.indexOf(id) === -1) picked.push(id); }
+    foodIds.slice(0, 4).forEach(add);
+    phrases.slice(0, 8).forEach(add);
+    if (picked.length < 4) phraseIds.slice(0, 8).forEach(add);
+
+    var foodWords = allIds.filter(function (id) {
+      var c = conceptById[id];
+      var hay = (c.word + " " + (glossFor(id) || "")).toLowerCase();
+      return c.cat === "food" || contentWords.some(function (w) { return hay.indexOf(w) !== -1; });
+    });
+    foodWords.slice(0, 3).forEach(add);
+    basicIds.slice(0, 2).forEach(add);
+    if (termIds.length && /because|although|however|but|so/.test(raw)) termIds.slice(0, 2).forEach(add);
+
+    return {
+      ids: picked.slice(0, 12),
+      title: tr("wishTitle", "Plan a lesson"),
+      note: (switched ? uiName(ACTIVE.code) + " · " : "") +
+        tr("wishReady", "Your lesson is ready.") + " " +
+        tr("wishDialect", "Using the standard language; this pack has no town-dialect data yet.")
+    };
   }
 
   function startSession(opts) {
@@ -4008,6 +4097,22 @@
 
   $("start-btn").addEventListener("click", function () {
     startSession({ unit: defaultUnit() });
+  });
+  $("wish-form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var input = $("wish-input");
+    var text = input ? input.value.trim() : "";
+    if (!text) {
+      $("wish-note").textContent = tr("wishEmpty", "Tell me where you are going and what you want to do.");
+      return;
+    }
+    var wish = wishLesson(text);
+    if (!wish.ids.length) {
+      $("wish-note").textContent = tr("wishEmpty", "Tell me where you are going and what you want to do.");
+      return;
+    }
+    toast(wish.note, 3200);
+    startSession({ ids: wish.ids, size: wish.ids.length, title: wish.title });
   });
   $("build-start").addEventListener("click", function () { startSession({ custom: true }); });
   $("review-missed").addEventListener("click", reviewMistakes);

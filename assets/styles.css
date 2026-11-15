@@ -1798,3 +1798,19 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   line-height: 1;
   margin: 6px 0 2px;
 }
+
+/* a compact request box on Today: type a situation, get a focused session */
+.wish-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: 0 3px 0 var(--border-deep);
+}
+.wish-card label { font-size: 13px; font-weight: 700; }
+.wish-row { display: flex; gap: 8px; }
+.wish-row input { flex: 1 1 auto; min-width: 0; }
+.wish-row .btn { flex: 0 0 auto; }
+.wish-card .builder-note { margin: 0; }

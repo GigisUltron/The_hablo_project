@@ -691,6 +691,13 @@ test("a chosen interface language is not silently reset by the deck", () => {
   assert.match(app, /renderStats\(\);\n  }/, "placement does not repaint Progress");
 });
 
+test("Today can build a lesson from a described situation", () => {
+  assert.match(html, /id="wish-form"/, "no request form on Today");
+  assert.match(app, /function wishLesson/, "no situation planner");
+  assert.match(app, /o\.ids && o\.ids\.length/, "custom lessons cannot pass item ids");
+  assert.match(app, /wishDialect/, "the planner does not admit missing dialect data");
+});
+
 test("only concrete first words get a picture, and the translation stays toggleable", () => {
   assert.match(app, /var EMOJI_BASIC =/, "no basic emoji allowlist");
   assert.match(app, /function basicEmoji/, "no emoji gate");
