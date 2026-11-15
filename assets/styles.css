@@ -2160,3 +2160,5 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 }
 .progress-more-body { display: grid; gap: 12px; padding-bottom: 8px; }
 #back-btn { font-size: 24px; line-height: 1; }
+
+#back-btn:disabled { opacity: 0.3; cursor: default; }

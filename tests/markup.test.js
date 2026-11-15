@@ -918,6 +918,14 @@ test("every settings option is read, applied now, and remembered", () => {
   assert.equal(/data-mode=/.test(html), false, "a deck-mode chooser came back");
 });
 
+test("back steps to the previous task while X exits with confirmation", () => {
+  assert.match(app, /function goBackTask/, "no previous-task handler");
+  assert.match(app, /session\.replaying = session\.quiz\[session\.qi\]/, "replayed cards are not marked");
+  assert.match(app, /var replay = session\.replaying === id;/, "replayed answers still count");
+  assert.match(app, /\$\("back-btn"\)\.addEventListener\("click", goBackTask\)/, "back is still an exit");
+  assert.match(app, /\$\("quit-btn"\)\.addEventListener\("click", leaveSession\)/, "X no longer asks before exit");
+});
+
 test("lessons have an explicit back action and confirmation", () => {
   assert.match(html, /id="back-btn"/, "no back button in the lesson header");
   assert.match(app, /function leaveSession/, "no leave-session confirmation");

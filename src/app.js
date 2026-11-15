@@ -3326,6 +3326,7 @@
       qStart: 0,
       answered: {},
       counted: {},
+      replaying: null,
       firstCorrect: 0,
       taughtIds: {},
       unique: 0
@@ -3349,6 +3350,15 @@
     var done = Math.min(doneSteps(), n);
     $("counter").textContent = Math.min(done + 1, n) + "/" + n;
     $("bar-fill").style.width = Math.round((done / n) * 100) + "%";
+    var back = $("back-btn");
+    if (back) {
+      var canBack = !!session && (
+        (session.phase === "study" && session.si > 0) ||
+        (session.phase === "quiz" && session.qi > 0)
+      );
+      back.disabled = !canBack;
+      back.setAttribute("aria-disabled", String(!canBack));
+    }
   }
 
   /* The process, made visible: a lesson is four named steps, not one long
@@ -4145,24 +4155,27 @@
   function answer(ok, chosenId) {
     var id = session.quiz[session.qi];
     var it = itemOf(id);
-    if (session.qStart) {
+    var replay = session.replaying === id;
+    if (session.qStart && !replay) {
       session.times.push(Date.now() - session.qStart);
-      session.qStart = 0;
     }
-    countToday(id);
+    session.qStart = 0;
+    if (!replay) countToday(id);
 
-    if (ok) {
-      if (!session.missed[id]) session.firstCorrect += 1;
-    } else {
-      if (chosenId) S.recordConfusion(state, id, chosenId);
-      session.missed[id] = true;
-      if (!session.requeued[id] && session.quiz.length < 40) {
-        session.requeued[id] = true;
-        session.quiz.push(id);
+    if (!replay) {
+      if (ok) {
+        if (!session.missed[id]) session.firstCorrect += 1;
+      } else {
+        if (chosenId) S.recordConfusion(state, id, chosenId);
+        session.missed[id] = true;
+        if (!session.requeued[id] && session.quiz.length < 40) {
+          session.requeued[id] = true;
+          session.quiz.push(id);
+        }
       }
+      S.review(state, id, ok ? 2 : 0, Date.now());
     }
-
-    S.review(state, id, ok ? 2 : 0, Date.now());
+    session.replaying = null;
     save();
     showAnswer(ok, it);
   }
@@ -4569,6 +4582,21 @@
     });
   });
 
+  function goBackTask() {
+    if (!session) return;
+    if (session.phase === "study" && session.si > 0) {
+      session.si -= 1;
+      renderStudy();
+      return;
+    }
+    if (session.phase === "quiz" && session.qi > 0) {
+      session.qi -= 1;
+      session.replaying = session.quiz[session.qi];
+      session.qStart = 0;
+      renderQuiz();
+    }
+  }
+
   function leaveSession() {
     var lvl = state.profile && state.profile.levelByLang && state.profile.levelByLang[ACTIVE.code];
     askConfirm(
@@ -4589,7 +4617,7 @@
   }
 
   $("quit-btn").addEventListener("click", leaveSession);
-  $("back-btn").addEventListener("click", leaveSession);
+  $("back-btn").addEventListener("click", goBackTask);
   document.addEventListener("keydown", function (ev) {
     if (currentView !== "session" || !session) return;
     if (ev.key === "Escape") {
