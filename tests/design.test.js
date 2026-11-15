@@ -37,3 +37,34 @@ test("hardcoded colours and radii only decrease", () => {
   assert.equal(hex.size, 0, `raw hex colours: ${hex.size} - use a token`);
   assert.ok(radii.size <= 9, `distinct radii: ${radii.size} (ceiling 9)`);
 });
+
+function ruleBody(selector) {
+  const at = css.indexOf(selector + " {");
+  assert.notEqual(at, -1, "missing rule: " + selector);
+  return css.slice(at, css.indexOf("}", at));
+}
+
+test("keyboard focus is visible on the session's text field", () => {
+  assert.match(css, /:focus-visible \{[^}]*outline: 2px solid var\(--accent\)/,
+    "the global keyboard ring disappeared");
+  const input = ruleBody(".type-input:focus, .type-input:focus-visible");
+  assert.doesNotMatch(input, /outline:\s*none/, "the text field suppresses its focus ring");
+  assert.match(input, /border-color: var\(--accent\)/, "the text field has no focus state");
+});
+
+test("session controls keep 44px thumb targets", () => {
+  const icon = ruleBody(".icon-btn");
+  assert.match(icon, /width: 44px;/, "the back/quit buttons are too narrow");
+  assert.match(icon, /height: 44px;/, "the back/quit buttons are too short");
+  assert.match(ruleBody(".card .option-word"), /min-height: 52px;/, "answer rows are too short");
+  assert.match(ruleBody(".token"), /min-height: 44px;/, "sentence tokens are too short");
+  assert.match(ruleBody(".match-btn"), /min-height: 54px;/, "match buttons are too short");
+  assert.match(ruleBody(".speak-btn, .mic"), /min-height: 44px;/, "the audio control is under 44px");
+});
+
+test("reduced motion removes every session animation", () => {
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?animation-duration: 0\.001ms !important;/,
+    "there is no global reduced-motion cut");
+  assert.match(css, /\.pick-correct, \.pick-wrong, \.feedback\.good, \.feedback\.bad \{ animation: none; \}/,
+    "answer feedback still animates under reduced motion");
+});

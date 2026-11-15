@@ -754,6 +754,27 @@ test("coins and the accent shop are wired into Today and Settings", () => {
   assert.match(app, /function payDailyGoal/);
 });
 
+test("one theme-colour meta follows the live accent and the system scheme", () => {
+  const metas = [...html.matchAll(/<meta\b[^>]*name="theme-color"[^>]*>/g)].map((m) => m[0]);
+  assert.equal(metas.length, 1, "a second theme-colour meta can override the live accent");
+  assert.equal(/\bmedia=/.test(metas[0]), false, "the live meta is scheme-conditioned");
+
+  const sync = app.slice(app.indexOf("function themeColorMeta"), app.indexOf("function watchScheme"));
+  assert.match(sync, /querySelector\('meta\[name="theme-color"\]'\)/, "the meta is never looked up");
+  assert.match(sync, /function syncThemeColor/, "there is no chrome sync function");
+  assert.match(sync, /getComputedStyle/, "the accent is not read from the cascade");
+  assert.match(sync, /getPropertyValue\("--accent"\)/, "the wrong custom property is read");
+  assert.doesNotMatch(sync, /#[0-9a-f]{3,8}/i, "the palette was copied into script");
+
+  const apply = app.slice(app.indexOf("function applyAccent"), app.indexOf("function accentLabel"));
+  assert.match(apply, /syncThemeColor\(\)/, "choosing a look does not repaint the chrome");
+
+  const watch = app.slice(app.indexOf("function watchScheme"), app.indexOf("function applyAccent"));
+  assert.match(watch, /matchMedia\("\(prefers-color-scheme: dark\)"\)/, "system scheme changes are ignored");
+  assert.match(watch, /addEventListener/, "no scheme listener is installed");
+  assert.match(app, /watchScheme\(\);/, "the scheme listener is never started at boot");
+});
+
 test("the area fallback is relevant or empty, never a greeting list", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   const start = app.indexOf("function suggestWordset");
@@ -1672,3 +1693,37 @@ test("a model conversation starts with an authored opening", () => {
   assert.match(app, /miniChat\.opening/);
 });
 
+
+test("the why-this-card line is one quiet, reserved, answer-free slot", () => {
+  assert.match(html, /<p class="why-line" id="why-line"><\/p>\s*<div class="stage" id="stage"[^>]*>/,
+    "the reason line has no stable slot above the task");
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(css, /\.why-line \{[^}]*min-height: 17px;/, "the reason slot collapses when empty");
+  assert.match(app, /function whyThisCard/, "there is no rule for why a card is asked");
+  assert.match(app, /tr\("new", "New"\)/, "a never-graded card has no label");
+  assert.match(app, /tr\("toReview", "to review"\)/, "a due review has no label");
+  assert.match(app, /tr\("comesBack", "Comes back"\)/, "a requeued miss has no label");
+  assert.match(app, /session\.missed && session\.missed\[id\]/, "the miss check is not session-local");
+});
+
+test("the verdict is the live region and progress exposes its value", () => {
+  assert.doesNotMatch(html, /<article class="card" id="card"[^>]*aria-live/,
+    "the whole card is still a live region");
+  assert.match(html, /<div class="stage" id="stage" aria-live="polite">/,
+    "the new question is never announced");
+  assert.match(html, /<p class="feedback" id="feedback" role="status" aria-live="polite">/,
+    "the verdict is not announced");
+  assert.match(html, /id="session-progress"[^>]*aria-valuemin="0"[^>]*aria-valuemax="0"[^>]*aria-valuenow="0"/,
+    "the progressbar has no value");
+  assert.match(html, /<span class="counter" id="counter" aria-hidden="true">/,
+    "the visual counter duplicates the progressbar for assistive tech");
+  assert.match(app, /progress\.setAttribute\("aria-valuemax"/, "progress max never updates");
+  assert.match(app, /progress\.setAttribute\("aria-valuenow"/, "progress value never updates");
+});
+
+test("a correct-answer advance belongs to the session that scheduled it", () => {
+  const helper = app.slice(app.indexOf("function clearAdvanceTimer"), app.indexOf("function newSession"));
+  assert.match(helper, /clearTimeout\(session\.advanceTimer\)/, "there is no cancel helper");
+  assert.match(app, /if \(session !== owner\) return;/, "a stale timer can advance a newer session");
+  assert.match(app, /clearAdvanceTimer\(\);\n        session = null;/, "leaving does not cancel the advance");
+});

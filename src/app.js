@@ -393,8 +393,11 @@
   /* one of each question type up front, so a minute is enough to see all three */
   var DEMO_TYPES = ["pick-word", "pick-picture", "say", "pick-picture", "pick-word"];
 
+  var schemeWatch = null;
+
   var state = boot();
   applyAccent();
+  watchScheme();
   renderCoins();
   renderLangPickers();
   renderUiLangPickers();
@@ -1233,12 +1236,45 @@
     updateAudioChip();
   }
 
+  /* Browser chrome follows the same token the page uses. The palette lives
+   * only in styles.css, including its dark values, so read the resolved
+   * custom property instead of keeping a second colour table in script. */
+  function themeColorMeta() {
+    if (!document.querySelector) return null;
+    return document.querySelector('meta[name="theme-color"]');
+  }
+
+  function syncThemeColor() {
+    var meta = themeColorMeta();
+    if (!meta || !window.getComputedStyle || !document.documentElement) return;
+    var accent = "";
+    try {
+      var view = window.getComputedStyle(document.documentElement);
+      accent = String(view.getPropertyValue("--accent") || "").trim();
+    } catch (err) { accent = ""; }
+    /* No readable token: keep the static fallback rather than guessing. */
+    if (!accent) return;
+    if (!/^#[0-9a-f]{3,8}$/i.test(accent) && !/^(rgb|hsl)a?\(/i.test(accent)) return;
+    meta.setAttribute("content", accent);
+  }
+
+  function watchScheme() {
+    if (!window.matchMedia || schemeWatch) return;
+    try { schemeWatch = window.matchMedia("(prefers-color-scheme: dark)"); }
+    catch (err) { schemeWatch = null; return; }
+    if (!schemeWatch) return;
+    var sync = function () { syncThemeColor(); };
+    if (typeof schemeWatch.addEventListener === "function") schemeWatch.addEventListener("change", sync);
+    else if (typeof schemeWatch.addListener === "function") schemeWatch.addListener(sync);
+  }
+
   function applyAccent() {
     var id = (state && state.settings && state.settings.accent) || "ember";
     var rootEl = document.documentElement;
     if (!rootEl) return;
     if (id === "ember") rootEl.removeAttribute("data-accent");
     else rootEl.setAttribute("data-accent", id);
+    syncThemeColor();
   }
 
   function accentLabel(theme) {
@@ -4995,7 +5031,18 @@
     return itemOf(id).kind !== "term" || connectorsUnlocked();
   }
 
+  /* A correct answer advances by itself. The timer belongs to the session
+   * that scheduled it: leaving, going back or starting another session must
+   * cancel it, or it lands on whatever is on screen next. */
+  function clearAdvanceTimer() {
+    if (session && session.advanceTimer) {
+      clearTimeout(session.advanceTimer);
+      session.advanceTimer = 0;
+    }
+  }
+
   function newSession(mode, study, quiz) {
+    clearAdvanceTimer();
     return {
       mode: mode,
       phase: "study",
@@ -5040,6 +5087,11 @@
     var done = Math.min(doneSteps(), n);
     $("counter").textContent = Math.min(done + 1, n) + "/" + n;
     $("bar-fill").style.width = Math.round((done / n) * 100) + "%";
+    var progress = $("session-progress");
+    if (progress) {
+      progress.setAttribute("aria-valuemax", String(n));
+      progress.setAttribute("aria-valuenow", String(done));
+    }
     var back = $("back-btn");
     if (back) {
       var canBack = !!session && (
@@ -5075,6 +5127,26 @@
     var f = $("feedback");
     f.textContent = "";
     f.className = "feedback";
+    var why = $("why-line");
+    if (why) why.textContent = "";
+  }
+
+  /* One quiet reason for the current card, from the existing localized keys:
+   * never graded, due for review, or missed earlier in this session. It never
+   * contains an answer. No key applies cleanly, so nothing is shown. */
+  function whyThisCard(id) {
+    if (!session || !id || !state.cards) return "";
+    var card = state.cards[id];
+    if (!card || card.last == null) return tr("new", "New");
+    if (session.missed && session.missed[id]) return tr("comesBack", "Comes back");
+    if (typeof card.due === "number" && card.due <= Date.now()) return tr("toReview", "to review");
+    return "";
+  }
+
+  function renderWhyLine(id) {
+    var line = $("why-line");
+    if (!line) return;
+    line.textContent = whyThisCard(id);
   }
 
   /* ---- phase 1: form the association, both halves visible at once -------- */
@@ -5085,6 +5157,7 @@
     renderSteps("learn");
 
     var it = itemOf(session.study[session.si]);
+    renderWhyLine(it.id);
     var last = session.si === session.study.length - 1;
     var emoji = basicEmoji(it);
 
@@ -5215,6 +5288,7 @@
     renderSteps("quiz");
 
     var id = session.quiz[session.qi];
+    renderWhyLine(id);
     var card = state.cards[id];
     if (!session.answered[id]) {
       session.answered[id] = true;
@@ -6131,10 +6205,21 @@
       /* correct: no confirmation tap. It moves on by itself. */
       $("actions").innerHTML = "";
       /* long enough to read the one-line reason, short enough to keep the loop */
-      session.advanceTimer = setTimeout(function () {
-        if (!session || session.viewing) return;
+      var owner = session;
+      var moveOn = function () {
+        /* A timer that outlived its session must never advance a newer one. */
+        if (session !== owner) return;
+        session.advanceTimer = 0;
+        /* The quit confirmation must not move the card out from under the
+         * dialog. Stay paused until it closes, then carry on. */
+        if (confirmState) {
+          session.advanceTimer = setTimeout(moveOn, 200);
+          return;
+        }
+        if (session.viewing) return;
         advance();
-      }, 900);
+      };
+      session.advanceTimer = setTimeout(moveOn, 900);
     } else {
       $("actions").innerHTML =
         '<button class="btn btn-ghost" id="coach-ask" type="button">' +
@@ -6172,11 +6257,11 @@
       if (session.history[i].qi <= target) { snap = session.history[i]; break; }
     }
     if (!snap) return;
-    if (session.advanceTimer) clearTimeout(session.advanceTimer);
-    session.advanceTimer = 0;
+    clearAdvanceTimer();
     session.viewing = snap;
     $("card").classList.remove("is-answered");
     $("card").classList.add("is-reviewing");
+    renderWhyLine("");
     $("stage").innerHTML = snap.stage;
     $("feedback").innerHTML = snap.feedback;
     $("feedback").className = snap.feedbackClass;
@@ -6217,6 +6302,7 @@
   }
 
   function finishSession() {
+    clearAdvanceTimer();
     /* A session of only skipped tasks is not a session: no XP, coins, streak,
      * path progress or history entry. */
     if (!session.unique) {
@@ -6225,6 +6311,7 @@
       toast(tr("skippedAll", "No cards answered; nothing was counted."));
       return;
     }
+    renderWhyLine("");
     state.history = state.history || [];
     state.history.push(session.qi);
     if (state.history.length > 50) state.history = state.history.slice(-50);
@@ -6260,6 +6347,11 @@
     renderSteps("done");
     $("bar-fill").style.width = "100%";
     $("counter").textContent = String(total);
+    var progress = $("session-progress");
+    if (progress) {
+      progress.setAttribute("aria-valuemax", String(total));
+      progress.setAttribute("aria-valuenow", String(total));
+    }
 
     var days = bumpStreak();
     save();
@@ -6969,6 +7061,7 @@
       tr("leaveLessonConfirm", "Your progress in this lesson will be lost."),
       tr("leave", "Leave"),
       function () {
+        clearAdvanceTimer();
         session = null;
         var pending = state.profile && state.profile.pendingLang;
         var from = state.profile && state.profile.pendingFrom;

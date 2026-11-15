@@ -6,10 +6,10 @@
 <title>hablo</title>
 <meta name="description" content="A free, open-source language course: listen, speak and recall, with meaning on request." />
 <meta name="color-scheme" content="light dark" />
-<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
-<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+<!-- One theme-colour tag; src/app.js rewrites it from the live --accent token
+     whenever the look or the system light/dark scheme changes. -->
+<meta name="theme-color" content="#c8410c" />
 <link rel="stylesheet" href="assets/styles.css" />
-  <meta name="theme-color" content="#c8410c" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="assets/icon-192.png" />
@@ -194,16 +194,17 @@
       <div class="session-head">
         <button class="icon-btn" id="back-btn" aria-label="Previous task" title="Previous task" data-i18n-aria="previousTask" data-i18n-title="previousTask">←</button>
         <button class="icon-btn" id="quit-btn" aria-label="End session" title="End session" data-i18n-aria="endSession" data-i18n-title="endSession"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-        <div class="bar" role="progressbar" aria-label="Session progress" data-i18n-aria="sessionProgress"><i id="bar-fill"></i></div>
-        <span class="counter" id="counter">0/0</span>
+        <div class="bar" id="session-progress" role="progressbar" aria-label="Session progress" data-i18n-aria="sessionProgress" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"><i id="bar-fill"></i></div>
+        <span class="counter" id="counter" aria-hidden="true">0/0</span>
       </div>
 
       <ol class="steps" id="steps" aria-label="Lesson steps" data-i18n-aria="lessonSteps"></ol>
 
 
-      <article class="card" id="card" aria-live="polite">
-        <div class="stage" id="stage"></div>
-        <p class="feedback" id="feedback"></p>
+      <article class="card" id="card">
+        <p class="why-line" id="why-line"></p>
+        <div class="stage" id="stage" aria-live="polite"></div>
+        <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
         <div class="card-actions" id="actions"></div>
       </article>
     </section>
