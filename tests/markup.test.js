@@ -1713,7 +1713,7 @@ test("the verdict is the live region and progress exposes its value", () => {
     "the new question is never announced");
   assert.match(html, /<p class="feedback" id="feedback" role="status" aria-live="polite">/,
     "the verdict is not announced");
-  assert.match(html, /id="session-progress"[^>]*aria-valuemin="0"[^>]*aria-valuemax="0"[^>]*aria-valuenow="0"/,
+  assert.match(html, /id="session-progress"[^>]*aria-valuemin="0"[^>]*aria-valuemax="1"[^>]*aria-valuenow="0"/,
     "the progressbar has no value");
   assert.match(html, /<span class="counter" id="counter" aria-hidden="true">/,
     "the visual counter duplicates the progressbar for assistive tech");
