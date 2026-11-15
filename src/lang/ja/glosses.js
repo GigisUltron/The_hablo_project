@@ -93,6 +93,8 @@ var SEMA_GLOSSES = {
   "b-ja-iku": "to go (polite)",
   "b-ja-kuru": "to come (polite)",
   "b-ja-kau": "to buy (polite)",
+  "ph-ja-pizza": "I'd like a pizza.",
+  "ph-ja-vegetarian": "I'm vegetarian.",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

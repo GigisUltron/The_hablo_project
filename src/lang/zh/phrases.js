@@ -42,6 +42,8 @@ var SEMA_PHRASES = {
     { id: "ph-zh-train-time", emoji: "🚆", text: "火车几点出发？", sub: "huǒ chē jǐ diǎn chū fā", cat: "phrase" },
     { id: "ph-zh-pharmacy", emoji: "💊", text: "药店在哪里？", sub: "yào diàn zài nǎ lǐ", cat: "phrase" },
     { id: "ph-zh-hurts-here", emoji: "🤕", text: "这里疼。", sub: "zhè lǐ téng", cat: "phrase" },
+    { id: "ph-zh-pizza", emoji: "🍕", text: "我想要披萨。", sub: "wǒ xiǎng yào pī sà", cat: "phrase", topic: "restaurant" },
+    { id: "ph-zh-vegetarian", emoji: "🥦", text: "我是素食者。", sub: "wǒ shì sù shí zhě", cat: "phrase", topic: "restaurant" },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_PHRASES;

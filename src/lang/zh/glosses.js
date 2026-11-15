@@ -93,6 +93,8 @@ var SEMA_GLOSSES = {
   "b-zh-qu": "to go",
   "b-zh-lai": "to come",
   "b-zh-mai": "to buy",
+  "ph-zh-pizza": "I'd like a pizza.",
+  "ph-zh-vegetarian": "I'm vegetarian.",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

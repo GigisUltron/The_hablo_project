@@ -89,6 +89,8 @@ var SEMA_LEVELS = {
   "ph-hi-train-time": "A2",
   "ph-hi-pharmacy": "A1",
   "ph-hi-hurts-here": "A1",
+  "ph-hi-pizza": "A1",
+  "ph-hi-vegetarian": "A2",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

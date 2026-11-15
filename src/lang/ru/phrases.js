@@ -43,6 +43,8 @@ var SEMA_PHRASES = {
     { id: "ph-ru-train-time", emoji: "🚆", text: "Во сколько уходит поезд?", sub: "Vo skolko ukhodit poyezd?", cat: "phrase" },
     { id: "ph-ru-pharmacy", emoji: "💊", text: "Где находится аптека?", sub: "Gde nakhoditsya apteka?", cat: "phrase" },
     { id: "ph-ru-hurts-here", emoji: "🤕", text: "У меня здесь болит.", sub: "U menya zdes bolit.", cat: "phrase" },
+    { id: "ph-ru-pizza", emoji: "🍕", text: "Я хочу пиццу.", sub: "V restorane.", cat: "phrase", topic: "restaurant" },
+    { id: "ph-ru-vegetarian", emoji: "🥦", text: "Я вегетарианец.", sub: "V restorane.", cat: "phrase", topic: "restaurant" },
   ]
 };
 

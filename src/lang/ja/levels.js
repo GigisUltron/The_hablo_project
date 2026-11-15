@@ -86,6 +86,8 @@ var SEMA_LEVELS = {
   "b-ja-iku": "A1",
   "b-ja-kuru": "A1",
   "b-ja-kau": "A1",
+  "ph-ja-pizza": "A1",
+  "ph-ja-vegetarian": "A2",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

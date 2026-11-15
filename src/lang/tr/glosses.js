@@ -96,6 +96,8 @@ var SEMA_GLOSSES = {
   "ph-tr-train-time": "what time does the train leave?",
   "ph-tr-pharmacy": "where is the pharmacy?",
   "ph-tr-hurts-here": "it hurts here",
+  "ph-tr-pizza": "I'd like a pizza.",
+  "ph-tr-vegetarian": "I'm vegetarian.",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

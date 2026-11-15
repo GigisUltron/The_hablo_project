@@ -43,6 +43,8 @@ var SEMA_PHRASES = {
     { id: "ph-ar-train-time", emoji: "🚆", text: "متى يغادر القطار؟", sub: "Mata yughadir al-qitar?", cat: "phrase" },
     { id: "ph-ar-pharmacy", emoji: "💊", text: "أين الصيدلية؟", sub: "Ayna al-saydaliyya?", cat: "phrase" },
     { id: "ph-ar-hurts-here", emoji: "🤕", text: "يؤلمني هنا.", sub: "Yu'limuni huna.", cat: "phrase" },
+    { id: "ph-ar-pizza", emoji: "🍕", text: "أريد بيتزا.", sub: "Fi al-mat'am.", cat: "phrase", topic: "restaurant" },
+    { id: "ph-ar-vegetarian", emoji: "🥦", text: "أنا نباتي.", sub: "Fi al-mat'am.", cat: "phrase", topic: "restaurant" },
   ]
 };
 

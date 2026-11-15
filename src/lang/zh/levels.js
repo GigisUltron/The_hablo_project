@@ -86,6 +86,8 @@ var SEMA_LEVELS = {
   "b-zh-qu": "A1",
   "b-zh-lai": "A1",
   "b-zh-mai": "A1",
+  "ph-zh-pizza": "A1",
+  "ph-zh-vegetarian": "A2",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
