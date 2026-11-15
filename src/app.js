@@ -1444,13 +1444,58 @@
       ? '<button class="btn btn-ghost" id="reader-listen" type="button">' +
         esc(tr("listenText", "Listen to text")) + "</button>"
       : "";
-    $("reader-actions").innerHTML = listen +
-      '<button class="btn btn-primary" id="reader-go">' + esc(tr("questions", "Questions")) + '</button>';
+    var generate = '<button class="btn btn-ghost" id="reader-generate" type="button">' +
+      esc(tr(t.ai ? "readerAnother" : "readerGenerate", t.ai ? "Another text" : "Write me a text")) +
+      "</button>";
+    var questions = t.questions && t.questions.length
+      ? '<button class="btn btn-primary" id="reader-go" type="button">' +
+        esc(tr("questions", "Questions")) + "</button>"
+      : "";
+    $("reader-actions").innerHTML = listen + generate + questions;
     var listenBtn = $("reader-listen");
     if (listenBtn) listenBtn.addEventListener("click", function () {
       speak(t.title + ". " + t.body, listenBtn);
     });
-    $("reader-go").addEventListener("click", renderReaderQuestion);
+    var generateBtn = $("reader-generate");
+    if (generateBtn) generateBtn.addEventListener("click", function () { generateReaderText(generateBtn); });
+    var go = $("reader-go");
+    if (go) go.addEventListener("click", renderReaderQuestion);
+  }
+
+  function generateReaderText(btn) {
+    if (!AITOOLS) {
+      toast(tr("readerNoModel", "No local model answered; keeping the packed text."));
+      return;
+    }
+    var old = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = tr("readerWriting", "Writing a text…");
+    var feedback = $("reader-feedback");
+    if (feedback) { feedback.textContent = ""; feedback.className = "feedback"; }
+    var personal = PERSONA && state.profile ? PERSONA.ensure(state.profile) : {};
+    var level = learnerLevel();
+    var context = [];
+    if (personal.why) context.push("The learner is learning for: " + personal.why + ".");
+    if (personal.interests) context.push("Topics they enjoy: " + personal.interests + ".");
+    var system = "You write very short reading practice in " + ACTIVE.name + ". " +
+      "Return only a title on the first line and three to five short sentences on the following lines. " +
+      "Use everyday words at the learner's level. No English, no markdown, no questions, no explanations.";
+    var prompt = "Level " + level + ". " + context.join(" ") +
+      " Write a new everyday text. Keep it under 70 words.";
+    localModelAsk(system, prompt).then(function (reply) {
+      var parsed = AITOOLS.parseReading(reply);
+      if (!parsed) throw new Error("no reading");
+      reader = {
+        text: { id: "ai-" + Date.now(), title: parsed.title, body: parsed.body,
+          level: level, questions: [], ai: true },
+        qi: 0, correct: 0, misses: [], done: false
+      };
+      renderReaderText();
+    }).catch(function () {
+      if (feedback) feedback.textContent = tr("readerNoModel", "No local model answered; keeping the packed text.");
+      btn.disabled = false;
+      btn.textContent = old;
+    });
   }
 
   /* Why that option was wrong, in the words the text ships with, and always the

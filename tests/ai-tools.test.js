@@ -11,6 +11,15 @@ test("model output is parsed from lines, commas, bullets and numbers", () => {
   assert.deepEqual(A.parseList(""), []);
 });
 
+test("reading parsing removes markdown and splits title from body", () => {
+  const r = A.parseReading("# El café\n\n**Hoy** fui al café. Pedí un café con leche.\n\nFue un buen día.");
+  assert.equal(r.title, "El café");
+  assert.match(r.body, /Hoy fui al café/);
+  assert.equal(A.parseReading("Hola"), null);
+  assert.equal(A.parseReading("Title\nshort"), null);
+  assert.equal(A.parseReading(""), null);
+});
+
 test("model output is deduped and capped", () => {
   assert.deepEqual(A.parseList("casa\nCasa\ncasa"), ["casa"]);
   const many = new Array(40).fill(0).map((_, i) => "w" + i).join("\n");

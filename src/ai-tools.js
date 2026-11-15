@@ -35,6 +35,22 @@
     return out.slice(0, limit);
   }
 
+  /* Reader output is one title line plus the body. Models add markdown,
+   * numbering or an English preface; strip that rather than showing it. */
+  function parseReading(text) {
+    var lines = String(text == null ? "" : text)
+      .replace(/\r\n?/g, "\n").split(/\n+/)
+      .map(function (line) {
+        return line.replace(/^\s*(?:#{1,6}|[-*•]|\d+[.)])\s*/, "")
+          .replace(/\*\*/g, "").replace(/^["'“”«»]+|["'“”«»]+$/g, "").trim();
+      }).filter(Boolean);
+    if (!lines.length) return null;
+    var title = lines[0].slice(0, 90);
+    var body = lines.slice(1).join(" ").replace(/\s+/g, " ").trim().slice(0, 1200);
+    if (!body || body.length < 20 || title.length < 2) return null;
+    return { title: title, body: body };
+  }
+
   function systemWords(language) {
     return "You are a careful " + String(language || "target-language") +
       " tutor. Answer only with target-language words or phrases, one per line. " +
@@ -61,6 +77,7 @@
   return {
     cleanLine: cleanLine,
     parseList: parseList,
+    parseReading: parseReading,
     systemWords: systemWords,
     wordsPrompt: wordsPrompt,
     systemKeywords: systemKeywords,
