@@ -1506,7 +1506,7 @@
       '<input class="type-input" id="type-input" type="text" autocomplete="off" ' +
         'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
         'aria-label="' + esc(tr("characters", "The characters")) + '" placeholder="' + esc(tr("characters", "The characters")) + '" />' +
-      '<p class="writing-hint">type or paste the characters</p>' +
+      '<p class="writing-hint">' + esc(tr("typeCharacters", "Type or paste the characters.")) + '</p>' +
       '<button class="btn btn-primary" id="write-check">' + esc(tr("check", "Check")) + '</button>';
 
     var input = $("type-input");
@@ -1531,7 +1531,7 @@
     if (!result.ok) {
       $("stage").innerHTML += '<p class="sentence">the answer was ' + textHTML(it) + "</p>";
     }
-    writingResult(it, result.ok, result.ok ? "correct" : "not quite");
+    writingResult(it, result.ok, result.ok ? tr("correct", "Correct") : tr("notQuite", "Not quite"));
   }
 
   function renderWritingRecognise(it) {
@@ -1568,7 +1568,8 @@
           if (b.getAttribute("data-sub") === it.sub) b.classList.add("pick-correct");
         });
         if (!ok) btn.classList.add("pick-wrong");
-        writingResult(it, ok, ok ? "correct" : "the answer was " + it.sub);
+        writingResult(it, ok, ok ? tr("correct", "Correct") :
+          tr("wrongAnswer", "the answer was {answer}").replace("{answer}", it.sub));
       });
     });
   }
@@ -2418,7 +2419,8 @@
     save();
 
     show("today");
-    toast(band + " — " + correct + "/" + total + " right.");
+    toast(tr("rightCount", "{correct}/{total} right")
+      .replace("{correct}", String(correct)).replace("{total}", String(total)));
     renderToday();
     renderStats();
   }
