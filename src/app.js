@@ -3327,6 +3327,9 @@
       answered: {},
       counted: {},
       replaying: null,
+      history: [],
+      viewing: null,
+      advanceTimer: 0,
       firstCorrect: 0,
       taughtIds: {},
       unique: 0
@@ -3354,7 +3357,7 @@
     if (back) {
       var canBack = !!session && (
         (session.phase === "study" && session.si > 0) ||
-        (session.phase === "quiz" && session.qi > 0)
+        (session.phase === "quiz" && session.qi > 0 && session.history.length)
       );
       back.disabled = !canBack;
       back.setAttribute("aria-disabled", String(!canBack));
@@ -4175,14 +4178,15 @@
       }
       S.review(state, id, ok ? 2 : 0, Date.now());
     }
+    var wasReplay = replay;
     session.replaying = null;
     save();
-    showAnswer(ok, it);
+    showAnswer(ok, it, wasReplay);
   }
 
   /* The question stays on screen; the verdict rises from the bottom with
    * the word, its sentence and the way on. */
-  function showAnswer(ok, it) {
+  function showAnswer(ok, it, replay) {
     sayItem(it);
     var mic = $("mic-btn");
     if (mic) mic.disabled = true;
@@ -4190,15 +4194,69 @@
     feedback(ok ? tr("correct", "Correct") : tr("comesBack", "Comes back"), ok ? "good" : "bad", it);
 
     var advance = function () { session.qi += 1; renderQuiz(); };
+    var snapshot = {
+      qi: session.qi,
+      id: it && it.id,
+      stage: $("stage").innerHTML,
+      feedback: $("feedback").innerHTML,
+      feedbackClass: $("feedback").className,
+      counter: $("counter").textContent,
+      bar: $("bar-fill").style.width
+    };
+    if (!replay) {
+      session.history.push(snapshot);
+      if (session.history.length > 12) session.history.shift();
+    }
     if (ok) {
       /* correct: no confirmation tap. It moves on by itself. */
       $("actions").innerHTML = "";
       /* long enough to read the one-line reason, short enough to keep the loop */
-      setTimeout(advance, 900);
+      session.advanceTimer = setTimeout(function () {
+        if (!session || session.viewing) return;
+        advance();
+      }, 900);
     } else {
       $("actions").innerHTML = '<button class="btn btn-primary" id="next">' + esc(tr("continue", "Continue")) + '</button>';
       $("next").addEventListener("click", advance);
     }
+  }
+
+  function showPreviousTask() {
+    if (!session || !session.history.length) return;
+    var at = session.history.length - 1;
+    if (session.history[at].qi === session.qi && at > 0) at -= 1;
+    var snap = session.history[at];
+    if (!snap) return;
+    if (session.advanceTimer) clearTimeout(session.advanceTimer);
+    session.advanceTimer = 0;
+    session.viewing = snap;
+    $("card").classList.add("is-reviewing");
+    $("stage").innerHTML = snap.stage;
+    $("feedback").innerHTML = snap.feedback;
+    $("feedback").className = snap.feedbackClass;
+    $("counter").textContent = snap.counter;
+    $("bar-fill").style.width = snap.bar;
+    Array.prototype.forEach.call($("stage").querySelectorAll("button, input, select, textarea"), function (el) {
+      el.disabled = true;
+    });
+    $("actions").innerHTML = '<button class="btn btn-primary" id="return-task" type="button" aria-label="Return to current task">→</button>';
+    $("return-task").addEventListener("click", function () {
+      session.viewing = null;
+      $("card").classList.remove("is-reviewing");
+      renderQuiz();
+    });
+    var back = $("back-btn");
+    if (back) {
+      back.disabled = false;
+      back.setAttribute("aria-label", "Return to current task");
+    }
+  }
+
+  function returnToTask() {
+    if (!session || !session.viewing) return;
+    session.viewing = null;
+    $("card").classList.remove("is-reviewing");
+    renderQuiz();
   }
 
   function finishSession() {
@@ -4584,16 +4642,17 @@
 
   function goBackTask() {
     if (!session) return;
+    if (session.viewing) {
+      returnToTask();
+      return;
+    }
     if (session.phase === "study" && session.si > 0) {
       session.si -= 1;
       renderStudy();
       return;
     }
-    if (session.phase === "quiz" && session.qi > 0) {
-      session.qi -= 1;
-      session.replaying = session.quiz[session.qi];
-      session.qStart = 0;
-      renderQuiz();
+    if (session.phase === "quiz" && session.history.length) {
+      showPreviousTask();
     }
   }
 

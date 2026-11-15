@@ -2162,3 +2162,14 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 #back-btn { font-size: 24px; line-height: 1; }
 
 #back-btn:disabled { opacity: 0.3; cursor: default; }
+
+/* previous task: frozen answer state, one clear way forward */
+.card.is-reviewing .stage { opacity: 0.92; }
+.card.is-reviewing .option-word:disabled,
+.card.is-reviewing .option:disabled { cursor: default; }
+.card .card-actions #return-task {
+  width: 52px;
+  min-width: 52px;
+  justify-self: start;
+  font-size: 20px;
+}

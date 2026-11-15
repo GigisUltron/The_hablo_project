@@ -918,9 +918,17 @@ test("every settings option is read, applied now, and remembered", () => {
   assert.equal(/data-mode=/.test(html), false, "a deck-mode chooser came back");
 });
 
+test("the previous task is read-only with a return arrow", () => {
+  assert.match(app, /id="return-task"/, "no return arrow");
+  assert.match(app, /el\.disabled = true/, "previous answers are still interactive");
+  assert.match(app, /session\.viewing = snap/, "previous task is not a view state");
+  assert.match(app, /session\.viewing = null;\n      \$\("card"\)\.classList\.remove/, "no return to current task");
+});
+
 test("back steps to the previous task while X exits with confirmation", () => {
   assert.match(app, /function goBackTask/, "no previous-task handler");
-  assert.match(app, /session\.replaying = session\.quiz\[session\.qi\]/, "replayed cards are not marked");
+  assert.match(app, /function showPreviousTask/, "previous tasks are not rendered read-only");
+  assert.match(app, /session\.history\.push\(snapshot\)/, "answered tasks are not snapshotted");
   assert.match(app, /var replay = session\.replaying === id;/, "replayed answers still count");
   assert.match(app, /\$\("back-btn"\)\.addEventListener\("click", goBackTask\)/, "back is still an exit");
   assert.match(app, /\$\("quit-btn"\)\.addEventListener\("click", leaveSession\)/, "X no longer asks before exit");
