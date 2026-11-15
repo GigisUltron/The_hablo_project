@@ -4639,6 +4639,10 @@
       });
     }
 
+    if (o.productionOnly) {
+      session.types = quizQueue.map(function (id, i) { return productionExercise(id, i); });
+    }
+
     /* your own sentence, if one is old enough to be worth re-reading */
     var older = MEM.nextToReview(state.memory, now, MEM.DAY_MS / 2);
     if (older) {
@@ -6215,6 +6219,39 @@
   var progressCoachKey = "";
   var progressCoachText = "";
 
+  function productionExercise(id, i) {
+    var it = itemOf(id);
+    if (it.kind === "phrase") {
+      if (i % 2 === 0 && buildable(id)) return "build";
+      if (i % 3 === 0 && gapFor(id)) return "message";
+      if (translationFor(id)) return i % 2 ? "translate-out" : "write";
+      return "write";
+    }
+    if (translationFor(id)) return i % 2 ? "translate-out" : "write";
+    return "write";
+  }
+
+  function productionPracticeIds() {
+    var now = Date.now();
+    return allIds.filter(function (id) {
+      var it = itemOf(id);
+      var card = state.cards[id];
+      return (it.kind === "word" || it.kind === "phrase") && atLevel(id) &&
+        card && card.reps > 0 && !card.prod;
+    }).sort(function (a, b) {
+      var ca = state.cards[a], cb = state.cards[b];
+      var da = ca.due <= now ? 0 : 1, db = cb.due <= now ? 0 : 1;
+      if (da !== db) return da - db;
+      return (ca.ease || 2.5) - (cb.ease || 2.5);
+    }).slice(0, 6);
+  }
+
+  function startProductionPractice() {
+    var ids = productionPracticeIds();
+    if (!ids.length) { toast(tr("produceEmpty", "No cards are ready for production practice yet.")); return; }
+    startSession({ ids: ids, size: ids.length, title: tr("practiceProduce", "Practice producing"), productionOnly: true });
+  }
+
   function renderProgressCoach(stats) {
     var box = $("coach-read");
     var note = $("coach-read-text");
@@ -6373,6 +6410,8 @@
       weakest: weakest ? catLabel(weakest.cat) : "",
       confusion: confused ? (conceptById[confused.target] || {}).word + " / " + (conceptById[confused.chosen] || {}).word : ""
     });
+    var produceBtn = $("produce-practice");
+    if (produceBtn) produceBtn.hidden = !productionPracticeIds().length;
     renderWeek();
   }
 
@@ -6523,6 +6562,7 @@
   renderChatSettings();
   $("settings-back").addEventListener("click", function () { show("today"); });
   $("export-backup").addEventListener("click", downloadBackup);
+  $("produce-practice").addEventListener("click", startProductionPractice);
   $("import-backup-btn").addEventListener("click", function () {
     var input = $("import-backup");
     if (input) input.click();
