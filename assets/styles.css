@@ -2017,3 +2017,6 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 /* fast language switching belongs to navigation, not inside a lesson */
 .app:has(#view-session.is-active) .lang-switch,
 .app:has(#view-setup.is-active) .lang-switch { display: none; }
+
+/* attribute visibility must win over the group display rule */
+.group[hidden] { display: none; }

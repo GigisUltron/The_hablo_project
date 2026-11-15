@@ -698,6 +698,12 @@ test("specialized lessons cycle varied exercises", () => {
   assert.match(app, /gapFor\(id\)\) phrases\.push\("message"\)/, "message completion is missing");
 });
 
+test("an empty My lessons group does not render", () => {
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(css, /\.group\[hidden\] \{ display: none; \}/, "hidden groups can still use the grid display");
+  assert.match(app, /group\.hidden = !list\.length/, "the group is never hidden when empty");
+});
+
 test("saved lessons can be deleted only after confirmation", () => {
   assert.match(app, /data-delete-custom/, "no delete control on saved lessons");
   assert.match(app, /deleteLessonConfirm/, "delete has no confirmation copy");
