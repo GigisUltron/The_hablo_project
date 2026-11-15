@@ -4822,6 +4822,8 @@
     var vs = state.vocabStats || { sessions: 0, correct: 0 };
     var vstat = $("stat-vocab");
     if (vstat) vstat.textContent = vs.sessions + " · " + vs.correct;
+    var daily = $("stat-daily");
+    if (daily) daily.textContent = (state.daily && state.daily.cards) || 0;
     $("stat-good").textContent = state.reviews.good;
     $("stat-again").textContent = state.reviews.again;
   }
