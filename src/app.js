@@ -6108,6 +6108,38 @@
 
   /* ---------------------------------------------------------------- stats */
 
+  var progressCoachKey = "";
+  var progressCoachText = "";
+
+  function renderProgressCoach(stats) {
+    var box = $("coach-read");
+    var note = $("coach-read-text");
+    if (!box || !note) return;
+    var fallback = tr("coachProgressFallback",
+      "You've met {known} words; {solid} are solid and {due} are due. Next: review the due ones and keep one conversation going.")
+      .replace("{known}", String(stats.known || 0))
+      .replace("{solid}", String(stats.solid || 0))
+      .replace("{due}", String(stats.due || 0));
+    var key = [ACTIVE && ACTIVE.code, learnerLevel(), stats.known, stats.solid, stats.due,
+      stats.sessions, stats.streak, stats.weakest, stats.confusion].join("|");
+    box.hidden = false;
+    if (key === progressCoachKey && progressCoachText) {
+      note.textContent = progressCoachText;
+      return;
+    }
+    progressCoachKey = key;
+    note.textContent = tr("coachThinking", "Writing a short coach note…");
+    if (!AITOOLS || !CE) { progressCoachText = fallback; note.textContent = fallback; return; }
+    localModelAsk(CE.buildProgressPrompt(ACTIVE, learnerLevel(), uiName(uiLang()), stats,
+      PERSONA ? PERSONA.prompt(state.profile) : ""), "Write the read now.").then(function (reply) {
+        progressCoachText = String(reply || "").trim().slice(0, 320) || fallback;
+        if (note && note.isConnected && $("coach-read-text") === note) note.textContent = progressCoachText;
+      }).catch(function () {
+        progressCoachText = fallback;
+        if (note && note.isConnected && $("coach-read-text") === note) note.textContent = fallback;
+      });
+  }
+
   function renderStats() {
     var cats = Object.keys(D.categories);
     var rows = cats.map(function (cat) {
@@ -6195,6 +6227,17 @@
     if (daily) daily.textContent = (state.daily && state.daily.cards) || 0;
     $("stat-good").textContent = state.reviews.good;
     $("stat-again").textContent = state.reviews.again;
+    var dueNow = S.dueList(state, Date.now()).filter(function (id) {
+      return state.cards[id] && state.cards[id].last !== null;
+    }).length;
+    var weakest = rows.slice().sort(function (a, b) { return a.pct - b.pct; })[0];
+    var confused = S.topConfusions(state, 1)[0];
+    renderProgressCoach({
+      known: known, total: allIds.length, solid: solid, due: dueNow,
+      sessions: state.sessions || 0, streak: currentStreak(),
+      weakest: weakest ? catLabel(weakest.cat) : "",
+      confusion: confused ? (conceptById[confused.target] || {}).word + " / " + (conceptById[confused.chosen] || {}).word : ""
+    });
   }
 
   /* ----------------------------------------------------------------- wire */

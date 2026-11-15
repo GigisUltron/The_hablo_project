@@ -179,6 +179,27 @@
 
   /* The wrap-up is a one-off coaching turn, not part of the conversation. It
    * asks for English notes so they stay readable under any interface. */
+  /* Progress is read from real counts, never from a model's guess. */
+  function buildProgressPrompt(pack, level, uiLanguage, stats, personal) {
+    var name = String((pack && pack.name) || "the target language");
+    var reply = String(uiLanguage || "English");
+    var s = stats || {};
+    var rules = [
+      "You are a concise " + name + " coach. Reply in " + reply + " only, in at most two short sentences.",
+      "Learner level: " + String(level || "A1") + ".",
+      "Words met: " + Number(s.known || 0) + " of " + Number(s.total || 0) + ".",
+      "Solid (interval at least six days): " + Number(s.solid || 0) + ".",
+      "Due now: " + Number(s.due || 0) + ".",
+      "Sessions: " + Number(s.sessions || 0) + ".",
+      "Day streak: " + Number(s.streak || 0) + ".",
+      s.weakest ? "Weakest topic: " + String(s.weakest) + "." : "",
+      s.confusion ? "Most confused pair: " + String(s.confusion) + "." : "",
+      "Say one specific strength and one concrete next step. No shame, no generic motivation, no emoji."
+    ];
+    if (personal) rules.push(String(personal));
+    return rules.filter(Boolean).join(" ");
+  }
+
   /* The end-of-session note is generated from the review data, not from a
    * transcript. It names one strength and one next focus. */
   function buildSessionCoachPrompt(pack, level, uiLanguage, kept, missed) {
@@ -637,6 +658,7 @@
     buildScenePrompt: buildScenePrompt,
     buildExplainPrompt: buildExplainPrompt,
     buildSessionCoachPrompt: buildSessionCoachPrompt,
+    buildProgressPrompt: buildProgressPrompt,
     buildMessages: buildMessages,
     buildRequest: buildRequest,
     normaliseBaseUrl: normaliseBaseUrl,

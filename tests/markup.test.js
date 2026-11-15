@@ -471,6 +471,17 @@ test("the session summary asks the coach for a brief real review", () => {
   assert.match(app, /renderSessionCoach\(kept, missed, total\)/);
 });
 
+test("Progress has an AI coach read built from real counts", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(html, /id="coach-read"/);
+  assert.match(html, /id="coach-read-text"/);
+  assert.match(app, /function renderProgressCoach/);
+  assert.match(app, /CE\.buildProgressPrompt/);
+  assert.match(app, /coachProgressFallback/);
+  assert.match(app, /progressCoachKey/);
+  assert.match(app, /weakest: weakest \? catLabel/);
+});
+
 test("a planned scene becomes a roleplay conversation", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(html, /id="wish-roleplay"/);

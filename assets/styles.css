@@ -1868,6 +1868,20 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 }
 
 /* Progress's own path: which lessons the placement opened. */
+.coach-read {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+}
+.coach-read p {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.4;
+}
 .progress-path {
   display: flex;
   gap: 10px;

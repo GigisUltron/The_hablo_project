@@ -148,7 +148,10 @@ Settings lists every language you are learning with its flag, name and level. Se
 
 The interface-language selector is separate and does not change when you switch learning languages.
 
-## Coins and looks
+## Progress
+
+**Progress** shows the real counts behind the course: level, words met, words solid (interval at least six days), cards due, the path, topic rings, confused pairs, kept sentences and session totals. The **Coach read** is written from those counts, not from invented XP: it names one strength and one next step, falls back to a plain count-based line when no model answers, and never replaces the numbers.
+
 
 Coins are **earned**, never bought. A finished lesson pays for first-try answers and a clean sheet; expanding vocabulary pays for each correct word; reaching the daily goal pays once. They buy **looks only** — three accent themes in **Settings → Look**:
 
