@@ -698,6 +698,18 @@ test("specialized lessons cycle varied exercises", () => {
   assert.match(app, /gapFor\(id\)\) phrases\.push\("message"\)/, "message completion is missing");
 });
 
+test("saved lessons can be deleted only after confirmation", () => {
+  assert.match(app, /data-delete-custom/, "no delete control on saved lessons");
+  assert.match(app, /deleteLessonConfirm/, "delete has no confirmation copy");
+  assert.match(app, /window\.confirm\(tr\("deleteLessonConfirm"/, "delete is not confirmed");
+});
+
+test("the plan-a-lesson field is styled as a real input", () => {
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(css, /\.wish-row input \{/, "the request input has no styling");
+  assert.match(css, /box-shadow: 0 0 0 3px var\(--accent-soft\)/, "the request input has no focus ring");
+});
+
 test("specialized lessons encode two chunks before retrieval", () => {
   assert.match(app, /var warm = o\.customId && queue\.length > 2 \? queue\.slice\(0, 2\) : \[\];/, "no custom encoding step");
   assert.match(app, /newSession\("mixed", warm, quizQueue\)/, "the warmup is not part of the session");

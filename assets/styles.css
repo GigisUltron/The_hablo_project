@@ -1814,3 +1814,43 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .wish-row input { flex: 1 1 auto; min-width: 0; }
 .wish-row .btn { flex: 0 0 auto; }
 .wish-card .builder-note { margin: 0; }
+
+/* the request field is an input, not a browser-default box */
+.wish-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 11px 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+.wish-row input::placeholder { color: var(--text-3); }
+.wish-row input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+@media (max-width: 520px) {
+  .wish-row { flex-wrap: wrap; }
+  .wish-row .btn { width: 100%; }
+}
+
+/* saved specialized lessons: open on the row, delete beside it */
+.custom-row { display: flex; align-items: stretch; gap: 6px; }
+.custom-row .custom-open { flex: 1 1 auto; min-width: 0; text-align: left; }
+.custom-del {
+  flex: 0 0 44px;
+  min-height: 44px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-2);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.custom-del:hover { color: var(--text); border-color: var(--text-2); }
+.custom-del:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

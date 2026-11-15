@@ -2878,12 +2878,26 @@
     group.hidden = !list.length;
     box.innerHTML = list.map(function (w) {
       var due = w.next && w.next <= Date.now();
-      return '<button class="row" type="button" data-custom="' + esc(w.id) + '">' +
-        '<span class="row-body"><span class="row-main">' + esc(w.title) + "</span>" +
-        '<span class="row-meta">' + esc(uiName(w.lang)) + (due ? " · " + esc(tr("today", "today")) : "") + "</span></span></button>";
+      return '<div class="custom-row">' +
+        '<button class="row custom-open" type="button" data-custom="' + esc(w.id) + '">' +
+          '<span class="row-body"><span class="row-main">' + esc(w.title) + "</span>" +
+          '<span class="row-meta">' + esc(uiName(w.lang)) + (due ? " · " + esc(tr("today", "today")) : "") + "</span></span>" +
+        "</button>" +
+        '<button class="custom-del" type="button" data-delete-custom="' + esc(w.id) + '" ' +
+          'aria-label="' + esc(tr("deleteLesson", "Delete lesson")) + '" title="' + esc(tr("deleteLesson", "Delete lesson")) + '">×</button>' +
+      "</div>";
     }).join("");
     Array.prototype.forEach.call(box.querySelectorAll("[data-custom]"), function (b) {
       b.addEventListener("click", function () { startCustomLesson(b.getAttribute("data-custom")); });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-delete-custom]"), function (b) {
+      b.addEventListener("click", function () {
+        if (!window.confirm(tr("deleteLessonConfirm", "Delete this lesson? This cannot be undone."))) return;
+        var id = b.getAttribute("data-delete-custom");
+        state.customLessons = (state.customLessons || []).filter(function (w) { return w.id !== id; });
+        save();
+        renderCustomLessons();
+      });
     });
   }
 
@@ -4230,6 +4244,7 @@
       return;
     }
     var saved = saveCustomLesson(wish, text);
+    if (input) input.value = "";
     toast(wish.note, 3200);
     startSession({ ids: wish.ids, size: wish.ids.length, title: wish.title, customId: saved.id });
   });
