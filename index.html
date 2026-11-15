@@ -239,6 +239,9 @@
         <div class="stage" id="conv-stage">
           <div class="chat-stage">
             <button class="chat-clear" id="chat-clear" type="button" aria-label="clear this conversation" data-i18n-aria="clearConversation" hidden>clear</button>
+            <div class="chat-voice-row" id="chat-voice-row" hidden>
+              <button class="voice-toggle" id="chat-voice" type="button" aria-pressed="false" data-i18n="voiceMode">Hands-free</button>
+            </div>
             <form class="chat-composer" id="chat-form">
               <input class="type-input" id="chat-input" type="text" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="send" placeholder="say something" aria-label="your message" data-i18n-ph="saySomething" data-i18n-aria="yourMessage" />
               <button class="icon-btn" id="chat-listen" type="button" aria-label="Speak your message" title="Speak your message" data-i18n-aria="speakMessage" data-i18n-title="speakMessage" hidden>

@@ -98,6 +98,8 @@ Assistant replies are spoken automatically through the browser’s installed spe
 
 **Settings → Personalize** stores two short local notes: why you are learning and what you like. They are shown on Today, used by the local coach for examples and scenarios, and never sent to a remote service by the app. They are not a quiz and not required.
 
+**Hands-free** is an opt-in voice loop on the conversation screen. Turn it on, speak, and the recognised message is sent; after the assistant replies and finishes speaking, the microphone opens again. It turns off when you leave the screen, when you clear the chat, or when microphone permission is refused. Browser speech recognition still requires a secure context and a supported browser; the typed conversation always remains available.
+
 A **transfer mission** appears above the conversation. It asks you to use two or three weak/due phrases in the conversation. A phrase counts only when you actually write it; completing the mission gives a small XP award.
 
 A local model is optional but it is now the only conversation-engine path when present: Settings has no engine chooser. Press **Find local model**; the app probes `http://localhost:8080`, `http://localhost:8081` and `http://localhost:11434`, stores the endpoint and model, and uses the first model that answers. Both llama.cpp's `llama-server` / `llama-cpp-python` and Ollama work. Without one, no conversation leaves the device; the authored fallback runs.

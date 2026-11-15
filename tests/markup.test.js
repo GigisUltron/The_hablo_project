@@ -492,6 +492,18 @@ test("a missed card can ask the coach for one useful correction", () => {
   assert.equal(app.includes("explain-btn"), false);
 });
 
+test("conversation has an opt-in hands-free voice loop", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(html, /id="chat-voice"/);
+  assert.match(app, /var chatVoice = false/);
+  assert.match(app, /function setVoiceMode/);
+  assert.match(app, /function renderVoiceControl/);
+  assert.match(app, /if \(chatVoice\) \{\n          input\.value = said;\n          sendChatTurn\(\);/);
+  assert.match(app, /var listenNext = function/);
+  assert.match(app, /if \(chatVoice && !quiet\) listenNext\(\)/);
+  assert.match(app, /if \(view !== "conv" && chatVoice\) setVoiceMode\(false\)/);
+});
+
 test("the conversation has a coach check-in that can become a lesson", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(html, /id="chat-wrap"/);
@@ -1333,7 +1345,7 @@ test("AI replies can auto-speak through local browser voices", () => {
   assert.match(html, /data-i18n="speakReplies"/);
   assert.match(app, /function autoSpeakOn\(\)/);
   assert.match(app, /s\.settings\.autoSpeak = "on"/);
-  assert.match(app, /if \(autoSpeakOn\(\) && hasTTS && !quiet\) speak\(clean\)/);
+  assert.match(app, /if \(autoSpeakOn\(\) && hasTTS && allVoices\(\)\.length && !quiet\) speak\(clean, null, listenNext\)/);
   assert.match(app, /v\.localService !== false/, "cloud voices are not filtered out");
   assert.match(app, /function canSpeak\(\)/);
 });

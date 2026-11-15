@@ -1577,6 +1577,29 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
+.chat-voice-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 0 6px;
+}
+.voice-toggle {
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.voice-toggle:hover { color: var(--accent); border-color: var(--accent); }
+.voice-toggle.is-on {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .chat-clear {
   align-self: flex-end;
   flex: none;

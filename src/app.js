@@ -778,7 +778,7 @@
     if (pendingSpeech && allVoices().length) {
       var pending = pendingSpeech;
       pendingSpeech = null;
-      setTimeout(function () { speak(pending.text, pending.btn); }, 0);
+      setTimeout(function () { speak(pending.text, pending.btn, pending.onDone); }, 0);
     }
     setTimeout(updateAudioChip, 1600);
     setTimeout(updateAudioChip, 4000);
@@ -877,13 +877,19 @@
     return true;
   }
 
-  function speak(text, btn) {
-    if (!audioEnabled() || !hasTTS) return;
+  function speak(text, btn, onDone) {
+    var finished = false;
+    function done() {
+      if (finished) return;
+      finished = true;
+      if (onDone) onDone();
+    }
+    if (!audioEnabled() || !hasTTS) { done(); return; }
     var synth = window.speechSynthesis;
     try {
       if (!voice) pickVoice();
       if (!allVoices().length) {
-        pendingSpeech = { text: String(text), btn: btn };
+        pendingSpeech = { text: String(text), btn: btn, onDone: onDone };
         return;
       }
       if (synth.paused) synth.resume();
@@ -911,6 +917,7 @@
       u.onend = function () {
         if (btn) btn.classList.remove("is-playing");
         stopFace();
+        done();
       };
       u.onerror = function (ev) {
         if (ev && ev.error && ev.error !== "canceled" && ev.error !== "interrupted") {
@@ -918,6 +925,7 @@
         }
         if (btn) btn.classList.remove("is-playing");
         stopFace();
+        done();
       };
 
       var busy = synth.speaking || synth.pending;
@@ -926,13 +934,13 @@
         try {
           if (face) face.classList.add("is-speaking");
           synth.speak(u);
-        } catch (err) { stopFace(); }
+        } catch (err) { stopFace(); done(); }
       };
       clearTimeout(speakTimer);
       /* queuing inside the same tick as cancel() loses the utterance in Firefox */
       if (busy) speakTimer = setTimeout(go, 90);
       else go();
-    } catch (err) { /* ignore */ }
+    } catch (err) { done(); }
   }
 
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -993,6 +1001,7 @@
 
   function show(view) {
     if (needsSetup() && view !== "setup") view = "setup";
+    if (view !== "conv" && chatVoice) setVoiceMode(false);
     /* If the control that opened this view is hidden with it, focus would be
      * lost in the document. Capture the origin now, and move focus into the new
      * view once it is visible. Tabs live outside the views, so switching tabs
@@ -1001,6 +1010,7 @@
     var fromView = previous && previous.closest ? previous.closest(".view") : null;
     applyStrings();
     currentView = view;
+    if (view === "conv") renderVoiceControl();
     VIEWS.forEach(function (v) {
       var el = $("view-" + v);
       if (el) el.classList.toggle("is-active", v === view);
@@ -1936,6 +1946,7 @@
   var chatPending = false;
   var chatListening = false;
   var chatRec = null;
+  var chatVoice = false;
   var chatEpoch = 0;
   var chatTranslating = {};
   var chatCleared = false;
@@ -2321,6 +2332,7 @@
     renderScene();
     chatEpoch += 1;
     chatTranslating = {};
+    setVoiceMode(false);
     setChatBusy(false);
     save();
     renderChat();
@@ -2443,7 +2455,14 @@
     trimChat();
     save();
     renderChat(true);
-    if (autoSpeakOn() && hasTTS && !quiet) speak(clean);
+    var listenNext = function () {
+      if (!chatVoice || !SR) return;
+      setTimeout(function () {
+        if (chatVoice && currentView === "conv" && !chatPending && chat) listenChat();
+      }, 260);
+    };
+    if (autoSpeakOn() && hasTTS && allVoices().length && !quiet) speak(clean, null, listenNext);
+    else if (chatVoice && !quiet) listenNext();
   }
 
   function addUser(text) {
@@ -2604,6 +2623,9 @@
 
   function sendChatTurn() {
     if (chatPending || !chat || !ACTIVE) return;
+    if (chatListening && chatRec) {
+      try { chatRec.stop(); } catch (err) { /* stopped */ }
+    }
     var input = $("chat-input");
     var text = input ? input.value.trim() : "";
     if (!text) return;
@@ -2816,6 +2838,7 @@
   function startConversation() {
     if (!CE) { toast(tr("chatEngineMissing", "The chat engine did not load.")); return; }
     chat = chatState();
+    setVoiceMode(false);
     hideCoach();
     if (!chat.mission) assignMission();
     chatCleared = false;
@@ -2827,8 +2850,43 @@
     renderChat(true);
     renderScene();
     renderMission();
+    renderVoiceControl();
     setChatBusy(false);
     refreshChatEngine();
+  }
+
+  function renderVoiceControl() {
+    var row = $("chat-voice-row");
+    if (!row) return;
+    row.hidden = !SR;
+    var btn = $("chat-voice");
+    if (btn) {
+      btn.classList.toggle("is-on", chatVoice);
+      btn.setAttribute("aria-pressed", String(chatVoice));
+      btn.textContent = tr(chatVoice ? "voiceModeOn" : "voiceMode", chatVoice ? "Hands-free on" : "Hands-free");
+    }
+  }
+
+  function setVoiceMode(on) {
+    chatVoice = !!on;
+    var btn = $("chat-voice");
+    if (!chatVoice) {
+      if (chatListening && chatRec) {
+        try { chatRec.stop(); } catch (err) { /* stopped */ }
+      }
+      if (btn) { btn.classList.remove("is-on"); btn.setAttribute("aria-pressed", "false"); }
+      renderVoiceControl();
+      return;
+    }
+    if (!SR) {
+      chatVoice = false;
+      toast(tr("noRecognition", "This browser has no speech recognition."));
+      renderVoiceControl();
+      return;
+    }
+    renderVoiceControl();
+    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (err) { /* no voice */ }
+    if (!chatListening) listenChat();
   }
 
   function listenChat() {
@@ -2862,12 +2920,19 @@
       try { said = ev.results[0][0].transcript || ""; } catch (err) { said = ""; }
       var input = $("chat-input");
       if (input && said) {
-        input.value = (input.value ? input.value.replace(/\s+$/, "") + " " : "") + said;
-        input.focus();
+        if (chatVoice) {
+          input.value = said;
+          sendChatTurn();
+        } else {
+          input.value = (input.value ? input.value.replace(/\s+$/, "") + " " : "") + said;
+          input.focus();
+        }
       }
     };
     rec.onerror = function (ev) {
       if (ev && (ev.error === "not-allowed" || ev.error === "service-not-allowed")) {
+        chatVoice = false;
+        renderVoiceControl();
         toast(tr("micRefused", "Microphone permission was refused."));
       } else if (ev && ev.error !== "no-speech") {
         toast(tr("couldNotHear", "Couldn't hear that — try again."));
@@ -6243,6 +6308,7 @@
     renderCoach();
   });
   if (SR) $("chat-listen").hidden = false;
+  renderVoiceControl();
   renderChatSettings();
   $("settings-back").addEventListener("click", function () { show("today"); });
   $("reader-back").addEventListener("click", function () {
