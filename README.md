@@ -4,9 +4,7 @@
 
 hablo is a dependency-free, local-first language app with **13 language packs**. Spanish, French, English and Italian are the flagship courses, with full phrase decks; German, Dutch, Portuguese, Russian, Turkish, Arabic, Hindi, Japanese and Chinese are starter courses that use the same learning engine.
 
-There are no accounts, no analytics, no server and no model required. Progress lives in your browser.
-
-![hablo — the Today screen](docs/hablo-preview.png)
+There are no accounts, no analytics and no remote service. Progress lives in your browser. A local model server is optional; the app installs as an offline-capable PWA on localhost or HTTPS.
 
 ## Start it
 
@@ -31,7 +29,8 @@ make ai                          # same as python3 server.py
 ```
 
 The app itself is still standard-library only and has no build step. For the
-app without the automatic model, use `python3 serve.py` (or `make serve`).
+app without the automatic model, use `python3 serve.py` (or `make serve`). The
+model is optional and runs only on the local machine.
 
 Open the printed `http://localhost:…` address rather than `index.html` directly. Microphone features need a secure context, and `file://` does not provide one.
 
@@ -39,8 +38,9 @@ Open the printed `http://localhost:…` address rather than `index.html` directl
 
 1. Choose the **language you want to learn**.
 2. Choose the **interface language**. It stays independent of the learning language.
-3. Press **I'm new** to start at the beginning, or **Test me** to take the entry exam.
-4. The entry exam adapts while you answer: three correct answers in a row move it up a band, a miss steps it back, and a perfect run can open C1. The current band is shown in the counter.
+3. Optionally choose **Travel / Work / Family / Culture**. It fills the local why, is never required, and can be changed later.
+4. Press **I'm new** to start at the beginning, or **Test me** to take the entry exam.
+5. The entry exam adapts while you answer: three correct answers in a row move it up a band, a miss steps it back, and a perfect run can open C1. The current band is shown in the counter.
 
 Your first language is added automatically. To add another later, open **Settings → Your languages → Add language**, choose a language, and complete that language's entry exam. Each language keeps its own level, cards, XP, statistics, custom lessons and conversation history.
 
@@ -64,6 +64,7 @@ Lessons use spaced repetition. What you miss comes back before the session ends 
 On `localhost` or HTTPS the app registers a small service worker, advertises a web manifest and can be installed to the home screen. The worker fetches the real shell and every loaded script into a cache, then uses network-first with a cache/offline fallback; it never touches the local-model origin. Audio is cached as it is played. On `file://` or in a browser without service workers nothing changes: the app still runs from disk.
 
 The manifest, icons and worker are ordinary files in the repository — no build step and no dependency.
+
 ### Scripts
 
 Non-Latin packs open on a script lesson. Each letter is a recall card: the shape is shown alone first, **Show the sound** reveals its name, an English sound hint and an example word with audio, and only then does **Next letter** save it. A short **All letters** grid is available from any card and at the finish, so the whole alphabet can be scanned and heard quickly. **Quiz** tests five letter/name pairs and marks correct letters as known. The script's own note (direction, joined forms, inherent vowels) is available in the card.
@@ -103,7 +104,7 @@ Every pack now carries five B1/B2 abstract words — decision, purpose, challeng
 
 ### Reading
 
-Each full course has eight reading texts across A1–B2. Starter courses have seven, including B1 and B2 texts that use the advanced layer. Every text has three multiple-choice questions and an explanation for each wrong option. The text screen also has **Listen to text**, which reads the title and body through the same installed voice used by conversation, and **Write me a text**, which asks the local model for a short new text at the learner's level using the personal context. Generated texts get a short cloze comprehension check built from their own sentences; if no model answers, the packed text stays.
+Each full course has eight reading texts across A1–B2. Starter courses have seven, including B1 and B2 texts that use the advanced layer. Every text has three multiple-choice questions and an explanation for each wrong option. Questions use the same **select, then Check** interaction as lessons, so a stray tap is not graded. The text screen also has **Listen to text**, which reads the title and body through the same installed voice used by conversation, and **Write me a text**, which asks the local model for a short new text at the learner's level using the personal context. Generated texts get a short cloze comprehension check built from their own sentences; if no model answers, the packed text stays.
 
 ### Conversation
 
@@ -115,8 +116,7 @@ The first-run screen offers an optional **Travel / Work / Family / Culture** why
 
 **Hands-free** is an opt-in voice loop on the conversation screen. Turn it on, speak, and the recognised message is sent; after the assistant replies and finishes speaking, the microphone opens again. It turns off when you leave the screen, when you clear the chat, or when microphone permission is refused. Browser speech recognition still requires a secure context and a supported browser; the typed conversation always remains available.
 
-A **transfer mission** appears above the conversation. It asks you to use two or three weak/due phrases in the conversation. A phrase counts only when you actually write it; completing the mission gives a small XP award. Coach check-ins select real authored phrases and use a rules-first note; the model may open a roleplay or write a practice text, but it is not allowed to replace data-derived coaching with generic self-talk.
- The mission's phrases are also passed to the conversation model with an instruction to create natural openings for them, not to list or quiz them.
+A **transfer mission** appears above the conversation. It asks you to use two or three weak/due phrases in the conversation. A phrase counts only when you actually write it; completing the mission gives a small XP award. Coach check-ins select real authored phrases and use a rules-first note; the model may open a roleplay or write a practice text, but it is not allowed to replace data-derived coaching with generic self-talk. The mission's phrases are also passed to the conversation model with an instruction to create natural openings for them, not to list or quiz them. The session summary's **Talk it through** carries the lesson's kept/missed phrases into that mission.
 
 The check-in also shows the learner side from the transcript: turns, words, questions and how many selected target phrases were actually used. These are counts, not model praise.
 
@@ -193,8 +193,9 @@ Settings → **Your data** downloads a JSON backup of the complete local state a
 - The storage key is intentionally `sema.v1` for compatibility with older saves.
 - Audio ships with the app as pre-rendered WAV files, generated with Piper neural voices; browser speech synthesis is the fallback.
 - No account, no analytics, no tracking.
-- Offline conversation never contacts a server.
-- A configured local model receives only the conversation and prompt needed for chat/translation.
+- Conversation with no model never leaves the device; a configured model runs locally.
+- A configured local model receives only the conversation and prompt for the feature you invoke.
+- On localhost/HTTPS the service worker caches the app shell and scripts for offline startup; audio is cached as it is played. It never caches the model origin.
 
 ## Audio
 
@@ -215,7 +216,7 @@ python3 tools/make_audio.py --lang fr --check
 make check                         # syntax gate + full test suite
 node --test tests/                 # tests only
 python3 tools/make_audio.py --check # audio manifest/files
-make integration                   # server + advanced data + audio + real model when installed
+make integration                   # server + content/audio + real 1.5B model when installed
 ```
 
 ## Repository layout
@@ -234,15 +235,25 @@ src/memory.js              personal sentences and cloze cards
 src/wordset.js             word-list matching for a focused lesson
 src/synonyms.js            authored synonym questions in vocabulary expansion
 src/ai-tools.js            local-model output parsing
+src/coach.js               guardrails for optional model coaching
+src/conversation.js        learner-side conversation counts
+src/pronunciation.js       missed-word speech feedback
+src/persona.js             local why/interests context
+src/backup.js              versioned JSON backup
 src/economy.js             earned coins and the cosmetic look costs
 src/chat-engine.js         optional local-model adapter
 src/mini-chat.js           dependency-free offline conversation predictor
 src/exercises.js           extra exercise helpers
 src/track.js               curriculum track
 src/curriculum.js          topic and unit resolution
+src/pwa.js                 service-worker registration
+manifest.webmanifest       installable app metadata
+sw.js                      offline shell and cache policy
 tools/make_audio.py        audio generator and checker
+tools/model_policy.py      RAM-aware 0.5B/1.5B/3B/4B selection
 tests/                     node:test suites
 serve.py                   local static server
+server.py                  one-command app + optional model
 docs/                      preview image and project notes
 ```
 
