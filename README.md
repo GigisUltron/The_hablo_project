@@ -107,7 +107,7 @@ Each full course has eight reading texts across A1–B2. Starter courses have si
 
 ### Conversation
 
-**Have a conversation** always works without a model. The local model is the default when one is running; if none answers, the app falls back to its own predictor and the active pack’s authored dialogue. The fallback follows authored turns where they fit, uses recent context, classifies greetings/thanks/yes-no/name/question intents, avoids repeating recent replies and refuses to echo or return runaway text.
+**Have a conversation** always works without a model. The local model is the default when one is running; if none answers, the app falls back to its own predictor and the active pack’s authored dialogue. The fallback follows authored turns where they fit, uses recent context, classifies greetings/thanks/yes-no/name/question intents, avoids repeating recent replies and refuses to echo or return runaway text. Even when the model is live, the first turn is an authored target-language opener, so the learner has something concrete to answer instead of an empty box.
 
 Assistant replies are spoken automatically through the browser’s installed speech voices when audio is on. A local target-language voice is preferred; if the device exposes only another installed voice, that is used as a fallback so the reply is not silent. If the voice list arrives late, the reply is queued until a voice appears. **Settings → Speak replies** turns the automatic voice off without muting card audio.
 

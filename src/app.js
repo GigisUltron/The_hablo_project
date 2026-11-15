@@ -2471,6 +2471,16 @@
     setChatStatus();
   }
 
+  /* A conversation with a live model still needs a first turn. The authored
+   * pack opener gives the learner something to answer; the model then takes
+   * over. It is never a "no model" apology. */
+  function seedModelOpening() {
+    if (!chat || chat.messages.length || chatCleared || !ACTIVE) return;
+    var opening = CE && CE.scriptedOpening ? CE.scriptedOpening(ACTIVE.code) : "";
+    if (!opening && miniChat) opening = miniChat.opening();
+    if (opening) addAssistant(opening, true, "scripted", true);
+  }
+
   function refreshChatEngine() {
     if (chatEngine() === "offline") {
       chatMeta = { status: "ready", engine: "mini", model: null, vision: false };
@@ -2525,6 +2535,7 @@
         if (token !== chatCheck) return;
         chatMeta = { status: "ready", engine: found.engine, model: chosen, vision: !!vision };
         setChatStatus();
+        seedModelOpening();
       });
     }).catch(function () {
       if (token !== chatCheck) return;

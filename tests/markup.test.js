@@ -1664,3 +1664,11 @@ test("Settings can test a real model reply without leaving the page", () => {
   assert.match(app, /noModelReply/);
 });
 
+test("a model conversation starts with an authored opening", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /function seedModelOpening/);
+  assert.match(app, /seedModelOpening\(\)/);
+  assert.match(app, /CE\.scriptedOpening/);
+  assert.match(app, /miniChat\.opening/);
+});
+
