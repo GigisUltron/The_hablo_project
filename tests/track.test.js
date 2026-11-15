@@ -9,7 +9,7 @@ test("nothing unlocked at zero except the first unit", () => {
   assert.equal(rows.filter((r) => r.unlocked).length, 1);
 });
 
-test("unlocks step by step with solid cards", () => {
+test("unlocks step by step with cards met", () => {
   assert.equal(T.map(6).filter((r) => r.unlocked).length, 2);
   assert.equal(T.map(14).filter((r) => r.unlocked).length, 3);
   assert.equal(T.map(30).filter((r) => r.unlocked).length, 5);
@@ -34,7 +34,7 @@ test("every unit is reachable in the smallest starter deck", () => {
   const starterCards = 24 + 32 + 8 + 16;
   const last = T.units[T.units.length - 1];
   assert.ok(last.need < starterCards,
-    `last unit needs ${last.need} solid cards; a starter deck only has ${starterCards}`);
+    `last unit needs ${last.need} cards met; a starter deck only has ${starterCards}`);
 });
 
 test("remaining counts down to the next unlock", () => {

@@ -501,7 +501,11 @@
      * level of the deck you left stays with that deck. */
     if (state.profile) {
       state.profile.levelByLang = state.profile.levelByLang || {};
-      if (!state.profile.levelByLang[code]) state.profile.levelByLang[code] = "A1";
+      if (!state.profile.levelByLang[code]) {
+        /* Preserve an older placement, which predates per-language levels. */
+        var pf = state.placement && state.placement.floor;
+        state.profile.levelByLang[code] = pf >= 3 ? "B1" : pf >= 1 ? "A2" : "A1";
+      }
       state.profile.level = state.profile.levelByLang[code];
     }
 
@@ -890,7 +894,7 @@
     $("goal-meter").setAttribute("aria-valuemax", String(Math.max(goal, today)));
     $("daily-goal").classList.toggle("is-met", today >= goal);
 
-    var date = new Date().toLocaleDateString(uiLocale(), { weekday: "long", day: "numeric", month: "long" });
+    var date = new Date().toLocaleDateString(uiLocale(), { weekday: "short", day: "numeric", month: "short" });
     $("today-date").textContent = date + " · " + ACTIVE.name + " · " + learnerLevel();
     $("lesson-meta").textContent = tr("aboutMinute", "about 1 min");
 
@@ -2007,11 +2011,12 @@
 
   /* The path is measured in everything the deck teaches, not only its nouns.
    * A starter pack has 24 concepts but 80 cards, so a concept-only count made
-   * its last units permanently locked. This count is what the track unlocks
-   * on; the adaptive session still uses concept solidity above. */
-  function solidDeckCount() {
+   * its last units permanently locked. The path unlocks on cards *met*, so a
+   * learner sees the next lesson after a session rather than after six days of
+   * spaced repetition. Solidity still drives the adaptive session below. */
+  function seenDeckCount() {
     return deckIds().filter(function (id) {
-      return state.cards[id] && state.cards[id].interval >= 6;
+      return state.cards[id] && state.cards[id].reps > 0;
     }).length;
   }
 
@@ -2077,7 +2082,7 @@
   }
 
   function trackRows() {
-    var rows = TRACK ? TRACK.map(solidDeckCount(), trackOpts()) : [];
+    var rows = TRACK ? TRACK.map(seenDeckCount(), trackOpts()) : [];
     var floor = placementFloor();
     rows.forEach(function (r) {
       r.unlocked = r.unlocked || r.index <= floor;
@@ -2421,7 +2426,9 @@
 
   /* Connectors are a later stage of the track, not filler for a mixed drill. */
   function connectorsUnlocked() {
-    return solidCount() >= 20;
+    /* The path opens the connectors unit after this many cards met; keep the
+     * connector layer in step with the node rather than with an older metric. */
+    return seenDeckCount() >= 46;
   }
 
   /* Every deck opens on the same four ideas: hello, how are you, favourite
@@ -3896,11 +3903,14 @@
     b.addEventListener("click", function () {
       var level = b.getAttribute("data-level");
       if (ADAPT.CEFR.indexOf(level) === -1) return;
-      state.profile = state.profile || {};
-      state.profile.levelByLang = state.profile.levelByLang || {};
-      state.profile.levelByLang[ACTIVE.code] = level;
-      state.profile.level = level;
-      save();
+      if (!state.profile) {
+        beginProfile(level);
+      } else {
+        state.profile.levelByLang = state.profile.levelByLang || {};
+        state.profile.levelByLang[ACTIVE.code] = level;
+        state.profile.level = level;
+        save();
+      }
       renderSettingsOptions();
       renderToday();
       toast(ACTIVE.name + " set to " + level + ".");

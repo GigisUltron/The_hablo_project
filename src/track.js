@@ -1,10 +1,9 @@
 /* The track: a visible curriculum instead of an endless deck.
  *
  * Each unit is a lesson with a stable key, a mode and a scope, unlocked by how
- * many cards are solid (interval >= 6 days). A unit carries no display string:
- * its title is resolved from the language being learned, so a learner of
- * Chinese never reads a unit named after Spanish. Pure: pass the count in, get
- * the map back.
+ * many cards the learner has met. A unit carries no display string: its title
+ * is resolved from the language being learned, so a learner of Chinese never
+ * reads a unit named after Spanish. Pure: pass the count in, get the map back.
  */
 var SEMA_TRACK = {
   units: [

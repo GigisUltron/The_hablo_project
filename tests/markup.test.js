@@ -421,8 +421,9 @@ test("today shows a real daily goal and a per-language level", () => {
 });
 
 test("the path unlocks on every deck card, not only on concepts", () => {
-  assert.match(app, /TRACK\.map\(solidDeckCount\(\)/, "the track still counts concepts only");
-  assert.match(app, /function solidDeckCount/, "no all-deck solid count");
+  assert.match(app, /TRACK\.map\(seenDeckCount\(\)/, "the track still counts concepts only");
+  assert.match(app, /function seenDeckCount/, "no all-deck cards-met count");
+  assert.match(app, /seenDeckCount\(\) >= 46/, "connectors do not unlock with their path node");
 });
 
 test("translations are rendered and can be switched off", () => {
@@ -507,7 +508,7 @@ test("a beginner's first session opens on phrases, with nothing above A2", () =>
 
   for (const deck of ["es", "fr", "it", "ja", "zh"]) {
     const C0 = require("../src/lang/" + deck + "/concepts.js").concepts;
-    /* a script deck opens on its alphabet first; six solid cards move the
+    /* a script deck opens on its alphabet first; six cards met move the
      * path on to the mixed lesson this test is about */
     const seen = ["ja", "zh"].includes(deck) ? C0.slice(0, 6).map((c) => c.id) : [];
     const { queue, A } = firstQueue(deck, "A1", seen);
