@@ -118,6 +118,11 @@ test("the alphabet screen reveals a flashcard and opens the all-letters grid", (
   all._l.click();
   assert.match(stage.innerHTML, /letter-grid/);
   assert.match(stage.innerHTML, /letter-tile/);
+  const quiz = registry.get("alphabet-quiz");
+  assert.ok(quiz && quiz._l.click, "quiz control is not wired");
+  quiz._l.click();
+  assert.match(stage.innerHTML, /letter-quiz-options/);
+  assert.match(stage.innerHTML, /option-word/);
 });
 
 test("a brand-new learner can pick a why, start fresh and reach a card", () => {

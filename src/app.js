@@ -1757,17 +1757,21 @@
     $("alphabet-actions").innerHTML =
       '<button class="btn btn-primary" id="alphabet-cards" type="button">' +
         esc(tr("backToCards", "Back to cards")) + "</button>" +
+      '<button class="btn btn-ghost btn-sm" id="alphabet-quiz" type="button">' +
+        esc(tr("quiz", "Quiz")) + "</button>" +
       '<button class="btn btn-ghost btn-sm" id="alphabet-done" type="button">' +
         esc(tr("leave", "done for now")) + "</button>";
     $("alphabet-cards").addEventListener("click", function () {
       alphabet.grid = false;
       renderAlphabetLetter();
     });
+    $("alphabet-quiz").addEventListener("click", startAlphabetQuiz);
     $("alphabet-done").addEventListener("click", function () { alphabet = null; show("today"); });
   }
 
   function renderAlphabetLetter() {
     if (!alphabet) return;
+    if (alphabet.quiz) { renderAlphabetQuiz(); return; }
     if (alphabet.grid) { renderAlphabetGrid(); return; }
     if (alphabet.i >= alphabet.queue.length) { finishAlphabet(); return; }
 
@@ -1851,6 +1855,106 @@
     });
   }
 
+  function startAlphabetQuiz() {
+    if (!alphabet) return;
+    var letters = scriptLetters().filter(function (l) { return l.name; });
+    var names = [];
+    letters.forEach(function (l) {
+      if (names.indexOf(l.name) === -1) names.push(l.name);
+    });
+    if (letters.length < 3 || names.length < 3) { toast(tr("noAlphabet", "This deck has no alphabet yet.")); return; }
+    var picked = S.shuffle(letters.slice(), Math.random).slice(0, 5);
+    var questions = picked.map(function (l) {
+      var options = [l.name];
+      var pool = names.filter(function (n) { return n !== l.name; });
+      S.shuffle(pool, Math.random);
+      pool.slice(0, 2).forEach(function (n) { options.push(n); });
+      options = S.shuffle(options, Math.random);
+      return { letter: l, options: options, answer: options.indexOf(l.name) };
+    });
+    alphabet.quiz = { questions: questions, i: 0, correct: 0, answered: false };
+    alphabet.grid = false;
+    renderAlphabetQuiz();
+  }
+
+  function renderAlphabetQuiz() {
+    if (!alphabet || !alphabet.quiz) return;
+    var qz = alphabet.quiz;
+    if (qz.i >= qz.questions.length) { finishAlphabetQuiz(); return; }
+    var q = qz.questions[qz.i];
+    $("alphabet-count").textContent = (qz.i + 1) + "/" + qz.questions.length;
+    $("alphabet-bar").style.width = Math.round(((qz.i + 1) / qz.questions.length) * 100) + "%";
+    $("alphabet-feedback").textContent = "";
+    $("alphabet-feedback").className = "feedback";
+    $("alphabet-stage").innerHTML =
+      '<p class="prompt">' + esc(tr("quiz", "Quiz")) + "</p>" +
+      '<div class="letter-card">' +
+        '<div class="letter-big" lang="' + esc((LANG && LANG.locale) || "") + '" dir="' + letterDirection() + '">' +
+          esc(q.letter.letter) + "</div>" +
+        '<p class="letter-question">' + esc(tr("whichName", "Which name is this letter?")) + "</p>" +
+        '<div class="letter-quiz-options">' + q.options.map(function (o, i) {
+          return '<button class="option-word" type="button" data-quiz-option="' + i + '">' + esc(o) + "</button>";
+        }).join("") + "</div>" +
+      "</div>";
+    $("alphabet-actions").innerHTML = "";
+    Array.prototype.forEach.call($("alphabet-stage").querySelectorAll("[data-quiz-option]"), function (btn) {
+      btn.addEventListener("click", function () {
+        if (qz.answered) return;
+        qz.answered = true;
+        var picked = Number(btn.getAttribute("data-quiz-option"));
+        var ok = picked === q.answer;
+        if (ok) {
+          qz.correct += 1;
+          var known = state.alphabet || (state.alphabet = {});
+          var reps = (known[q.letter.letter] && known[q.letter.letter].reps) || 0;
+          known[q.letter.letter] = { reps: reps + 1, at: Date.now() };
+          save();
+        }
+        Array.prototype.forEach.call($("alphabet-stage").querySelectorAll("[data-quiz-option]"), function (b) {
+          b.disabled = true;
+          if (Number(b.getAttribute("data-quiz-option")) === q.answer) b.classList.add("pick-correct");
+          if (Number(b.getAttribute("data-quiz-option")) === picked && !ok) b.classList.add("pick-wrong");
+        });
+        $("alphabet-feedback").textContent = ok ? tr("correct", "Correct") : tr("notQuite", "Not quite");
+        $("alphabet-feedback").className = "feedback " + (ok ? "good" : "bad");
+        $("alphabet-actions").innerHTML = '<button class="btn btn-primary" id="letter-next" type="button">' +
+          esc(tr("continue", "Continue")) + "</button>";
+        $("letter-next").addEventListener("click", function () {
+          qz.i += 1;
+          qz.answered = false;
+          renderAlphabetQuiz();
+        });
+      });
+    });
+  }
+
+  function finishAlphabetQuiz() {
+    var qz = alphabet.quiz;
+    var text = tr("quizScore", "{correct} / {total} correct")
+      .replace("{correct}", String(qz.correct)).replace("{total}", String(qz.questions.length));
+    $("alphabet-bar").style.width = "100%";
+    $("alphabet-count").textContent = tr("done", "done");
+    $("alphabet-feedback").textContent = "";
+    $("alphabet-feedback").className = "feedback";
+    $("alphabet-stage").innerHTML =
+      '<p class="prompt">' + esc(tr("quiz", "Quiz")) + "</p>" +
+      '<div class="word">' + esc(text) + "</div>";
+    $("alphabet-actions").innerHTML =
+      '<button class="btn btn-primary" id="alphabet-grid" type="button">' +
+        esc(tr("allLetters", "All letters")) + "</button>" +
+      '<button class="btn btn-ghost btn-sm" id="alphabet-again" type="button">' +
+        esc(tr("again", "Again")) + "</button>" +
+      '<button class="btn btn-ghost btn-sm" id="alphabet-done" type="button">' +
+        esc(tr("leave", "done for now")) + "</button>";
+    $("alphabet-grid").addEventListener("click", function () {
+      alphabet.quiz = null;
+      alphabet.grid = true;
+      renderAlphabetGrid();
+    });
+    $("alphabet-again").addEventListener("click", startAlphabetQuiz);
+    $("alphabet-done").addEventListener("click", function () { alphabet = null; show("today"); });
+  }
+
   function finishAlphabet() {
     var total = alphabet.queue.length;
     state.alphabet = state.alphabet || {};
@@ -1880,6 +1984,7 @@
       '<button class="btn btn-primary" id="alphabet-again" type="button">' +
         esc(more ? tr("nextLetter", "Next letter") : canWrite ? tr("writeCharacters", "Write the characters") : tr("start", "Start lesson")) + "</button>" +
       '<button class="btn btn-ghost btn-sm" id="alphabet-all" type="button">' + esc(tr("allLetters", "All letters")) + "</button>" +
+      '<button class="btn btn-ghost btn-sm" id="alphabet-quiz" type="button">' + esc(tr("quiz", "Quiz")) + "</button>" +
       '<button class="btn btn-ghost btn-sm" id="alphabet-done" type="button">' + esc(tr("leave", "done for now")) + "</button>";
     $("alphabet-again").addEventListener("click", function () {
       if (canWrite) startWriting();

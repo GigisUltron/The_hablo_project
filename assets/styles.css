@@ -2395,6 +2395,8 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .letter-tile.is-known { border-color: var(--accent); background: var(--accent-soft); }
 .letter-tile b { font-size: 28px; line-height: 1.1; }
 .letter-tile span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); font-size: 11px; }
+.letter-quiz-options { display: grid; gap: 8px; width: 100%; margin-top: 8px; }
+.letter-quiz-options .option-word { width: 100%; min-height: 44px; }
 @media (max-width: 390px) {
   .letter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
