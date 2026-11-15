@@ -229,30 +229,30 @@
           </label>
 
           <div class="chat-settings">
-            <p class="panel-title">Chat with a local model</p>
-            <label class="chat-field">Endpoint
+            <p class="panel-title" data-i18n="chatWithModel">Chat with a local model</p>
+            <label class="chat-field"><span data-i18n="endpoint">Endpoint</span>
               <input class="type-input" id="chat-endpoint" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="http://localhost:11434" />
             </label>
-            <label class="chat-field">Model
+            <label class="chat-field"><span data-i18n="model">Model</span>
               <input class="type-input" id="chat-model" type="text" autocomplete="off" spellcheck="false" placeholder="auto" />
             </label>
             <div class="chat-settings-row">
-              <button class="btn btn-ghost" id="chat-check" type="button">Check model</button>
-              <span class="builder-note" id="chat-settings-status">not checked yet</span>
+              <button class="btn btn-ghost" id="chat-check" type="button" data-i18n="checkModel">Check model</button>
+              <span class="builder-note" id="chat-settings-status" data-i18n="notChecked">not checked yet</span>
             </div>
           </div>
 
           <div class="settings-options">
             <div class="option-group" role="group" aria-label="Session length">
               <span class="option-label" data-i18n="session">Session</span>
-              <button class="seg" data-length="goal" type="button">goal</button>
-              <button class="seg" data-length="short" type="button">short</button>
-              <button class="seg" data-length="long" type="button">long</button>
+              <button class="seg" data-length="goal" type="button" data-i18n="goal">goal</button>
+              <button class="seg" data-length="short" type="button" data-i18n="short">short</button>
+              <button class="seg" data-length="long" type="button" data-i18n="long">long</button>
             </div>
             <div class="option-group" role="group" aria-label="Audio">
               <span class="option-label" data-i18n="audio">Audio</span>
-              <button class="seg" data-audio="on" type="button">on</button>
-              <button class="seg" data-audio="off" type="button">off</button>
+              <button class="seg" data-audio="on" type="button" data-i18n="on">on</button>
+              <button class="seg" data-audio="off" type="button" data-i18n="off">off</button>
             </div>
             <div class="option-group">
               <span class="option-label" data-i18n="translations">Translations</span>
@@ -268,11 +268,11 @@
           <div class="fields" id="fields"></div>
 
           <div class="builder-actions">
-            <button class="btn btn-ghost btn-sm" id="build-start">Start with these</button>
+            <button class="btn btn-ghost btn-sm" id="build-start" data-i18n="startWithThese">Start with these</button>
             <button class="btn btn-ghost btn-sm" id="review-missed" data-i18n="review">Review my mistakes</button>
             <button class="btn btn-ghost btn-sm" id="place-btn" data-i18n="place">Place me</button>
             <button class="btn btn-ghost btn-sm" id="read-btn" data-i18n="read">Read a text</button>
-            <button class="btn btn-ghost btn-sm" id="settings-start">Start a lesson</button>
+            <button class="btn btn-ghost btn-sm" id="settings-start" data-i18n="start">Start lesson</button>
             <button class="btn btn-ghost btn-sm" id="conv-btn" data-i18n="converse">Have a conversation</button>
             <span class="builder-note" id="builder-note"></span>
           </div>
