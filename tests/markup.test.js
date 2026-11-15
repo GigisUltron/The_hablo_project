@@ -691,6 +691,12 @@ test("a chosen interface language is not silently reset by the deck", () => {
   assert.match(app, /renderStats\(\);\n  }/, "placement does not repaint Progress");
 });
 
+test("typed translation is a real routed exercise", () => {
+  assert.match(app, /function renderTypeTranslation/, "no typed translation renderer");
+  assert.match(app, /type === "type-translation"/, "typed translation is not routed");
+  assert.match(app, /i % 7 === 5\) return "type-translation"/, "typed translation is unreachable");
+});
+
 test("Today can build a lesson from a described situation", () => {
   assert.match(html, /id="wish-form"/, "no request form on Today");
   assert.match(app, /function wishLesson/, "no situation planner");

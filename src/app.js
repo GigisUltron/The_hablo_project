@@ -3173,6 +3173,7 @@
      * UI meaning → target. No emoji matching, no English under a non-English UI. */
     if (itemOf(link).kind === "phrase" && gapFor(link) && i % 6 === 4) return "message";
     if (translationFor(link)) {
+      if (itemOf(link).kind === "word" && i % 7 === 5) return "type-translation";
       /* A clean session can stop at six; both directions must appear before
        * the stop rule, so they alternate in the first four reviewed cards. */
       if (i % 4 === 1) return "translate";
@@ -3240,6 +3241,7 @@
     else if (type === "translate") renderTranslate(id);
     else if (type === "translate-out") renderTranslateToTarget(id);
     else if (type === "message") renderMessage(id);
+    else if (type === "type-translation") renderTypeTranslation(id);
     else renderPickPicture(id);
   }
 
@@ -3706,6 +3708,29 @@
   /* Write it: the only exercise that tests production without a microphone.
    * Fuzzy on purpose - "cafe" for "café" is not a spelling lesson, it is a
    * recall success. */
+  /* Type the target from its UI meaning. Unlike the multiple-choice
+   * translation, this tests production without showing the answer first. */
+  function renderTypeTranslation(id) {
+    var it = itemOf(id);
+    var prompt = translationFor(id) || glossFor(id) || it.sub || "";
+    $("stage").innerHTML =
+      '<p class="prompt">' + esc(tr("translateInto", "Translate into") + " · " + esc(uiName(LANG.code))) + "</p>" +
+      '<p class="word">' + esc(prompt) + "</p>" +
+      '<input class="type-input" id="type-input" type="text" autocomplete="off" ' +
+        'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
+        'aria-label="' + esc(tr("writeIt", "Write it")) + '" placeholder="' + esc(tr("writeIt", "Write it")) + '" />' +
+      '<button class="btn btn-primary" id="write-check">' + esc(tr("check", "Check")) + '</button>';
+    var input = $("type-input");
+    if (input) {
+      input.focus();
+      input.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") { ev.preventDefault(); submitWrite(id, it); }
+      });
+    }
+    $("write-check").addEventListener("click", function () { submitWrite(id, it); });
+    $("actions").innerHTML = "";
+  }
+
   function renderWrite(id) {
     var it = itemOf(id);
     var prompt = translationFor(id) || glossFor(id) || it.sub || "";
