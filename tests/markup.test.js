@@ -808,6 +808,11 @@ test("specialized exercise types are shuffled per session", () => {
   assert.match(app, /phrases = S\.shuffle\(phrases, Math\.random\)/, "phrase task types are fixed");
 });
 
+test("planned lessons mix due revision into the situation", () => {
+  assert.match(app, /var revision = phraseIds\.filter/, "no revision block");
+  assert.match(app, /revision\.slice\(0, 2\)\.forEach\(add\)/, "revision is never included");
+});
+
 test("vocabulary memory anchors and XP level are wired", () => {
   assert.match(app, /state\.anchors/, "personal anchors are not stored");
   assert.match(app, /vocab-anchor/, "no anchor control");

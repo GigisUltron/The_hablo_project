@@ -3074,6 +3074,16 @@
     var picked = [];
     function add(id) { if (id && picked.indexOf(id) === -1) picked.push(id); }
     phrases.slice(0, 8).forEach(add);
+    var now = Date.now();
+    var revision = phraseIds.filter(function (id) {
+      var card = state.cards[id];
+      return card && (!card.due || card.due <= now);
+    }).sort(function (a, b) {
+      var ca = state.cards[a] || {};
+      var cb = state.cards[b] || {};
+      return (ca.ease || 2.5) - (cb.ease || 2.5);
+    });
+    revision.slice(0, 2).forEach(add);
 
     var foodWords = allIds.filter(function (id) {
       var c = conceptById[id];
