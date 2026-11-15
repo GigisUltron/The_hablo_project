@@ -972,9 +972,6 @@
       var due = state.cards[id].due;
       return '<button class="row" type="button" data-review="' + esc(id) + '"' +
         ' aria-label="Review ' + esc(it.text) + '">' +
-        '<span class="row-pic" aria-hidden="true">' +
-          (it.schema && typeof schemaSVG === "function" ? schemaSVG(it.schema) : (it.emoji || "")) +
-        "</span>" +
         '<span class="row-body">' +
           '<span class="row-main">' + articleHTML(it.article) + textHTML(it) + "</span>" +
           '<span class="row-meta">' + (due <= now ? tr("today", "today") : capital(whenFrom(due - now))) + "</span>" +
@@ -2029,9 +2026,10 @@
     $("counter").textContent = (placement.i + 1) + "/" + PLACEMENT_TOTAL;
     $("bar-fill").style.width = Math.round((placement.i / PLACEMENT_TOTAL) * 100) + "%";
 
+    var prompt = translationFor(id) || glossFor(id) || it.sub || "";
     $("stage").innerHTML =
       '<p class="prompt">' + esc(tr("howMuch", "How much do you know?")) + "</p>" +
-      tileHTML(it) +
+      (prompt ? '<p class="word">' + esc(prompt) + "</p>" : "") +
       '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
 
     Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
@@ -2056,7 +2054,9 @@
       var at = ADAPT.CEFR.indexOf(itemLevel(id));
       if (at > maxBand) maxBand = at;
     });
-    var bandIndex = Math.min(placement.band, maxBand);
+    /* A short placement test can open A1/A2/B1; B2 and C1 are earned through
+     * study, not inferred from eight multiple-choice taps. */
+    var bandIndex = Math.min(placement.band, maxBand, 2);
     var band = ADAPT.CEFR[bandIndex] || "A1";
     var floor = Math.min(units.length - 1, bandIndex * 2);
     state.placement = { floor: floor, band: band, score: correct, total: total, at: Date.now() };
@@ -2678,8 +2678,9 @@
       : [p.fresh.length ? p.fresh.length + " " + tr("new", "new") : "",
          p.due.length ? p.due.length + " " + tr("toReview", "to review") : ""].filter(Boolean).join(", ");
     if (box) {
-      box.innerHTML = p.script ? "" : p.queue.slice(0, 5).map(function (id) {
-        return '<span class="pic">' + itemOf(id).emoji + "</span>";
+      box.innerHTML = p.script ? "" : p.queue.slice(0, 3).map(function (id) {
+        var meaning = translationFor(id) || glossFor(id) || itemOf(id).sub || "";
+        return meaning ? '<span class="pic-text">' + esc(meaning) + "</span>" : "";
       }).join("");
     }
     return {
@@ -2941,7 +2942,6 @@
     $("stage").innerHTML =
       '<p class="prompt">' + esc(tr("learnPair", "Learn the pair")) + " · " + (session.si + 1) + " / " + session.study.length +
         (it.kind === "phrase" ? " · " + esc(tr("phrase", "phrase")) : "") + "</p>" +
-      (it.kind === "term" || it.kind === "phrase" || it.kind === "basic" ? "" : figureHTML(it, "Hear it")) +
       wordsHTML(it) +
       meaningHTML(it.id) +
       contextHTML(it);
@@ -3176,7 +3176,6 @@
     var it = itemOf(id);
     $("stage").innerHTML =
       '<p class="prompt">' + esc(tr("new", "New")) + "</p>" +
-      (it.kind === "term" || it.kind === "phrase" || it.kind === "basic" ? "" : figureHTML(it, "Hear it")) +
       wordsHTML(it) +
       meaningHTML(id) +
       contextHTML(it);
@@ -3510,17 +3509,8 @@
 
   function renderPickWord(id) {
     var it = itemOf(id);
-    if (it.kind === "phrase") { renderTranslateToTarget(id); return; }
-    var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
-
-    $("stage").innerHTML =
-      '<p class="prompt">' + tr("whichOne", "Which one is this?") + "</p>" +
-      figureHTML(it, "Hear it") +
-      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
-
-    sayItem(it);
-    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
-    chooseThenCheck(".option-word", id);
+    if (it.kind === "word" || it.kind === "phrase") { renderTranslateToTarget(id); return; }
+    renderTranslateToTarget(id);
   }
 
   /* A tap only selects; Check commits. A slip of the finger is not a wrong
@@ -3556,24 +3546,7 @@
   }
 
   function renderPickPicture(id) {
-    var it = itemOf(id);
-    if (it.kind === "phrase") { renderTranslateToTarget(id); return; }
-    var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
-
-    $("stage").innerHTML =
-      '<p class="prompt">' + esc(tr("findPicture", "Find the picture")) + "</p>" +
-      '<div class="say-line">' +
-        '<button class="speak-btn round" id="hear-btn" aria-label="' + esc(tr("hearit", "Hear it")) + '" title="' + esc(tr("hearit", "Hear it")) + '"' + (audioAvailable() ? "" : " disabled") + ">" + ICON.speaker + "</button>" +
-        wordsHTML(it) +
-      "</div>" +
-      '<div class="options">' + set.map(function (o, i) {
-        return '<button class="option" data-id="' + esc(o) + '" aria-label="Picture ' + (i + 1) + '">' +
-          '<span aria-hidden="true">' + itemOf(o).emoji + "</span></button>";
-      }).join("") + "</div>";
-
-    sayItem(it);
-    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
-    chooseThenCheck(".option", id);
+    renderTranslateToTarget(id);
   }
 
   /* Write it: the only exercise that tests production without a microphone.
@@ -3581,11 +3554,11 @@
    * recall success. */
   function renderWrite(id) {
     var it = itemOf(id);
-    var prompt = it.kind === "phrase" ? (translationFor(id) || glossFor(id)) : "";
+    var prompt = translationFor(id) || glossFor(id) || it.sub || "";
 
     $("stage").innerHTML =
       '<p class="prompt">' + esc(tr("writeIt", "Write it")) + " · " + esc(uiName(LANG.code)) + "</p>" +
-      (prompt ? '<p class="word">' + esc(prompt) + "</p>" : tileHTML(it)) +
+      (prompt ? '<p class="word">' + esc(prompt) + "</p>" : "") +
       '<input class="type-input" id="type-input" type="text" autocomplete="off" ' +
         'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
         'aria-label="write the word" placeholder="type it" />' +
@@ -3620,12 +3593,9 @@
 
     $("stage").innerHTML =
       '<p class="prompt">' + esc(tr("sayIt", "Say it")) + " · " + esc(uiName(LANG.code)) + "</p>" +
-      figureHTML(it, "Hear it") +
-      (it.kind === "phrase" ? wordsHTML(it) : "") +
+      meaningHTML(id) +
       (SR ? '<button class="mic" id="mic-btn">' + ICON.mic + esc(tr("sayAloud", "Say it aloud")) + '</button>' : "") +
       '<p class="score" id="score"></p>';
-
-    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
 
     var mic = $("mic-btn");
     if (mic) mic.addEventListener("click", function () {
@@ -3817,7 +3787,7 @@
         var when = kind === "back"
           ? '<span class="row-meta">' + esc(capital(whenFrom(state.cards[id].due - now))) + "</span>"
           : "";
-        return '<li><span aria-hidden="true">' + it.emoji + "</span> " + textHTML(it) + when + "</li>";
+        return "<li>" + textHTML(it) + when + "</li>";
       }).join("") + "</ul></section>";
   }
 
@@ -3934,9 +3904,8 @@
         var a = conceptById[row.target], b = conceptById[row.chosen];
         if (!a || !b) return "";
         return '<div class="confusion">' +
-          '<span class="e">' + a.emoji + "</span>" +
           '<span class="w">' + esc(a.word) + "</span>" +
-          '<span class="e" style="opacity:.6">' + b.emoji + "</span>" +
+          '<span class="w" style="opacity:.6">' + esc(b.word) + "</span>" +
           '<span class="n">×' + row.count + "</span>" +
         "</div>";
       }).join("");

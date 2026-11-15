@@ -178,7 +178,11 @@ test("placement gets harder after two easy correct answers", () => {
   A.placementStep(p, true);
   assert.equal(p.band, 0, "one correct answer is not a level");
   A.placementStep(p, true);
-  assert.equal(p.band, 1, "two correct answers move the test up a band");
+  assert.equal(p.band, 0, "two easy items are not enough");
+  A.placementStep(p, true);
+  assert.equal(p.band, 1, "three correct answers move the test up a band");
+  A.placementStep(p, true);
+  assert.equal(p.band, 1);
   A.placementStep(p, true);
   assert.equal(p.band, 1);
   A.placementStep(p, true);
@@ -195,11 +199,11 @@ test("a miss steps placement back one band, never below A1", () => {
   assert.equal(p.band, 0, "the test cannot fall below A1");
 });
 
-test("eight correct answers reach C1", () => {
+test("eight correct answers reach B1, not B2 or C1", () => {
   const p = { band: 0, streak: 0, correct: 0 };
   for (let i = 0; i < 8; i += 1) A.placementStep(p, true);
-  assert.equal(A.CEFR[p.band], "C1");
-  assert.equal(p.peak, 4);
+  assert.equal(A.CEFR[p.band], "B1");
+  assert.equal(p.peak, 2, "placement cannot infer B2/C1 from eight taps");
 });
 
 test("the daily count is once per card and resets on a new day", () => {

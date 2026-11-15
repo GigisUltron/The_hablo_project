@@ -1775,3 +1775,19 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   font-weight: 600;
   color: var(--text);
 }
+
+/* lesson preview: meanings, never copied emoji */
+.pic-text {
+  display: inline-block;
+  max-width: 100%;
+  padding: 6px 10px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

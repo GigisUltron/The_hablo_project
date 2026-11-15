@@ -171,7 +171,9 @@
     s.correct = (s.correct || 0) + (correct ? 1 : 0);
     if (correct) {
       streak += 1;
-      if (streak >= 2 && band < CEFR.length - 1) {
+      /* Two lucky easy items (hello, water) are not a level. Three correct
+       * answers at the current band are the smallest honest promotion. */
+      if (streak >= 3 && band < CEFR.length - 1) {
         band += 1;
         streak = 0;
       }
