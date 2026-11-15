@@ -803,6 +803,13 @@ test("a handcrafted item explanation wins over generic prose", () => {
   assert.match(app, /if \(it\.why\) return it\.why;/, "explanations are ignored");
 });
 
+test("listen-and-type is a routed production exercise", () => {
+  assert.match(app, /function renderListenType/, "no listen-type renderer");
+  assert.match(app, /type === "listen-type"/, "listen-type is not routed");
+  assert.match(app, /tick % 9 === 7\) return "listen-type"/, "listen-type is unreachable");
+  assert.match(app, /words\.push\("listen-type"\)/, "custom lessons omit listen-type");
+});
+
 test("quiz task phase is randomized per session", () => {
   assert.match(app, /taskShift: Math\.floor\(Math\.random\(\) \* 4\)/, "no task phase shift");
   assert.match(app, /var tick = i \+ \(session\.taskShift \|\| 0\)/, "task rules do not use the shift");

@@ -3185,12 +3185,14 @@
           var words = hasTranslation
             ? ["translate", "type-translation", "translate-out", "write"]
             : ["write"];
+          if (listenable(id)) words.push("listen-type");
           return words[i % words.length];
         }
         if (it.kind === "phrase") {
           var phrases = hasTranslation ? ["translate", "translate-out", "write"] : ["write"];
           if (buildable(id)) phrases.push("build");
           if (gapFor(id)) phrases.push("message");
+          if (listenable(id)) phrases.push("listen-type");
           return phrases[i % phrases.length];
         }
         return "pick-word";
@@ -3497,6 +3499,7 @@
     /* reviewed cards alternate both directions: target → UI meaning, and
      * UI meaning → target. No emoji matching, no English under a non-English UI. */
     if (itemOf(link).kind === "phrase" && gapFor(link) && tick % 6 === 4) return "message";
+    if (listenable(link) && tick % 9 === 7) return "listen-type";
     if (translationFor(link)) {
       if (itemOf(link).kind === "word" && tick % 7 === 5) return "type-translation";
       /* A clean session can stop at six; both directions must appear before
@@ -3570,6 +3573,7 @@
     else if (type === "translate-out") renderTranslateToTarget(id);
     else if (type === "message") renderMessage(id);
     else if (type === "type-translation") renderTypeTranslation(id);
+    else if (type === "listen-type") renderListenType(id);
     else renderPickPicture(id);
   }
 
@@ -4038,6 +4042,27 @@
    * recall success. */
   /* Type the target from its UI meaning. Unlike the multiple-choice
    * translation, this tests production without showing the answer first. */
+  /* Audio first, production second: no target text is shown. */
+  function renderListenType(id) {
+    var it = itemOf(id);
+    $("stage").innerHTML =
+      '<p class="prompt">' + esc(tr("listenType", "Listen and type")) + " · " + esc(uiName(LANG.code)) + "</p>" +
+      '<div class="listen-face"><button class="speak-btn round" id="hear-btn" aria-label="' + esc(tr("hearit", "Hear it")) + '" title="' + esc(tr("hearit", "Hear it")) + '"' + (audioAvailable() ? "" : " disabled") + ">" + ICON.speaker + "</button></div>" +
+      '<input class="type-input" id="type-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="' + esc(tr("typeIt", "type it")) + '" />' +
+      '<button class="btn btn-primary" id="write-check">' + esc(tr("check", "Check")) + '</button>';
+    sayItem(it);
+    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
+    var input = $("type-input");
+    if (input) {
+      input.focus();
+      input.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") { ev.preventDefault(); submitWrite(id, it); }
+      });
+    }
+    $("write-check").addEventListener("click", function () { submitWrite(id, it); });
+    $("actions").innerHTML = "";
+  }
+
   function renderTypeTranslation(id) {
     var it = itemOf(id);
     var prompt = translationFor(id) || glossFor(id) || it.sub || "";
