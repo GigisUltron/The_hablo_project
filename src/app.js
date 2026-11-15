@@ -3233,6 +3233,7 @@
             : ["write"];
           if (listenable(id)) words.push("listen-type");
           if (hasTranslation) words.push("match");
+          words = S.shuffle(words, Math.random);
           return words[i % words.length];
         }
         if (it.kind === "phrase") {
@@ -3241,6 +3242,7 @@
           if (gapFor(id)) phrases.push("message");
           if (listenable(id)) phrases.push("listen-type");
           if (hasTranslation) phrases.push("match");
+          phrases = S.shuffle(phrases, Math.random);
           return phrases[i % phrases.length];
         }
         return "pick-word";

@@ -803,6 +803,11 @@ test("a handcrafted item explanation wins over generic prose", () => {
   assert.match(app, /if \(it\.why\) return it\.why;/, "explanations are ignored");
 });
 
+test("specialized exercise types are shuffled per session", () => {
+  assert.match(app, /words = S\.shuffle\(words, Math\.random\)/, "word task types are fixed");
+  assert.match(app, /phrases = S\.shuffle\(phrases, Math\.random\)/, "phrase task types are fixed");
+});
+
 test("matching pairs is a routed exercise", () => {
   assert.match(app, /function renderMatch/, "no match renderer");
   assert.match(app, /type === "match"/, "match is not routed");
