@@ -1921,9 +1921,10 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   color: var(--text-2);
 }
 
-/* Progress's own path: which lessons the placement opened. */
-.produce-row { display: flex; justify-content: flex-end; }
-.produce-row .btn { min-height: 44px; }
+/* Progress's own path: which lessons the placement opened. The producing
+ * action belongs beside the title, not floating in a row of its own. */
+#produce-practice { align-self: center; margin-left: auto; min-height: 44px; }
+#progress-summary { max-width: none; }
 .coach-read {
   display: grid;
   gap: 4px;
@@ -1992,6 +1993,18 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .progress-step.now .n { background: var(--accent); color: var(--on-accent); }
 .progress-step.open .n { color: var(--accent); }
 .progress-step.locked { opacity: 0.55; }
+
+/* On a wide screen the path is a readable grid; the sideways scroll is for
+ * a phone, where a cut-off final card is the affordance. */
+@media (min-width: 760px) {
+  .progress-path {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    overflow: visible;
+    padding-bottom: 8px;
+  }
+  .progress-step { min-width: 0; }
+}
 
 .gloss-fallback {
   font-size: 10px;

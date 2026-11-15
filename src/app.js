@@ -5587,8 +5587,9 @@
   function renderTeach(id) {
     var it = itemOf(id);
     var emoji = basicEmoji(it);
+    /* The reserved why-line already says "New"; a second prompt here was the
+     * duplicate the session screenshot showed. The phrase is the heading. */
     $("stage").innerHTML =
-      '<p class="prompt">' + esc(tr("new", "New")) + "</p>" +
       (emoji ? '<div class="emoji-basic" aria-hidden="true">' + emoji + "</div>" : "") +
       wordsHTML(it) +
       (emoji ? "" : meaningHTML(id)) +
@@ -6797,11 +6798,22 @@
     var box = $("coach-read");
     var note = $("coach-read-text");
     if (!box || !note) return;
-    var fallback = tr("coachProgressFallback",
-      "You've met {known} words; {solid} are solid and {due} are due. Next: review the due ones and keep one conversation going.")
-      .replace("{known}", String(stats.known || 0))
-      .replace("{solid}", String(stats.solid || 0))
-      .replace("{due}", String(stats.due || 0));
+    var fallback;
+    if (!stats.known) {
+      fallback = tr("coachProgressFirst",
+        "No words met yet. Start the first lesson, then come back for the counts.");
+    } else if (!stats.due) {
+      fallback = tr("coachProgressNoDue",
+        "You've met {known} words; {solid} are solid and nothing is due. Next: start a new lesson or keep one conversation going.")
+        .replace("{known}", String(stats.known || 0))
+        .replace("{solid}", String(stats.solid || 0));
+    } else {
+      fallback = tr("coachProgressFallback",
+        "You've met {known} words; {solid} are solid and {due} are due. Next: review the due ones and keep one conversation going.")
+        .replace("{known}", String(stats.known || 0))
+        .replace("{solid}", String(stats.solid || 0))
+        .replace("{due}", String(stats.due || 0));
+    }
     var key = [ACTIVE && ACTIVE.code, learnerLevel(), stats.known, stats.solid, stats.due,
       stats.produced, stats.retention, stats.reviews, stats.sessions, stats.streak, stats.weakest, stats.confusion].join("|");
     box.hidden = false;
@@ -6810,10 +6822,9 @@
       return;
     }
     progressCoachKey = key;
-    progressCoachText = fallback + " · " + String(stats.produced || 0) + " " + tr("canProduce", "can produce") +
-      (stats.retention !== null && stats.retention !== undefined
-        ? " · " + stats.retention + "% " + tr("accuracy", "accuracy")
-        : "");
+    /* The header already carries produced and accuracy, with the sample size.
+     * Repeating them here made the coach read look like a second stat line. */
+    progressCoachText = fallback;
     note.textContent = progressCoachText;
   }
 
@@ -6864,7 +6875,9 @@
       known + "/" + allIds.length + " " + tr("wordsMet", "words met") + " · " +
       solid + " " + tr("solid", "solid") + " · " +
       produced + " " + tr("canProduce", "can produce") + " · " +
-      (retention !== null ? retention + "% " + tr("accuracy", "accuracy") + " · " : "") +
+      (retention !== null
+        ? retention + "% " + tr("accuracy", "accuracy") + " · " + reviewTotal + " " + tr("recalled", "recalled") + " · "
+        : "") +
       currentStreak() + " " + tr("dayStreak", "day streak") + " · " +
       (state.coins || 0) + " " + tr("coins", "coins");
 

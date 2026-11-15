@@ -500,7 +500,8 @@ test("Progress reports real recall accuracy and requires data", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(app, /var reviewTotal = \(state\.reviews\.good/);
   assert.match(app, /var retention = reviewTotal \?/);
-  assert.match(app, /retention !== null \? retention \+ "% "/);
+  assert.match(app, /retention !== null[\s\S]{0,140}retention \+ "% " \+ tr\("accuracy"/);
+  assert.match(app, /reviewTotal \+ " " \+ tr\("recalled"/, "accuracy is shown without its sample");
   assert.match(app, /stats\.retention, stats\.reviews/);
 });
 
@@ -595,7 +596,7 @@ test("Practice exposes a one-tap AI roleplay with a 44px target", () => {
   assert.match(app, /startRoleplay\(scene/);
   assert.match(css, /#home-roleplay \.row-pic svg/);
   assert.match(css, /voice-toggle[\s\S]*min-height: 44px/);
-  assert.match(css, /produce-row \.btn \{ min-height: 44px/);
+  assert.match(css, /#produce-practice \{ align-self: center; margin-left: auto; min-height: 44px/);
 });
 
 test("a planned scene becomes a roleplay conversation", () => {
@@ -1738,4 +1739,13 @@ test("translations off cannot render a basic gloss prompt or an empty reveal", (
   assert.match(app, /var canReveal = !!meaning;/,
     "the vocabulary card still offers a reveal with nothing to reveal");
   assert.match(app, /vocabHintOff/);
+});
+
+test("the Progress action sits in the header, not in a floating row of its own", () => {
+  const start = html.indexOf('id="view-stats"');
+  const end = html.indexOf('id="coach-read"', start);
+  assert.ok(start > -1 && end > start, "Progress view is missing");
+  const head = html.slice(start, end);
+  assert.match(head, /id="produce-practice"/, "the producing action is not part of the header");
+  assert.doesNotMatch(html, /class="produce-row"/, "the orphan produce row is still in the markup");
 });

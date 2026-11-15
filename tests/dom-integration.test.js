@@ -506,6 +506,9 @@ test("a session card says why it asks, and never gives the answer away", () => {
   const fresh = boot(sessionSave());
   firstSessionCard(fresh);
   assert.equal(fresh.get("why-line").textContent, X.en.new, "a never-graded card is not labelled new");
+  const labels = fresh.get("why-line").textContent + " " + fresh.get("stage").innerHTML;
+  assert.equal((labels.match(new RegExp("\\b" + X.en.new + "\\b", "g")) || []).length, 1,
+    "the new label is printed twice on a teach card");
   assert.notEqual(fresh.get("why-line").textContent, "Hola", "the why line leaked the answer");
 
   const due = boot(dueSave());
@@ -544,8 +547,23 @@ test("translations off teaches every new card instead of quizzing without a prom
     assert.ok(got && got._l.click, `teach card ${i + 1} has no Got it control`);
     assert.doesNotThrow(() => got._l.click(), `teach card ${i + 1} recursed`);
   }
-  assert.match(registry.get("stage").innerHTML, /prompt/, "the session stopped rendering after the taught cards");
+  assert.ok(registry.get("stage").innerHTML.length > 20, "the session stopped rendering after the taught cards");
   assert.equal(registry.get("why-line").textContent, X.en.new, "a new card stopped being labelled new");
+});
+
+test("Progress shows accuracy with its sample and a coach line that is not a stat dump", () => {
+  const save = sessionSave({ reviews: { good: 8, again: 2 } });
+  const registry = boot(save);
+  registry.get("tab-stats")._l.click();
+  const summary = registry.get("progress-summary").textContent;
+  assert.match(summary, /80% accuracy/, "Progress dropped the real accuracy");
+  assert.match(summary, /10 recalled/, "accuracy is shown without its sample size");
+  assert.equal(registry.get("coach-read-text").textContent, X.en.coachProgressFirst,
+    "an empty Progress screen does not say what to do first");
+  assert.doesNotMatch(registry.get("coach-read-text").textContent, /80%|can produce/,
+    "the coach read repeats the header stats");
+  assert.equal(registry.get("produce-practice").hidden, true,
+    "the producing action is shown when there are no cards to produce");
 });
 
 test("production practice with translations off dictates instead of writing from nothing", () => {

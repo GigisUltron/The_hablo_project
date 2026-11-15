@@ -68,3 +68,8 @@ test("reduced motion removes every session animation", () => {
   assert.match(css, /\.pick-correct, \.pick-wrong, \.feedback\.good, \.feedback\.bad \{ animation: none; \}/,
     "answer feedback still animates under reduced motion");
 });
+
+test("the Progress path uses a grid on a wide screen", () => {
+  assert.match(css, /@media \(min-width: 760px\) \{[\s\S]{0,220}\.progress-path \{[\s\S]{0,120}display: grid/,
+    "the path still scrolls sideways on a desktop");
+});
