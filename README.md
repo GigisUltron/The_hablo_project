@@ -57,7 +57,7 @@ A lesson mixes:
 - production, listening, matching, sentence building and message completion
 - a short end-of-session review for what you missed
 
-With **Settings → Translations** switched off, a lesson still runs the same loop: every new card is taught rather than asked cold, and review cards use meaning-free tasks — build a sentence, complete a message, listen and type, or listen and pick — instead of a translation prompt.
+With **Settings → Translations** switched off, a lesson still runs the same loop: every new card is taught rather than asked cold, review cards use meaning-free tasks — build a sentence, complete a message, listen and type, or listen and pick — instead of a translation prompt, and grammar cards whose only prompt would be a translation are held back. Vocabulary expansion hides its reveal control, so the card becomes self-assessment.
 
 Lessons use spaced repetition. What you miss comes back before the session ends and again when it is due. A missed card offers **Ask coach**, a rules-first explanation built from the correct form, its meaning and your answer; it never asks a model to invent grammar. The end screen's coach note is built from the actual kept and missed cards, not model prose. The optional **one sentence with today's words** box still has **Check sentence**, which asks the local model for a wording suggestion; its output is labelled as a suggestion, guarded, and the 0.5B tier refuses grammar claims rather than pretending. **One more** starts a short pass on real weak or missed items rather than a generic new lesson. **Talk it through** carries the same kept/missed phrases into a conversation mission.
 

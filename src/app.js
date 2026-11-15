@@ -4920,25 +4920,29 @@
       return;
     }
     var context = it.sentence || (it.kind === "phrase" ? it.sub : "");
+    /* Translations off means there is nothing to reveal; showing the control
+     * anyway produced an empty answer panel. The card becomes self-assessment. */
+    var canReveal = !!meaning;
     $("vocab-stage").innerHTML =
-      '<p class="prompt">' + esc(tr("vocabHint", "Recall the meaning before revealing")) + "</p>" +
+      '<p class="prompt">' + esc(canReveal ? tr("vocabHint", "Recall the meaning before revealing") : tr("vocabHintOff", "Translations are off. Recall the meaning, then continue.")) + "</p>" +
       '<p class="vocab-word">' + esc(it.text) + "</p>" +
       '<div class="vocab-word-actions">' +
-        '<button class="vocab-reveal" id="vocab-reveal" type="button">' + esc(reveal ? tr("glossHide", "hide translation") : tr("glossShow", "show translation")) + "</button>" +
+        (canReveal ? '<button class="vocab-reveal" id="vocab-reveal" type="button">' + esc(reveal ? tr("glossHide", "hide translation") : tr("glossShow", "show translation")) + "</button>" : "") +
         (audioAvailable()
           ? '<button class="icon-btn vocab-hear" id="vocab-hear" type="button" aria-label="' +
             esc(tr("hearit", "Hear it")) + '" title="' + esc(tr("hearit", "Hear it")) + '">' + ICON.speaker + "</button>"
           : "") +
       "</div>" +
-      '<p class="vocab-meaning"' + (reveal ? "" : " hidden") + ">" + esc(meaning) + "</p>" +
-      (context && reveal ? '<p class="vocab-sentence">' + esc(context) + "</p>" : "") +
+      (canReveal ? '<p class="vocab-meaning"' + (reveal ? "" : " hidden") + ">" + esc(meaning) + "</p>" : "") +
+      (context && reveal && canReveal ? '<p class="vocab-sentence">' + esc(context) + "</p>" : "") +
       '<input class="vocab-anchor-input" id="vocab-anchor" type="text" maxlength="120" autocomplete="off" placeholder="' + esc(tr("vocabAnchor", "Personal cue (optional)")) + '" value="' + esc(anchor) + '" />' +
       '<div class="vocab-actions">' +
         '<button class="btn btn-ghost" id="vocab-again" type="button">' + esc(tr("again", "Again")) + "</button>" +
         '<button class="btn btn-primary" id="vocab-got" type="button">' + esc(tr("gotit", "Got it")) + "</button>" +
       "</div>";
     $("vocab-anchor").addEventListener("input", function () { vocab.anchorDraft = this.value; });
-    $("vocab-reveal").addEventListener("click", function () {
+    var revealBtn = $("vocab-reveal");
+    if (revealBtn) revealBtn.addEventListener("click", function () {
       vocab.revealed = !vocab.revealed;
       renderVocab();
     });
@@ -4983,8 +4987,17 @@
     }).slice(0, 2);
     if (weak.length) queue = queue.slice(0, lead).concat(weak, queue.slice(lead));
 
+    /* A basic grammar item is taught through its interface meaning. With
+     * translations off that prompt cannot exist, so it is not a session card. */
+    if (!translationsOn()) {
+      queue = queue.filter(function (id) { return itemOf(id).kind !== "basic"; });
+    }
+
     if (!queue.length) {
-      queue = S.shuffle(deckIds(), Math.random).slice(0, p.size || lessonSize() || 8);
+      var pool = deckIds().filter(function (id) {
+        return translationsOn() || itemOf(id).kind !== "basic";
+      });
+      queue = S.shuffle(pool, Math.random).slice(0, p.size || lessonSize() || 8);
       toast(tr("noDue", "Nothing due here — free practice."));
     }
 
@@ -5438,6 +5451,7 @@
     }
 
     if (itemOf(id).kind === "basic") {
+      if (!translationsOn()) { skipCard(); return; }
       var basic = itemOf(id);
       if (basic.of && basic.person) renderPerson(id);
       else if (basicById[id] && basicById[id].kind === "pronoun") renderPronoun(id);

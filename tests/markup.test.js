@@ -1727,3 +1727,15 @@ test("a correct-answer advance belongs to the session that scheduled it", () => 
   assert.match(app, /if \(session !== owner\) return;/, "a stale timer can advance a newer session");
   assert.match(app, /clearAdvanceTimer\(\);\n        session = null;/, "leaving does not cancel the advance");
 });
+
+test("translations off cannot render a basic gloss prompt or an empty reveal", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /if \(!translationsOn\(\)\) \{[\s\S]{0,120}queue = queue\.filter/,
+    "basic grammar cards are still queued with no translation prompt");
+  assert.match(app, /itemOf\(id\)\.kind !== "basic"/);
+  assert.match(app, /if \(!translationsOn\(\)\) \{ skipCard\(\); return; \}/,
+    "a stray basic card can still reach an English prompt");
+  assert.match(app, /var canReveal = !!meaning;/,
+    "the vocabulary card still offers a reveal with nothing to reveal");
+  assert.match(app, /vocabHintOff/);
+});
