@@ -462,6 +462,16 @@ test("Read a text can ask the local model for a personal text", () => {
   assert.match(app, /readerNoModel/);
 });
 
+test("a missed card can ask the coach for one useful correction", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /id="coach-ask"/);
+  assert.match(app, /function explainMistake/);
+  assert.match(app, /CE\.buildExplainPrompt/);
+  assert.match(app, /session\.lastAnswer/);
+  assert.match(app, /coach-explain/);
+  assert.equal(app.includes("explain-btn"), false);
+});
+
 test("the conversation has a coach check-in that can become a lesson", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(html, /id="chat-wrap"/);

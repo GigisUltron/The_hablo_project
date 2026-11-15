@@ -742,6 +742,15 @@ ruby rt {
 .feedback { min-height: 22px; font-size: 15px; font-weight: 600; color: var(--text-2); }
 .feedback.good { color: var(--good); }
 .feedback.bad { color: var(--bad); }
+.coach-explain {
+  margin: 8px 0 0;
+  padding: 7px 0 7px 10px;
+  border-left: 2px solid var(--accent);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
 
 .card-actions { margin-top: auto; display: grid; gap: 8px; padding-bottom: 8px; }
 /* while the question is open there is no verdict and no button yet */

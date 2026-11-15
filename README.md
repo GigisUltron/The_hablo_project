@@ -56,7 +56,7 @@ A lesson mixes:
 - production, listening, matching, sentence building and message completion
 - a short end-of-session review for what you missed
 
-Lessons use spaced repetition. What you miss comes back before the session ends and again when it is due.
+Lessons use spaced repetition. What you miss comes back before the session ends and again when it is due. A missed card offers **Ask coach**: the local model gives one short explanation in the interface language, with a plain fallback when no model answers.
 
 ### Exercise types
 

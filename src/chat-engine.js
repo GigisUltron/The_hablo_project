@@ -163,6 +163,22 @@
    * conversation system prompt, and it must name the pack that is live now. */
   /* The wrap-up is a one-off coaching turn, not part of the conversation. It
    * asks for English notes so they stay readable under any interface. */
+  /* An explanation is a one-off micro-lesson, not a conversation turn. */
+  function buildExplainPrompt(pack, level, uiLanguage, item, learnerAnswer) {
+    var name = String((pack && pack.name) || "the target language");
+    var reply = String(uiLanguage || "English");
+    var text = String((item && item.text) || "").slice(0, 160);
+    var meaning = String((item && item.meaning) || "").slice(0, 240);
+    var sentence = String((item && item.sentence) || "").slice(0, 240);
+    var wrong = String(learnerAnswer || "").slice(0, 160);
+    return "You are a kind, concise " + name + " coach. Answer in " + reply + " only, in at most two short sentences. " +
+      "Do not shame the learner and do not give a long grammar lecture. " +
+      "Correct answer: " + text + " (meaning: " + meaning + "). " +
+      "Example: " + sentence + ". " +
+      (wrong ? "The learner answered: " + wrong + ". " : "") +
+      "Explain the one useful thing to notice so they get it next time.";
+  }
+
   function buildCoachPrompt(pack, personal, uiLanguage) {
     var name = String((pack && pack.name) || "the target language");
     var replyLanguage = String(uiLanguage || "English");
@@ -588,6 +604,7 @@
     buildSystemPrompt: buildSystemPrompt,
     buildTranslationPrompt: buildTranslationPrompt,
     buildCoachPrompt: buildCoachPrompt,
+    buildExplainPrompt: buildExplainPrompt,
     buildMessages: buildMessages,
     buildRequest: buildRequest,
     normaliseBaseUrl: normaliseBaseUrl,

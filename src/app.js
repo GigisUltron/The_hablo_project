@@ -5615,6 +5615,10 @@
       state.trackMet[id] = true;
     }
     var wasReplay = replay;
+    var answerEl = $("type-input");
+    var typed = answerEl ? String(answerEl.value || "").slice(0, 160) : "";
+    var chosenText = chosenId && itemOf(chosenId) ? itemOf(chosenId).text : "";
+    session.lastAnswer = { text: typed || chosenText || "" };
     session.replaying = null;
     save();
     showAnswer(ok, it, wasReplay);
@@ -5659,9 +5663,43 @@
         advance();
       }, 900);
     } else {
-      $("actions").innerHTML = '<button class="btn btn-primary" id="next">' + esc(tr("continue", "Continue")) + '</button>';
+      $("actions").innerHTML =
+        '<button class="btn btn-ghost" id="coach-ask" type="button">' +
+          esc(tr("askCoach", "Ask coach")) + "</button>" +
+        '<button class="btn btn-primary" id="next">' + esc(tr("continue", "Continue")) + "</button>";
+      $("coach-ask").addEventListener("click", function () { explainMistake(it); });
       $("next").addEventListener("click", advance);
     }
+  }
+
+  function explainMistake(it) {
+    if (!it || !session) return;
+    var btn = $("coach-ask");
+    var answer = (session.lastAnswer && session.lastAnswer.text) || "";
+    if (btn) { btn.disabled = true; btn.textContent = tr("coachThinking", "Writing a short coach note…"); }
+    var feedbackBox = $("feedback");
+    if (!feedbackBox) return;
+    feedbackBox.insertAdjacentHTML("beforeend",
+      '<p class="coach-explain" id="coach-explain" role="status">' +
+      esc(tr("coachThinking", "Writing a short coach note…")) + "</p>");
+    var note = $("coach-explain");
+    var meaning = glossFor(it.id) || it.sub || "";
+    var fallback = tr("coachExplainFallback", "The correct answer is above. Read it once, then say it aloud.") +
+      (meaning ? " · " + meaning : "");
+    if (!AITOOLS) {
+      if (note) note.textContent = fallback;
+      return;
+    }
+    localModelAsk(
+      CE.buildExplainPrompt(ACTIVE, learnerLevel(), uiName(uiLang()), {
+        text: it.text, meaning: meaning, sentence: it.sentence || it.sub || ""
+      }, answer)
+    ).then(function (reply) {
+      if (!note || !note.isConnected) return;
+      note.textContent = String(reply || "").trim().slice(0, 320) || fallback;
+    }).catch(function () {
+      if (note && note.isConnected) note.textContent = fallback;
+    });
   }
 
   function showPreviousTask() {
