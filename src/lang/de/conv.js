@@ -13,6 +13,18 @@
         { speaker: "eine Person", es: "Bis morgen.", expects: [], item: "ph-de-see-you", reply: "", gloss: "See you tomorrow.", audio: "ph-de-see-you" },
       ]
     },
+    {
+      id: "cv-at-the-cafe",
+      title: "At the café",
+      turns: [
+        { speaker: "Kellner", es: "Guten Tag! Was möchten Sie?", expects: ["kaffee"], item: "ph-de-coffee", reply: "Einen Kaffee, bitte.", gloss: "Good afternoon! What would you like?", audio: "ph-de-coffee" },
+        { speaker: "Kellner", es: "Sonst noch etwas?", expects: ["rechnung", "nein"], item: "ph-de-bill", reply: "Nein, danke. Die Rechnung, bitte.", gloss: "Anything else?", audio: "ph-de-bill" },
+        { speaker: "Kellner", es: "Das macht drei Euro.", expects: ["danke"], item: "ph-de-thank-you", reply: "Danke, hier bitte.", gloss: "That's three euros.", audio: "ph-de-thank-you" },
+        { speaker: "Kellner", es: "Möchten Sie noch Wasser?", expects: ["wasser", "nein"], item: "ph-de-water", reply: "Wasser, bitte.", gloss: "Would you like water too?", audio: "ph-de-water" },
+        { speaker: "Kellner", es: "Hier ist Ihr Kaffee.", expects: ["danke"], item: "ph-de-thank-you", reply: "Danke.", gloss: "Here is your coffee.", audio: "ph-de-thank-you" },
+        { speaker: "Kellner", es: "Auf Wiedersehen!", expects: ["wiedersehen", "tschüss"], item: "ph-de-goodbye", reply: "Auf Wiedersehen!", gloss: "Goodbye!", audio: "ph-de-goodbye" },
+      ]
+    },
   ];
 
   function fold(s) {

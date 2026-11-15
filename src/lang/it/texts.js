@@ -86,6 +86,18 @@ var SEMA_TEXTS = {
         {"q": "Che cosa rimpiange soprattutto l'autore?", "options": ["le cene sui balconi", "le occasioni di parlarsi", "il prezzo degli appartamenti"], "answer": 1, "why": ["le cene sono un esempio", "", "il prezzo non è menzionato"]},
       ]
     },
+    {
+      id: "tx-it-coro",
+      title: "Il coro del quartiere",
+      level: 4,
+      band: "B2",
+      body: "Tre anni fa, la vecchia officina di via dei Fiori è diventata una sala prove. Ogni martedì sera, una ventina di persone di età diverse si trova lì per cantare. Non serve saper leggere la musica e nessuno fa un provino: basta voler esserci. Il direttore, un ex insegnante di matematica, sceglie brani semplici e spiega ogni frase prima di provarla. All'inizio il coro era solo un passatempo, ma con il tempo è diventato qualcosa di più. Quando una signora del palazzo accanto è rimasta sola, sono stati i vicini del coro a organizzare le cene. Il direttore dice che non gli interessa il risultato: gli interessa che, alla fine delle prove, le persone escano insieme.",
+      questions: [
+        {"q": "Che cosa serve per entrare nel coro?", "options": ["voler esserci", "saper leggere la musica", "superare un provino"], "answer": 0, "why": ["", "il testo dice che non serve", "nessuno fa un provino"]},
+        {"q": "Che cosa fa il direttore prima di provare un brano?", "options": ["spiega ogni frase", "canta da solo", "riscrive il brano"], "answer": 0, "why": ["", "il testo non dice che canta da solo", "non riscrive i brani, li sceglie"]},
+        {"q": "Che cosa è diventato il coro con il tempo?", "options": ["un modo per stare insieme", "un gruppo professionista", "un corso a pagamento"], "answer": 0, "why": ["", "il testo non parla di professionisti", "il testo non parla di denaro"]},
+      ]
+    },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TEXTS;

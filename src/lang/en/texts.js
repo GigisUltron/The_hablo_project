@@ -86,6 +86,18 @@ var SEMA_TEXTS = {
         {"q": "What does the author miss most?", "options": ["the dinners on the balconies", "the occasions to talk", "the price of the flats"], "answer": 1, "why": ["the dinners are one example", "", "the price is not mentioned"]},
       ]
     },
+    {
+      id: "tx-en-nightbus",
+      title: "The night bus",
+      level: 4,
+      band: "B2",
+      body: "The number 12 bus runs all night, but between midnight and five it carries a different city. At half past twelve, the hospital workers climb on with tired faces and paper cups of coffee. At two, the bakers get off near the industrial estate, where the ovens are already warm. At four, cleaners travel in the other direction, and the driver knows most of them by name. Nobody says much. The bus is warm, the lights are low and the radio plays old songs. A young nurse once told me she prefers this route to a taxi: it is slower, she said, but it feels less lonely. When the sun comes up, the night passengers disappear and the bus fills with people going to work.",
+      questions: [
+        {"q": "Who travels on the bus at two in the morning?", "options": ["bakers", "hospital workers", "schoolchildren"], "answer": 0, "why": ["", "they travel at half past twelve", "the text is about the night, not schoolchildren"]},
+        {"q": "Why does the nurse prefer the bus to a taxi?", "options": ["it feels less lonely", "it is faster", "it is cheaper"], "answer": 0, "why": ["", "she says it is slower", "she does not mention the price"]},
+        {"q": "What happens when the sun comes up?", "options": ["the night passengers disappear", "the bus stops running", "the driver changes route"], "answer": 0, "why": ["", "it fills with people going to work", "the text does not mention a route change"]},
+      ]
+    },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TEXTS;

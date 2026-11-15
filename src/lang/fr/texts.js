@@ -86,6 +86,18 @@ var SEMA_TEXTS = {
         {"q": "Que regrette surtout l'auteur ?", "options": ["les dîners sur les balcons", "les occasions de se parler", "le prix des appartements"], "answer": 1, "why": ["les dîners sont un exemple", "", "le prix n'est pas mentionné"]},
       ]
     },
+    {
+      id: "tx-fr-atelier",
+      title: "L'atelier de réparation",
+      level: 4,
+      band: "B2",
+      body: "Le samedi matin, l'ancienne menuiserie du quartier ouvre ses portes à ceux qui ne veulent pas jeter leurs objets. On y répare des grille-pain, des lampes, des vélos et parfois des jouets. Le principe est simple : on apporte l'objet cassé, on s'assoit à côté d'un bénévole et on essaie de le réparer ensemble. Personne ne paie, mais on peut laisser une pièce pour les outils. Au début, certains venaient seulement pour faire réparer leur appareil, sans rien apprendre. Aujourd'hui, beaucoup restent plus longtemps que nécessaire, surtout ceux qui vivent seuls. La bénévole qui m'a accueilli le dit clairement : le but n'est pas de sauver des machines, mais de montrer qu'on peut encore faire les choses soi-même.",
+      questions: [
+        {"q": "Que faut-il apporter à l'atelier ?", "options": ["un objet cassé", "ses propres outils", "un appareil neuf"], "answer": 0, "why": ["", "les outils sont sur place", "l'atelier répare, il ne vend pas"]},
+        {"q": "Pourquoi certains restent-ils plus longtemps aujourd'hui ?", "options": ["parce qu'ils y trouvent de la compagnie", "parce que la réparation est lente", "parce qu'ils doivent payer"], "answer": 0, "why": ["", "le texte ne parle pas de lenteur", "la réparation est gratuite"]},
+        {"q": "Quel est le vrai but de la bénévole ?", "options": ["montrer qu'on peut faire les choses soi-même", "ouvrir un magasin d'appareils", "gagner de l'argent avec les réparations"], "answer": 0, "why": ["", "elle ne vend rien", "les réparations sont gratuites"]},
+      ]
+    },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TEXTS;

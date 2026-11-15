@@ -13,6 +13,18 @@
         { speaker: "uma pessoa", es: "Até amanhã.", expects: [], item: "ph-pt-see-you", reply: "", gloss: "See you tomorrow.", audio: "ph-pt-see-you" },
       ]
     },
+    {
+      id: "cv-at-the-cafe",
+      title: "At the café",
+      turns: [
+        { speaker: "empregado", es: "Boa tarde! O que deseja?", expects: ["café"], item: "ph-pt-coffee", reply: "Um café, por favor.", gloss: "Good afternoon! What would you like?", audio: "ph-pt-coffee" },
+        { speaker: "empregado", es: "Mais alguma coisa?", expects: ["conta", "não"], item: "ph-pt-bill", reply: "Não, obrigado. A conta, por favor.", gloss: "Anything else?", audio: "ph-pt-bill" },
+        { speaker: "empregado", es: "São três euros.", expects: ["obrigado"], item: "ph-pt-thank-you", reply: "Obrigado, aqui está.", gloss: "That's three euros.", audio: "ph-pt-thank-you" },
+        { speaker: "empregado", es: "Quer também água?", expects: ["água", "não"], item: "ph-pt-water", reply: "Água, por favor.", gloss: "Would you like water too?", audio: "ph-pt-water" },
+        { speaker: "empregado", es: "Aqui está o seu café.", expects: ["obrigad"], item: "ph-pt-thank-you", reply: "Obrigado.", gloss: "Here is your coffee.", audio: "ph-pt-thank-you" },
+        { speaker: "empregado", es: "Até logo!", expects: ["até logo", "adeus"], item: "ph-pt-goodbye", reply: "Até logo!", gloss: "Goodbye!", audio: "ph-pt-goodbye" },
+      ]
+    },
   ];
 
   function fold(s) {

@@ -86,6 +86,18 @@ var SEMA_TEXTS = {
         {"q": "¿Qué sugiere la última frase?", "options": ["que el ruido depende de quién lo produce", "que hay que cerrar el parque", "que los niños no deben jugar de noche"], "answer": 0, "why": ["", "no pide cerrarlo", "no habla de prohibir el juego"]},
       ]
     },
+    {
+      id: "tx-es-herramientas",
+      title: "La biblioteca de herramientas",
+      level: 4,
+      band: "B2",
+      body: "En el bajo de mi edificio hay una biblioteca muy particular: no presta libros, sino herramientas. Empezó hace tres años, cuando un vecino se cansó de comprar un taladro para usarlo una sola vez. Hoy hay taladros, escaleras, máquinas de coser y hasta una tienda de campaña. Cualquiera del barrio puede llevarse lo que necesite durante una semana, siempre que lo devuelva limpio y en buen estado. Al principio, algunos desconfiaban: pensaban que nadie cuidaría las cosas. Sin embargo, casi todo vuelve a tiempo, y lo que se rompe se arregla en grupos los sábados por la mañana. Lo más valioso, dice la coordinadora, no son los objetos, sino las conversaciones que empiezan cuando alguien pide ayuda para usar una máquina.",
+      questions: [
+        {"q": "¿Qué se puede hacer en la biblioteca del edificio?", "options": ["llevarse herramientas durante una semana", "leer libros y revistas", "comprar herramientas nuevas"], "answer": 0, "why": ["", "el texto dice que no presta libros", "las herramientas se prestan, no se venden"]},
+        {"q": "¿Qué pensaban algunos vecinos al principio?", "options": ["que nadie cuidaría las cosas", "que las herramientas eran caras", "que el proyecto duraría poco"], "answer": 0, "why": ["", "el texto no habla del precio", "no se menciona cuánto duraría"]},
+        {"q": "¿Qué considera más valioso la coordinadora?", "options": ["las conversaciones que surgen", "los objetos que se prestan", "el dinero que se ahorra"], "answer": 0, "why": ["", "dice que lo valioso no son los objetos", "el texto no habla del dinero ahorrado"]},
+      ]
+    },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TEXTS;

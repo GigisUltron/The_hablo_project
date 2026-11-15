@@ -13,6 +13,18 @@
         { speaker: "een persoon", es: "Tot morgen.", expects: [], item: "ph-nl-see-you", reply: "", gloss: "See you tomorrow.", audio: "ph-nl-see-you" },
       ]
     },
+    {
+      id: "cv-at-the-cafe",
+      title: "At the café",
+      turns: [
+        { speaker: "ober", es: "Goedemiddag! Wat wilt u bestellen?", expects: ["koffie"], item: "ph-nl-coffee", reply: "Een koffie, alstublieft.", gloss: "Good afternoon! What would you like to order?", audio: "ph-nl-coffee" },
+        { speaker: "ober", es: "Nog iets anders?", expects: ["rekening", "nee"], item: "ph-nl-bill", reply: "Nee, dank u. De rekening, alstublieft.", gloss: "Anything else?", audio: "ph-nl-bill" },
+        { speaker: "ober", es: "Dat is drie euro.", expects: ["dank"], item: "ph-nl-thank-you", reply: "Dank u, alstublieft.", gloss: "That's three euros.", audio: "ph-nl-thank-you" },
+        { speaker: "ober", es: "Wilt u nog water?", expects: ["water", "nee"], item: "ph-nl-water", reply: "Water, alstublieft.", gloss: "Would you like water too?", audio: "ph-nl-water" },
+        { speaker: "ober", es: "Hier is uw koffie.", expects: ["dank"], item: "ph-nl-thank-you", reply: "Dank u.", gloss: "Here is your coffee.", audio: "ph-nl-thank-you" },
+        { speaker: "ober", es: "Tot ziens!", expects: ["tot ziens", "dag"], item: "ph-nl-goodbye", reply: "Tot ziens!", gloss: "Goodbye!", audio: "ph-nl-goodbye" },
+      ]
+    },
   ];
 
   function fold(s) {
