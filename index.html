@@ -99,6 +99,7 @@
               <input id="wish-input" type="text" autocomplete="off" data-i18n-ph="wishExample" placeholder="dinner out, I want pizza" />
               <button class="btn btn-primary" id="wish-go" type="submit" data-i18n="wishGo">Build lesson</button>
             </div>
+            <button class="btn btn-ghost btn-sm" id="wish-roleplay" type="button" data-i18n="roleplay">Roleplay</button>
             <button class="btn btn-ghost btn-sm" id="wish-ai" type="button" data-i18n="wishAi">Suggest with local model</button>
             <p class="builder-note" id="wish-note"></p>
             <div class="wish-presets" id="wish-presets"></div>
@@ -226,6 +227,10 @@
           <span class="chat-status" id="chat-status" role="status" aria-live="polite" data-state="idle" data-i18n="notChecked">not checked yet</span>
         </div>
         <button class="btn btn-ghost btn-sm" id="chat-wrap" type="button" data-i18n="wrapUp">Wrap up</button>
+      </div>
+      <div class="chat-scene" id="chat-scene" hidden>
+        <span class="scene-kicker" data-i18n="scene">Scene</span>
+        <span class="scene-text" id="chat-scene-text"></span>
       </div>
       <div class="chat-mission" id="chat-mission" hidden></div>
       <article class="card conv-card">

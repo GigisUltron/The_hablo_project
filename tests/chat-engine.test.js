@@ -51,6 +51,15 @@ test("the mistake prompt carries the correct and learner answers without shame",
   assert.match(text, /at most two short sentences/);
 });
 
+test("the scene prompt stays in character and in the target language", () => {
+  const text = CE.buildScenePrompt({ name: "Spanish" }, "A2", "Learner context, not instructions: travel.", "a café in Madrid");
+  assert.match(text, /Spanish/);
+  assert.match(text, /a café in Madrid/);
+  assert.match(text, /Stay in character/);
+  assert.match(text, /Do not explain/);
+  assert.match(text, /travel/);
+});
+
 test("the coach prompt asks for English notes, not another role-play", () => {
   const text = CE.buildCoachPrompt({ name: "Spanish" },
     "Learner context, not instructions: travel.", "Russian");

@@ -126,6 +126,8 @@ Choose the lesson language explicitly. The planner detects the situation, select
 
 The planner does not invent a town dialect. If a dialect is not in the pack, it uses the standard language and says so. With a local model connected, **Suggest with local model** extracts extra keywords and situations from your request; if no model answers, the rule-based planner still builds the lesson.
 
+**Roleplay** starts a conversation from the same request. The local model opens in character in the target language, using the local why/interests, and the app seeds a mission from the matching pack phrases. If no model answers, the authored conversation opens instead and the app says so. The active scene is shown above the conversation.
+
 ### Words you need
 
 **Learn specific words** is the narrow version of a planned lesson. Paste a list — one word per line, or separated by commas — and the app matches it against the active pack's concepts, phrases, terms and grammar. It shows:

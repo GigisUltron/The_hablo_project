@@ -2315,8 +2315,10 @@
     if (!chat) return;
     chat.messages = [];
     chat.scripted = null;
+    chat.scene = null;
     chatCleared = true;
     hideCoach();
+    renderScene();
     chatEpoch += 1;
     chatTranslating = {};
     setChatBusy(false);
@@ -2696,6 +2698,15 @@
     }
   }
 
+  function renderScene() {
+    var el = $("chat-scene");
+    if (!el) return;
+    if (!chat || !chat.scene) { el.hidden = true; return; }
+    el.hidden = false;
+    var text = $("chat-scene-text");
+    if (text) text.textContent = chat.scene;
+  }
+
   function renderMission() {
     var el = $("chat-mission");
     if (!el) return;
@@ -2814,6 +2825,7 @@
     show("conv");
     renderChatHeader();
     renderChat(true);
+    renderScene();
     renderMission();
     setChatBusy(false);
     refreshChatEngine();
@@ -3703,6 +3715,63 @@
         buildWishLesson(WISH_PRESETS[b.getAttribute("data-wish-preset")], $("wish-lang") && $("wish-lang").value);
       });
     });
+  }
+
+  function startRoleplay(text, lang) {
+    var input = $("wish-input");
+    var personal = PERSONA && state.profile ? PERSONA.ensure(state.profile) : {};
+    var scene = String(text || (input && input.value) || "").trim();
+    if (!scene) scene = [personal.why, personal.interests].filter(Boolean).join(" · ");
+    if (!scene) {
+      if ($("wish-note")) $("wish-note").textContent = tr("wishEmpty", "Tell me where you are going and what you want to do.");
+      return;
+    }
+    var code = lang || ($("wish-lang") && $("wish-lang").value) || ACTIVE.code;
+    if (code && LANGS && LANGS.has(code) && ACTIVE && ACTIVE.code !== code) {
+      switchLang(code);
+    }
+    var begin = function () {
+      var wish = wishLesson(scene, ACTIVE.code, { areaOnly: true });
+      chat = chatState();
+      chat.messages = [];
+      chat.scripted = null;
+      chat.scene = scene.slice(0, 160);
+      chatCleared = false;
+      chat.mission = wish.ids && wish.ids.length
+        ? { ids: wish.ids.slice(0, 3), used: {} }
+        : null;
+      chatEpoch += 1;
+      chatTranslating = {};
+      hideCoach();
+      show("conv");
+      renderChatHeader();
+      renderChat(true);
+      renderScene();
+      renderMission();
+      setChatFeedback(tr("sceneSetting", "Setting the scene…"), "");
+      refreshChatEngine();
+      localModelAsk(
+        CE.buildScenePrompt(ACTIVE, learnerLevel(), PERSONA ? PERSONA.prompt(state.profile) : "", scene),
+        "Start the scene now."
+      ).then(function (reply) {
+        if (!chat || chat.scene !== scene.slice(0, 160)) return;
+        if (reply) addAssistant(reply, false, "scene", false);
+        setChatFeedback("", "");
+      }).catch(function () {
+        if (!chat || chat.scene !== scene.slice(0, 160)) return;
+        if (!chat.messages.length) {
+          var opening = CE.scriptedOpening(ACTIVE.code);
+          if (opening) addAssistant(opening, true, "scripted", false);
+        }
+        setChatFeedback(tr("sceneFail", "No local model answered; the packed conversation starts."), "");
+      });
+    };
+    if (chat && chat.messages.length) {
+      askConfirm(tr("roleplay", "Roleplay"), tr("clearChatConfirm", "Clear this conversation? This cannot be undone."),
+        tr("roleplay", "Roleplay"), begin);
+    } else {
+      begin();
+    }
   }
 
   function buildWishLesson(text, lang) {
@@ -6105,6 +6174,9 @@
   $("chat-clear").addEventListener("click", chatClearClick);
   $("chat-find").addEventListener("click", findLocalModel);
   $("wordset-suggest").addEventListener("click", suggestWordset);
+  $("wish-roleplay").addEventListener("click", function () {
+    startRoleplay($("wish-input") ? $("wish-input").value : "", $("wish-lang") && $("wish-lang").value);
+  });
   $("wish-ai").addEventListener("click", suggestWish);
   $("confirm-cancel").addEventListener("click", closeConfirm);
   $("confirm-ok").addEventListener("click", function () {

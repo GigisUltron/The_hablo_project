@@ -2653,6 +2653,31 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .swatch-moss { background: var(--accent-moss); }
 
 /* transfer mission: the lesson words must survive contact with conversation */
+.chat-scene {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 4px 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+}
+.scene-kicker {
+  flex: none;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.scene-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: var(--text);
+}
 .chat-mission {
   max-width: 720px;
   margin: 0 auto 10px;

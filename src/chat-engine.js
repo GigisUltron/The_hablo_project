@@ -161,6 +161,22 @@
 
   /* A translation is a separate, one-message request. It must not reuse the
    * conversation system prompt, and it must name the pack that is live now. */
+  /* A scene is a roleplay opener, not a lesson plan. It is allowed to be
+   * slightly longer than a normal reply, but still asks the learner to talk. */
+  function buildScenePrompt(pack, level, personal, request) {
+    var name = String((pack && pack.name) || "the target language");
+    var lvl = /^(A1|A2|B1|B2|C1)$/.test(String(level || "")) ? String(level) : "A1";
+    var scene = String(request || "").trim().slice(0, 240);
+    var rules = [
+      "You start a short roleplay for a learner of " + name + " at level " + lvl + ".",
+      "Scene: " + scene + ".",
+      "Stay in character. Reply in " + name + " only with one or two short sentences and one simple question.",
+      "Do not explain the scene, do not write stage directions, and do not use English."
+    ];
+    if (personal) rules.push(String(personal));
+    return rules.join(" ");
+  }
+
   /* The wrap-up is a one-off coaching turn, not part of the conversation. It
    * asks for English notes so they stay readable under any interface. */
   /* An explanation is a one-off micro-lesson, not a conversation turn. */
@@ -604,6 +620,7 @@
     buildSystemPrompt: buildSystemPrompt,
     buildTranslationPrompt: buildTranslationPrompt,
     buildCoachPrompt: buildCoachPrompt,
+    buildScenePrompt: buildScenePrompt,
     buildExplainPrompt: buildExplainPrompt,
     buildMessages: buildMessages,
     buildRequest: buildRequest,
