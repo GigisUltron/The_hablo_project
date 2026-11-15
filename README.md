@@ -87,6 +87,8 @@ Each full course has eight reading texts across A1–B2. Starter courses have fi
 
 **Have a conversation** always works without a model. The local model is the default when one is running; if none answers, the app falls back to its own predictor and the active pack’s authored dialogue. The fallback follows authored turns where they fit, uses recent context, classifies greetings/thanks/yes-no/name/question intents, avoids repeating recent replies and refuses to echo or return runaway text.
 
+Assistant replies are spoken automatically through the browser’s **local** speech voices when audio is on. Cloud voices are excluded; if the device has no local voice for the target language, the reply stays silent and the per-message speaker is hidden. **Settings → Speak replies** turns the automatic voice off without muting card audio.
+
 A **transfer mission** appears above the conversation. It asks you to use two or three weak/due phrases in the conversation. A phrase counts only when you actually write it; completing the mission gives a small XP award.
 
 A local model is optional but it is now the only conversation-engine path when present: Settings has no engine chooser. Press **Find local model**; the app probes `http://localhost:8080`, `http://localhost:8081` and `http://localhost:11434`, stores the endpoint and model, and uses the first model that answers. Both llama.cpp's `llama-server` / `llama-cpp-python` and Ollama work. Without one, no conversation leaves the device; the authored fallback runs.

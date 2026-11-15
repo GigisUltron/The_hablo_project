@@ -1220,7 +1220,19 @@ test("the level is placed by the adaptive test, not by a settings control", () =
     "the placement result is not stored for the live language");
 });
 
+test("AI replies can auto-speak through local browser voices", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(html, /data-speak="on"/);
+  assert.match(html, /data-i18n="speakReplies"/);
+  assert.match(app, /function autoSpeakOn\(\)/);
+  assert.match(app, /s\.settings\.autoSpeak = "on"/);
+  assert.match(app, /if \(autoSpeakOn\(\) && canSpeak\(\) && !quiet\) speak\(clean\)/);
+  assert.match(app, /v\.localService !== false/, "cloud voices are not filtered out");
+  assert.match(app, /function canSpeak\(\)/);
+});
+
 test("every settings option is read, applied now, and remembered", () => {
+
   // session length
   assert.match(app, /function lessonSize\(\)/, "no session-length rule");
   assert.match(app, /mode === "short"\) return 5/, "short is not short");

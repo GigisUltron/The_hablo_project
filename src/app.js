@@ -31,6 +31,10 @@
     return (state && state.settings && state.settings.audio) !== "off";
   }
 
+  function autoSpeakOn() {
+    return audioEnabled() && (!state || !state.settings || state.settings.autoSpeak !== "off");
+  }
+
   var uiCache = {};
 
   function uiTable(code) {
@@ -487,6 +491,7 @@
     }
     if (["goal", "short", "long"].indexOf(s.settings.length) === -1) s.settings.length = "goal";
     if (["on", "off"].indexOf(s.settings.audio) === -1) s.settings.audio = "on";
+    if (["on", "off"].indexOf(s.settings.autoSpeak) === -1) s.settings.autoSpeak = "on";
     if (["on", "off"].indexOf(s.settings.ruby) === -1) s.settings.ruby = "on";
     if (["on", "off"].indexOf(s.settings.translations) === -1) s.settings.translations = "on";
     /* There is one kind of lesson now. Older saves carried a deck mode; drop
@@ -730,8 +735,15 @@
     var name = String((LANG && LANG.name) || "").toLowerCase();
     return voices.filter(function (v) {
       var lang = String(v.lang || "").toLowerCase();
-      return lang.indexOf(want) === 0 || (name && String(v.name || "").toLowerCase().indexOf(name) !== -1);
+      var matches = lang.indexOf(want) === 0 || (name && String(v.name || "").toLowerCase().indexOf(name) !== -1);
+      /* Cloud voices are not local. localService is undefined on some older
+       * engines; treat that as local rather than losing TTS entirely. */
+      return matches && v.localService !== false;
     });
+  }
+
+  function canSpeak() {
+    return hasTTS && langVoices().length > 0;
   }
 
   function pickVoice() {
@@ -836,7 +848,7 @@
   }
 
   function speak(text, btn) {
-    if (!audioAvailable()) return;
+    if (!audioEnabled() || !canSpeak()) return;
     var synth = window.speechSynthesis;
     try {
       if (!voice) pickVoice();
@@ -1063,6 +1075,7 @@
     }
     mark("[data-length]", "data-length", (state.settings && state.settings.length) || "goal");
     mark("[data-audio]", "data-audio", audioEnabled() ? "on" : "off");
+    mark("[data-speak]", "data-speak", (state.settings && state.settings.autoSpeak) === "off" ? "off" : "on");
     mark("[data-ruby]", "data-ruby", rubyOn() ? "on" : "off");
 
     var group = $("ruby-group");
@@ -2139,7 +2152,7 @@
       log.innerHTML = chat.messages.map(function (m, i) {
         return CE && CE.messageHTML
           ? CE.messageHTML(m, esc, {
-            canSpeak: hasTTS,
+            canSpeak: audioEnabled() && canSpeak(),
             canTranslate: chatMeta.status === "ready" && !!chatMeta.model,
             index: i,
             translating: !!chatTranslating[m.id]
@@ -2316,7 +2329,7 @@
     trimChat();
     save();
     renderChat(true);
-    if (hasTTS && !quiet) speak(clean);
+    if (autoSpeakOn() && canSpeak() && !quiet) speak(clean);
   }
 
   function addUser(text) {
@@ -5896,6 +5909,17 @@
       state.settings.audio = b.getAttribute("data-audio");
       save();
       applyAudioSetting();
+      renderSettingsOptions();
+    });
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll("[data-speak]"), function (b) {
+    b.addEventListener("click", function () {
+      state.settings.autoSpeak = b.getAttribute("data-speak");
+      save();
+      if (state.settings.autoSpeak === "off" && window.speechSynthesis) {
+        try { window.speechSynthesis.cancel(); } catch (err) { /* no voice */ }
+      }
       renderSettingsOptions();
     });
   });
