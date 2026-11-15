@@ -88,6 +88,11 @@ var SEMA_GLOSSES = {
   "ph-ja-train-time": "what time does the train leave?",
   "ph-ja-pharmacy": "where is the pharmacy?",
   "ph-ja-hurts-here": "it hurts here",
+  "b-ja-taberu": "to eat (polite)",
+  "b-ja-nomu": "to drink (polite)",
+  "b-ja-iku": "to go (polite)",
+  "b-ja-kuru": "to come (polite)",
+  "b-ja-kau": "to buy (polite)",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

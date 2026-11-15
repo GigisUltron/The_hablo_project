@@ -88,6 +88,11 @@ var SEMA_GLOSSES = {
   "ph-zh-train-time": "what time does the train leave?",
   "ph-zh-pharmacy": "where is the pharmacy?",
   "ph-zh-hurts-here": "it hurts here",
+  "b-zh-chi": "to eat",
+  "b-zh-he": "to drink",
+  "b-zh-qu": "to go",
+  "b-zh-lai": "to come",
+  "b-zh-mai": "to buy",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
