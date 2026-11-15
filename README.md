@@ -76,6 +76,7 @@ Lessons use spaced repetition. What you miss comes back before the session ends 
 - one synonym question at a time, never a recall-meaning card in front of it
 - the meaning stays hidden until after you answer; a **show translation** control is optional
 - every correct answer feeds the same SRS as lessons; wrong words return in the session
+- a correct synonym advances by itself; **Continue** appears only after a miss
 - after a run of correct answers the task gets harder: more options, then closer same-field distractors
 - the synonym pool respects your placed ceiling; the recall fallback starts near your band
 - the whole set is authored synonym pairs; a small starter pack repeats its pairs to fill the session
@@ -87,13 +88,13 @@ Lessons use spaced repetition. What you miss comes back before the session ends 
 
 ### Reading
 
-Each full course has eight reading texts across A1–B2. Starter courses have five. Every text has three multiple-choice questions and an explanation for each wrong option.
+Each full course has eight reading texts across A1–B2. Starter courses have five. Every text has three multiple-choice questions and an explanation for each wrong option. The text screen also has **Listen to text**, which reads the title and body through the same installed voice used by conversation.
 
 ### Conversation
 
 **Have a conversation** always works without a model. The local model is the default when one is running; if none answers, the app falls back to its own predictor and the active pack’s authored dialogue. The fallback follows authored turns where they fit, uses recent context, classifies greetings/thanks/yes-no/name/question intents, avoids repeating recent replies and refuses to echo or return runaway text.
 
-Assistant replies are spoken automatically through the browser’s **local** speech voices when audio is on. Cloud voices are excluded; if the device has no local voice for the target language, the reply stays silent and the per-message speaker is hidden. **Settings → Speak replies** turns the automatic voice off without muting card audio.
+Assistant replies are spoken automatically through the browser’s installed speech voices when audio is on. A local target-language voice is preferred; if the device exposes only another installed voice, that is used as a fallback so the reply is not silent. If the voice list arrives late, the reply is queued until a voice appears. **Settings → Speak replies** turns the automatic voice off without muting card audio.
 
 A **transfer mission** appears above the conversation. It asks you to use two or three weak/due phrases in the conversation. A phrase counts only when you actually write it; completing the mission gives a small XP award.
 

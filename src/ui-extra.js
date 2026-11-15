@@ -223,6 +223,7 @@ var SEMA_UI_EXTRA = (function () {
     "session": ["Session", "Sesión", "Session", "Sessione", "Sessão", "Sitzung", "Sessie", "Занятие", "Oturum", "جلسة", "सत्र", "セッション", "课程"],
     "audio": ["Audio", "Audio", "Audio", "Audio", "Áudio", "Audio", "Audio", "Аудио", "Ses", "صوت", "ऑडियो", "音声", "音频"],
     "speakReplies": ["Speak replies", "Leer respuestas", "Lire les réponses", "Leggi le risposte", "Falar respostas", "Antworten sprechen", "Antwoorden spreken", "Озвучивать ответы", "Yanıtları seslendir", "نطق الردود", "जवाब बोलें", "返答を読み上げ", "朗读回复"],
+    "listenText": ["Listen to text", "Escuchar el texto", "Écouter le texte", "Ascolta il testo", "Ouvir o texto", "Text anhören", "Tekst beluisteren", "Прослушать текст", "Metni dinle", "اسمع النص", "पाठ सुनें", "本文を聞く", "听文本"],
     "translations": ["Translations", "Traducciones", "Traductions", "Traduzioni", "Traduções", "Übersetzungen", "Vertalingen", "Переводы", "Çeviriler", "الترجمات", "अनुवाद", "翻訳", "翻译"],
     "pinyin": ["Pinyin", "Pinyin", "Pinyin", "Pinyin", "Pinyin", "Pinyin", "Pinyin", "Пиньинь", "Pinyin", "بينيين", "पिनयिन", "ピンイン", "拼音"],
     "privacy": ["No accounts, no tracking.", "Sin cuentas, sin rastreo.", "Sans compte, sans suivi.", "Nessun account, nessun tracciamento.", "Sem contas, sem rastreamento.", "Keine Konten, kein Tracking.", "Geen accounts, geen tracking.", "Без аккаунтов и слежки.", "Hesap yok, takip yok.", "لا حسابات ولا تتبع.", "कोई खाता नहीं, कोई ट्रैकिंग नहीं।", "アカウントなし、追跡なし。", "无账号，无追踪。"],

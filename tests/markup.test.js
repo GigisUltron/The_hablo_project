@@ -417,6 +417,32 @@ test("skipping typing removes the task instead of grading it", () => {
   assert.doesNotMatch(writing, /firstCorrect/);
 });
 
+test("a correct synonym advances; Continue is only shown after a miss", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  const block = app.slice(app.indexOf("function renderVocabSynonym"), app.indexOf("function renderVocab()"));
+  assert.match(block, /if \(ok\) \{/, "correct and wrong share the same action");
+  assert.match(block, /setTimeout\(advance, 800\)/, "correct does not advance");
+  assert.match(block, /\} else \{/, "wrong has no separate action");
+  assert.match(block, /id="vocab-syn-continue"/, "wrong has no Continue");
+  assert.match(block, /currentView !== "vocab"/, "a stale timer can advance a hidden screen");
+});
+
+test("Read a text has a local listen button", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /id="reader-listen"/);
+  assert.match(app, /tr\("listenText"/);
+  assert.match(app, /speak\(t\.title \+ "\. " \+ t\.body/);
+});
+
+test("AI speech falls back to any installed voice and queues before voices load", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /function allVoices\(\)/);
+  assert.match(app, /function anyLangVoice\(\)/);
+  assert.match(app, /pendingSpeech/);
+  assert.match(app, /if \(!allVoices\(\)\.length\)/);
+  assert.match(app, /localAny\[0\] \|\| all\[0\]/);
+});
+
 test("server.py is the single automatic setup entry point", () => {
   const server = fs.readFileSync(path.join(__dirname, "..", "server.py"), "utf8");
   assert.match(server, /tools.*install_ai\.py/);
@@ -1235,7 +1261,7 @@ test("AI replies can auto-speak through local browser voices", () => {
   assert.match(html, /data-i18n="speakReplies"/);
   assert.match(app, /function autoSpeakOn\(\)/);
   assert.match(app, /s\.settings\.autoSpeak = "on"/);
-  assert.match(app, /if \(autoSpeakOn\(\) && canSpeak\(\) && !quiet\) speak\(clean\)/);
+  assert.match(app, /if \(autoSpeakOn\(\) && hasTTS && !quiet\) speak\(clean\)/);
   assert.match(app, /v\.localService !== false/, "cloud voices are not filtered out");
   assert.match(app, /function canSpeak\(\)/);
 });

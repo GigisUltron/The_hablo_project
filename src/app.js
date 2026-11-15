@@ -728,31 +728,54 @@
   var voice = null;
   var hasTTS = "speechSynthesis" in window;
 
-  function langVoices() {
+  function allVoices() {
+    return hasTTS ? (window.speechSynthesis.getVoices() || []) : [];
+  }
+
+  function allLangVoices() {
     if (!hasTTS) return [];
     var voices = window.speechSynthesis.getVoices() || [];
     var want = String((LANG && LANG.code) || "").toLowerCase();
     var name = String((LANG && LANG.name) || "").toLowerCase();
     return voices.filter(function (v) {
       var lang = String(v.lang || "").toLowerCase();
-      var matches = lang.indexOf(want) === 0 || (name && String(v.name || "").toLowerCase().indexOf(name) !== -1);
-      /* Cloud voices are not local. localService is undefined on some older
-       * engines; treat that as local rather than losing TTS entirely. */
-      return matches && v.localService !== false;
+      return lang.indexOf(want) === 0 || (name && String(v.name || "").toLowerCase().indexOf(name) !== -1);
     });
   }
 
+  function langVoices() {
+    return allLangVoices().filter(function (v) { return v.localService !== false; });
+  }
+
+  function anyLangVoice() {
+    var local = langVoices();
+    if (local.length) return local[0];
+    var target = allLangVoices();
+    if (target.length) return target[0];
+    /* Last resort: a local voice from another language. It is better than
+     * silence for an AI reply the learner asked to hear. */
+    var all = allVoices();
+    var localAny = all.filter(function (v) { return v.localService !== false; });
+    return localAny[0] || all[0] || null;
+  }
+
   function canSpeak() {
-    return hasTTS && langVoices().length > 0;
+    /* The voice list can arrive after the first assistant message. Allow the
+     * attempt; speak() queues it until a voice appears. */
+    return !!hasTTS;
   }
 
   function pickVoice() {
     if (!hasTTS) return;
-    var voices = langVoices();
-    voice = voices[0] || null;
+    voice = anyLangVoice();
     updateAudioChip();
-  setTimeout(updateAudioChip, 1600);
-  setTimeout(updateAudioChip, 4000);
+    if (pendingSpeech && allVoices().length) {
+      var pending = pendingSpeech;
+      pendingSpeech = null;
+      setTimeout(function () { speak(pending.text, pending.btn); }, 0);
+    }
+    setTimeout(updateAudioChip, 1600);
+    setTimeout(updateAudioChip, 4000);
   }
 
   /* Audio is a bonus, not a dependency: if the device has no voice for the
@@ -799,6 +822,7 @@
 
   var audioCache = {};
   var speakTimer = null;
+  var pendingSpeech = null;
 
   function hasBundled() {
     return !!(bundled && Object.keys(bundled).length);
@@ -848,10 +872,14 @@
   }
 
   function speak(text, btn) {
-    if (!audioEnabled() || !canSpeak()) return;
+    if (!audioEnabled() || !hasTTS) return;
     var synth = window.speechSynthesis;
     try {
       if (!voice) pickVoice();
+      if (!allVoices().length) {
+        pendingSpeech = { text: String(text), btn: btn };
+        return;
+      }
       if (synth.paused) synth.resume();
 
       var u = new SpeechSynthesisUtterance(String(text));
@@ -863,10 +891,13 @@
       var want = String(u.lang || "").slice(0, 2).toLowerCase();
       var pick = voice;
       if (pick && want && String(pick.lang || "").slice(0, 2).toLowerCase() !== want) {
-        var alt = langVoices();
-        pick = alt.length ? alt[0] : null;
+        pick = anyLangVoice();
       }
-      if (pick) u.voice = pick;
+      if (!pick) pick = anyLangVoice();
+      if (pick) {
+        u.voice = pick;
+        if (pick.lang) u.lang = pick.lang;
+      }
 
       var face = $("chat-face");
       var stopFace = function () { if (face) face.classList.remove("is-speaking"); };
@@ -1386,7 +1417,16 @@
       '<p class="prompt">' + esc(tr("read", "Read")) + "</p>" +
       '<h3 class="reader-title">' + esc(t.title) + "</h3>" +
       '<p class="reader-body">' + esc(t.body) + "</p>";
-    $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-go">' + esc(tr("questions", "Questions")) + '</button>';
+    var listen = hasTTS && audioEnabled()
+      ? '<button class="btn btn-ghost" id="reader-listen" type="button">' +
+        esc(tr("listenText", "Listen to text")) + "</button>"
+      : "";
+    $("reader-actions").innerHTML = listen +
+      '<button class="btn btn-primary" id="reader-go">' + esc(tr("questions", "Questions")) + '</button>';
+    var listenBtn = $("reader-listen");
+    if (listenBtn) listenBtn.addEventListener("click", function () {
+      speak(t.title + ". " + t.body, listenBtn);
+    });
     $("reader-go").addEventListener("click", renderReaderQuestion);
   }
 
@@ -2329,7 +2369,7 @@
     trimChat();
     save();
     renderChat(true);
-    if (autoSpeakOn() && canSpeak() && !quiet) speak(clean);
+    if (autoSpeakOn() && hasTTS && !quiet) speak(clean);
   }
 
   function addUser(text) {
@@ -4080,12 +4120,25 @@
         if (meaningBtn) meaningBtn.addEventListener("click", function () {
           meaningBtn.outerHTML = '<span class="vocab-syn-def">' + esc(meaning) + "</span>";
         });
-        $("vocab-stage").insertAdjacentHTML("beforeend",
-          '<div class="vocab-actions"><button class="btn btn-primary" id="vocab-syn-continue" type="button">' +
-          esc(tr("continue", "Continue")) + "</button></div>");
-        var next = $("vocab-syn-continue");
-        next.addEventListener("click", function () { answerVocab(ok); });
-        try { next.focus({ preventScroll: true }); } catch (err) { next.focus(); }
+        var advanced = false;
+        function advance() {
+          if (advanced) return;
+          advanced = true;
+          if (!vocab || vocab.done || currentView !== "vocab") return;
+          answerVocab(ok);
+        }
+        if (ok) {
+          /* A correct synonym moves on by itself; the learner only has to
+           * press Continue after a miss, where the explanation matters. */
+          setTimeout(advance, 800);
+        } else {
+          $("vocab-stage").insertAdjacentHTML("beforeend",
+            '<div class="vocab-actions"><button class="btn btn-primary" id="vocab-syn-continue" type="button">' +
+            esc(tr("continue", "Continue")) + "</button></div>");
+          var next = $("vocab-syn-continue");
+          next.addEventListener("click", advance);
+          try { next.focus({ preventScroll: true }); } catch (err) { next.focus(); }
+        }
       });
     });
     var first = $("vocab-stage").querySelector("[data-synonym]");
