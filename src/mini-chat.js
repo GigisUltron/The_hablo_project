@@ -5,6 +5,11 @@
  * uses word-level bigrams to produce a short continuation when no exact
  * retrieval fits. That is enough to keep an offline conversation moving
  * without pretending to be a general-purpose model.
+ *
+ * The predictor is deliberately conservative: it never echoes the learner,
+ * never repeats a recent reply, never returns oversized text, and answers a
+ * learner question only with an authored statement rather than an unrelated
+ * question. An empty string is an honest "nothing to add".
  */
 (function (root) {
   "use strict";
@@ -34,6 +39,27 @@
 
   function sentences(text) {
     return String(text || "").split(/[.!?。！？؟]+/).map(function (s) { return s.trim(); }).filter(Boolean);
+  }
+
+  /* Comparison form for echo and repetition checks. Punctuation, spacing and
+   * accents are not meaning, so "Me llamo Ana!" and "me llamo ana" are the same
+   * line. Combining marks are removed for any script, not just Latin. */
+  function normaliseLine(text) {
+    var value = String(text == null ? "" : text).trim().toLowerCase();
+    if (typeof value.normalize === "function") {
+      try {
+        value = value.normalize("NFD").replace(/\p{M}+/gu, "");
+      } catch (err) {
+        value = value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      }
+    }
+    return value
+      .replace(/[.!?。！？؟…,;:¡¿"'“”«»]+/g, " ")
+      .replace(/\s+/g, " ").trim();
+  }
+
+  function isQuestionText(text) {
+    return /[?？؟]\s*$/.test(String(text || "").trim());
   }
 
   function intent(text) {
@@ -98,12 +124,18 @@
 
     var last = "";
 
-    function pick(list) {
-      return list.length ? list[Math.floor(Math.random() * list.length)] : "";
+    function pick(list, rand) {
+      var r = typeof rand === "function" ? rand : Math.random;
+      if (!list.length) return "";
+      var index = Math.floor(r() * list.length);
+      if (!(index >= 0)) index = 0;
+      if (index >= list.length) index = list.length - 1;
+      return list[index];
     }
 
-    function opening() {
-      var d = pick(conv);
+    function opening(opts) {
+      var rand = opts && typeof opts.rand === "function" ? opts.rand : Math.random;
+      var d = pick(conv, rand);
       if (d && d.turns && d.turns[0] && d.turns[0].es) return d.turns[0].es;
       var greeting = candidates.filter(function (c) {
         return /^(hello|hi|hey|hola|bonjour|ciao|hallo|olá|привет|merhaba|مرحبا|नमस्ते|こんにちは|你好)/i.test(c.text);
@@ -124,7 +156,7 @@
       return overlap * 10 + context * 2 - Math.min(4, Math.floor(candidate.tokens.length / 8));
     }
 
-    function generate(userTokens) {
+    function generate(userTokens, rand) {
       var seed = userTokens.find(function (w) { return bigrams[w] && bigrams[w].length; });
       if (!seed) return "";
       var out = [seed];
@@ -132,7 +164,7 @@
       for (var i = 0; i < 10; i += 1) {
         var options = bigrams[current];
         if (!options || !options.length) break;
-        current = pick(options);
+        current = pick(options, rand);
         out.push(current);
       }
       if (out.length < 3) return "";
@@ -142,17 +174,24 @@
 
     function reply(text, opts) {
       var o = opts || {};
+      var rand = typeof o.rand === "function" ? o.rand : Math.random;
       var userTokens = words(text);
       var contextTokens = words(o.context || "");
-      var lower = String(text || "").toLowerCase();
       var kindIntent = intent(text);
       var greeting = kindIntent === "greeting";
       var thanks = kindIntent === "thanks";
+      var asksQuestion = kindIntent === "question";
       var ranked = candidates.slice().sort(function (a, b) {
         return score(b, userTokens, contextTokens) - score(a, userTokens, contextTokens);
       });
       var recent = (o.recent || []).map(function (x) { return String(x); });
-      function fresh(c) { return c.text !== (o.last || "") && recent.indexOf(c.text) === -1; }
+      var recentKeys = recent.map(normaliseLine);
+      var lastKey = normaliseLine(o.last || "");
+      function fresh(c) {
+        if (!c || c.text === (o.last || "")) return false;
+        return recent.indexOf(c.text) === -1 && normaliseLine(c.text) !== lastKey &&
+          recentKeys.indexOf(normaliseLine(c.text)) === -1;
+      }
       var best = ranked.filter(function (c) { return score(c, userTokens, contextTokens) > 0; });
       var choice = "";
       /* Follow an authored dialogue turn when the learner's line clearly
@@ -161,7 +200,9 @@
         var followed = edges.map(function (e) {
           return { edge: e, score: score({ tokens: e.from }, userTokens, contextTokens) };
         }).sort(function (a, b) { return b.score - a.score; })[0];
-        if (followed && followed.score >= 10) {
+        if (followed && followed.score >= 10 && fresh({ text: followed.edge.to }) &&
+            String(followed.edge.to || "").length <= 180 &&
+            (!asksQuestion || !isQuestionText(followed.edge.to))) {
           choice = followed.edge.to;
         }
       }
@@ -176,26 +217,45 @@
             var warm = pool.filter(function (c) { return !c.question; });
             if (warm.length) pool = warm;
           }
-          choice = (pool.length ? pick(pool) : best[0]).text;
-        } else if (userTokens.length) {
-          choice = generate(userTokens);
+          if (asksQuestion) {
+            /* A question deserves an authored answer, not another unrelated
+             * question. If the pack only offers a question back, stay honest
+             * and return nothing; the app has a visible "nothing to add" state. */
+            pool = pool.filter(function (c) { return !c.question; });
+          }
+          choice = pool.length ? pick(pool, rand).text : "";
+        } else if (userTokens.length && !asksQuestion) {
+          var generated = generate(userTokens, rand);
+          if (generated && fresh({ text: generated })) choice = generated;
         }
       }
-      if (!choice) {
-        var questions = candidates.filter(function (c) { return c.question && c.text !== (o.last || ""); });
-        choice = questions.length ? pick(questions).text : (candidates.length ? pick(candidates).text : "");
+      if (!choice && !asksQuestion) {
+        var questions = candidates.filter(function (c) { return c.question && fresh(c); });
+        if (questions.length) {
+          choice = pick(questions, rand).text;
+        } else {
+          var freshCandidates = candidates.filter(fresh);
+          choice = freshCandidates.length ? pick(freshCandidates, rand).text : "";
+        }
       }
       var prompt = String(text || "").trim().toLowerCase();
-      if (choice && (choice.trim().toLowerCase() === prompt || choice.length > 180)) choice = "";
-      if (choice && !/[?？؟]\s*$/.test(choice) && Math.random() < 0.4) {
-        var follow = candidates.filter(function (c) { return c.question && c.text !== choice && recent.indexOf(c.text) === -1; })
+      var promptKey = normaliseLine(text);
+      function echoes(value) {
+        var key = normaliseLine(value);
+        return key !== "" && key === promptKey;
+      }
+      if (choice && (choice.trim().toLowerCase() === prompt || echoes(choice) || choice.length > 180)) choice = "";
+      if (choice && !asksQuestion && !isQuestionText(choice) && rand() < 0.4) {
+        var follow = candidates.filter(function (c) { return c.question && c.text !== choice && fresh(c); })
           .sort(function (a, b) {
             return score(b, userTokens, contextTokens) - score(a, userTokens, contextTokens);
           });
         if (follow.length && score(follow[0], userTokens, contextTokens) >= 2) {
-          choice += " " + follow[0].text;
+          var joined = choice + " " + follow[0].text;
+          if (joined.length <= 180) choice = joined;
         }
       }
+      if (choice && (choice.trim().toLowerCase() === prompt || echoes(choice) || choice.length > 180)) choice = "";
       last = choice;
       return choice;
     }

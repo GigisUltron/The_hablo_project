@@ -89,3 +89,69 @@ test("mini chat follows recent context and matches CJK by character", () => {
 test("tokenizer keeps non-Latin words", () => {
   assert.ok(M.words("Привет 你好 こんにちは").length >= 3);
 });
+
+/* The safety rules below are behavioural, not source-text checks. Each pack is
+ * small enough that a tie can be resolved with an injected rand, so the result
+ * is deterministic without changing the production fallback. */
+
+function safetyPack(phrases, conv) {
+  return {
+    phrases: { phrases: phrases.map((text) => ({ text })) },
+    terms: { terms: [] },
+    basics: { items: [] },
+    concepts: { concepts: [] },
+    texts: { texts: [] },
+    conv: { dialogues: conv || [] }
+  };
+}
+
+test("mini chat never repeats the reply it was just told about", () => {
+  const m = M.build(safetyPack(["Hola, ¿qué tal?"]));
+  assert.equal(m.reply("hola", { recent: ["Hola, ¿qué tal?"], rand: () => 0 }), "");
+  assert.equal(m.reply("hola", { recent: ["HOLA, ¿QUÉ TAL?"], rand: () => 0 }), "",
+    "a differently cased recent reply was repeated");
+});
+
+test("mini chat does not echo the learner, even with different punctuation or accents", () => {
+  const m = M.build(safetyPack(["Hola, ¿qué tal?", "Me llamo Ana."]));
+  assert.equal(m.reply("hola, ¿que tal!", { rand: () => 0 }), "");
+  assert.equal(m.reply("ME LLAMO ANA!", { rand: () => 0 }), "");
+});
+
+test("mini chat never returns an oversized authored line", () => {
+  const long = "z".repeat(250);
+  const m = M.build(safetyPack([long]));
+  assert.equal(m.reply("zzz", { rand: () => 0 }), "");
+
+  const dialogue = M.build(safetyPack([], [{
+    turns: [{ es: "Hola" }, { es: "y".repeat(250) }]
+  }]));
+  const reply = dialogue.reply("hola", { rand: () => 0 });
+  assert.ok(reply.length <= 180, "oversized dialogue reply: " + reply.length);
+});
+
+test("mini chat does not append a follow-up question that would exceed the cap", () => {
+  const longQuestion = "¿" + "pizza ".repeat(30).trim() + "?";
+  const m = M.build(safetyPack(["Quiero una pizza.", longQuestion]));
+  const reply = m.reply("pizza", { rand: () => 0 });
+  assert.ok(reply.length <= 180, "oversized joined reply: " + reply.length);
+  assert.equal(reply, "Quiero una pizza.");
+});
+
+test("an unanswerable question gets the honest empty answer, not an unrelated question", () => {
+  const m = M.build(safetyPack(["¿De dónde eres?", "¿Cómo estás?"]));
+  assert.equal(m.reply("¿Dónde está el tren?", { rand: () => 0 }), "");
+});
+
+test("a question prefers an authored statement over another question", () => {
+  const m = M.build(safetyPack(["Quiero una pizza.", "¿De dónde eres?"]));
+  const reply = m.reply("¿Dónde está la pizza?", { rand: () => 0 });
+  assert.equal(reply, "Quiero una pizza.");
+  assert.doesNotMatch(reply, /[?？؟]/);
+});
+
+test("mini chat can be driven deterministically by an injected rand", () => {
+  const m = M.build(safetyPack(["Quiero una pizza.", "Me llamo Ana.", "¿De dónde eres?"]));
+  assert.equal(m.reply("pizza", { rand: () => 0 }), m.reply("pizza", { rand: () => 0 }));
+  assert.equal(m.opening({ rand: () => 0 }), m.opening({ rand: () => 0 }));
+});

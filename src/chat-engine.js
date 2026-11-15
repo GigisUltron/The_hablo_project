@@ -11,6 +11,32 @@
  * Two request shapes are supported:
  *   ollama — POST /api/chat, images as base64 in `images`
  *   openai — POST /v1/chat/completions, images as `image_url` content parts
+ *
+ * Streaming is additive: streamChat(opts) sends the same request with
+ * `stream: true` and reads Ollama NDJSON or OpenAI-compatible SSE. It calls
+ * opts.onChunk(deltaText) as text arrives and resolves to the same
+ * {ok, text, error} shape as sendChat. Passing opts.accumulate === false
+ * keeps only a character count and delivers text through onChunk only.
+ * Cancellation is an AbortSignal in opts.signal, or an opts.abortFactory
+ * returning an AbortController-like {signal, abort}; the engine never reads a
+ * global AbortController itself. A timeout uses the existing opts.timeoutMs.
+ * A stream that fails before any text resolves {ok:false,error} so the caller
+ * can fall back once; a stream that fails after text resolves {ok:true,text}
+ * so the caller never sends the turn twice. Aborting always resolves
+ * {ok:false,error:"aborted"} without throwing. Replies are capped at
+ * MAX_STREAM_CHARS code points, and a chunk that crosses the cap is cut on a
+ * code-point boundary rather than through a surrogate pair.
+ *
+ *   streamChat({
+ *     engine, baseUrl, model, system, history, vision, timeoutMs,
+ *     onChunk: function (deltaText) {},
+ *     signal: controller.signal,        // or abortFactory: function () {}
+ *     accumulate: true                  // optional
+ *   }) -> Promise<{ ok: true, text: string } | { ok: false, error: string }>
+ *
+ * Grounding is separate and pure: pickContext(phrases, lastMessage, limit)
+ * returns up to three authored phrase texts; pass them to buildSystemPrompt
+ * as { grounding: picked } (or { grounding: true, groundingPhrases: picked }).
  */
 (function (root, factory) {
   if (typeof module === "object" && module.exports) module.exports = factory(root);
@@ -22,6 +48,8 @@
   var DEFAULT_MODEL = "llama3.2";
   var DEFAULT_LEVEL = "A2";
   var MAX_HISTORY = 12;
+  var MAX_STREAM_CHARS = 4000;
+  var MAX_GROUNDED_PHRASES = 3;
 
   /* ------------------------------------------------------------- endpoints */
 
@@ -126,9 +154,123 @@
 
   /* --------------------------------------------------------------- the prompt */
 
+  /* Grounding is retrieval of authored text, never generation. Tokenisation
+   * is deliberately script-agnostic: a Cyrillic, Arabic, Devanagari, kana or
+   * CJK phrase is tokenised just like a Latin one, and a CJK run also yields
+   * its characters and bigrams so a short learner line still overlaps. */
+  function foldForMatch(value) {
+    var text = String(value == null ? "" : value).toLowerCase();
+    if (typeof text.normalize === "function") {
+      try {
+        text = text.normalize("NFD").replace(/\p{M}+/gu, "");
+      } catch (err) {
+        text = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      }
+    }
+    return text;
+  }
+
+  function isKanaOrCjk(text) {
+    return /[\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff]/.test(String(text || ""));
+  }
+
+  function contextTokens(text) {
+    var value = foldForMatch(text);
+    var raw;
+    try {
+      raw = value.match(/[\p{L}\p{N}]+/gu) || [];
+    } catch (err) {
+      raw = value.match(/[a-z0-9\u00c0-\u024f\u0370-\u03ff\u0400-\u04ff\u0590-\u05ff\u0600-\u06ff\u0900-\u097f\u0e00-\u0e7f\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff\uac00-\ud7af]+/g) || [];
+    }
+    var out = [];
+    raw.forEach(function (token) {
+      if (isKanaOrCjk(token) && typeof Array.from === "function") {
+        var chars = Array.from(token);
+        chars.forEach(function (ch) { out.push(ch); });
+        for (var i = 0; i < chars.length - 1; i += 1) out.push(chars[i] + chars[i + 1]);
+        return;
+      }
+      out.push(token);
+    });
+    return out;
+  }
+
+  function phraseText(entry) {
+    if (typeof entry === "string") return entry;
+    if (entry && typeof entry.text === "string") return entry.text;
+    if (entry && typeof entry.phrase === "string") return entry.phrase;
+    return "";
+  }
+
+  /* Up to three authored phrase texts whose tokens overlap the learner's last
+   * message. The sort is stable by input order, so the same pack and message
+   * always produce the same context. Only text carried by `phrases` is ever
+   * returned; nothing is invented or rewritten. */
+  function pickContext(phrases, lastMessage, limit) {
+    var list = Array.isArray(phrases) ? phrases
+      : (phrases && Array.isArray(phrases.phrases) ? phrases.phrases : []);
+    var cap = limit == null ? MAX_GROUNDED_PHRASES
+      : Math.max(0, Math.min(Number(limit) || 0, MAX_GROUNDED_PHRASES));
+    if (!cap || !list.length) return [];
+
+    var messageTokens = contextTokens(lastMessage);
+    if (!messageTokens.length) return [];
+    var wanted = {};
+    messageTokens.forEach(function (token) { wanted[token] = true; });
+
+    var seenText = {};
+    var scored = [];
+    list.forEach(function (entry, index) {
+      var original = phraseText(entry).replace(/^\s+|\s+$/g, "");
+      var text = original.replace(/\s+/g, " ").trim();
+      if (!text || seenText[text]) return;
+      seenText[text] = true;
+      var counted = {};
+      var score = 0;
+      contextTokens(text).forEach(function (token) {
+        if (!counted[token] && wanted[token]) {
+          counted[token] = true;
+          score += 1;
+        }
+      });
+      if (score) scored.push({ text: original, score: score, index: index });
+    });
+
+    scored.sort(function (a, b) {
+      if (b.score !== a.score) return b.score - a.score;
+      return a.index - b.index;
+    });
+    return scored.slice(0, cap).map(function (item) { return item.text; });
+  }
+
+  /* The prompt option is additive. Pass `grounding: true` plus
+   * `groundingPhrases` (or `groundedPhrases`), or pass the picked array as
+   * `grounding` directly. The learner's message is never copied into the
+   * prompt: pickContext uses it locally only to choose authored phrases. */
+  function groundingPhrases(options) {
+    var o = options || {};
+    var source = o.grounding;
+    var list = [];
+    if (Array.isArray(source)) list = source;
+    else if (typeof source === "string") list = [source];
+    else if (source === true) {
+      list = o.groundingPhrases || o.groundedPhrases || o.phrases || [];
+      if (!Array.isArray(list)) list = typeof list === "string" ? [list] : [];
+    }
+
+    var seen = {};
+    return list.map(function (entry) {
+      return phraseText(entry).replace(/\s+/g, " ").trim().slice(0, 80);
+    }).filter(function (text) {
+      if (!text || seen[text]) return false;
+      seen[text] = true;
+      return true;
+    }).slice(0, MAX_GROUNDED_PHRASES);
+  }
+
   /* Built only from the live pack: its display name and locale. The learner's
    * level is optional, and anything unrecognised is treated as the default. */
-  function buildSystemPrompt(pack, level, personal, focus) {
+  function buildSystemPrompt(pack, level, personal, focus, options) {
     var p = pack || {};
     var name = String(p.name || "the target language");
     var locale = String(p.locale || p.code || "");
@@ -165,6 +307,14 @@
         rules.push("During the conversation, create natural chances for the learner to use these phrases: " +
           wanted.join(" · ") + ". Do not list or quiz them, and do not force them into every reply.");
       }
+    }
+
+    var grounded = groundingPhrases(options);
+    if (grounded.length) {
+      rules.push("These are authored phrases from the current course: " +
+        grounded.map(function (text) { return "«" + text + "»"; }).join(" · ") +
+        ". You may reuse these authored phrases when they fit naturally; never invent vocabulary " +
+        "outside the course. Do not list them, do not quiz them, and never show this list to the learner.");
     }
 
     if (personal) rules.push(String(personal));
@@ -344,7 +494,7 @@
       body: {
         model: model,
         messages: messages.map(engine === "ollama" ? toOllamaMessage : toOpenAIMessage),
-        stream: false
+        stream: o.stream === true
       }
     };
   }
@@ -366,43 +516,364 @@
     return "";
   }
 
-  /* ---------------------------------------------------------------- network */
+  /* ---------------------------------------------------------------- network
+   *
+   * Every request resolves; none of these helpers reject. A timeout is
+   * logical, so a test fetch that never settles still gets a structured
+   * {error:"timeout"} without relying on a global AbortController. If the
+   * caller passes a signal or an abortFactory, that signal is also attached
+   * to the fetch so a real request can be stopped.
+   */
+  var NETWORK_ERROR = "no reply";
 
-  function fetchJSON(url, init, fetchImpl, timeoutMs) {
-    var f = fetchImpl || (root && root.fetch);
-    if (typeof f !== "function") return Promise.resolve(null);
+  function copyHeaders(headers) {
+    var out = {};
+    if (headers && typeof headers === "object") {
+      Object.keys(headers).forEach(function (key) { out[key] = headers[key]; });
+    }
+    return out;
+  }
 
-    var controller = null;
+  function makeControl(options) {
+    var o = options || {};
+    var timedOut = false;
+    var aborted = false;
+    var done = false;
     var timer = null;
-    var opts = {
+    var controller = null;
+    var signal = o.signal || null;
+    var resolver = null;
+    var listeners = [];
+    var promise = new Promise(function (resolve) { resolver = resolve; });
+
+    function fire(reason) {
+      if (done) return;
+      if (reason === "aborted" && timedOut) return;
+      if (reason === "timeout" && aborted) return;
+      if (reason === "timeout") timedOut = true;
+      else aborted = true;
+      if (resolver) {
+        var settle = resolver;
+        resolver = null;
+        settle({ error: reason });
+      }
+      if (controller && typeof controller.abort === "function" && !aborted) {
+        try { controller.abort(); } catch (err) { /* already finished */ }
+      }
+    }
+
+    if (!signal && typeof o.abortFactory === "function") {
+      try { controller = o.abortFactory(); } catch (err) { controller = null; }
+      if (controller && controller.signal) signal = controller.signal;
+    }
+
+    if (signal) {
+      if (signal.aborted) {
+        fire("aborted");
+      } else if (typeof signal.addEventListener === "function") {
+        var onAbort = function () { fire("aborted"); };
+        try {
+          signal.addEventListener("abort", onAbort);
+          listeners.push({ signal: signal, handler: onAbort });
+        } catch (err) { /* older signal shape */ }
+      }
+    }
+
+    var ms = Number(o.timeoutMs) > 0 ? Number(o.timeoutMs) : 0;
+    if (ms && !aborted && typeof setTimeout === "function") {
+      timer = setTimeout(function () {
+        fire("timeout");
+      }, ms);
+    }
+
+    return {
+      signal: signal,
+      promise: promise,
+      aborted: function () { return aborted; },
+      error: function () {
+        if (timedOut) return "timeout";
+        if (aborted) return "aborted";
+        return "";
+      },
+      done: function () {
+        if (done) return;
+        done = true;
+        if (timer && typeof clearTimeout === "function") clearTimeout(timer);
+        timer = null;
+        listeners.forEach(function (entry) {
+          try { entry.signal.removeEventListener("abort", entry.handler); } catch (err) { /* closed */ }
+        });
+        listeners = [];
+      }
+    };
+  }
+
+  /* Race an operation against the control. The operation always gets a
+   * rejection handler, so a late timeout cannot become an unhandled one. */
+  function guard(promise, control) {
+    return Promise.race([
+      Promise.resolve(promise).then(function (value) {
+        return { value: value };
+      }, function (err) {
+        var reason = control.error();
+        if (reason) return { error: reason };
+        if (err && (err.name === "AbortError" || err.code === "ABORT_ERR")) return { error: "aborted" };
+        return { error: NETWORK_ERROR };
+      }),
+      control.promise
+    ]);
+  }
+
+  function statusError(res) {
+    if (!res) return NETWORK_ERROR;
+    var status = Number(res.status);
+    if (res.ok === false || (status && (status < 200 || status >= 300))) {
+      return status ? "http " + status : "http error";
+    }
+    return "";
+  }
+
+  function getReader(res) {
+    if (!res || !res.body) return null;
+    if (typeof res.body.getReader === "function") {
+      try { return res.body.getReader(); } catch (err) { return null; }
+    }
+    if (Array.isArray(res.body)) {
+      var index = 0;
+      return {
+        read: function () {
+          return Promise.resolve(index < res.body.length
+            ? { done: false, value: res.body[index++] }
+            : { done: true });
+        },
+        cancel: function () { return Promise.resolve(); }
+      };
+    }
+    if (typeof Symbol !== "undefined" && res.body[Symbol.asyncIterator]) {
+      var iterator;
+      try { iterator = res.body[Symbol.asyncIterator](); } catch (err) { return null; }
+      return {
+        read: function () { return Promise.resolve(iterator.next()); },
+        cancel: function () {
+          if (iterator && typeof iterator.return === "function") return Promise.resolve(iterator.return());
+          return Promise.resolve();
+        }
+      };
+    }
+    return null;
+  }
+
+  function cancelReader(reader) {
+    if (!reader || typeof reader.cancel !== "function") return;
+    try {
+      var pending = reader.cancel();
+      if (pending && typeof pending.catch === "function") pending.catch(function () {});
+    } catch (err) { /* already closed */ }
+  }
+
+  /* TextDecoder when the host has it, and a small incremental UTF-8 decoder
+   * when it does not. Both keep an incomplete multibyte sequence for the next
+   * read, so a chunk boundary can fall anywhere. */
+  function makeDecoder() {
+    var TD = root && root.TextDecoder;
+    if (typeof TD === "function") {
+      var textDecoder = new TD("utf-8");
+      return {
+        write: function (value) {
+          if (typeof value === "string") return value;
+          if (value == null) return "";
+          if (typeof Uint8Array === "function" && typeof value === "object" &&
+              !value.buffer && typeof value.length === "number") {
+            value = new Uint8Array(value);
+          }
+          return textDecoder.decode(value, { stream: true });
+        },
+        end: function () { return textDecoder.decode(); }
+      };
+    }
+
+    var pending = [];
+    function bytesOf(value) {
+      if (value == null) return [];
+      if (typeof value === "object" && value.buffer && typeof Uint8Array === "function") {
+        return Array.prototype.slice.call(new Uint8Array(value.buffer, value.byteOffset || 0, value.byteLength));
+      }
+      if (typeof value === "object" && typeof value.byteLength === "number" && typeof Uint8Array === "function") {
+        return Array.prototype.slice.call(new Uint8Array(value));
+      }
+      return Array.prototype.slice.call(value);
+    }
+
+    function decode(bytes, final) {
+      var out = "";
+      var i = 0;
+      while (i < bytes.length) {
+        var b0 = bytes[i] & 255;
+        if (b0 < 0x80) { out += String.fromCharCode(b0); i += 1; continue; }
+
+        var need, cp, min;
+        if (b0 >= 0xC2 && b0 <= 0xDF) {
+          need = 1; cp = b0 & 31; min = 0x80;
+        } else if (b0 >= 0xE0 && b0 <= 0xEF) {
+          need = 2; cp = b0 & 15; min = 0x800;
+        } else if (b0 >= 0xF0 && b0 <= 0xF4) {
+          need = 3; cp = b0 & 7; min = 0x10000;
+        } else {
+          out += "\uFFFD"; i += 1; continue;
+        }
+
+        if (i + need >= bytes.length) {
+          if (final) { out += "\uFFFD"; i = bytes.length; }
+          break;
+        }
+
+        var valid = true;
+        var k;
+        for (k = 1; k <= need; k += 1) {
+          var b = bytes[i + k] & 255;
+          if ((b & 0xC0) !== 0x80) { valid = false; break; }
+          cp = (cp << 6) | (b & 0x3F);
+        }
+        if (!valid || cp < min || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF)) {
+          out += "\uFFFD"; i += 1; continue;
+        }
+        if (cp > 0xFFFF) {
+          cp -= 0x10000;
+          out += String.fromCharCode(0xD800 + (cp >> 10), 0xDC00 + (cp & 0x3FF));
+        } else {
+          out += String.fromCharCode(cp);
+        }
+        i += need + 1;
+      }
+      return { text: out, rest: bytes.slice(i) };
+    }
+
+    return {
+      write: function (value) {
+        if (typeof value === "string") return value;
+        var bytes = bytesOf(value);
+        var result = decode(pending.concat(bytes), false);
+        pending = result.rest;
+        return result.text;
+      },
+      end: function () {
+        var result = decode(pending, true);
+        pending = [];
+        return result.text;
+      }
+    };
+  }
+
+  function fetchInit(init, control) {
+    var out = {
       method: init.method || "GET",
-      headers: init.headers || {}
+      headers: copyHeaders(init.headers)
     };
     if (init.body !== undefined) {
-      opts.body = JSON.stringify(init.body);
-      opts.headers["Content-Type"] = "application/json";
+      out.body = typeof init.body === "string" ? init.body : JSON.stringify(init.body);
+      if (!out.headers["Content-Type"]) out.headers["Content-Type"] = "application/json";
     }
-    if (timeoutMs && typeof AbortController === "function") {
-      controller = new AbortController();
-      opts.signal = controller.signal;
-      timer = setTimeout(function () {
-        try { controller.abort(); } catch (err) { /* already finished */ }
-      }, timeoutMs);
+    if (control.signal) out.signal = control.signal;
+    return out;
+  }
+
+  function bodyText(res, control) {
+    if (typeof res.text === "function") {
+      return guard(Promise.resolve().then(function () { return res.text(); }), control)
+        .then(function (out) {
+          if (out.error) return { error: out.error };
+          return { text: out.value == null ? "" : String(out.value) };
+        });
+    }
+    if (typeof res.json === "function") {
+      return guard(Promise.resolve().then(function () { return res.json(); }), control)
+        .then(function (out) {
+          if (out.error) return { error: out.error === NETWORK_ERROR ? "invalid json" : out.error };
+          return { json: out.value };
+        });
     }
 
-    function done(value) {
-      if (timer) clearTimeout(timer);
-      return value;
+    var reader = getReader(res);
+    if (!reader) return Promise.resolve({ text: "" });
+    var decoder = makeDecoder();
+    var text = "";
+    function pump() {
+      return guard(reader.read(), control).then(function (out) {
+        if (out.error) {
+          cancelReader(reader);
+          return { error: out.error };
+        }
+        var step = out.value;
+        if (!step || step.done) {
+          text += decoder.end();
+          return { text: text };
+        }
+        text += decoder.write(step.value);
+        return pump();
+      });
     }
+    return pump();
+  }
 
-    return Promise.resolve().then(function () {
-      return f(url, opts);
-    }).then(function (res) {
-      if (!res || !res.ok) return null;
-      return res.json().catch(function () { return null; });
+  function readBody(res, control) {
+    return bodyText(res, control).then(function (out) {
+      if (out.error) return out;
+      if (Object.prototype.hasOwnProperty.call(out, "json")) {
+        if (out.json == null) return { error: "empty body" };
+        return { json: out.json };
+      }
+      var text = out.text || "";
+      if (!text.trim()) return { error: "empty body" };
+      try {
+        return { json: JSON.parse(text) };
+      } catch (err) {
+        return { error: "invalid json" };
+      }
+    });
+  }
+
+  function requestJSON(url, init, options) {
+    var o = options || {};
+    var f = o.fetchImpl || (root && root.fetch);
+    if (typeof f !== "function") return Promise.resolve({ error: NETWORK_ERROR });
+
+    var control = makeControl(o);
+    var request = fetchInit(init, control);
+    var operation = Promise.resolve().then(function () {
+      if (control.aborted()) return { error: "aborted" };
+      return guard(Promise.resolve().then(function () { return f(url, request); }), control)
+        .then(function (out) {
+          if (out.error) return { error: out.error };
+          var res = out.value;
+          var bad = statusError(res);
+          if (bad) return { error: bad };
+          return readBody(res, control);
+        });
+    });
+
+    return operation.then(function (result) {
+      var reason = control.error();
+      control.done();
+      if (reason) return { error: reason };
+      return result;
+    }, function () {
+      var reason = control.error() || NETWORK_ERROR;
+      control.done();
+      return { error: reason };
+    });
+  }
+
+  function fetchJSON(url, init, fetchImpl, timeoutMs, extra) {
+    return requestJSON(url, init, {
+      fetchImpl: fetchImpl,
+      timeoutMs: timeoutMs,
+      signal: extra && extra.signal,
+      abortFactory: extra && extra.abortFactory
+    }).then(function (out) {
+      return out && out.json ? out.json : null;
     }).catch(function () {
       return null;
-    }).then(done);
+    });
   }
 
   function getJSON(url, fetchImpl, timeoutMs) {
@@ -483,14 +954,327 @@
 
   function sendChat(opts, fetchImpl) {
     var o = opts || {};
-    var req = buildRequest(o);
-    return postJSON(req.url, req.body, fetchImpl || o.fetchImpl, o.timeoutMs).then(function (json) {
-      if (!json) return { ok: false, error: "no reply" };
-      if (json.error) return { ok: false, error: "model error" };
-      var text = replyText(req.engine, json);
-      if (!text) return { ok: false, error: "empty reply" };
-      return { ok: true, text: text };
-    });
+    try {
+      var req = buildRequest(o);
+      return requestJSON(req.url, {
+        method: "POST",
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
+        body: req.body
+      }, {
+        fetchImpl: fetchImpl || o.fetchImpl,
+        timeoutMs: o.timeoutMs,
+        signal: o.signal,
+        abortFactory: o.abortFactory
+      }).then(function (out) {
+        if (out.error) return { ok: false, error: out.error };
+        var json = out.json;
+        if (!json || typeof json !== "object") return { ok: false, error: "empty reply" };
+        if (json.error) return { ok: false, error: "model error" };
+        var text = replyText(req.engine, json);
+        if (!text) return { ok: false, error: "empty reply" };
+        return { ok: true, text: text };
+      }).catch(function () {
+        return { ok: false, error: NETWORK_ERROR };
+      });
+    } catch (err) {
+      return Promise.resolve({ ok: false, error: NETWORK_ERROR });
+    }
+  }
+
+  /* ------------------------------------------------------------- streaming
+   *
+   * The wire format is chosen by engine, not by a content-type guess:
+   *   ollama — newline-delimited JSON, message.content per line, done:true last
+   *   openai — SSE `data: {...}` lines, choices[0].delta.content, data: [DONE]
+   * Lines are buffered until a newline arrives, so a JSON object split across
+   * reads is parsed once, whole. Blank lines, SSE comment lines, unknown SSE
+   * fields and malformed JSON lines are ignored; a malformed stream that never
+   * yields text is reported as an empty reply.
+   */
+
+  function deltaText(engine, json) {
+    if (!json) return "";
+    if (engine === "ollama") {
+      if (json.message && typeof json.message.content === "string") return json.message.content;
+      if (typeof json.response === "string") return json.response;
+      return "";
+    }
+    var choice = json.choices && json.choices[0];
+    if (!choice) return "";
+    var content = choice.delta && choice.delta.content;
+    if (content == null && choice.message) content = choice.message.content;
+    if (content == null) content = choice.text;
+    if (Array.isArray(content)) {
+      return content.map(function (part) {
+        return part && typeof part.text === "string" ? part.text : "";
+      }).join("");
+    }
+    return typeof content === "string" ? content : "";
+  }
+
+  function createStreamState(o) {
+    return {
+      text: "",
+      received: 0,
+      truncated: false,
+      stopped: false,
+      error: "",
+      malformed: 0,
+      done: false,
+      accumulate: !(o && o.accumulate === false),
+      onChunk: o && typeof o.onChunk === "function" ? o.onChunk : null
+    };
+  }
+
+  function emitDelta(state, delta) {
+    if (state.stopped) return;
+    var text = String(delta == null ? "" : delta);
+    if (!text) return;
+    if (state.received >= MAX_STREAM_CHARS) {
+      state.truncated = true;
+      state.stopped = true;
+      return;
+    }
+
+    var chars = Array.from(text);
+    var room = MAX_STREAM_CHARS - state.received;
+    if (chars.length > room) {
+      text = chars.slice(0, room).join("");
+      state.truncated = true;
+    }
+    state.received += Array.from(text).length;
+    if (state.accumulate) state.text += text;
+    if (state.onChunk) {
+      try { state.onChunk(text); } catch (err) { /* a renderer must not stop the stream */ }
+    }
+    if (state.truncated) state.stopped = true;
+  }
+
+  function streamLineParser(engine, state, control) {
+    var buffer = "";
+    var started = false;
+
+    function stopped() {
+      return state.stopped || !!(control && control.error());
+    }
+
+    function handlePayload(payload) {
+      if (stopped()) return;
+      var value = String(payload == null ? "" : payload).trim();
+      if (!value) return;
+      var json;
+      try {
+        json = JSON.parse(value);
+      } catch (err) {
+        state.malformed += 1;
+        return;
+      }
+      if (!json || typeof json !== "object") {
+        state.malformed += 1;
+        return;
+      }
+      if (json.error) {
+        state.error = "model error";
+        state.stopped = true;
+        return;
+      }
+      var delta = deltaText(engine, json);
+      if (delta) emitDelta(state, delta);
+      if (engine === "ollama" && json.done === true) {
+        state.done = true;
+        state.stopped = true;
+      }
+    }
+
+    function handleLine(raw) {
+      if (stopped()) return;
+      var line = String(raw == null ? "" : raw);
+      if (!started) {
+        started = true;
+        if (line.charCodeAt(0) === 0xfeff) line = line.slice(1);
+      }
+      if (line.charCodeAt(line.length - 1) === 13) line = line.slice(0, -1);
+      var trimmed = line.trim();
+      if (!trimmed) return;
+      if (trimmed.charAt(0) === ":") return;
+
+      if (/^data\s*:/i.test(trimmed)) {
+        var payload = trimmed.slice(trimmed.indexOf(":") + 1).trim();
+        if (!payload) return;
+        if (payload === "[DONE]" || payload === "done") {
+          state.done = true;
+          state.stopped = true;
+          return;
+        }
+        handlePayload(payload);
+        return;
+      }
+      if (/^(event|id|retry)\s*:/i.test(trimmed)) return;
+      handlePayload(trimmed);
+    }
+
+    function push(text) {
+      if (stopped()) return;
+      buffer += String(text == null ? "" : text);
+      var index;
+      while (!stopped() && (index = buffer.indexOf("\n")) !== -1) {
+        var line = buffer.slice(0, index);
+        buffer = buffer.slice(index + 1);
+        handleLine(line);
+      }
+    }
+
+    function end() {
+      if (stopped() || !buffer) return;
+      var line = buffer;
+      buffer = "";
+      handleLine(line);
+    }
+
+    return { push: push, end: end };
+  }
+
+  function consumeStream(res, engine, state, control) {
+    var parser = streamLineParser(engine, state, control);
+    var reader = getReader(res);
+
+    if (reader) {
+      var decoder = makeDecoder();
+      function pump() {
+        return guard(reader.read(), control).then(function (out) {
+          if (out.error) {
+            cancelReader(reader);
+            return { error: out.error };
+          }
+          var step = out.value;
+          if (!step || step.done) {
+            var tail = decoder.end();
+            if (tail) parser.push(tail);
+            parser.end();
+            return { done: true };
+          }
+          var text = typeof step.value === "string" ? step.value : decoder.write(step.value);
+          if (text) parser.push(text);
+          if (state.stopped || (control && control.error())) {
+            cancelReader(reader);
+            return { done: true };
+          }
+          return pump();
+        });
+      }
+      return pump();
+    }
+
+    if (typeof res.text === "function") {
+      return guard(Promise.resolve().then(function () { return res.text(); }), control)
+        .then(function (out) {
+          if (out.error) return { error: out.error };
+          var text = out.value == null ? "" : String(out.value);
+
+          /* A server that ignores `stream: true` may answer with one complete
+           * JSON body, possibly pretty-printed across lines. Try that before
+           * the line parser, which only understands one object per line. */
+          var whole = null;
+          try { whole = JSON.parse(text.trim()); } catch (err) { whole = null; }
+          if (whole && typeof whole === "object") {
+            if (whole.error) {
+              state.error = "model error";
+              return { done: true };
+            }
+            var wholeDelta = deltaText(engine, whole);
+            if (wholeDelta) emitDelta(state, wholeDelta);
+            if (engine === "ollama" && whole.done === true) state.stopped = true;
+            return { done: true };
+          }
+
+          parser.push(text);
+          parser.end();
+          return { done: true };
+        });
+    }
+
+    if (typeof res.json === "function") {
+      return guard(Promise.resolve().then(function () { return res.json(); }), control)
+        .then(function (out) {
+          if (out.error) return { error: out.error === NETWORK_ERROR ? "invalid json" : out.error };
+          var json = out.value;
+          if (json && json.error) {
+            state.error = "model error";
+            return { done: true };
+          }
+          var delta = deltaText(engine, json);
+          if (delta) emitDelta(state, delta);
+          if (engine === "ollama" && json && json.done === true) state.stopped = true;
+          return { done: true };
+        });
+    }
+
+    return Promise.resolve({ error: "empty reply" });
+  }
+
+  function usableText(state) {
+    return state.accumulate ? state.text.replace(/^\s+|\s+$/g, "") : "";
+  }
+
+  function hasUsableText(state) {
+    return state.accumulate ? !!(state.text && state.text.trim()) : state.received > 0;
+  }
+
+  function streamFailure(error, state) {
+    if (error === "aborted") return { ok: false, error: "aborted" };
+    if (hasUsableText(state)) return { ok: true, text: usableText(state) };
+    return { ok: false, error: error || "empty reply" };
+  }
+
+  function streamOutcome(result, state) {
+    if (result && result.error) return streamFailure(result.error, state);
+    if (state.error) return streamFailure(state.error, state);
+    if (!hasUsableText(state)) return { ok: false, error: "empty reply" };
+    return { ok: true, text: usableText(state) };
+  }
+
+  function streamChat(opts, fetchImpl) {
+    var o = opts || {};
+    try {
+      var requestOptions = {};
+      Object.keys(o).forEach(function (key) { requestOptions[key] = o[key]; });
+      requestOptions.stream = true;
+      var req = buildRequest(requestOptions);
+      var f = fetchImpl || o.fetchImpl || (root && root.fetch);
+      if (typeof f !== "function") return Promise.resolve({ ok: false, error: NETWORK_ERROR });
+
+      var control = makeControl(o);
+      var state = createStreamState(o);
+      var operation = Promise.resolve().then(function () {
+        if (control.aborted()) return { error: "aborted" };
+        var init = fetchInit({
+          method: "POST",
+          headers: { Accept: "application/json", "Content-Type": "application/json" },
+          body: req.body
+        }, control);
+        return guard(Promise.resolve().then(function () { return f(req.url, init); }), control)
+          .then(function (out) {
+            if (out.error) return { error: out.error };
+            var res = out.value;
+            var bad = statusError(res);
+            if (bad) return { error: bad };
+            return consumeStream(res, req.engine, state, control);
+          });
+      });
+
+      return operation.then(function (result) {
+        var reason = control.error();
+        control.done();
+        if (reason) return streamFailure(reason, state);
+        return streamOutcome(result, state);
+      }, function () {
+        var reason = control.error() || NETWORK_ERROR;
+        control.done();
+        return streamFailure(reason, state);
+      });
+    } catch (err) {
+      return Promise.resolve({ ok: false, error: NETWORK_ERROR });
+    }
   }
 
   /* ------------------------------------------------------- scripted fallback
@@ -678,7 +1462,10 @@
     DEFAULT_ENDPOINT: DEFAULT_ENDPOINT,
     DEFAULT_MODEL: DEFAULT_MODEL,
     MAX_HISTORY: MAX_HISTORY,
+    MAX_STREAM_CHARS: MAX_STREAM_CHARS,
+    MAX_GROUNDED_PHRASES: MAX_GROUNDED_PHRASES,
     buildSystemPrompt: buildSystemPrompt,
+    pickContext: pickContext,
     buildTranslationPrompt: buildTranslationPrompt,
     buildCoachPrompt: buildCoachPrompt,
     buildScenePrompt: buildScenePrompt,
@@ -700,6 +1487,7 @@
     discover: discover,
     visionFor: visionFor,
     sendChat: sendChat,
+    streamChat: streamChat,
     scriptedStart: scriptedStart,
     scriptedOpening: scriptedOpening,
     scriptedRespond: scriptedRespond,
