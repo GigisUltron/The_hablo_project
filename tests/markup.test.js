@@ -818,6 +818,14 @@ test("offline chat tracks recent replies for variation", () => {
   assert.match(app, /recent: \(chat\.recentMini/, "recent replies are not passed to the predictor");
 });
 
+test("settings selects are styled and transfer mission is visible", () => {
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(html, /class="row-sub" data-i18n="transferMission"/, "transfer mission is not surfaced");
+  assert.match(css, /appearance: none/, "selects keep the browser box");
+  assert.match(css, /#chat-engine/, "conversation engine is unstyled");
+  assert.match(css, /\.settings-lang select/, "interface select is unstyled");
+});
+
 test("conversation transfer missions require real use of lesson phrases", () => {
   assert.match(html, /id="chat-mission"/, "no transfer mission surface");
   assert.match(app, /function assignMission/, "no mission assignment");
