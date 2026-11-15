@@ -32,9 +32,19 @@ function boot(save, hash = "") {
     registry.set(chip.id, chip);
     return chip;
   });
+  const tabs = ["today", "stats", "settings"].map((view) => {
+    const tab = node("tab-" + view);
+    tab._attrs["data-view"] = view;
+    registry.set(tab.id, tab);
+    return tab;
+  });
   const document = {
     getElementById(id) { if (!registry.has(id)) registry.set(id, node(id)); return registry.get(id); },
-    querySelectorAll(selector) { return selector === "[data-why]" ? why : []; },
+    querySelectorAll(selector) {
+      if (selector === "[data-why]") return why;
+      if (selector === ".tab") return tabs;
+      return [];
+    },
     querySelector(selector) { return selector === "#view-setup .setup-q" ? registry.get("setup-q") || null : null; },
     createElement() { return node(); }, createElementNS() { return node(); },
     addEventListener() {}, body: node("body"),
@@ -126,4 +136,32 @@ test("a brand-new learner can pick a why, start fresh and reach a card", () => {
   start._l.click();
   const stage = registry.get("stage");
   assert.ok(stage.innerHTML.length > 20, "Start did not render a card");
+});
+
+test("Progress, Settings and Reader can be opened from the real controls", () => {
+  const save = {
+    version: 1,
+    profile: {
+      level: "A2", levelByLang: { es: "A2" }, lang: "es", uiLang: "en",
+      byLang: {}, languages: ["es"], why: "travel"
+    },
+    settings: { size: 8, translations: "on", audio: "off", autoSpeak: "off" },
+    cards: {}, confusions: {}, reviews: { good: 0, again: 0 }, sessions: 0,
+    memory: { sentences: [] }, daily: { date: "2026-11-15", cards: 0 }
+  };
+  const registry = boot(save);
+  const stats = registry.get("tab-stats");
+  assert.ok(stats._l.click, "Progress tab is not wired");
+  stats._l.click();
+  assert.ok(registry.get("progress-summary").textContent.length > 0, "Progress did not render its summary");
+  const settings = registry.get("tab-settings");
+  settings._l.click();
+  assert.ok(registry.get("view-settings").hidden === false, "Settings view is not active");
+  const read = registry.get("read-btn");
+  assert.ok(read && read._l.click, "Read is not wired");
+  read._l.click();
+  assert.match(registry.get("reader-stage").innerHTML, /reader-body/);
+  assert.ok(registry.get("reader-go")._l.click, "Reader questions are not wired");
+  registry.get("reader-go")._l.click();
+  assert.match(registry.get("reader-stage").innerHTML, /option-word/);
 });

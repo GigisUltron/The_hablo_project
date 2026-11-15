@@ -1740,7 +1740,8 @@
         "</summary><p>" + esc(alphabetNote()) + "</p></details>" : "") +
       '<p class="letter-question">' + esc(tr("tapLetter", "Tap a letter to hear it")) + "</p>" +
       '<div class="letter-grid">' + letters.map(function (l, i) {
-        return '<button class="letter-tile" type="button" data-letter-index="' + i + '">' +
+        var known = !!(state.alphabet && state.alphabet[l.letter]);
+        return '<button class="letter-tile' + (known ? " is-known" : "") + '" type="button" data-letter-index="' + i + '">' +
           '<b lang="' + esc((LANG && LANG.locale) || "") + '" dir="' + letterDirection() + '">' +
           esc(l.letter) + "</b><span>" + esc(l.name || "") + "</span></button>";
       }).join("") + "</div>";
