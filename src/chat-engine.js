@@ -1134,12 +1134,31 @@
     return { push: push, end: end };
   }
 
+  /* A server may ignore stream:true and answer with one complete JSON body,
+   * possibly pretty-printed across lines. Try that before or after the line
+   * parser; it is the only way to read such a body. */
+  function absorbWholeJSON(engine, state, text) {
+    var whole = null;
+    try { whole = JSON.parse(String(text == null ? "" : text).trim()); } catch (err) { return false; }
+    if (!whole || typeof whole !== "object") return false;
+    if (whole.error) {
+      state.error = "model error";
+      return true;
+    }
+    var delta = deltaText(engine, whole);
+    if (delta) emitDelta(state, delta);
+    if (engine === "ollama" && whole.done === true) state.stopped = true;
+    return true;
+  }
+
   function consumeStream(res, engine, state, control) {
     var parser = streamLineParser(engine, state, control);
     var reader = getReader(res);
 
     if (reader) {
       var decoder = makeDecoder();
+      var raw = "";
+      var rawFull = false;
       function pump() {
         return guard(reader.read(), control).then(function (out) {
           if (out.error) {
@@ -1149,12 +1168,24 @@
           var step = out.value;
           if (!step || step.done) {
             var tail = decoder.end();
-            if (tail) parser.push(tail);
+            if (tail) {
+              parser.push(tail);
+              if (!rawFull && raw.length < 262144) raw += tail;
+            }
             parser.end();
+            /* The line parser sees one object per line; a pretty JSON body has
+             * no such lines, so retry the whole body when nothing was read. */
+            if (state.received === 0 && !state.error) absorbWholeJSON(engine, state, raw);
             return { done: true };
           }
           var text = typeof step.value === "string" ? step.value : decoder.write(step.value);
-          if (text) parser.push(text);
+          if (text) {
+            parser.push(text);
+            if (!rawFull) {
+              if (raw.length + text.length <= 262144) raw += text;
+              else rawFull = true;
+            }
+          }
           if (state.stopped || (control && control.error())) {
             cancelReader(reader);
             return { done: true };
@@ -1171,24 +1202,10 @@
           if (out.error) return { error: out.error };
           var text = out.value == null ? "" : String(out.value);
 
-          /* A server that ignores `stream: true` may answer with one complete
-           * JSON body, possibly pretty-printed across lines. Try that before
-           * the line parser, which only understands one object per line. */
-          var whole = null;
-          try { whole = JSON.parse(text.trim()); } catch (err) { whole = null; }
-          if (whole && typeof whole === "object") {
-            if (whole.error) {
-              state.error = "model error";
-              return { done: true };
-            }
-            var wholeDelta = deltaText(engine, whole);
-            if (wholeDelta) emitDelta(state, wholeDelta);
-            if (engine === "ollama" && whole.done === true) state.stopped = true;
-            return { done: true };
+          if (!absorbWholeJSON(engine, state, text)) {
+            parser.push(text);
+            parser.end();
           }
-
-          parser.push(text);
-          parser.end();
           return { done: true };
         });
     }

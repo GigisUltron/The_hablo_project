@@ -741,3 +741,14 @@ test("streamChat accepts a pretty-printed complete JSON body from a non-streamin
   }));
   assert.deepEqual(result, { ok: true, text: "Hola" });
 });
+
+test("streamChat reads a pretty-printed body even when the response also exposes text()", async () => {
+  const body = JSON.stringify({ message: { content: "Hola" } }, null, 2);
+  const result = await CE.streamChat(streamOpts(), async () => ({
+    ok: true,
+    status: 200,
+    body: readerBody([body]),
+    text: async () => body
+  }));
+  assert.deepEqual(result, { ok: true, text: "Hola" });
+});
