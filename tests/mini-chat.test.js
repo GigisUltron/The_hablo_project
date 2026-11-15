@@ -30,6 +30,13 @@ test("mini chat retrieves a relevant authored line", () => {
   assert.match(r, /llamo|Ana|Hola|pizza|dónde/);
 });
 
+test("mini chat avoids recently used replies", () => {
+  const fs = require("node:fs");
+  const source = fs.readFileSync(require("node:path").join(__dirname, "..", "src", "mini-chat.js"), "utf8");
+  assert.match(source, /recent\.indexOf\(c\.text\) === -1/);
+  assert.match(source, /o\.recent/);
+});
+
 test("mini follow-up questions are relevance-gated", () => {
   const fs = require("node:fs");
   const source = fs.readFileSync(require("node:path").join(__dirname, "..", "src", "mini-chat.js"), "utf8");

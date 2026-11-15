@@ -136,6 +136,8 @@
       var ranked = candidates.slice().sort(function (a, b) {
         return score(b, userTokens, contextTokens) - score(a, userTokens, contextTokens);
       });
+      var recent = (o.recent || []).map(function (x) { return String(x); });
+      function fresh(c) { return c.text !== (o.last || "") && recent.indexOf(c.text) === -1; }
       var best = ranked.filter(function (c) { return score(c, userTokens, contextTokens) > 0; });
       var choice = "";
       /* Follow an authored dialogue turn when the learner's line clearly
@@ -149,7 +151,7 @@
         }
       }
       if (!choice && best.length) {
-        var pool = best.slice(0, Math.min(4, best.length)).filter(function (c) { return c.text !== (o.last || ""); });
+        var pool = best.slice(0, Math.min(6, best.length)).filter(fresh);
         if (greeting) {
           var hello = pool.filter(function (c) { return /^(hi|hello|hey|hola|bonjour|ciao|hallo|olá|привет|merhaba|مرحبا|नमस्ते|こんにちは|你好)/i.test(c.text); });
           if (hello.length) pool = hello;
@@ -167,7 +169,7 @@
         choice = questions.length ? pick(questions).text : (candidates.length ? pick(candidates).text : "");
       }
       if (choice && !/[?？؟]\s*$/.test(choice) && Math.random() < 0.4) {
-        var follow = candidates.filter(function (c) { return c.question && c.text !== choice; })
+        var follow = candidates.filter(function (c) { return c.question && c.text !== choice && recent.indexOf(c.text) === -1; })
           .sort(function (a, b) {
             return score(b, userTokens, contextTokens) - score(a, userTokens, contextTokens);
           });

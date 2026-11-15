@@ -813,6 +813,11 @@ test("planned lessons mix due revision into the situation", () => {
   assert.match(app, /revision\.slice\(0, 2\)\.forEach\(add\)/, "revision is never included");
 });
 
+test("offline chat tracks recent replies for variation", () => {
+  assert.match(app, /chat\.recentMini/, "recent replies are not tracked");
+  assert.match(app, /recent: \(chat\.recentMini/, "recent replies are not passed to the predictor");
+});
+
 test("offline mini chat is the default conversation engine", () => {
   assert.match(html, /id="chat-engine"/, "no engine choice");
   assert.match(app, /function chatEngine\(/, "no engine selector");

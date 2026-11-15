@@ -1980,9 +1980,14 @@
   function miniAnswer(text) {
     if (!miniChat) return "";
     var context = (chat.miniContext || []).slice(-3).join(" ");
-    var reply = miniChat.reply(text, { last: chat.lastMini || "", context: context });
+    var reply = miniChat.reply(text, {
+      last: chat.lastMini || "",
+      context: context,
+      recent: (chat.recentMini || []).slice(-4)
+    });
     if (reply) {
       chat.lastMini = reply;
+      chat.recentMini = (chat.recentMini || []).concat([reply]).slice(-6);
       chat.miniContext = (chat.miniContext || []).concat([text, reply]).slice(-4);
     }
     return reply;
