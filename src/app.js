@@ -5858,7 +5858,10 @@
       state.trackMet[id] = true;
       var card = state.cards[id];
       if (ok && card && EX && EX.isProduction(session.currentType)) {
+        var now = Date.now();
         card.prod = (card.prod || 0) + 1;
+        card.prodAt = now;
+        card.prodDue = now + 14 * 86400000;
       }
     }
     var wasReplay = replay;
@@ -6261,7 +6264,7 @@
       var it = itemOf(id);
       var card = state.cards[id];
       return (it.kind === "word" || it.kind === "phrase") && atLevel(id) &&
-        card && card.reps > 0 && !card.prod;
+        card && card.reps > 0 && (!card.prod || !card.prodDue || card.prodDue <= now);
     }).sort(function (a, b) {
       var ca = state.cards[a], cb = state.cards[b];
       var da = ca.due <= now ? 0 : 1, db = cb.due <= now ? 0 : 1;

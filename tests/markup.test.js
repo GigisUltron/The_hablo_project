@@ -504,6 +504,12 @@ test("Progress reports real recall accuracy and requires data", () => {
   assert.match(app, /stats\.retention, stats\.reviews/);
 });
 
+test("produced cards return to production practice after two weeks", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /card\.prodDue = now \+ 14 \* 86400000/);
+  assert.match(app, /!card\.prod \|\| !card\.prodDue \|\| card\.prodDue <= now/);
+});
+
 test("Progress can launch a production-only practice session", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(html, /id="produce-practice"/);
