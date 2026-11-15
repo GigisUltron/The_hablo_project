@@ -817,6 +817,10 @@ test("listen-and-type is a routed production exercise", () => {
   assert.match(app, /words\.push\("listen-type"\)/, "custom lessons omit listen-type");
 });
 
+test("a standard lesson carries at least ten retrieval cards", () => {
+  assert.match(app, /plan\.size \+ 4, Math\.max\(goal, 10\)/, "the default lesson is still a short sample");
+});
+
 test("quiz task phase is randomized per session", () => {
   assert.match(app, /taskShift: Math\.floor\(Math\.random\(\) \* 4\)/, "no task phase shift");
   assert.match(app, /var tick = i \+ \(session\.taskShift \|\| 0\)/, "task rules do not use the shift");

@@ -2829,7 +2829,7 @@
     var hist = (state.history || []).map(function (h) { return typeof h === "number" ? h : h && h.size; });
     var goal = ADAPT ? ADAPT.nextGoal(ADAPT.dailyGoal(hist), hist.slice(-3)) : 8;
     var chosen = o.size || lessonSize();
-    var size = chosen || Math.min(plan.size + 2, goal);
+    var size = chosen || Math.min(plan.size + 4, Math.max(goal, 10));
     var fields = unit && unit.fields ? unit.fields : selectedFields();
     var now = Date.now();
 
