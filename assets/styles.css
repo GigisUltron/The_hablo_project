@@ -2210,17 +2210,44 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .language-list { display: grid; gap: 6px; }
 .language-card {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: stretch;
   min-height: 52px;
-  padding: 8px 12px;
+  padding: 0;
   border: 2px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--card);
   color: var(--text);
+  overflow: hidden;
+}
+.language-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
   text-align: left;
+  font: inherit;
   cursor: pointer;
 }
+.language-pick:focus-visible,
+.language-remove:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+.language-remove {
+  flex: none;
+  width: 44px;
+  border: 0;
+  border-left: 1px solid var(--line);
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.language-remove:hover { color: var(--bad); background: var(--bad-soft); }
 .language-card.is-active { border-color: var(--accent); background: var(--accent-soft); }
 .language-card .flag { font-size: 24px; }
 .language-card .name { font-weight: 700; }

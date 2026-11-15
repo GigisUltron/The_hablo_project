@@ -1055,6 +1055,13 @@ test("back steps to the previous task while X exits with confirmation", () => {
   assert.match(app, /\$\("quit-btn"\)\.addEventListener\("click", leaveSession\)/, "X no longer asks before exit");
 });
 
+test("a language can be removed only through confirmation", () => {
+  assert.match(app, /data-remove-lang/, "no remove control");
+  assert.match(app, /askConfirm\(tr\("removeLanguage"/, "removal is not confirmed");
+  assert.match(app, /delete state\.profile\.byLang\[code\]/, "language progress is not deleted");
+  assert.match(app, /languages\.length > 1/, "the last language has no guard");
+});
+
 test("settings keeps a language library and adds via entry exam", () => {
   assert.match(html, /id="language-list"/, "no language library");
   assert.match(html, /id="add-lang-btn"/, "no add-language control");

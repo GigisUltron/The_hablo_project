@@ -932,17 +932,32 @@
     if (languages.indexOf(ACTIVE.code) === -1) languages.unshift(ACTIVE.code);
     box.innerHTML = languages.map(function (code) {
       var lv = (state.profile.levelByLang && state.profile.levelByLang[code]) || "A1";
-      return '<button class="language-card' + (code === ACTIVE.code ? " is-active" : "") +
-        '" type="button" data-lang-card="' + esc(code) + '">' +
-        '<span class="flag" aria-hidden="true">' + (LANG_FLAGS[code] || "") + "</span>" +
-        '<span class="name">' + esc(uiName(code)) + "</span>" +
-        '<span class="level">' + esc(lv) + "</span></button>";
+      return '<div class="language-card' + (code === ACTIVE.code ? " is-active" : "") + '">' +
+        '<button class="language-pick" type="button" data-lang-card="' + esc(code) + '">' +
+          '<span class="flag" aria-hidden="true">' + (LANG_FLAGS[code] || "") + "</span>" +
+          '<span class="name">' + esc(uiName(code)) + "</span>" +
+          '<span class="level">' + esc(lv) + "</span></button>" +
+        (languages.length > 1
+          ? '<button class="language-remove" type="button" data-remove-lang="' + esc(code) +
+            '" aria-label="' + esc(tr("removeLanguage", "Remove language") + " " + uiName(code)) +
+            '" title="' + esc(tr("removeLanguage", "Remove language")) + '">×</button>'
+          : "") +
+      "</div>";
     }).join("");
     Array.prototype.forEach.call(box.querySelectorAll("[data-lang-card]"), function (b) {
       b.addEventListener("click", function () {
         if (b.getAttribute("data-lang-card") === ACTIVE.code) return;
         switchLang(b.getAttribute("data-lang-card"));
         renderLanguageLibrary();
+      });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll("[data-remove-lang]"), function (b) {
+      b.addEventListener("click", function () {
+        var code = b.getAttribute("data-remove-lang");
+        askConfirm(tr("removeLanguage", "Remove language"),
+          uiName(code) + " — " + tr("removeLanguageConfirm", "All progress for this language will be deleted. This cannot be undone."),
+          tr("remove", "Remove"),
+          function () { removeLanguage(code); });
       });
     });
     if (select) {
@@ -953,6 +968,24 @@
       select.disabled = !available.length;
     }
     if (add) add.disabled = !available.length;
+  }
+
+  function removeLanguage(code) {
+    if (!state.profile || !code || !LANGS.has(code)) return;
+    var languages = (state.profile.languages || []).filter(function (x) { return x !== code; });
+    if (!languages.length) return;
+    if (ACTIVE.code === code) switchLang(languages[0]);
+    state.profile.languages = languages;
+    delete state.profile.byLang[code];
+    delete state.profile.levelByLang[code];
+    if (state.chat) delete state.chat[code];
+    state.profile.recentLangs = (state.profile.recentLangs || []).filter(function (x) { return x !== code; });
+    if (state.profile.lang === code) state.profile.lang = ACTIVE.code;
+    save();
+    renderLanguageLibrary();
+    renderToday();
+    renderStats();
+    toast(uiName(code) + " · " + tr("done", "removed"), 1800);
   }
 
   function renderSettingsOptions() {
