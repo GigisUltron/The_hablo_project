@@ -72,6 +72,11 @@ var SEMA_DATA = {
     { id: "en-speak", emoji: "💬", word: "speak", article: "", cat: "action", sentence: "I speak with my mother." },
     { id: "en-listen", emoji: "👂", word: "listen", article: "", cat: "action", sentence: "I listen to the rain." },
     { id: "en-freedom", emoji: "🗽", word: "freedom", article: "the", cat: "abstract", sentence: "Freedom has a price." },
+    { id: "en-decision", emoji: "⚖️", word: "decision", article: "the", cat: "abstract", sentence: "I made a difficult decision.", synonyms: ["choice"] },
+    { id: "en-purpose", emoji: "🎯", word: "purpose", article: "the", cat: "abstract", sentence: "My purpose is to learn English.", synonyms: ["aim"] },
+    { id: "en-challenge", emoji: "🧗", word: "challenge", article: "the", cat: "abstract", sentence: "The challenge is big but possible.", synonyms: ["difficulty"] },
+    { id: "en-achievement", emoji: "🏆", word: "achievement", article: "the", cat: "abstract", sentence: "We are celebrating your achievement.", synonyms: ["success"] },
+    { id: "en-risk", emoji: "⚠️", word: "risk", article: "the", cat: "abstract", sentence: "There is a small risk.", synonyms: ["danger"] },
   ],
 
   edges: [
@@ -112,6 +117,11 @@ var SEMA_DATA = {
     { a: "en-eat", b: "en-drink", type: "related" },
     { a: "en-sea", b: "en-mountain", type: "related" },
     { a: "en-freedom", b: "en-fear", type: "opposite" },
+    { a: "en-decision", b: "en-freedom", type: "related" },
+    { a: "en-purpose", b: "en-love", type: "related" },
+    { a: "en-challenge", b: "en-mountain", type: "related" },
+    { a: "en-achievement", b: "en-joy", type: "related" },
+    { a: "en-risk", b: "en-fear", type: "related" },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_DATA;

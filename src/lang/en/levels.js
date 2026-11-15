@@ -233,6 +233,11 @@ var SEMA_LEVELS = {
   "ph-en-past-just-sat": "B1",
   "ph-en-past-driving": "B2",
   "ph-en-past-pouring": "B2",
+  "en-decision": "B1",
+  "en-purpose": "B1",
+  "en-challenge": "B2",
+  "en-achievement": "B2",
+  "en-risk": "B1",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
 if (typeof window !== "undefined") {

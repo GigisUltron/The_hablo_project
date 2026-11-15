@@ -224,6 +224,11 @@ var SEMA_GLOSSES = {
   "ph-fr-plans-cancel": "I have to cancel what I'd planned for Saturday.",
   "ph-fr-plans-conditional": "If all goes well, we'll leave next week.",
   "ph-fr-plans-depend": "It will depend on work; I'll tell you on Friday.",
+  "décision": "decision",
+  "but": "purpose",
+  "défi": "challenge",
+  "réussite": "achievement",
+  "risque": "risk",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {

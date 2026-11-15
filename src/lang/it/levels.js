@@ -199,6 +199,11 @@ var SEMA_LEVELS = {
   "ph-it-opinion-partly": "B1",
   "ph-it-opinion-convinced": "B2",
   "ph-it-opinion-concerned": "B2",
+  "it-decisione": "B1",
+  "it-scopo": "B1",
+  "it-sfida": "B2",
+  "it-risultato": "B2",
+  "it-rischio": "B1",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
 if (typeof window !== "undefined") {

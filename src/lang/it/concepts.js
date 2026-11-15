@@ -56,6 +56,11 @@ var SEMA_DATA = {
     { id: "it-day", emoji: "📅", word: "giorno", article: "il", cat: "time", sentence: "Il giorno è lungo." },
     { id: "it-love", emoji: "💗", word: "amore", article: "l'", cat: "emotion", sentence: "L'amore non si spiega." },
     { id: "it-eat", emoji: "🍽️", word: "mangiare", article: "", cat: "action", sentence: "Voglio mangiare del pane." },
+    { id: "it-decisione", emoji: "⚖️", word: "decisione", article: "la", cat: "abstract", sentence: "Ho preso una decisione difficile.", synonyms: ["scelta"] },
+    { id: "it-scopo", emoji: "🎯", word: "scopo", article: "lo", cat: "abstract", sentence: "Il mio scopo è imparare l'italiano.", synonyms: ["obiettivo"] },
+    { id: "it-sfida", emoji: "🧗", word: "sfida", article: "la", cat: "abstract", sentence: "La sfida è grande, ma possibile.", synonyms: ["difficoltà"] },
+    { id: "it-risultato", emoji: "🏆", word: "risultato", article: "il", cat: "abstract", sentence: "Festeggiamo il tuo risultato.", synonyms: ["successo"] },
+    { id: "it-rischio", emoji: "⚠️", word: "rischio", article: "il", cat: "abstract", sentence: "C'è un piccolo rischio.", synonyms: ["pericolo"] },
   ],
 
   edges: [
@@ -84,6 +89,11 @@ var SEMA_DATA = {
     { a: "it-sun", b: "it-sea", type: "related" },
     { a: "it-car", b: "it-train", type: "related" },
     { a: "it-city", b: "it-house", type: "related" },
+    { a: "it-decisione", b: "it-love", type: "related" },
+    { a: "it-scopo", b: "it-heart", type: "related" },
+    { a: "it-sfida", b: "it-sea", type: "related" },
+    { a: "it-risultato", b: "it-city", type: "related" },
+    { a: "it-rischio", b: "it-car", type: "related" },
   ]
 };
 

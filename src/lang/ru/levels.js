@@ -104,6 +104,11 @@ var SEMA_LEVELS = {
   "ph-ru-visit-grandmother": "A2",
   "ph-ru-flight-delayed": "A2",
   "ph-ru-book-doctor": "B1",
+  "ru-reshenie": "B1",
+  "ru-tsel": "B1",
+  "ru-vyzov": "B2",
+  "ru-dostizhenie": "B2",
+  "ru-risk": "B1",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

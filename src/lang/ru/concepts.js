@@ -56,6 +56,11 @@ var SEMA_DATA = {
     { id: "ru-day", emoji: "📅", word: "день", article: "", cat: "time", sentence: "День длинный." },
     { id: "ru-love", emoji: "💗", word: "любовь", article: "", cat: "emotion", sentence: "Любовь не объяснить." },
     { id: "ru-eat", emoji: "🍽️", word: "есть", article: "", cat: "action", sentence: "Я хочу есть." },
+    { id: "ru-reshenie", emoji: "⚖️", word: "решение", article: "", cat: "abstract", sentence: "Я принял трудное решение.", synonyms: ["выбор"] },
+    { id: "ru-tsel", emoji: "🎯", word: "цель", article: "", cat: "abstract", sentence: "Моя цель — учить русский.", synonyms: ["задача"] },
+    { id: "ru-vyzov", emoji: "🧗", word: "вызов", article: "", cat: "abstract", sentence: "Это большой вызов.", synonyms: ["испытание"] },
+    { id: "ru-dostizhenie", emoji: "🏆", word: "достижение", article: "", cat: "abstract", sentence: "Мы отмечаем твоё достижение.", synonyms: ["успех"] },
+    { id: "ru-risk", emoji: "⚠️", word: "риск", article: "", cat: "abstract", sentence: "Есть небольшой риск.", synonyms: ["опасность"] },
   ],
 
   edges: [
@@ -84,6 +89,11 @@ var SEMA_DATA = {
     { a: "ru-sun", b: "ru-sea", type: "related" },
     { a: "ru-car", b: "ru-train", type: "related" },
     { a: "ru-city", b: "ru-house", type: "related" },
+    { a: "ru-reshenie", b: "ru-love", type: "related" },
+    { a: "ru-tsel", b: "ru-city", type: "related" },
+    { a: "ru-vyzov", b: "ru-sea", type: "related" },
+    { a: "ru-dostizhenie", b: "ru-heart", type: "related" },
+    { a: "ru-risk", b: "ru-car", type: "related" },
   ]
 };
 

@@ -224,6 +224,11 @@ var SEMA_GLOSSES = {
   "ph-es-work-tenure": "I've been at the same company for five years.",
   "ph-es-work-team": "I'm in charge of a team of six.",
   "ph-es-work-remote": "As long as I give notice in advance, I can work from home.",
+  "decisión": "decision",
+  "propósito": "purpose",
+  "desafío": "challenge",
+  "logro": "achievement",
+  "riesgo": "risk",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {

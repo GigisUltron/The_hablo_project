@@ -85,7 +85,12 @@ var SEMA_DATA = {
     { id: "ecouter",  emoji: "👂", word: "écouter",  article: "",   cat: "action",   sentence: "J'écoute la pluie." },
 
     { id: "paix",     emoji: "☮️", word: "paix",     article: "la", cat: "abstract", sentence: "La paix est fragile." },
-    { id: "liberte",  emoji: "🗽", word: "liberté",  article: "la", cat: "abstract", sentence: "La liberté a un prix." }
+    { id: "liberte",  emoji: "🗽", word: "liberté",  article: "la", cat: "abstract", sentence: "La liberté a un prix." },
+    { id: "décision", emoji: "⚖️", word: "décision", article: "la", cat: "abstract", sentence: "J'ai pris une décision difficile.", synonyms: ["choix"] },
+    { id: "but", emoji: "🎯", word: "but", article: "le", cat: "abstract", sentence: "Mon but est d'apprendre le français.", synonyms: ["objectif"] },
+    { id: "défi", emoji: "🧗", word: "défi", article: "le", cat: "abstract", sentence: "Le défi est grand, mais possible.", synonyms: ["challenge"] },
+    { id: "réussite", emoji: "🏆", word: "réussite", article: "la", cat: "abstract", sentence: "Nous célébrons ta réussite.", synonyms: ["succès"] },
+    { id: "risque", emoji: "⚠️", word: "risque", article: "le", cat: "abstract", sentence: "Il y a un petit risque.", synonyms: ["danger"] },
   ],
 
   /* The semantic web, translated edge for edge. Distractors come from here
@@ -133,7 +138,12 @@ var SEMA_DATA = {
     { a: "soleil",   b: "mer",      type: "related" },
     { a: "montagne", b: "mer",      type: "related" },
     { a: "fenetre",  b: "soleil",   type: "related" },
-    { a: "dormir",   b: "nuit",     type: "related" }
+    { a: "dormir",   b: "nuit",     type: "related" },
+    { a: "décision", b: "temps", type: "related" },
+    { a: "but", b: "amour", type: "related" },
+    { a: "défi", b: "montagne", type: "related" },
+    { a: "réussite", b: "joie", type: "related" },
+    { a: "risque", b: "peur", type: "related" },
   ]
 };
 

@@ -224,6 +224,11 @@ var SEMA_LEVELS = {
   "ph-es-work-tenure": "B1",
   "ph-es-work-team": "B1",
   "ph-es-work-remote": "B2",
+  "decisión": "B1",
+  "propósito": "B1",
+  "desafío": "B2",
+  "logro": "B2",
+  "riesgo": "B1",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
 if (typeof window !== "undefined") {

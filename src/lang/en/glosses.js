@@ -235,6 +235,11 @@ var SEMA_GLOSSES = {
   "ph-en-past-just-sat": "I had just sat down when the phone rang.",
   "ph-en-past-driving": "We had driven for hours before we found the turning.",
   "ph-en-past-pouring": "It had rained heavily all morning, so we stayed indoors.",
+  "en-decision": "decision",
+  "en-purpose": "purpose",
+  "en-challenge": "challenge",
+  "en-achievement": "achievement",
+  "en-risk": "risk",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {

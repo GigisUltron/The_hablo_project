@@ -86,6 +86,10 @@ Lessons use spaced repetition. What you miss comes back before the session ends 
 - skipping a typing card removes it from the queue; it earns no XP, coin, streak or path progress
 - **personal anchors** remain available on the recall fallback for packs without synonym pairs
 
+### Advanced vocabulary
+
+The five core packs (Spanish, French, English, Italian and Russian) also carry a small B1/B2 abstract layer — decision, purpose, challenge, achievement and risk — with sentences, English glosses, synonym tasks and newly generated local audio. It appears once the learner’s band reaches it, so a C1 placement is no longer opened on A1 words alone. The path is unchanged; these words extend lessons and synonym practice.
+
 ### Reading
 
 Each full course has eight reading texts across A1–B2. Starter courses have five. Every text has three multiple-choice questions and an explanation for each wrong option. The text screen also has **Listen to text**, which reads the title and body through the same installed voice used by conversation, and **Write me a text**, which asks the local model for a short new text at the learner's level using the personal context. Generated texts are read-only; if no model answers, the packed text stays.

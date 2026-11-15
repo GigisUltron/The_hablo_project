@@ -224,6 +224,11 @@ var SEMA_LEVELS = {
   "ph-fr-plans-cancel": "B2",
   "ph-fr-plans-conditional": "B1",
   "ph-fr-plans-depend": "B1",
+  "décision": "B1",
+  "but": "B1",
+  "défi": "B2",
+  "réussite": "B2",
+  "risque": "B1",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
 if (typeof window !== "undefined") {

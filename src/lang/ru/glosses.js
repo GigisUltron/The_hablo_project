@@ -111,6 +111,11 @@ var SEMA_GLOSSES = {
   "ph-ru-visit-grandmother": "On Saturday we're going to my grandmother's.",
   "ph-ru-flight-delayed": "Our flight was delayed by two hours.",
   "ph-ru-book-doctor": "I need to make an appointment with the doctor for tomorrow.",
+  "ru-reshenie": "decision",
+  "ru-tsel": "purpose",
+  "ru-vyzov": "challenge",
+  "ru-dostizhenie": "achievement",
+  "ru-risk": "risk",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

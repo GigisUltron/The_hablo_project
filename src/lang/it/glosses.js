@@ -199,6 +199,11 @@ var SEMA_GLOSSES = {
   "ph-it-opinion-partly": "I only partly agree.",
   "ph-it-opinion-convinced": "I'm not convinced, but I understand your reasons.",
   "ph-it-opinion-concerned": "As far as I'm concerned, the situation has improved.",
+  "it-decisione": "decision",
+  "it-scopo": "purpose",
+  "it-sfida": "challenge",
+  "it-risultato": "achievement",
+  "it-rischio": "risk",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {
