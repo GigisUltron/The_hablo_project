@@ -1484,11 +1484,14 @@
     $("alphabet-stage").innerHTML =
       '<p class="prompt">' + esc(tr("theScript", "The script")) + "</p>" +
       '<div class="letter-big" lang="' + esc((LANG && LANG.locale) || "") + '">' + esc(l.letter) + "</div>" +
-      '<p class="letter-name">' + esc(l.name) + "</p>" +
+      (String(l.name || "").toLowerCase() !== String(l.letter || "").toLowerCase()
+        ? '<p class="letter-name">' + esc(l.name) + "</p>" : "") +
       (l.hint ? '<p class="letter-hint">' + esc(l.hint) + "</p>" : "") +
       (l.example
-        ? '<button class="letter-example" id="letter-hear" type="button" aria-label="' +
-            esc(tr("hearit", "Hear it")) + '">' + ICON.speaker + "<span>" + esc(l.example) + "</span></button>"
+        ? (audioAvailable()
+          ? '<button class="letter-example" id="letter-hear" type="button" aria-label="' +
+              esc(tr("hearit", "Hear it")) + '">' + ICON.speaker + "<span>" + esc(l.example) + "</span></button>"
+          : '<p class="letter-example-text">' + esc(l.example) + "</p>")
         : "");
 
     var hear = $("letter-hear");
@@ -1496,7 +1499,7 @@
     /* only the bundled clip plays on arrival; a synthesized voice on every
      * letter would talk over the learner */
     var exampleId = exampleIdFor(l.example);
-    if (exampleId && bundled && bundled[exampleId]) sayItem(itemOf(exampleId));
+    if (exampleId && audioAvailable() && bundled && bundled[exampleId]) sayItem(itemOf(exampleId));
 
     $("alphabet-actions").innerHTML =
       '<button class="btn btn-primary" id="letter-next">' +
@@ -1645,6 +1648,15 @@
     $("write-check").addEventListener("click", function () {
       checkWriting(it, input ? input.value : "");
     });
+    $("actions").innerHTML = typingSkipHTML();
+    wireTypingSkip(skipWriting);
+  }
+
+  function skipWriting() {
+    if (!writing) return;
+    writing.i += 1;
+    if (writing.i >= writing.queue.length) finishWriting();
+    else renderWritingCard();
   }
 
   function checkWriting(it, answer) {
@@ -1706,6 +1718,10 @@
     S.review(state, it.id, ok ? 2 : 0, Date.now());
     save();
 
+    $("card").classList.add("is-answered");
+    Array.prototype.forEach.call($("stage").querySelectorAll("button, input, select, textarea"), function (el) {
+      el.disabled = true;
+    });
     $("feedback").textContent = message;
     $("feedback").className = "feedback " + (ok ? "good" : "bad");
     $("actions").innerHTML = glossHTML(it.id) +
@@ -2450,11 +2466,12 @@
   /* ------------------------------------------------------------ placement */
 
   var placement = null;
-  var PLACEMENT_TOTAL = 10;
+  var PLACEMENT_TOTAL = 12;
 
-  /* Eight questions on a staircase, not a random sample. Two correct answers
-   * in a row move the next question up a CEFR band; a miss steps back one.
-   * The learner never picks a level by hand. */
+  /* Twelve questions on a staircase, not a random sample. Three correct
+   * answers in a row move the next question up a CEFR band; a miss steps back
+   * one. A perfect run can reach C1, and the question's band is visible in the
+   * counter. The learner never picks a level by hand. */
   function startPlacement() {
     placement = { i: 0, correct: 0, band: 0, streak: 0, peak: 0, asked: {}, id: null };
     show("session");
@@ -2496,7 +2513,8 @@
     var it = itemOf(id);
     var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
 
-    $("counter").textContent = (placement.i + 1) + "/" + PLACEMENT_TOTAL;
+    $("counter").textContent = (placement.i + 1) + "/" + PLACEMENT_TOTAL +
+      " · " + (ADAPT.CEFR[placement.band] || "A1");
     $("bar-fill").style.width = Math.round((placement.i / PLACEMENT_TOTAL) * 100) + "%";
 
     var prompt = translationFor(id) || glossFor(id) || it.sub || "";
@@ -2527,9 +2545,9 @@
       var at = ADAPT.CEFR.indexOf(itemLevel(id));
       if (at > maxBand) maxBand = at;
     });
-    /* A short placement test can open A1/A2/B1; B2 and C1 are earned through
-     * study, not inferred from eight multiple-choice taps. */
-    var bandIndex = Math.min(placement.band, maxBand, 2);
+    /* Twelve answers can open any band the deck actually carries; a perfect
+     * run should reach C1 if C1 material exists. */
+    var bandIndex = Math.min(placement.band, maxBand);
     var band = ADAPT.CEFR[bandIndex] || "A1";
     var floor = Math.min(units.length - 1, bandIndex * 2);
     state.placement = { floor: floor, band: band, score: correct, total: total, at: Date.now() };
@@ -4084,7 +4102,7 @@
   function clearCard() {
     $("stage").innerHTML = "";
     $("actions").innerHTML = "";
-    $("card").classList.remove("is-summary", "is-answered");
+    $("card").classList.remove("is-summary", "is-answered", "is-reviewing");
     var f = $("feedback");
     f.textContent = "";
     f.className = "feedback";
@@ -4659,21 +4677,30 @@
   /* Listen and pick: the clip first, the text only in the four answers. */
   function renderListen(id) {
     var it = itemOf(id);
+    if (!audioAvailable()) {
+      $("stage").innerHTML =
+        '<p class="prompt">' + esc(tr("listenPick", "Listen and pick")) + "</p>" +
+        '<p class="sentence">' + esc(tr("audioUnavailable", "Audio is unavailable on this device. Skip this one.")) + "</p>";
+      $("actions").innerHTML = '<button class="btn btn-ghost" id="skip">' + esc(tr("skip", "Skip")) + "</button>";
+      $("skip").addEventListener("click", skipCard);
+      return;
+    }
     var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
 
     $("stage").innerHTML =
-      '<p class="prompt">' + esc(tr("listenPick", "Listen and pick")) + "</p>" +
-      '<div class="listen-face">' +
-        '<button class="speak-btn round" id="hear-btn" aria-label="' + esc(tr("hearit", "Hear it")) + '" title="' + esc(tr("hearit", "Hear it")) + '"' + (audioAvailable() ? "" : " disabled") + ">" +
-          ICON.speaker + "</button>" +
+      '<div class="listen-line">' +
+        '<p class="prompt">' + esc(tr("listenPick", "Listen and pick")) + "</p>" +
+        (audioAvailable()
+          ? '<button class="speak-btn round" id="hear-btn" aria-label="' + esc(tr("hearit", "Hear it")) + '" title="' + esc(tr("hearit", "Hear it")) + '">' + ICON.speaker + "</button>"
+          : "") +
       "</div>" +
       '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
     $("actions").innerHTML = glossHTML(id) +
       '<button class="btn btn-ghost" id="skip">' + esc(tr("skip", "Skip")) + "</button>";
     wireGloss();
 
-    sayItem(it);
-    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
+    if (audioAvailable()) sayItem(it);
+    if ($("hear-btn")) $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
     $("skip").addEventListener("click", skipCard);
     Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
       btn.addEventListener("click", function () {
@@ -4816,16 +4843,65 @@
     });
   }
 
+  /* Typing is production, not a spelling bee: case, accents and punctuation
+   * are already folded by S.similarity. A non-Latin item also accepts its
+   * authored reading (sub) so a Latin keyboard is not a dead end. */
+  function acceptedAnswers(it) {
+    var out = [it.text];
+    function add(value) {
+      var v = String(value || "").trim();
+      if (v && out.indexOf(v) === -1) out.push(v);
+    }
+    if (it.sub && WRITING && WRITING.hasScript(it.text) && !WRITING.hasScript(it.sub)) add(it.sub);
+    ["accept", "alternatives", "answers"].forEach(function (key) {
+      if (Array.isArray(it[key])) it[key].forEach(add);
+    });
+    return out.filter(Boolean);
+  }
+
+  function bestAnswer(typed, it) {
+    var best = it.text;
+    var bestScore = -1;
+    acceptedAnswers(it).forEach(function (answer) {
+      var score = S.similarity(typed, answer, ACTIVE && ACTIVE.code);
+      if (score > bestScore) { best = answer; bestScore = score; }
+    });
+    return { answer: best, score: bestScore };
+  }
+
+  function typingSkipHTML() {
+    return '<button class="btn btn-ghost btn-sm" id="skip-typing" type="button">' +
+      esc(tr("skipTyping", "Skip typing")) + "</button>";
+  }
+
+  function wireTypingSkip(handler) {
+    var btn = $("skip-typing");
+    if (btn) btn.addEventListener("click", handler || skipCard);
+  }
+
   /* Audio first, production second: no target text is shown. */
   function renderListenType(id) {
     var it = itemOf(id);
+    if (!audioAvailable()) {
+      $("stage").innerHTML =
+        '<p class="prompt">' + esc(tr("listenType", "Listen and type")) + " · " + esc(uiName(LANG.code)) + "</p>" +
+        '<p class="sentence">' + esc(tr("audioUnavailable", "Audio is unavailable on this device. Skip this one.")) + "</p>";
+      $("actions").innerHTML = typingSkipHTML();
+      wireTypingSkip(skipCard);
+      return;
+    }
     $("stage").innerHTML =
-      '<p class="prompt">' + esc(tr("listenType", "Listen and type")) + " · " + esc(uiName(LANG.code)) + "</p>" +
-      '<div class="listen-face"><button class="speak-btn round" id="hear-btn" aria-label="' + esc(tr("hearit", "Hear it")) + '" title="' + esc(tr("hearit", "Hear it")) + '"' + (audioAvailable() ? "" : " disabled") + ">" + ICON.speaker + "</button></div>" +
+      '<div class="listen-line">' +
+        '<p class="prompt">' + esc(tr("listenType", "Listen and type")) + " · " + esc(uiName(LANG.code)) + "</p>" +
+        (audioAvailable()
+          ? '<button class="speak-btn round" id="hear-btn" aria-label="' + esc(tr("hearit", "Hear it")) + '" title="' + esc(tr("hearit", "Hear it")) + '">' + ICON.speaker + "</button>"
+          : "") +
+      "</div>" +
       '<input class="type-input" id="type-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="' + esc(tr("typeIt", "type it")) + '" />' +
       '<button class="btn btn-primary" id="write-check">' + esc(tr("check", "Check")) + '</button>';
-    sayItem(it);
-    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
+    if (audioAvailable()) sayItem(it);
+    var hearBtn = $("hear-btn");
+    if (hearBtn) hearBtn.addEventListener("click", function () { sayItem(it, this); });
     var input = $("type-input");
     if (input) {
       input.focus();
@@ -4834,7 +4910,8 @@
       });
     }
     $("write-check").addEventListener("click", function () { submitWrite(id, it); });
-    $("actions").innerHTML = "";
+    $("actions").innerHTML = typingSkipHTML();
+    wireTypingSkip(skipCard);
   }
 
   function renderTypeTranslation(id) {
@@ -4855,7 +4932,8 @@
       });
     }
     $("write-check").addEventListener("click", function () { submitWrite(id, it); });
-    $("actions").innerHTML = "";
+    $("actions").innerHTML = typingSkipHTML();
+    wireTypingSkip(skipCard);
   }
 
   function renderWrite(id) {
@@ -4877,15 +4955,17 @@
       });
     }
     $("write-check").addEventListener("click", function () { submitWrite(id, it); });
-    $("actions").innerHTML = glossHTML(id);
+    $("actions").innerHTML = glossHTML(id) + typingSkipHTML();
     wireGloss();
+    wireTypingSkip(skipCard);
   }
 
   function submitWrite(id, it) {
     var input = $("type-input");
     var typed = input ? input.value : "";
-    var score = S.similarity(typed, it.text, ACTIVE && ACTIVE.code);
-    var kind = CORRECT ? CORRECT.classify(typed, it.text, ACTIVE && ACTIVE.code) : "spelling";
+    var best = bestAnswer(typed, it);
+    var score = best.score;
+    var kind = CORRECT ? CORRECT.classify(typed, best.answer, ACTIVE && ACTIVE.code) : "spelling";
     var articleMiss = kind === "article" || kind === "extra-article" || kind === "missing-article";
 
     if (score >= 0.8 && !articleMiss) { answer(true, null); return; }
@@ -4893,8 +4973,8 @@
     /* A tutor says what was wrong, not just that it was. */
     var key = "correction" + kind.replace(/-([a-z])/g, function (_, c) { return c.toUpperCase(); });
     var message = tr(key, "");
-    if (!message) message = CORRECT ? CORRECT.message(kind, it.text) : tr("notQuite", "Not quite");
-    toast(message.replace("{word}", it.text));
+    if (!message) message = CORRECT ? CORRECT.message(kind, best.answer) : tr("notQuite", "Not quite");
+    toast(message.replace("{word}", best.answer));
     answer(false, null);
   }
 
@@ -5006,6 +5086,13 @@
     var mic = $("mic-btn");
     if (mic) mic.disabled = true;
 
+    /* The task is answered: the in-card Check is no longer a valid action, and
+     * two filled buttons on one card read as a choice that does not exist. */
+    $("card").classList.add("is-answered");
+    Array.prototype.forEach.call($("stage").querySelectorAll("button, input, select, textarea"), function (el) {
+      el.disabled = true;
+    });
+
     feedback(ok ? tr("correct", "Correct") : tr("comesBack", "Comes back"), ok ? "good" : "bad", it);
 
     var advance = function () { session.qi += 1; renderQuiz(); };
@@ -5038,13 +5125,19 @@
 
   function showPreviousTask() {
     if (!session || !session.history.length) return;
-    var at = session.history.length - 1;
-    if (session.history[at].qi === session.qi && at > 0) at -= 1;
-    var snap = session.history[at];
+    /* The snapshot records the task's qi. Pick the latest snapshot at or
+     * before the previous task, not "last minus one": replays and repeated
+     * back taps used to skip two tasks. */
+    var target = Math.max(0, session.qi - 1);
+    var snap = null;
+    for (var i = session.history.length - 1; i >= 0; i -= 1) {
+      if (session.history[i].qi <= target) { snap = session.history[i]; break; }
+    }
     if (!snap) return;
     if (session.advanceTimer) clearTimeout(session.advanceTimer);
     session.advanceTimer = 0;
     session.viewing = snap;
+    $("card").classList.remove("is-answered");
     $("card").classList.add("is-reviewing");
     $("stage").innerHTML = snap.stage;
     $("feedback").innerHTML = snap.feedback;
@@ -5054,6 +5147,9 @@
     Array.prototype.forEach.call($("stage").querySelectorAll("button, input, select, textarea"), function (el) {
       el.disabled = true;
     });
+    /* The restored feedback contains its own "show translation" control. It
+     * was cloned as HTML, so it needs a fresh listener after every restore. */
+    wireGloss();
     $("actions").innerHTML = '<button class="btn btn-primary" id="return-task" type="button" aria-label="' + esc(tr("returnTask", "Return to current task")) + '">→</button>';
     $("return-task").addEventListener("click", function () {
       session.viewing = null;

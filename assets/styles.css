@@ -2229,6 +2229,11 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .card.is-reviewing .stage { opacity: 0.92; }
 .card.is-reviewing .option-word:disabled,
 .card.is-reviewing .option:disabled { cursor: default; }
+/* after an answer, the in-card check is gone; the only filled action is the
+   one that moves on */
+.card.is-answered .stage .btn-primary,
+.card.is-reviewing .stage .btn-primary { display: none; }
+.card.is-answered .stage .type-input { color: var(--text-2); }
 .card .card-actions #return-task {
   width: 52px;
   min-width: 52px;

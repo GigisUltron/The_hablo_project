@@ -206,6 +206,12 @@ test("eight correct answers reach B1, not B2 or C1", () => {
   assert.equal(p.peak, 2, "placement cannot infer B2/C1 from eight taps");
 });
 
+test("a perfect twelve-question run can reach C1", () => {
+  const p = { band: 0, streak: 0, correct: 0 };
+  for (let i = 0; i < 12; i += 1) A.placementStep(p, true);
+  assert.equal(A.CEFR[p.band], "C1");
+});
+
 test("the daily count is once per card and resets on a new day", () => {
   const dayOne = new Date(2026, 0, 1, 9, 0, 0).getTime();
   const dayTwo = new Date(2026, 0, 2, 9, 0, 0).getTime();

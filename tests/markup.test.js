@@ -368,6 +368,24 @@ test("every track unit has a mode the app can start", () => {
   for (const m of modes) assert.ok(["words", "phrases", "terms", "read", "script"].includes(m), "unknown mode " + m);
 });
 
+test("the reviewed task restores its translation control, and answered cards drop Check", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  const back = app.slice(app.indexOf("function showPreviousTask"), app.indexOf("function returnToTask"));
+  assert.match(back, /wireGloss\(\)/, "the restored feedback is not rewired");
+  assert.match(back, /session\.history\[i\]\.qi <= target/, "back does not select one previous task");
+  assert.match(app, /classList\.add\("is-answered"\)/);
+  assert.match(fs.readFileSync(path.join(__dirname, "..", "assets", "styles.css"), "utf8"),
+    /card\.is-answered \.stage \.btn-primary/);
+});
+
+test("typing has a visible skip and a non-Latin transliteration path", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /typingSkipHTML/);
+  assert.match(app, /acceptedAnswers/);
+  assert.match(app, /WRITING\.hasScript\(it\.text\)/);
+  assert.match(app, /tr\("skipTyping"/);
+});
+
 test("vocabulary expansion keeps audio, context and a way back to misses", () => {
   assert.match(html, /id="vocab-bar"/);
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
@@ -1056,8 +1074,9 @@ test("the authored dialogue is the offline conversation", () => {
   assert.match(app, /d\.turns\[chat\.scripted\.turn\]/, "the offline dialogue never advances");
 });
 
-test("placement cannot infer B2 from a short easy test", () => {
-  assert.match(app, /Math\.min\(placement\.band, maxBand, 2\)/, "placement is not capped at B1");
+test("placement can reach the deck's real ceiling from a perfect run", () => {
+  assert.match(app, /PLACEMENT_TOTAL = 12/, "placement is still the short ten");
+  assert.match(app, /Math\.min\(placement\.band, maxBand\)/, "placement is still capped at B1");
 });
 
 test("immersion does not turn a translation into the answer", () => {
@@ -1098,7 +1117,7 @@ test("the next lesson names the lesson and Progress mirrors the path", () => {
 
 test("the level is placed by the adaptive test, not by a settings control", () => {
   assert.equal(/data-level/.test(html), false, "a manual level control came back");
-  assert.match(app, /PLACEMENT_TOTAL = 10/, "placement is not bounded");
+  assert.match(app, /PLACEMENT_TOTAL = 12/, "placement is not bounded");
   assert.match(app, /ADAPT\.placementStep/, "placement is not a staircase");
   assert.match(app, /state\.profile\.levelByLang\[ACTIVE\.code\] = band/,
     "the placement result is not stored for the live language");

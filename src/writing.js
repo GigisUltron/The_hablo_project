@@ -23,7 +23,7 @@
 
   /* Punctuation and spacing carry no answer: 你好！ and 你好 are the same. */
   function normalise(text) {
-    var value = String(text == null ? "" : text);
+    var value = String(text == null ? "" : text).toLowerCase();
     try { value = value.normalize("NFKC"); } catch (err) { /* older engines */ }
     try { return value.replace(/[\p{P}\p{Z}\s]+/gu, ""); }
     catch (err) {
@@ -45,7 +45,11 @@
   function grade(answer, expected) {
     if (!normalise(answer)) return { ok: false, reason: "empty" };
     if (!hasScript(answer)) return { ok: false, reason: "latin-only" };
-    return { ok: normalise(answer) === normalise(expected), reason: "" };
+    var targets = Array.isArray(expected) ? expected : [expected];
+    var ok = targets.some(function (target) {
+      return normalise(answer) === normalise(target);
+    });
+    return { ok: ok, reason: "" };
   }
 
   function canRecall(item) {
