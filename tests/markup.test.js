@@ -803,6 +803,13 @@ test("a handcrafted item explanation wins over generic prose", () => {
   assert.match(app, /if \(it\.why\) return it\.why;/, "explanations are ignored");
 });
 
+test("matching pairs is a routed exercise", () => {
+  assert.match(app, /function renderMatch/, "no match renderer");
+  assert.match(app, /type === "match"/, "match is not routed");
+  assert.match(app, /match-grid/, "match has no columns");
+  assert.match(app, /matchPairs/, "match has no localized prompt");
+});
+
 test("listen-and-type is a routed production exercise", () => {
   assert.match(app, /function renderListenType/, "no listen-type renderer");
   assert.match(app, /type === "listen-type"/, "listen-type is not routed");

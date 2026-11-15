@@ -3186,6 +3186,7 @@
             ? ["translate", "type-translation", "translate-out", "write"]
             : ["write"];
           if (listenable(id)) words.push("listen-type");
+          if (hasTranslation) words.push("match");
           return words[i % words.length];
         }
         if (it.kind === "phrase") {
@@ -3193,6 +3194,7 @@
           if (buildable(id)) phrases.push("build");
           if (gapFor(id)) phrases.push("message");
           if (listenable(id)) phrases.push("listen-type");
+          if (hasTranslation) phrases.push("match");
           return phrases[i % phrases.length];
         }
         return "pick-word";
@@ -3500,6 +3502,7 @@
      * UI meaning → target. No emoji matching, no English under a non-English UI. */
     if (itemOf(link).kind === "phrase" && gapFor(link) && tick % 6 === 4) return "message";
     if (listenable(link) && tick % 9 === 7) return "listen-type";
+    if (translationFor(link) && tick % 10 === 8) return "match";
     if (translationFor(link)) {
       if (itemOf(link).kind === "word" && tick % 7 === 5) return "type-translation";
       /* A clean session can stop at six; both directions must appear before
@@ -3574,6 +3577,7 @@
     else if (type === "message") renderMessage(id);
     else if (type === "type-translation") renderTypeTranslation(id);
     else if (type === "listen-type") renderListenType(id);
+    else if (type === "match") renderMatch(id);
     else renderPickPicture(id);
   }
 
@@ -4042,6 +4046,67 @@
    * recall success. */
   /* Type the target from its UI meaning. Unlike the multiple-choice
    * translation, this tests production without showing the answer first. */
+  /* Match three target lines to their UI meanings. Only the current card is
+   * graded; the other pairs are there to make the retrieval less mechanical. */
+  function renderMatch(id) {
+    var it = itemOf(id);
+    var meaning = translationFor(id) || glossFor(id);
+    if (!meaning) { renderTranslateToTarget(id); return; }
+    var other = distractorsFor(id, 3).filter(function (x) {
+      return x !== id && (translationFor(x) || glossFor(x));
+    }).slice(0, 2);
+    var ids = [id].concat(other);
+    var pairs = ids.map(function (x) {
+      return { id: x, text: itemOf(x).text, meaning: translationFor(x) || glossFor(x) };
+    });
+    var targets = S.shuffle(pairs, Math.random);
+    var meanings = S.shuffle(pairs, Math.random);
+    var picked = null;
+    var matched = {};
+
+    $("stage").innerHTML =
+      '<p class="prompt">' + esc(tr("matchPairs", "Match the pairs")) + "</p>" +
+      '<div class="match-grid">' +
+        '<div class="match-col">' + targets.map(function (p) {
+          return '<button class="match-btn" type="button" data-target="' + esc(p.id) + '">' + esc(p.text) + "</button>";
+        }).join("") + "</div>" +
+        '<div class="match-col">' + meanings.map(function (p) {
+          return '<button class="match-btn" type="button" data-meaning="' + esc(p.id) + '">' + esc(p.meaning) + "</button>";
+        }).join("") + "</div>" +
+      "</div>";
+    $("actions").innerHTML = glossHTML(id);
+    wireGloss();
+
+    Array.prototype.forEach.call($("stage").querySelectorAll("[data-target]"), function (b) {
+      b.addEventListener("click", function () {
+        if (b.disabled) return;
+        Array.prototype.forEach.call($("stage").querySelectorAll("[data-target]"), function (x) { x.classList.remove("is-selected"); });
+        picked = b.getAttribute("data-target");
+        b.classList.add("is-selected");
+      });
+    });
+    Array.prototype.forEach.call($("stage").querySelectorAll("[data-meaning]"), function (b) {
+      b.addEventListener("click", function () {
+        if (!picked || b.disabled) return;
+        var target = picked;
+        if (b.getAttribute("data-meaning") !== target) {
+          b.classList.add("pick-wrong");
+          setTimeout(function () { b.classList.remove("pick-wrong"); }, 320);
+          return;
+        }
+        matched[target] = true;
+        Array.prototype.forEach.call($("stage").querySelectorAll("[data-target]"), function (x) {
+          if (x.getAttribute("data-target") === target) { x.disabled = true; x.classList.add("pick-correct"); }
+        });
+        Array.prototype.forEach.call($("stage").querySelectorAll("[data-meaning]"), function (x) {
+          if (x.getAttribute("data-meaning") === target) { x.disabled = true; x.classList.add("pick-correct"); }
+        });
+        picked = null;
+        if (target === id) answer(true, null);
+      });
+    });
+  }
+
   /* Audio first, production second: no target text is shown. */
   function renderListenType(id) {
     var it = itemOf(id);
