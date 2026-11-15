@@ -2527,19 +2527,19 @@
     if (b) {
       return {
         id: b.id, emoji: "", article: "", text: b.text, sub: b.gloss,
-        kind: "basic", person: b.person, of: b.of
+        kind: "basic", person: b.person, of: b.of, why: b.why || ""
       };
     }
     var t = termById[id];
     if (t) {
       return {
         id: t.id, emoji: "", schema: t.schema, article: "", text: t.text,
-        sub: t.frame, frame: t.frame, contrast: t.contrast, kind: "term"
+        sub: t.frame, frame: t.frame, contrast: t.contrast, kind: "term", why: t.why || ""
       };
     }
     var p = phraseById[id];
     if (p) {
-      return { id: p.id, emoji: p.emoji, article: "", text: p.text, sub: p.sub || "", kind: "phrase" };
+      return { id: p.id, emoji: p.emoji, article: "", text: p.text, sub: p.sub || "", kind: "phrase", why: p.why || "" };
     }
     var c = conceptById[id];
     if (!c) return { id: id, emoji: "❓", article: "", text: id, sub: "", kind: "word" };
@@ -2547,7 +2547,7 @@
      * transliteration); the example sentence is a separate field */
     return {
       id: c.id, emoji: c.emoji, article: c.article, text: c.word,
-      sub: c.sub || "", sentence: c.sentence || "", kind: "word"
+      sub: c.sub || "", sentence: c.sentence || "", kind: "word", why: c.why || ""
     };
   }
 
@@ -4384,6 +4384,7 @@
 
   function whyText(it) {
     if (!it) return "";
+    if (it.why) return it.why;
     if (it.kind === "basic") {
       if (it.of) {
         var who = pronounsFor(it.person).join(" / ");

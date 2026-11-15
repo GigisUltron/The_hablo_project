@@ -797,6 +797,12 @@ test("typed translation is a real routed exercise", () => {
   assert.match(app, /tick % 7 === 5\) return "type-translation"/, "typed translation is unreachable");
 });
 
+test("a handcrafted item explanation wins over generic prose", () => {
+  assert.match(app, /why: b\.why \|\| ""/, "basic explanations are not loaded");
+  assert.match(app, /why: p\.why \|\| ""/, "phrase explanations are not loaded");
+  assert.match(app, /if \(it\.why\) return it\.why;/, "explanations are ignored");
+});
+
 test("quiz task phase is randomized per session", () => {
   assert.match(app, /taskShift: Math\.floor\(Math\.random\(\) \* 4\)/, "no task phase shift");
   assert.match(app, /var tick = i \+ \(session\.taskShift \|\| 0\)/, "task rules do not use the shift");
