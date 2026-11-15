@@ -442,6 +442,17 @@ test("coins and the accent shop are wired into Today and Settings", () => {
   assert.match(app, /function payDailyGoal/);
 });
 
+test("the area fallback is relevant or empty, never a greeting list", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  const start = app.indexOf("function suggestWordset");
+  const end = app.indexOf("function suggestWish");
+  const block = app.slice(start, end);
+  assert.match(block, /areaOnly: true/);
+  assert.match(block, /wordsetNoArea/);
+  assert.doesNotMatch(block, /wishLesson\(area, ACTIVE\.code\)/);
+  assert.match(app, /if \(areaOnly && !topics\.length\)/);
+});
+
 test("the local model assists area suggestions and planned lessons", () => {
   assert.match(html, /id="wordset-area"/);
   assert.match(html, /id="wordset-suggest"/);

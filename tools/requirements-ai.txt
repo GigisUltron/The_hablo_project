@@ -1,0 +1,4 @@
+# Optional local AI. Install with:
+#   python3 tools/install_ai.py
+# or let the installer create an isolated venv.
+llama-cpp-python[server]>=0.3.37

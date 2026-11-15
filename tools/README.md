@@ -60,35 +60,48 @@ python3 tools/make_audio.py --lang ja --check
 
 ## The local conversation model
 
-`local_model.sh` starts the llama.cpp server built under `.tools/`, using the
-small GGUF model. It is optional: the app keeps Offline practice when it is not
-running, and every AI assist falls back to the authored pack.
+The supported path is one command. It creates an isolated Python environment,
+installs the `llama-cpp-python[server]` wheel/source package, downloads a small
+GGUF, starts the app, and starts the OpenAI-compatible server alongside it:
 
 ```sh
-# once, on a machine with a C++ toolchain and cmake
-cmake -S .tools/llama.cpp -B .tools/llama.cpp/build -DCMAKE_BUILD_TYPE=Release
-cmake --build .tools/llama.cpp/build -j --target llama-server
-
-# download one small model (Qwen 2.5 1.5B Q4 is about 1.1 GB)
-curl -fL -o .tools/models/qwen2.5-1.5b-instruct-q4_k_m.gguf \
-  https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf
-
-# run it on the port the app probes
-tools/local_model.sh
+make ai
+# or
+python3 tools/install_ai.py
+python3 serve.py --ai
 ```
 
-The server exposes an OpenAI-compatible `/v1` API. In **Settings**, press
-**Find local model**; the app probes `http://localhost:8080` and
+`python3 tools/install_ai.py --start` starts only the model server (port 8080),
+which is useful if you run the app separately. `serve.py --ai` starts the model
+on port 8081 and the app on the first free port from 8080, so the two do not
+fight over the same socket.
+
+The default model is Qwen 2.5 0.5B Instruct Q4 (~490 MB). To use a larger model
+you already have:
+
+```sh
+python3 tools/install_ai.py --model .tools/models/qwen2.5-1.5b-instruct-q4_k_m.gguf --start
+```
+
+The installer stays out of the app: everything goes under `.tools/`, which is
+ignored by git. It needs Python 3.9+ and pip; on platforms with no prebuilt
+wheel, pip builds `llama-cpp-python` and therefore needs a C++ toolchain and
+cmake. The installer tries the prebuilt CPU wheel index first and says plainly
+if the build is the remaining step.
+
+In the app, open **Settings → Find local model**. It probes
+`http://localhost:8080`, `http://localhost:8081` and
 `http://localhost:11434`, stores the endpoint and model, and switches the
-conversation engine to the local model. The same endpoint is used by
+conversation engine to it. The same endpoint powers
 **Suggest words** on the word-set screen and **Suggest with local model** on a
-planned lesson. If the server is not running, those buttons use the pack's
-topic planner instead.
+planned lesson. Without a running model, those buttons use the pack's authored
+topic planner and never invent a word.
 
-The app never loads the model, a Python binding or a browser runtime itself. It
-talks HTTP to the local server, so there is no new runtime dependency.
+The older source-built llama.cpp path is still available for a machine that
+already has it: `tools/local_model.sh` starts `.tools/llama.cpp/build/bin/llama-server`
+with a GGUF from `.tools/models/`. It is an alternative, not the default.
 
-## The neural path (a machine with internet)
+## The neural path## The neural path (a machine with internet)
 
 Piper is not a dependency of the repo. It is only needed when you want to
 *regenerate* the clips with a neural voice. On a machine where you can install

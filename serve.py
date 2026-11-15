@@ -13,14 +13,79 @@ prints rather than opening index.html from the filesystem.
 """
 
 import argparse
+import atexit
 import functools
 import http.server
 import os
+import pathlib
 import socket
+import subprocess
 import sys
 import webbrowser
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
+ROOT_PATH = pathlib.Path(ROOT)
+
+
+def _ai_python():
+    """The interpreter that can import llama_cpp.server, if any."""
+    candidates = [sys.executable]
+    for venv in (".tools/ai-venv", ".tools/venv"):
+        for rel in ("bin/python", "Scripts/python.exe"):
+            candidates.append(str(ROOT_PATH / venv / rel))
+    for python in candidates:
+        if not os.path.isfile(python):
+            continue
+        try:
+            check = subprocess.run(
+                [python, "-c", "import llama_cpp.server"],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        if check.returncode == 0:
+            return python
+    return None
+
+
+def _ai_model():
+    models = ROOT_PATH / ".tools" / "models"
+    preferred = models / "qwen2.5-0.5b-instruct-q4_k_m.gguf"
+    if preferred.is_file():
+        return preferred
+    found = sorted(models.glob("*.gguf")) if models.is_dir() else []
+    return found[0] if found else None
+
+
+def start_ai(port=8080):
+    """Start the optional local model in the background. Returns the process."""
+    python = _ai_python()
+    model = _ai_model()
+    if not python or not model:
+        print("  local model: not installed (run: python3 tools/install_ai.py)")
+        return None
+    log = ROOT_PATH / ".tools" / "local-model.log"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    command = [
+        python, "-m", "llama_cpp.server",
+        "--model", str(model),
+        "--model_alias", "qwen2.5-0.5b-instruct",
+        "--n_ctx", "2048",
+        "--n_threads", str(max(1, (os.cpu_count() or 2) // 2)),
+        "--host", "127.0.0.1",
+        "--port", str(port),
+    ]
+    handle = open(log, "w")
+    try:
+        process = subprocess.Popen(command, stdout=handle, stderr=subprocess.STDOUT)
+    except OSError as exc:
+        handle.close()
+        print("  local model: could not start (%s)" % exc)
+        return None
+    atexit.register(lambda: (process.poll() is None and process.terminate(), handle.close()))
+    print("  local model: %s on http://127.0.0.1:%d" % (model.name, port))
+    print("  local model log: %s" % log.relative_to(ROOT_PATH))
+    return process
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -58,7 +123,11 @@ def main():
     parser.add_argument("-p", "--port", type=int, default=8080, help="first port to try (default 8080)")
     parser.add_argument("--no-open", action="store_true", help="don't open a browser")
     parser.add_argument("--host", default="127.0.0.1", help="interface to bind (default 127.0.0.1)")
+    parser.add_argument("--ai", action="store_true", help="also start the optional local model")
+    parser.add_argument("--ai-port", type=int, default=8081, help="local model port (default 8081)")
     args = parser.parse_args()
+    if args.ai:
+        start_ai(args.ai_port)
 
     port = args.port
     handler = functools.partial(Handler, directory=ROOT)

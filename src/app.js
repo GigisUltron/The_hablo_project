@@ -1886,7 +1886,7 @@
    */
   var localCandidates = function () {
     var out = [];
-    [chatEndpoint(), "http://localhost:8080", "http://localhost:11434"].forEach(function (value) {
+    [chatEndpoint(), "http://localhost:8080", "http://localhost:8081", "http://localhost:11434"].forEach(function (value) {
       var base = CE && CE.normaliseBaseUrl ? CE.normaliseBaseUrl(value) : String(value || "");
       if (base && out.indexOf(base) === -1 && (!CE || CE.isLocalEndpoint(base))) out.push(base);
     });
@@ -1972,28 +1972,32 @@
       var words = AITOOLS.parseList(text, 12);
       if (!words.length) throw new Error("no words");
       var input = $("wordset-input");
-      if (input) input.value = words.join("\n");
+      if (input) { input.value = words.join("\n"); input.scrollTop = 0; }
       state.settings.wordsetDraft = input ? input.value : "";
       save();
       findWordset();
       if (note) note.textContent = "";
     }).catch(function () {
-      /* No model is not a dead end: use the pack's own topic planner. */
-      var wish = wishLesson(area, ACTIVE.code);
+      /* No model is not a dead end, but an unrelated greeting list is worse
+       * than an honest empty answer. Use only the pack's matching topic
+       * phrases; never openers, due revision or grammar filler. */
+      var wish = wishLesson(area, ACTIVE.code, { areaOnly: true });
       var texts = (wish.ids || []).map(function (id) { return itemOf(id).text; }).filter(Boolean);
       var input = $("wordset-input");
       if (texts.length && input) {
         input.value = texts.join("\n");
+        input.scrollTop = 0;
         state.settings.wordsetDraft = input.value;
         save();
         findWordset();
-      } else if (input) {
-        input.value = area;
-        state.settings.wordsetDraft = area;
+        if (note) note.textContent = tr("wordsetFallback", "Local model is not connected; used the pack's topic matches.");
+      } else {
+        if (input) input.value = "";
+        state.settings.wordsetDraft = "";
         save();
-        findWordset();
+        clearWordsetPreview();
+        if (note) note.textContent = tr("wordsetNoArea", "No pack words for that area yet. Connect a local model for a suggestion.");
       }
-      if (note) note.textContent = tr("wordsetFallback", "Local model is not connected; used the pack's topic matches.");
     }).then(function () {
       if (btn) { btn.disabled = false; btn.textContent = tr("wordsetSuggest", "Suggest words"); }
     });
@@ -3492,9 +3496,10 @@
     startSession({ ids: wish.ids, size: wish.ids.length, title: wish.title, customId: saved.id });
   }
 
-  function wishLesson(text, requestedCode) {
+  function wishLesson(text, requestedCode, opts) {
     var raw = String(text || "").toLowerCase();
     var code = requestedCode || "";
+    var areaOnly = !!(opts && opts.areaOnly);
     if (!code) {
       WISH_PLACES.forEach(function (pair) {
         if (!code && new RegExp("\\b" + pair[0] + "\\b").test(raw)) code = pair[1];
@@ -3506,7 +3511,8 @@
     }
 
     var topics = [];
-    if (/restaurant|dinner|lunch|eat|food|menu|pizza|pasta|meal|cafe|café/.test(raw)) topics.push("restaurant", "café");
+    if (/restaurant|dinner|lunch|eat|food|menu|pizza|pasta|meal|cafe|café|cook|kitchen|recipe|bake/.test(raw)) topics.push("restaurant", "café");
+    if (/tech|computer|phone|internet|email|software|app/.test(raw)) topics.push("phone", "messages", "work");
     if (/hotel|stay|room|check.?in/.test(raw)) topics.push("hotel");
     if (/train|station|platform|ticket/.test(raw)) topics.push("station", "tickets");
     if (/airport|flight|plane/.test(raw)) topics.push("airport");
@@ -3518,6 +3524,10 @@
     if (/lost|direction|city|centre|center|where is/.test(raw)) topics.push("city", "directions");
     if (/cousin|aunt|uncle|family|wedding|marry|brother|sister|grandmother|grandfather/.test(raw)) {
       topics.push("family");
+    }
+
+    if (areaOnly && !topics.length) {
+      return { ids: [], focus: [], title: tr("wishTitle", "Plan a lesson"), note: "" };
     }
 
     var STOP = { "going": 1, "want": 1, "need": 1, "with": 1, "that": 1, "this": 1, "there": 1,
@@ -3548,33 +3558,38 @@
       if (topics.indexOf(CURR.topicOf(phraseById[id])) !== -1) return true;
       return phraseScore(id) >= 3;
     });
-    if (!phrases.length) phrases = ranked;
+    if (!phrases.length) {
+      if (areaOnly) return { ids: [], focus: [], title: tr("wishTitle", "Plan a lesson"), note: "" };
+      phrases = ranked;
+    }
 
     var picked = [];
     function add(id) { if (id && picked.indexOf(id) === -1) picked.push(id); }
     phrases.slice(0, 8).forEach(add);
     var now = Date.now();
-    var revision = phraseIds.filter(function (id) {
-      var card = state.cards[id];
-      return card && (!card.due || card.due <= now);
-    }).sort(function (a, b) {
-      var ca = state.cards[a] || {};
-      var cb = state.cards[b] || {};
-      return (ca.ease || 2.5) - (cb.ease || 2.5);
-    });
-    revision.slice(0, 2).forEach(add);
+    if (!areaOnly) {
+      var revision = phraseIds.filter(function (id) {
+        var card = state.cards[id];
+        return card && (!card.due || card.due <= now);
+      }).sort(function (a, b) {
+        var ca = state.cards[a] || {};
+        var cb = state.cards[b] || {};
+        return (ca.ease || 2.5) - (cb.ease || 2.5);
+      });
+      revision.slice(0, 2).forEach(add);
 
-    var foodWords = allIds.filter(function (id) {
-      var c = conceptById[id];
-      var hay = (c.word + " " + (glossFor(id) || "")).toLowerCase();
-      return c.cat === "food" || keywords.some(function (w) { return hay.indexOf(w) !== -1; });
-    }).sort(function (a, b) {
-      function score(id) { var h = (conceptById[id].word + " " + (glossFor(id) || "")).toLowerCase(); return keywords.filter(function (w) { return h.indexOf(w) !== -1; }).length; }
-      return score(b) - score(a);
-    });
-    foodWords.slice(0, 2).forEach(add);
-    basicIds.slice(0, 2).forEach(add);
-    if (termIds.length && /because|although|however|but|so/.test(raw)) termIds.slice(0, 2).forEach(add);
+      var foodWords = allIds.filter(function (id) {
+        var c = conceptById[id];
+        var hay = (c.word + " " + (glossFor(id) || "")).toLowerCase();
+        return c.cat === "food" || keywords.some(function (w) { return hay.indexOf(w) !== -1; });
+      }).sort(function (a, b) {
+        function score(id) { var h = (conceptById[id].word + " " + (glossFor(id) || "")).toLowerCase(); return keywords.filter(function (w) { return h.indexOf(w) !== -1; }).length; }
+        return score(b) - score(a);
+      });
+      foodWords.slice(0, 2).forEach(add);
+      basicIds.slice(0, 2).forEach(add);
+      if (termIds.length && /because|although|however|but|so/.test(raw)) termIds.slice(0, 2).forEach(add);
+    }
 
     return {
       ids: picked.slice(0, 12),
@@ -3768,7 +3783,7 @@
     wordset = null;
     show("wordset");
     var input = $("wordset-input");
-    if (input) input.value = state.settings.wordsetDraft || "";
+    if (input) { input.value = state.settings.wordsetDraft || ""; input.scrollTop = 0; }
     clearWordsetPreview();
     renderWordsetLangs();
     if (input) input.focus();
