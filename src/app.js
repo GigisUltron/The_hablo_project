@@ -2416,7 +2416,7 @@
 
   function emptyChatLine() {
     var name = (ACTIVE && uiName(ACTIVE.code)) || "the language";
-    return "Say something in " + name + ". Or attach a picture.";
+    return tr("emptyChat", "Say something in {lang}.").replace("{lang}", name);
   }
 
   function renderChatHeader() {

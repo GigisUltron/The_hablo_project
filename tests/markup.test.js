@@ -1643,3 +1643,9 @@ test("keyboard users can skip the tab bar", () => {
   assert.match(html, /<main id="main" tabindex="-1">/);
 });
 
+test("the empty conversation does not promise a missing attachment feature", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /tr\("emptyChat"/);
+  assert.doesNotMatch(app, /Or attach a picture/);
+});
+

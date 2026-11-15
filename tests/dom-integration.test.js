@@ -165,3 +165,29 @@ test("Progress, Settings and Reader can be opened from the real controls", () =>
   registry.get("reader-go")._l.click();
   assert.match(registry.get("reader-stage").innerHTML, /option-word/);
 });
+
+test("a conversation opens with an honest empty state and accepts a message", () => {
+  const save = {
+    version: 1,
+    profile: {
+      level: "A2", levelByLang: { es: "A2" }, lang: "es", uiLang: "en",
+      byLang: {}, languages: ["es"], why: "travel"
+    },
+    settings: { size: 8, translations: "on", audio: "off", autoSpeak: "off" },
+    cards: {}, confusions: {}, reviews: { good: 0, again: 0 }, sessions: 0,
+    memory: { sentences: [] }, daily: { date: "2026-11-15", cards: 0 }
+  };
+  const registry = boot(save);
+  const open = registry.get("home-conv");
+  assert.ok(open && open._l.click, "conversation entry is not wired");
+  open._l.click();
+  const log = registry.get("chat");
+  assert.match(log.innerHTML, /Say something in /);
+  assert.doesNotMatch(log.innerHTML, /attach a picture/i);
+  const input = registry.get("chat-input");
+  input.value = "Hola, me llamo Ana.";
+  const form = registry.get("chat-form");
+  assert.ok(form && form._l.submit, "chat form is not wired");
+  form._l.submit({ preventDefault() {} });
+  assert.match(log.innerHTML, /Hola, me llamo Ana/);
+});
