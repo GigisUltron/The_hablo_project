@@ -31,10 +31,6 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>
         <span data-i18n="tabToday">Today</span>
       </button>
-      <button class="tab" data-view="map">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="7" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="17" r="2.5"/><path d="M8.3 8.3l2.4 6.4M15.9 7.6l-2.6 7.2M8.5 7h7"/></svg>
-        <span data-i18n="tabMap">Map</span>
-      </button>
       <button class="tab" data-view="stats">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-8M12 20V5M19 20v-9"/></svg>
         <span data-i18n="tabProgress">Progress</span>
@@ -65,7 +61,7 @@
 
         <section class="lesson-card" aria-labelledby="lesson-name">
           <div class="lesson-top">
-            <h2 id="lesson-name">Next lesson</h2>
+            <h2 id="lesson-name" data-i18n="nextLesson">Next lesson</h2>
             <span id="lesson-meta">about 1 min</span>
           </div>
           <div class="lesson-pics" id="next-stack" aria-hidden="true"></div>
@@ -106,9 +102,9 @@
         <section class="group" aria-labelledby="words-title">
           <h2 class="group-title" id="words-title" data-chrome="yourWords">Your words</h2>
           <div class="list known">
-            <p class="known-line"><b id="stat-learned">0</b> of <span id="stat-total">0</span> words known</p>
+            <p class="known-line"><b id="stat-learned">0</b> / <span id="stat-total">0</span> <span data-i18n="wordsKnown">words known</span></p>
             <div class="meter" aria-hidden="true"><i id="known-bar"></i></div>
-            <p class="known-meta"><span><b id="stat-due">0</b> to review</span><span><b id="stat-mastered">0</b> solid</span></p>
+            <p class="known-meta"><span><b id="stat-due">0</b> <span data-i18n="toReview">to review</span></span><span><b id="stat-mastered">0</b> <span data-i18n="solid">solid</span></span></p>
           </div>
         </section>
 
@@ -197,11 +193,11 @@
     <!-- ============================================================= SETUP -->
     <section class="view" id="view-setup" aria-label="Setup">
       <div class="solo">
-        <p class="prompt">Before you start</p>
+        <p class="prompt" data-i18n="beforeStart">Before you start</p>
         <h1 class="setup-q">Have you studied this language before?</h1>
         <div class="cta-row">
-          <button class="btn btn-primary" id="setup-new">I'm new</button>
-          <button class="btn btn-ghost" id="setup-test">Test me</button>
+          <button class="btn btn-primary" id="setup-new" data-i18n="imNew">I'm new</button>
+          <button class="btn btn-ghost" id="setup-test" data-i18n="testMe">Test me</button>
         </div>
         <label class="setup-lang"><span data-chrome="deckLang">Language</span>
           <select id="setup-lang"></select>
@@ -209,7 +205,7 @@
         <label class="setup-lang"><span data-chrome="interfaceLang">Interface</span>
           <select id="setup-uilang"></select>
         </label>
-        <p class="builder-note">Each deck carries its own words, audio and progress.</p>
+        <p class="builder-note" data-i18n="setupNote">Each language keeps its own deck, progress and audio.</p>
       </div>
     </section>
 
@@ -218,7 +214,6 @@
       <div class="map-head">
         <div>
           <h2 data-chrome="settingsTitle">Settings</h2>
-          <p>What you study, how it sounds, and where else to look.</p>
         </div>
         <button class="btn btn-ghost btn-sm" id="reset-btn" data-i18n="reset">Reset progress</button>
         <button class="btn btn-ghost btn-sm" id="settings-back" data-i18n="done">Done</button>
@@ -245,37 +240,28 @@
               <button class="btn btn-ghost" id="chat-check" type="button">Check model</button>
               <span class="builder-note" id="chat-settings-status">not checked yet</span>
             </div>
-            <p class="builder-note">Optional. Without a model, the chat uses a short scripted partner and says so.</p>
           </div>
 
           <div class="settings-options">
             <div class="option-group" role="group" aria-label="Session length">
-              <span class="option-label">Session</span>
+              <span class="option-label" data-i18n="session">Session</span>
               <button class="seg" data-length="goal" type="button">goal</button>
               <button class="seg" data-length="short" type="button">short</button>
               <button class="seg" data-length="long" type="button">long</button>
             </div>
             <div class="option-group" role="group" aria-label="Audio">
-              <span class="option-label">Audio</span>
+              <span class="option-label" data-i18n="audio">Audio</span>
               <button class="seg" data-audio="on" type="button">on</button>
               <button class="seg" data-audio="off" type="button">off</button>
             </div>
             <div class="option-group">
-              <span class="option-label">Translations</span>
+              <span class="option-label" data-i18n="translations">Translations</span>
               <button class="seg" id="gloss-toggle" type="button">on</button>
             </div>
             <div class="option-group" id="ruby-group" role="group" aria-label="Pinyin">
-              <span class="option-label">Pinyin</span>
+              <span class="option-label" data-i18n="pinyin">Pinyin</span>
               <button class="seg" data-ruby="on" type="button">on</button>
               <button class="seg" data-ruby="off" type="button">off</button>
-            </div>
-            <div class="option-group" role="group" aria-label="Level">
-              <span class="option-label">Level</span>
-              <button class="seg" data-level="A1" type="button">A1</button>
-              <button class="seg" data-level="A2" type="button">A2</button>
-              <button class="seg" data-level="B1" type="button">B1</button>
-              <button class="seg" data-level="B2" type="button">B2</button>
-              <button class="seg" data-level="C1" type="button">C1</button>
             </div>
           </div>
 
@@ -292,42 +278,8 @@
           </div>
         <div class="settings-row">
           <button class="audio-chip" id="audio-chip" type="button">🔊 checking audio…</button>
-          <button class="foot-link" type="button" data-goto="map">map</button>
           <button class="foot-link" type="button" data-goto="stats">progress</button>
         </div>
-      </div>
-    </section>
-
-    <!-- ============================================================== MAP -->
-    <section class="view" id="view-map" aria-labelledby="map-title">
-      <div class="map-head">
-        <div>
-          <h2 id="map-title">The semantic web</h2>
-          <p>
-            Each concept sits with its neighbours. Learning a word together with the words it
-            touches is what makes it stick; a list of 500 unconnected words is not vocabulary.
-          </p>
-        </div>
-        <button class="btn btn-ghost btn-sm" id="map-practice">Practise neighbours</button>
-      </div>
-
-      <div class="map-mode" role="group" aria-label="Show the map as">
-        <button class="is-on" data-mapmode="list" type="button" aria-pressed="true">List</button>
-        <button data-mapmode="web" type="button" aria-pressed="false">Web</button>
-      </div>
-
-      <div class="map-list" id="map-list"></div>
-
-      <div class="panel map-panel">
-        <svg class="map-svg" id="map-svg" viewBox="0 0 900 690" role="img" aria-label="Semantic map of concepts">
-          <g id="map-edges"></g>
-          <g id="map-nodes"></g>
-        </svg>
-        <div class="legend" id="map-legend"></div>
-      </div>
-
-      <div class="map-info" id="map-info">
-        <div class="hint">Tap any concept to hear it and see how it connects.</div>
       </div>
     </section>
 
@@ -336,37 +288,33 @@
       <div class="map-head">
         <div>
           <h2 id="stats-title">Progress</h2>
-          <p>What you know, and — more usefully — which concepts you keep trading for each other.</p>
+          <p id="progress-summary"></p>
         </div>
       </div>
 
-      <div class="stats-grid">
-        <div class="panel panel-pad">
-          <p class="panel-title">Coverage by field</p>
-          <div class="bars" id="cat-bars"></div>
-        </div>
-        <div class="panel panel-pad">
-          <p class="panel-title">Most confused pairs</p>
-          <div class="confusions" id="confusions"></div>
-        </div>
+      <div class="roadmap" id="progress-roadmap"></div>
+
+      <div class="panel panel-pad">
+        <p class="panel-title" data-i18n="confusedPairs">Most confused pairs</p>
+        <div class="confusions" id="confusions"></div>
       </div>
 
       <div class="panel panel-pad history">
-        <p class="panel-title">What the app remembers</p>
+        <p class="panel-title" data-i18n="whatRemembers">What the app remembers</p>
         <div class="mini-stats">
-          <div class="mini"><b id="mem-sentences">0</b><span>sentences</span></div>
-          <div class="mini"><b id="mem-acc">—</b><span>accuracy</span></div>
-          <div class="mini"><b id="mem-days">0</b><span>days written</span></div>
+          <div class="mini"><b id="mem-sentences">0</b><span data-i18n="sentences">sentences</span></div>
+          <div class="mini"><b id="mem-acc">—</b><span data-i18n="accuracy">accuracy</span></div>
+          <div class="mini"><b id="mem-days">0</b><span data-i18n="daysWritten">days written</span></div>
         </div>
         <div class="mem-list" id="mem-list"></div>
       </div>
 
       <div class="panel panel-pad history">
-        <p class="panel-title">Session history</p>
+        <p class="panel-title" data-i18n="sessionHistory">Session history</p>
         <div class="mini-stats">
-          <div class="mini"><b id="stat-sessions">0</b><span>sessions</span></div>
-          <div class="mini"><b id="stat-good">0</b><span>recalled</span></div>
-          <div class="mini"><b id="stat-again">0</b><span>lapses</span></div>
+          <div class="mini"><b id="stat-sessions">0</b><span data-i18n="sessions">sessions</span></div>
+          <div class="mini"><b id="stat-good">0</b><span data-i18n="recalled">recalled</span></div>
+          <div class="mini"><b id="stat-again">0</b><span data-i18n="lapses">lapses</span></div>
         </div>
       </div>
     </section>
@@ -374,7 +322,7 @@
   </main>
 
   <footer class="foot">
-    <span>No accounts, no tracking. Chat goes only to the endpoint you set.</span>
+    <span data-i18n="privacy">No accounts, no tracking.</span>
   </footer>
 </div>
 
@@ -525,6 +473,7 @@
 <script src="src/writing.js"></script>
 <script src="src/exercises.js"></script>
 <script src="src/ui-strings.js"></script>
+<script src="src/ui-extra.js"></script>
 <script src="src/srs.js"></script>
 <script src="src/memory.js"></script>
 <script src="src/chat.js"></script>

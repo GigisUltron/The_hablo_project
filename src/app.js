@@ -18,6 +18,7 @@
    * The learner chooses an interface language once; everything below resolves
    * through these tables, never through a literal. */
   var UI_LANGS = window.SEMA_UI_LANGS || {};
+  var UI_EXTRA = window.SEMA_UI_EXTRA || {};
   var RUBY = window.SemaRuby;
   var WRITING = window.SemaWriting;
   var EX = window.SemaExercises;
@@ -39,13 +40,15 @@
       if (k === "name" || k === "locale" || k === "keys") return;
       table[k] = more[k];
     });
+    var extra = UI_EXTRA[lang] || {};
+    Object.keys(extra).forEach(function (k) { table[k] = extra[k]; });
     if (!Object.keys(table).length) return uiTable("en");
     uiCache[lang] = table;
     return table;
   }
 
   function uiLang() {
-    return (state && state.profile && state.profile.uiLang) || "en";
+    return (state && state.profile && state.profile.uiLang) || defaultUiFor(ACTIVE && ACTIVE.code);
   }
 
   /* Dates follow the interface language, not a hardcoded en-GB. */
@@ -59,16 +62,36 @@
     return table[key] || uiTable("en")[key] || fallback || key;
   }
 
+  function catLabel(cat) {
+    var fallback = D && D.categories && D.categories[cat] ? D.categories[cat].label : cat;
+    return tr("cat_" + cat, fallback);
+  }
+
   /* Locales we can actually paint: every one with a chrome table. The list is
    * data, not a hardcoded set, so a new table appears here by itself. */
-  function uiChoices() {
+  function uiChoices(except) {
     var codes = [];
     ["en"].concat(Object.keys(UI || {}), Object.keys(UI_LANGS)).forEach(function (code) {
-      if (!code || code === "t" || codes.indexOf(code) !== -1) return;
+      if (!code || code === "t" || code === except || codes.indexOf(code) !== -1) return;
       var table = uiTable(code);
       if (table.start && table.tabToday) codes.push(code);
     });
     return codes;
+  }
+
+  /* The interface and the deck are different choices, but choosing the same
+   * language for both makes the app explain Spanish in Spanish to a beginner.
+   * Keep the two pickers disjoint, for every pack. */
+  function defaultUiFor(deck) {
+    return deck === "en" ? "es" : "en";
+  }
+
+  function keepUiOffDeck() {
+    if (!state.profile || !ACTIVE) return;
+    if (state.profile.uiLang === ACTIVE.code) {
+      state.profile.uiLang = defaultUiFor(ACTIVE.code);
+      save();
+    }
   }
 
   /* A language's own name comes from its pack; without one, the code is all we
@@ -84,7 +107,7 @@
   }
 
   function renderUiLangPickers() {
-    var choices = uiChoices();
+    var choices = uiChoices(ACTIVE && ACTIVE.code);
     var current = uiLang();
     ["setup-uilang", "settings-uilang"].forEach(function (id) {
       var sel = $(id);
@@ -92,7 +115,10 @@
       sel.innerHTML = choices.map(function (code) {
         return '<option value="' + esc(code) + '">' + esc(uiName(code)) + "</option>";
       }).join("");
-      sel.value = choices.indexOf(current) === -1 ? "en" : current;
+      var fallback = choices.indexOf(defaultUiFor(ACTIVE && ACTIVE.code)) !== -1
+        ? defaultUiFor(ACTIVE && ACTIVE.code)
+        : (choices[0] || "en");
+      sel.value = choices.indexOf(current) === -1 ? fallback : current;
     });
   }
 
@@ -219,7 +245,6 @@
 
     rebuildIndexes();
     voice = null;
-    warnedNoVoice = false;
     if (hasTTS) pickVoice();
     updateAudioChip();
     return pack;
@@ -318,8 +343,13 @@
 
     s.settings = s.settings || {};
     s.alphabet = s.alphabet && typeof s.alphabet === "object" && !Array.isArray(s.alphabet) ? s.alphabet : {};
-    if (s.profile && (!s.profile.uiLang || uiChoices().indexOf(s.profile.uiLang) === -1)) {
-      s.profile.uiLang = "en";
+    if (s.profile) {
+      var uiChoicesHere = uiChoices(code);
+      if (!s.profile.uiLang || uiChoicesHere.indexOf(s.profile.uiLang) === -1) {
+        s.profile.uiLang = uiChoicesHere.indexOf(defaultUiFor(code)) !== -1
+          ? defaultUiFor(code)
+          : (uiChoicesHere[0] || "en");
+      }
     }
     if (typeof s.settings.chatEndpoint !== "string" || !s.settings.chatEndpoint.trim()) {
       s.settings.chatEndpoint = (CE && CE.DEFAULT_ENDPOINT) || "http://localhost:11434";
@@ -453,11 +483,11 @@
   function updateSetupCopy() {
     var q = document.querySelector("#view-setup .setup-q");
     if (!q || !ACTIVE) return;
-    q.textContent = "Have you studied " + ACTIVE.name + " before?";
+    q.textContent = tr("studiedBefore", "Have you studied this language before?");
   }
 
   function setUiLang(code) {
-    if (uiChoices().indexOf(code) === -1) return;
+    if (uiChoices(ACTIVE && ACTIVE.code).indexOf(code) === -1) return;
     state.profile = state.profile || {};
     state.profile.uiLang = code;
     save();
@@ -509,6 +539,10 @@
       state.profile.level = state.profile.levelByLang[code];
     }
 
+    if (state.profile && state.profile.uiLang === code) {
+      state.profile.uiLang = defaultUiFor(code);
+    }
+
     seedDeck(state);
     session = null;
     reader = null;
@@ -516,13 +550,13 @@
     chatEpoch += 1;
     resetChatClear();
     placement = null;
-    mapBuilt = false;
     save();
+    applyStrings();
+    renderUiLangPickers();
     renderLangPickers();
     updateSetupCopy();
     renderToday();
     if (currentView === "settings") renderSettingsOptions();
-    if (currentView === "map") buildMap();
     if (currentView === "stats") renderStats();
     return true;
   }
@@ -531,11 +565,10 @@
     var code = (ACTIVE && ACTIVE.code) || "es";
     var byLang = (state.profile && state.profile.byLang) || {};
     var levels = (state.profile && state.profile.levelByLang) || {};
-    var ui = state.profile && state.profile.uiLang;
+    var ui = (state.profile && state.profile.uiLang) || defaultUiFor(code);
     byLang[code] = bucketOf(state);
     levels[code] = level;
-    state.profile = { level: level, levelByLang: levels, lang: code, byLang: byLang };
-    if (ui) state.profile.uiLang = ui;
+    state.profile = { level: level, levelByLang: levels, lang: code, byLang: byLang, uiLang: ui };
     save();
   }
 
@@ -613,6 +646,16 @@
     return !!(bundled && Object.keys(bundled).length);
   }
 
+  /* Actual playback, not just the presence of an API. A pack with no clips and
+   * no installed voice (Chinese on most machines) should not produce a speaking
+   * task or a repeated "cannot play" toast. */
+  function audioAvailable() {
+    if (!audioEnabled()) return false;
+    if (hasBundled()) return true;
+    if (!hasTTS) return false;
+    return langVoices().length > 0;
+  }
+
   /* Test the active pack, not a hardcoded Spanish word: the settings chip used
    * to say "noche" while a French or Arabic deck was loaded. */
   function audioTestItem() {
@@ -627,7 +670,7 @@
    * installed voices, which is the common case on Linux. Speech synthesis is
    * the fallback, not the primary path. */
   function sayItem(it, btn) {
-    if (!audioEnabled()) return;
+    if (!audioAvailable()) return false;
     var url = bundled && bundled[it.id];
     if (url) {
       try {
@@ -639,24 +682,18 @@
           btn.classList.add("is-playing");
           a.onended = function () { btn.classList.remove("is-playing"); };
         }
-        return;
+        return true;
       } catch (err) { /* fall through */ }
     }
     speak(it.text, btn);
+    return true;
   }
 
-  var warnedNoVoice = false;
-
   function speak(text, btn) {
-    if (!audioEnabled()) return;
-    if (!hasTTS) { toast("This browser has no speech synthesis."); return; }
+    if (!audioAvailable()) return;
     var synth = window.speechSynthesis;
     try {
       if (!voice) pickVoice();
-      if (!hasBundled() && !langVoices().length && !synth.speaking && !warnedNoVoice && audioStatus().state === "none") {
-        warnedNoVoice = true;
-        toast("No speech voice on this device — everything else still works.");
-      }
       if (synth.paused) synth.resume();
 
       var u = new SpeechSynthesisUtterance(String(text));
@@ -746,9 +783,8 @@
 
   /* ---------------------------------------------------------------- views */
 
-  var VIEWS = ["today", "session", "reader", "alphabet", "conv", "setup", "settings", "map", "stats"];
+  var VIEWS = ["today", "session", "reader", "alphabet", "conv", "setup", "settings", "stats"];
   var currentView = "today";
-  var mapBuilt = false;
 
   function show(view) {
     applyStrings();
@@ -766,13 +802,6 @@
     if (view === "today" || view === "settings") renderToday();
     if (view === "settings") renderChatSettings();
     if (view === "stats") renderStats();
-    if (view === "map" && !mapBuilt) { buildMap(); mapBuilt = true; }
-    if (view === "map") {
-      refreshMapState();
-      renderMapList();
-      /* the web pans on a phone; it opens on the middle, where the clusters meet */
-      setMapMode($("view-map").getAttribute("data-mode") || "list");
-    }
     if (window.history && window.history.replaceState) {
       window.history.replaceState(null, "", "#" + view);
     }
@@ -796,7 +825,6 @@
     mark("[data-length]", "data-length", (state.settings && state.settings.length) || "goal");
     mark("[data-audio]", "data-audio", audioEnabled() ? "on" : "off");
     mark("[data-ruby]", "data-ruby", rubyOn() ? "on" : "off");
-    mark("[data-level]", "data-level", learnerLevel());
 
     var group = $("ruby-group");
     if (group) group.hidden = !hasScriptLesson();
@@ -836,7 +864,7 @@
       var n = D.concepts.filter(function (c) { return c.cat === cat; }).length;
       var on = fields.indexOf(cat) !== -1;
       return '<button type="button" class="field' + (on ? " is-on" : "") + '" data-cat="' + cat + '"' +
-        ' aria-pressed="' + on + '">' + esc(D.categories[cat].label) +
+        ' aria-pressed="' + on + '">' + esc(catLabel(cat)) +
         ' <b>' + n + "</b></button>";
     }).join("");
 
@@ -864,7 +892,8 @@
     var note = $("builder-note");
     if (note) {
       var goalNow = ADAPT ? ADAPT.dailyGoal((state.history || [])) : lessonSize();
-      note.textContent = goalNow + " today · " + deckIds().length + " cards · " + due + " due";
+      note.textContent = goalNow + " " + tr("today", "today") + " · " + deckIds().length + " " +
+        tr("cards", "cards") + " · " + due + " " + tr("due", "due");
     }
   }
 
@@ -900,7 +929,7 @@
 
     var next = renderNextStack();
     $("lesson-name").textContent = next.title;
-    $("start-sub").textContent = next.caption || "Nothing new or due. Practise anything.";
+    $("start-sub").textContent = next.caption || tr("nothingDue", "Nothing new or due. Practise anything.");
     renderReviewList();
   }
 
@@ -917,7 +946,7 @@
     }).slice(0, 4);
 
     if (!ids.length) {
-      box.innerHTML = '<p class="list-empty">Words you learn come back here when they are due.</p>';
+      box.innerHTML = '<p class="list-empty">' + esc(tr("reviewEmpty", "Words you learn come back here when they are due.")) + "</p>";
       return;
     }
     box.innerHTML = ids.map(function (id) {
@@ -991,7 +1020,7 @@
     $("reader-feedback").textContent = "";
     $("reader-feedback").className = "feedback";
     $("reader-stage").innerHTML =
-      '<p class="prompt">Read</p>' +
+      '<p class="prompt">' + esc(tr("read", "Read")) + "</p>" +
       '<h3 class="reader-title">' + esc(t.title) + "</h3>" +
       '<p class="reader-body">' + esc(t.body) + "</p>";
     $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-go">Questions</button>';
@@ -1050,7 +1079,7 @@
     $("reader-feedback").textContent = "";
     $("reader-feedback").className = "feedback";
     $("reader-stage").innerHTML =
-      '<p class="prompt">Text finished</p>' +
+      '<p class="prompt">' + esc(tr("textFinished", "Text finished")) + "</p>" +
       '<div class="word">' + reader.correct + "/" + total + "</div>" +
       '<p class="sentence">' + esc(t.title) + " · level " + t.level + "</p>" +
       (reader.misses.length
@@ -1079,7 +1108,8 @@
     var next = shelf.filter(function (x) { return state.readTexts.indexOf(x.id) === -1; })[0] || shelf[0];
     var more = next && next.id !== t.id;
     $("reader-actions").innerHTML =
-      '<button class="btn btn-primary" id="reader-again">' + (more ? "Next text" : "Read it again") + "</button>" +
+      '<button class="btn btn-primary" id="reader-again">' +
+        esc(more ? tr("nextText", "Next text") : tr("readAgain", "Read it again")) + "</button>" +
       '<button class="btn btn-ghost btn-sm" id="reader-done" type="button">done for now</button>';
     $("reader-again").addEventListener("click", startReader);
     $("reader-done").addEventListener("click", function () { reader = null; show("today"); });
@@ -1193,7 +1223,7 @@
     var canWrite = !more && writingPool().length > 0;
     $("alphabet-actions").innerHTML =
       '<button class="btn btn-primary" id="alphabet-again">' +
-        esc(more ? tr("nextLetter", "Next letter") : canWrite ? "Write the characters" : tr("start", "Start lesson")) + "</button>" +
+        esc(more ? tr("nextLetter", "Next letter") : canWrite ? tr("writeCharacters", "Write the characters") : tr("start", "Start lesson")) + "</button>" +
       '<button class="btn btn-ghost btn-sm" id="alphabet-done" type="button">' + esc(tr("leave", "done for now")) + "</button>";
     $("alphabet-again").addEventListener("click", function () {
       if (canWrite) startWriting();
@@ -1281,7 +1311,7 @@
 
   function renderWritingRecall(it) {
     $("stage").innerHTML =
-      '<p class="prompt">Write it</p>' +
+      '<p class="prompt">' + esc(tr("writeIt", "Write it")) + "</p>" +
       '<div class="writing-pinyin">' + esc(it.sub) + "</div>" +
       (writingGloss(it) ? '<p class="writing-gloss">' + esc(writingGloss(it)) + "</p>" : "") +
       '<input class="type-input" id="type-input" type="text" autocomplete="off" ' +
@@ -1333,7 +1363,7 @@
     }
 
     $("stage").innerHTML =
-      '<p class="prompt">Which reading?</p>' +
+      '<p class="prompt">' + esc(tr("whichReading", "Which reading?")) + "</p>" +
       '<div class="word">' + esc(it.text) + "</div>" +
       '<div class="word-options">' + S.shuffle(set, Math.random).map(function (sub) {
         return '<button class="option-word" data-sub="' + esc(sub) + '">' + esc(sub) + "</button>";
@@ -1386,12 +1416,10 @@
     $("feedback").textContent = "";
     $("feedback").className = "feedback";
     $("stage").innerHTML =
-      '<p class="prompt">Writing done</p>' +
-      '<p class="sum-big">' + good + "/" + total + "</p>" +
-      '<p class="sum-line">' + (total === 1 ? "character" : "characters") + " written</p>" +
-      '<p class="sum-meta">each one comes back as a card, exactly like a word</p>';
+      '<p class="prompt">' + esc(tr("writingDone", "Writing done")) + "</p>" +
+      '<p class="sum-big">' + good + "/" + total + "</p>";
     $("actions").innerHTML =
-      '<button class="btn btn-primary" id="writing-again">Write more</button>' +
+      '<button class="btn btn-primary" id="writing-again">' + esc(tr("writeMore", "Write more")) + "</button>" +
       '<button class="btn btn-ghost btn-sm" id="writing-done" type="button">done for now</button>';
     $("writing-again").addEventListener("click", startWriting);
     $("writing-done").addEventListener("click", function () { writing = null; show("today"); });
@@ -1934,15 +1962,13 @@
   /* ------------------------------------------------------------ placement */
 
   var placement = null;
+  var PLACEMENT_TOTAL = 8;
 
-  /* Eight questions, mixed decks, hardest last. The result is a floor on the
-   * track: a false beginner should not be made to click through "casa". */
+  /* Eight questions on a staircase, not a random sample. Two correct answers
+   * in a row move the next question up a CEFR band; a miss steps back one.
+   * The learner never picks a level by hand. */
   function startPlacement() {
-    var queue = S.shuffle(allIds, Math.random).slice(0, 4)
-      .concat(S.shuffle(phraseIds, Math.random).slice(0, 2))
-      .concat(S.shuffle(termIds, Math.random).slice(0, 2));
-
-    placement = { queue: queue, i: 0, correct: 0 };
+    placement = { i: 0, correct: 0, band: 0, streak: 0, peak: 0, asked: {}, id: null };
     show("session");
     renderPlaceItem();
   }
@@ -1951,43 +1977,71 @@
     return (state.placement && state.placement.floor) || 0;
   }
 
+  function pickPlacementItem() {
+    var asked = placement.asked;
+    function atBand(band) {
+      var want = ADAPT.CEFR[band];
+      return deckIds().filter(function (id) {
+        return !asked[id] && itemLevel(id) === want;
+      });
+    }
+    var ids = atBand(placement.band);
+    for (var lower = placement.band - 1; !ids.length && lower >= 0; lower -= 1) ids = atBand(lower);
+    for (var higher = placement.band + 1; !ids.length && higher < ADAPT.CEFR.length; higher += 1) ids = atBand(higher);
+    if (!ids.length) {
+      ids = deckIds().filter(function (id) { return !asked[id]; });
+    }
+    return S.shuffle(ids, Math.random)[0] || null;
+  }
+
   function renderPlaceItem() {
     if (!placement) return;
-    if (placement.i >= placement.queue.length) { finishPlacement(); return; }
+    if (placement.i >= PLACEMENT_TOTAL) { finishPlacement(); return; }
+    if (!placement.id) {
+      placement.id = pickPlacementItem();
+      if (!placement.id) { finishPlacement(); return; }
+      placement.asked[placement.id] = true;
+    }
 
     clearCard();
-    var id = placement.queue[placement.i];
+    var id = placement.id;
     var it = itemOf(id);
     var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
 
-    $("counter").textContent = (placement.i + 1) + "/" + placement.queue.length;
-    $("bar-fill").style.width = Math.round((placement.i / placement.queue.length) * 100) + "%";
+    $("counter").textContent = (placement.i + 1) + "/" + PLACEMENT_TOTAL;
+    $("bar-fill").style.width = Math.round((placement.i / PLACEMENT_TOTAL) * 100) + "%";
 
     $("stage").innerHTML =
-      '<p class="prompt">How much do you know?</p>' +
+      '<p class="prompt">' + esc(tr("howMuch", "How much do you know?")) + "</p>" +
       tileHTML(it) +
       '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
 
     Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
       btn.addEventListener("click", function () {
         var ok = btn.getAttribute("data-id") === id;
-        if (ok) placement.correct += 1;
         btn.classList.add(ok ? "pick-correct" : "pick-wrong");
         markChoices(".option-word", id);
+        ADAPT.placementStep(placement, ok);
         placement.i += 1;
+        placement.id = null;
         setTimeout(renderPlaceItem, ok ? 220 : 700);
       });
     });
   }
 
   function finishPlacement() {
-    var total = placement.queue.length;
+    var total = Math.max(1, placement.i);
     var correct = placement.correct;
     var units = trackUnits();
-    var ratio = correct / total;
-    var floor = Math.min(units.length - 1, Math.floor(ratio * units.length));
-    var band = floor >= 3 ? "B1" : floor >= 1 ? "A2" : "A1";
-    state.placement = { floor: floor, score: correct, total: total, at: Date.now() };
+    var maxBand = 0;
+    deckIds().forEach(function (id) {
+      var at = ADAPT.CEFR.indexOf(itemLevel(id));
+      if (at > maxBand) maxBand = at;
+    });
+    var bandIndex = Math.min(placement.band, maxBand);
+    var band = ADAPT.CEFR[bandIndex] || "A1";
+    var floor = Math.min(units.length - 1, bandIndex * 2);
+    state.placement = { floor: floor, band: band, score: correct, total: total, at: Date.now() };
     if (state.profile) {
       state.profile.level = band;
       state.profile.levelByLang = state.profile.levelByLang || {};
@@ -1997,9 +2051,7 @@
     save();
 
     show("today");
-    toast(floor > 0
-      ? "Starting at " + TRACK.title(units[floor].key, trackOpts()) + " — " + correct + "/" + total + " right."
-      : "Starting from the beginning.");
+    toast(band + " — " + correct + "/" + total + " right.");
     renderToday();
   }
 
@@ -2567,7 +2619,7 @@
     if (phrases * 2 > kinds.length) return "Phrases";
     var cats = p.fresh.map(function (id) { return conceptById[id] && conceptById[id].cat; }).filter(Boolean);
     var same = cats.length && cats.every(function (c) { return c === cats[0]; });
-    return same && D.categories[cats[0]] ? D.categories[cats[0]].label : "New words";
+    return same && D.categories[cats[0]] ? catLabel(cats[0]) : "New words";
   }
 
   function startSession(opts) {
@@ -2779,8 +2831,8 @@
     var box = $("steps");
     if (!box || !session) return;
     var steps = [];
-    if (session.hasPersonal) steps.push(["warm", "Warm up"]);
-    steps.push(["learn", "Learn"], ["quiz", "Quiz"], ["done", "Done"]);
+    if (session.hasPersonal) steps.push(["warm", tr("warmup", "Warm up")]);
+    steps.push(["learn", tr("learn", "Learn")], ["quiz", tr("quiz", "Quiz")], ["done", tr("done", "Done")]);
 
     var passed = false;
     box.innerHTML = steps.map(function (s) {
@@ -2810,8 +2862,8 @@
     var last = session.si === session.study.length - 1;
 
     $("stage").innerHTML =
-      '<p class="prompt">Learn the pair · ' + (session.si + 1) + " of " + session.study.length +
-        (it.kind === "phrase" ? " · phrase" : "") + "</p>" +
+      '<p class="prompt">' + esc(tr("learnPair", "Learn the pair")) + " · " + (session.si + 1) + " / " + session.study.length +
+        (it.kind === "phrase" ? " · " + esc(tr("phrase", "phrase")) : "") + "</p>" +
       figureHTML(it, "Hear it") +
       wordsHTML(it) +
       glossLine(it.id) +
@@ -2837,7 +2889,7 @@
   }
 
   function listenable(id) {
-    if (!audioEnabled()) return false;
+    if (!audioAvailable()) return false;
     return EX.canListen(bundled, id, hasTTS);
   }
 
@@ -3003,7 +3055,7 @@
   function renderTeach(id) {
     var it = itemOf(id);
     $("stage").innerHTML =
-      '<p class="prompt">New</p>' +
+      '<p class="prompt">' + esc(tr("new", "New")) + "</p>" +
       figureHTML(it, "Hear it") +
       wordsHTML(it) +
       glossLine(it.id) +
@@ -3090,7 +3142,7 @@
     var set = S.shuffle([id].concat(S.pickDistractors(id, termIds, [], 3, Math.random)), Math.random);
 
     $("stage").innerHTML =
-      '<p class="prompt">Which one fits?</p>' +
+      '<p class="prompt">' + esc(tr("whichFits", "Which one fits?")) + "</p>" +
       '<p class="term-blank">' + esc(it.frame) + "</p>" +
       '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
 
@@ -3113,7 +3165,7 @@
     var placed = [];
 
     $("stage").innerHTML =
-      '<p class="prompt">Build the sentence</p>' +
+      '<p class="prompt">' + esc(tr("buildSentence", "Build the sentence")) + "</p>" +
       '<div class="build-line" id="build-line" aria-live="polite"></div>' +
       '<div class="word-options" id="build-pool"></div>';
     $("actions").innerHTML = '<button class="btn btn-primary" id="build-check" disabled>Check</button>';
@@ -3163,7 +3215,7 @@
     var completed = gap.sentence.replace("___", gap.answer);
 
     $("stage").innerHTML =
-      '<p class="prompt">Fill the gap</p>' +
+      '<p class="prompt">' + esc(tr("fillGap", "Fill the gap")) + "</p>" +
       '<p class="gap-sentence">' + esc(gap.sentence) + "</p>" +
       '<div class="word-options">' + options.map(function (word) {
         return '<button class="option-word" data-word="' + esc(word) + '">' + esc(word) + "</button>";
@@ -3192,16 +3244,17 @@
     var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
 
     $("stage").innerHTML =
-      '<p class="prompt">Listen and pick</p>' +
+      '<p class="prompt">' + esc(tr("listenPick", "Listen and pick")) + "</p>" +
       '<div class="listen-face">' +
         '<button class="speak-btn round" id="hear-btn" aria-label="Play it again" title="Play it again">' +
           ICON.speaker + "</button>" +
       "</div>" +
       '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
-    $("actions").innerHTML = "";
+    $("actions").innerHTML = '<button class="btn btn-ghost" id="skip">' + esc(tr("skip", "Skip")) + "</button>";
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
+    $("skip").addEventListener("click", skipCard);
     Array.prototype.forEach.call($("stage").querySelectorAll(".option-word"), function (btn) {
       btn.addEventListener("click", function () {
         var picked = btn.getAttribute("data-id");
@@ -3262,7 +3315,7 @@
     var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
 
     $("stage").innerHTML =
-      '<p class="prompt">Find the picture</p>' +
+      '<p class="prompt">' + esc(tr("findPicture", "Find the picture")) + "</p>" +
       '<div class="say-line">' +
         '<button class="speak-btn round" id="hear-btn" aria-label="Hear it" title="Hear it">' + ICON.speaker + "</button>" +
         wordsHTML(it) +
@@ -3284,7 +3337,7 @@
     var it = itemOf(id);
 
     $("stage").innerHTML =
-      '<p class="prompt">Write it in ' + esc(LANG.name) + "</p>" +
+      '<p class="prompt">' + esc(tr("writeIt", "Write it")) + " · " + esc(LANG.name) + "</p>" +
       tileHTML(it) +
       '<input class="type-input" id="type-input" type="text" autocomplete="off" ' +
         'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
@@ -3317,7 +3370,7 @@
     var it = itemOf(id);
 
     $("stage").innerHTML =
-      '<p class="prompt">Say it in ' + esc(LANG.name) + "</p>" +
+      '<p class="prompt">' + esc(tr("sayIt", "Say it")) + " · " + esc(LANG.name) + "</p>" +
       figureHTML(it, "Hear it") +
       (SR ? '<button class="mic" id="mic-btn">' + ICON.mic + 'Say it aloud</button>' : "") +
       '<p class="score" id="score"></p>';
@@ -3347,8 +3400,10 @@
 
     /* without a recogniser the learner says it aloud and checks themselves */
     $("actions").innerHTML = (SR ? "" : '<button class="btn btn-primary" id="said">I said it</button>') +
+      '<button class="btn btn-ghost" id="skip">' + esc(tr("skip", "Skip")) + "</button>" +
       '<button class="btn btn-ghost" id="reveal">Show the answer</button>';
     if (!SR) $("said").addEventListener("click", function () { answer(true, null); });
+    $("skip").addEventListener("click", skipCard);
     $("reveal").addEventListener("click", function () { answer(false, null); });
   }
 
@@ -3367,6 +3422,18 @@
     session.counted[id] = true;
     bumpDaily();
     save();
+  }
+
+  /* Leave a task the device cannot actually run, without marking it wrong. */
+  function skipCard() {
+    if (!session) return;
+    var id = session.quiz[session.qi];
+    if (session.answered[id]) {
+      delete session.answered[id];
+      session.unique = Math.max(0, (session.unique || 0) - 1);
+    }
+    session.qi += 1;
+    renderQuiz();
   }
 
   function answer(ok, chosenId) {
@@ -3439,21 +3506,22 @@
 
     /* This screen gets shown to other people, across a room: one number,
      * then what stuck and what is coming back. Nothing else competes. */
-    var noun = session.mode === "words" ? "word" : "card";
+    var noun = tr("cards", "cards");
     var secs = Math.max(1, Math.round((now - session.startedAt) / 1000));
-    var took = secs < 120 ? secs + " second" + (secs === 1 ? "" : "s") : Math.round(secs / 60) + " minutes";
+    var took = secs < 120 ? secs + "s" : Math.round(secs / 60) + "m";
 
     $("card").classList.add("is-summary");
     $("stage").innerHTML =
-      '<p class="prompt">Lesson done</p>' +
+      '<p class="prompt">' + esc(tr("lessonDone", "Lesson done")) + "</p>" +
       '<p class="sum-big">' + total + "</p>" +
-      '<p class="sum-line">' + noun + (total === 1 ? "" : "s") + " in " + took + "</p>" +
+      '<p class="sum-line">' + esc(noun) + " · " + took + "</p>" +
       '<div class="sum-cols">' +
-        (kept.length ? sumGroup("kept", "Remembered · " + kept.length, kept, now) : "") +
-        (missed.length ? sumGroup("back", "Comes back · " + missed.length, missed, now) : "") +
+        (kept.length ? sumGroup("kept", tr("remembered", "Remembered") + " · " + kept.length, kept, now) : "") +
+        (missed.length ? sumGroup("back", tr("comesBack", "Comes back") + " · " + missed.length, missed, now) : "") +
       "</div>" +
-      '<p class="sum-meta">' + session.firstCorrect + " of " + total + " right the first time · " +
-        days + "-day streak</p>";
+      '<p class="sum-meta">' + session.firstCorrect + "/" + total + " " +
+        esc(tr("rightFirst", "right the first time")) + " · " + days + " " +
+        esc(tr("dayStreak", "day streak")) + "</p>";
 
     feedback("", "");
     $("stage").insertAdjacentHTML("beforeend",
@@ -3479,8 +3547,8 @@
     });
 
     $("actions").innerHTML =
-      '<button class="btn btn-primary" id="again">One more</button>' +
-      '<button class="btn btn-ghost btn-sm" id="back" type="button">done for now</button>';
+      '<button class="btn btn-primary" id="again">' + esc(tr("oneMore", "One more")) + "</button>" +
+      '<button class="btn btn-ghost btn-sm" id="back" type="button">' + esc(tr("leave", "done for now")) + "</button>";
 
     $("back").addEventListener("click", function () { session = null; show("today"); });
     $("again").addEventListener("click", function () { startSession(); });
@@ -3554,237 +3622,9 @@
     f.className = "feedback" + (kind ? " " + kind : "");
   }
 
-  /* ------------------------------------------------------------------ map */
-
-  var positions = {};
-
-  function layout() {
-    var cats = Object.keys(D.categories);
-    var cx = 450, cy = 345, rx = 332, ry = 226;
-    var byCat = {};
-    cats.forEach(function (c) { byCat[c] = []; });
-    D.concepts.forEach(function (c) {
-      (byCat[c.cat] || (byCat[c.cat] = [])).push(c.id);
-    });
-
-    cats.forEach(function (cat, ci) {
-      var angle = (ci / cats.length) * Math.PI * 2 - Math.PI / 2;
-      var gx = cx + Math.cos(angle) * rx;
-      var gy = cy + Math.sin(angle) * ry;
-      var ids = byCat[cat] || [];
-      var spread = ids.length > 1 ? 40 + ids.length * 7 : 0;
-
-      ids.forEach(function (id, i) {
-        var a = (i / Math.max(ids.length, 1)) * Math.PI * 2 - Math.PI / 2;
-        var r = ids.length > 1 ? spread : 0;
-        positions[id] = {
-          x: gx + Math.cos(a) * r,
-          y: gy + Math.sin(a) * r,
-          cat: cat,
-          cx: gx,
-          cy: gy
-        };
-      });
-    });
-
-    separate(Object.keys(positions), 54);
-  }
-
-  /* Neighbouring clusters on the ellipse can land a node exactly on top of
-   * another (mar under perro, amor under correr). A few rounds of pairwise
-   * pushing keep every node visible without redesigning the layout. */
-  function separate(ids, minGap) {
-    for (var round = 0; round < 80; round += 1) {
-      var moved = false;
-      for (var i = 0; i < ids.length; i += 1) {
-        for (var j = i + 1; j < ids.length; j += 1) {
-          var a = positions[ids[i]], b = positions[ids[j]];
-          var dx = b.x - a.x, dy = b.y - a.y;
-          var d = Math.sqrt(dx * dx + dy * dy);
-          if (d >= minGap) continue;
-          if (d < 0.01) { dx = 1; dy = 0; d = 1; }
-          var push = (minGap - d) / 2;
-          a.x -= (dx / d) * push; a.y -= (dy / d) * push;
-          b.x += (dx / d) * push; b.y += (dy / d) * push;
-          moved = true;
-        }
-      }
-      ids.forEach(function (id) {
-        var p = positions[id];
-        p.x = Math.max(40, Math.min(860, p.x));
-        p.y = Math.max(30, Math.min(650, p.y));
-      });
-      if (!moved) break;
-    }
-  }
-
-  function buildMap() {
-    layout();
-    var edgeLayer = $("map-edges");
-    var nodeLayer = $("map-nodes");
-    edgeLayer.innerHTML = "";
-    nodeLayer.innerHTML = "";
-
-    var svgNS = "http://www.w3.org/2000/svg";
-
-    D.edges.forEach(function (e) {
-      var p1 = positions[e.a], p2 = positions[e.b];
-      if (!p1 || !p2) return;
-      var mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
-      var dx = p2.x - p1.x, dy = p2.y - p1.y;
-      var cxp = mx - dy * 0.12, cyp = my + dx * 0.12;
-      var path = document.createElementNS(svgNS, "path");
-      path.setAttribute("d", "M" + p1.x + "," + p1.y + " Q" + cxp + "," + cyp + " " + p2.x + "," + p2.y);
-      path.setAttribute("class", "edge" + (e.type === "opposite" ? " strong" : ""));
-      path.setAttribute("data-a", e.a);
-      path.setAttribute("data-b", e.b);
-      edgeLayer.appendChild(path);
-    });
-
-    D.concepts.forEach(function (c) {
-      var p = positions[c.id];
-      if (!p) return;
-      var g = document.createElementNS(svgNS, "g");
-      g.setAttribute("class", "node");
-      g.setAttribute("data-id", c.id);
-      g.setAttribute("tabindex", "0");
-      g.setAttribute("role", "button");
-      /* a node is a fixed 21px circle: ruby would overflow it, so the label stays
-       * plain and the reading rides along in the accessible name and the tooltip.
-       * The list and the info panel, where there is room, do use ruby. */
-      g.setAttribute("aria-label", c.word + (c.sub ? " — " + c.sub : ""));
-      var tip = document.createElementNS(svgNS, "title");
-      tip.textContent = c.word + (c.sub ? " (" + c.sub + ")" : "");
-      g.appendChild(tip);
-
-      var halo = document.createElementNS(svgNS, "circle");
-      halo.setAttribute("class", "halo");
-      halo.setAttribute("cx", p.x);
-      halo.setAttribute("cy", p.y);
-      halo.setAttribute("r", 21);
-      g.appendChild(halo);
-
-      var glyph = document.createElementNS(svgNS, "text");
-      glyph.setAttribute("class", "glyph");
-      glyph.setAttribute("x", p.x);
-      glyph.setAttribute("y", p.y);
-      glyph.textContent = c.emoji;
-      g.appendChild(glyph);
-
-      // Labels are pushed away from the centre of the drawing, not from the
-      // cluster: that always aims them at the empty margin instead of at the
-      // neighbouring nodes inside the same cluster.
-      var dx = p.x - 450;
-      var dy = p.y - 345;
-      var len = Math.sqrt(dx * dx + dy * dy);
-      var ox = len > 12 ? (dx / len) * 32 : 0;
-      var oy = len > 12 ? (dy / len) * 32 : 34;
-
-      var label = document.createElementNS(svgNS, "text");
-      label.setAttribute("class", "node-word");
-      label.setAttribute("x", p.x + ox);
-      label.setAttribute("y", p.y + oy + 3);
-      label.setAttribute("text-anchor", "middle");
-      label.textContent = c.word;
-      g.appendChild(label);
-
-      g.addEventListener("click", function () { selectNode(c.id); });
-      g.addEventListener("keydown", function (ev) {
-        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); selectNode(c.id); }
-      });
-      nodeLayer.appendChild(g);
-    });
-
-    var legend = $("map-legend");
-    legend.innerHTML = Object.keys(D.relationTypes).map(function (k) {
-      return '<span class="' + (k === "opposite" ? "purple" : "") + '"><i></i>' +
-        esc(D.relationTypes[k].label) + "</span>";
-    }).join("");
-  }
-
-  function refreshMapState() {
-    Array.prototype.forEach.call(document.querySelectorAll("#map-nodes .node"), function (g) {
-      var id = g.getAttribute("data-id");
-      var card = state.cards[id];
-      var learned = card && card.reps > 0;
-      g.classList.toggle("learned", !!learned);
-      var halo = g.querySelector(".halo");
-      var hue = (D.categories[conceptById[id].cat] || {}).hue || "#d93a1c";
-      if (learned) {
-        halo.setAttribute("fill", hue);
-        halo.setAttribute("fill-opacity", "0.78");
-      } else {
-        halo.removeAttribute("fill");
-        halo.removeAttribute("fill-opacity");
-      }
-    });
-  }
-
-  /* On a phone the web is too wide to read, so the same graph also comes as
-   * a list: each field, its words, and what each word sits next to. */
-  function renderMapList() {
-    var box = $("map-list");
-    box.innerHTML = Object.keys(D.categories).map(function (cat) {
-      var words = D.concepts.filter(function (c) { return c.cat === cat; });
-      if (!words.length) return "";
-      var known = words.filter(function (c) { return state.cards[c.id] && state.cards[c.id].reps > 0; }).length;
-      return '<section class="group">' +
-        '<h3 class="group-title">' + esc(D.categories[cat].label) + " · " + known + " of " + words.length + "</h3>" +
-        '<div class="list">' + words.map(function (c) {
-          var near = neighboursOf(c.id).slice(0, 3).map(function (n) { return esc(conceptById[n].word); }).join(", ");
-          return '<button class="row" type="button" data-id="' + esc(c.id) + '">' +
-            '<span class="row-pic" aria-hidden="true">' + c.emoji + "</span>" +
-            '<span class="row-body">' +
-              '<span class="row-main">' + articleHTML(c.article) + textHTML(itemOf(c.id)) + "</span>" +
-              '<span class="row-meta">' + near + "</span>" +
-            "</span></button>";
-        }).join("") + "</div></section>";
-    }).join("");
-
-    Array.prototype.forEach.call(box.querySelectorAll(".row"), function (btn) {
-      btn.addEventListener("click", function () { sayItem(itemOf(btn.getAttribute("data-id"))); });
-    });
-  }
-
-  function setMapMode(mode) {
-    $("view-map").setAttribute("data-mode", mode);
-    Array.prototype.forEach.call(document.querySelectorAll("[data-mapmode]"), function (b) {
-      var on = b.getAttribute("data-mapmode") === mode;
-      b.classList.toggle("is-on", on);
-      b.setAttribute("aria-pressed", String(on));
-    });
-    if (mode === "web") {
-      var panel = document.querySelector(".map-panel");
-      if (panel) panel.scrollLeft = (panel.scrollWidth - panel.clientWidth) / 2;
-    }
-  }
-
-  function selectNode(id) {
-    var c = conceptById[id];
-    sayItem(itemOf(c.id));
-    var info = $("map-info");
-    var links = (neighbours[id] || []).slice(0, 4).map(function (n) {
-      var rel = D.relationTypes[n.type] ? D.relationTypes[n.type].label : "related to";
-      return "<b>" + esc(conceptById[n.id].word) + "</b> (" + esc(rel) + ")";
-    }).join(" · ");
-
-    info.innerHTML =
-      '<div class="tile" aria-hidden="true">' + c.emoji + "</div>" +
-      '<div class="info-body">' +
-        '<div class="info-word">' + (c.article ? esc(c.article) + " " : "") + textHTML(itemOf(c.id)) + "</div>" +
-        '<div class="info-links">' + (links || "no links yet") + "</div>" +
-        '<div class="hint">' + contextHTML(itemOf(c.id)) + "</div>" +
-      "</div>" +
-      '<button class="speak-btn" id="info-hear">' + ICON.speaker + 'Again</button>';
-
-    var hear = $("info-hear");
-    if (hear) hear.addEventListener("click", function () { speak(c.sentence, this); });
-  }
-
   /* ---------------------------------------------------------------- stats */
 
   function renderStats() {
-    var bars = $("cat-bars");
     var cats = Object.keys(D.categories);
     var rows = cats.map(function (cat) {
       var ids = D.concepts.filter(function (c) { return c.cat === cat; }).map(function (c) { return c.id; });
@@ -3793,19 +3633,28 @@
       return { cat: cat, learned: learned, total: ids.length, pct: pct };
     }).filter(function (r) { return r.total > 0; });
 
-    bars.innerHTML = rows.map(function (r) {
-      var hue = D.categories[r.cat].hue;
-      return '<div class="bar-row">' +
-        '<span class="label">' + esc(D.categories[r.cat].label) + "</span>" +
-        '<span class="track" style="background:' + hue + '33"><span class="fill" style="width:' + r.pct + "%;background:" + hue + '"></span></span>' +
-        '<span class="n">' + r.learned + "/" + r.total + "</span>" +
+    var known = allIds.filter(function (id) { return state.cards[id] && state.cards[id].reps > 0; }).length;
+    var solid = allIds.filter(function (id) { return state.cards[id] && state.cards[id].interval >= 6; }).length;
+    $("progress-summary").textContent = known + "/" + allIds.length + " " +
+      tr("wordsMet", "words met") + " · " + solid + " " + tr("solid", "solid") + " · " +
+      currentStreak() + " " + tr("dayStreak", "day streak");
+
+    /* The roadmap: one ring per topic, filled to the share of its words met.
+     * This replaces the old semantic map; the edges still power distractors,
+     * but the screen is about how far the learner has travelled. */
+    $("progress-roadmap").innerHTML = rows.map(function (r) {
+      return '<div class="topic" style="--pct:' + r.pct + '" aria-label="' +
+        esc(catLabel(r.cat) + ": " + r.pct + " percent, " + r.learned + " of " + r.total) + '">' +
+        '<span class="topic-ring" aria-hidden="true"><b>' + r.pct + "%</b></span>" +
+        '<span class="topic-name">' + esc(catLabel(r.cat)) + "</span>" +
+        '<span class="topic-count">' + r.learned + "/" + r.total + "</span>" +
       "</div>";
     }).join("");
 
     var conf = S.topConfusions(state, 5);
     var box = $("confusions");
     if (!conf.length) {
-      box.innerHTML = '<div class="empty">No confusions recorded yet.<br />They appear here when you pick a neighbouring concept instead of the right one.</div>';
+      box.innerHTML = '<div class="empty">' + esc(tr("noConfusions", "No confusions yet.")) + "</div>";
     } else {
       box.innerHTML = conf.map(function (row) {
         var a = conceptById[row.target], b = conceptById[row.chosen];
@@ -3831,7 +3680,7 @@
           return '<p class="mem-line">“' + esc(item.text) + "” <span>" +
             esc(shortDate(item.created)) + "</span></p>";
         }).join("")
-      : '<div class="empty">Nothing kept yet. Finish a lesson and write one sentence with the words you just met.</div>';
+      : '<div class="empty">' + esc(tr("noMemory", "Nothing kept yet.")) + "</div>";
 
 
     $("stat-sessions").textContent = state.sessions;
@@ -3941,25 +3790,6 @@
     });
   });
 
-  /* A level belongs to the language on screen. Setting it here is how an
-   * advanced learner reaches B2/C1 material that placement tops out below. */
-  Array.prototype.forEach.call(document.querySelectorAll("[data-level]"), function (b) {
-    b.addEventListener("click", function () {
-      var level = b.getAttribute("data-level");
-      if (ADAPT.CEFR.indexOf(level) === -1) return;
-      if (!state.profile) {
-        beginProfile(level);
-      } else {
-        state.profile.levelByLang = state.profile.levelByLang || {};
-        state.profile.levelByLang[ACTIVE.code] = level;
-        state.profile.level = level;
-        save();
-      }
-      renderSettingsOptions();
-      renderToday();
-      toast(ACTIVE.name + " set to " + level + ".");
-    });
-  });
   $("quit-btn").addEventListener("click", function () {
     session = null;
     // backing out of the placement returns to the question, not to a lesson
@@ -3967,11 +3797,6 @@
     if ((lvl || (state.profile && state.profile.level)) === "?") { show("setup"); return; }
     show("today");
   });
-  $("map-practice").addEventListener("click", function () { startSession(); });
-  Array.prototype.forEach.call(document.querySelectorAll("[data-mapmode]"), function (b) {
-    b.addEventListener("click", function () { setMapMode(b.getAttribute("data-mapmode")); });
-  });
-
   document.addEventListener("keydown", function (ev) {
     if (currentView !== "session" || !session) return;
     if (ev.key === "Escape") { session = null; show("today"); return; }

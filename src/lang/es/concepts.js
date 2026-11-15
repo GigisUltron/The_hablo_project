@@ -5,8 +5,9 @@
  * target-language sentence for context. English glosses live in glosses.js and
  * are shown on new cards and answer states; see AGENTS.md §5.
  *
- * Relations form the semantic web that the Map view draws. They are what make
- * "learn the neighbours together" possible instead of learning a list.
+ * Relations still power distractor selection and the "learn the neighbours
+ * together" idea. The old semantic-map view is gone; progress is a topic
+ * roadmap now.
  */
 var SEMA_DATA = {
   language: { code: "es", name: "Spanish", locale: "es-ES" },

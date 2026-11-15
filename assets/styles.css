@@ -13,6 +13,8 @@
 /* ---------------------------------------------------------------- tokens */
 :root {
   --radius-pill: 999px;
+  /* overridden per topic by the roadmap ring */
+  --pct: 0;
   --bg: #f2f2f7;
   --card: #ffffff;
   --fill: #e5e5ea;
@@ -874,6 +876,45 @@ ruby rt {
   align-items: start;
 }
 .history { margin-top: 16px; }
+
+/* the roadmap: one ring per topic, filled to the words met */
+.roadmap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.topic {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 8px;
+  padding: 16px 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: 0 4px 0 var(--border-deep);
+  text-align: center;
+}
+.topic-ring {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent) calc(var(--pct) * 1%), var(--fill) 0);
+  display: grid;
+  place-items: center;
+}
+.topic-ring::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: var(--card);
+}
+.topic-ring b { position: relative; font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.topic-name { font-size: 14px; font-weight: 700; line-height: 1.25; }
+.topic-count { font-size: 12px; color: var(--text-2); font-variant-numeric: tabular-nums; }
 
 .bars { display: grid; gap: 12px; }
 .bar-row {

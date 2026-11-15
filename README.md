@@ -35,7 +35,7 @@ make serve                       # same thing
 Open the printed `http://localhost:…` URL rather than the file directly: browsers gate
 microphone access behind a secure context and `file://` doesn't qualify.
 
-Deep links: `#practice` (start a lesson), `#phrases` (phrase lesson), `#quiz`, `#chat`, `#map`, `#stats`.
+Deep links: `#practice` (start a lesson), `#quiz`, `#chat`, `#read`, `#stats`.
 
 
 ## Chat with a local model

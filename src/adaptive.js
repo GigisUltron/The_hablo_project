@@ -160,6 +160,31 @@
   /* A profile keeps one level per language: a B1 Spanish learner is not B1 in
    * Arabic, and switching decks must not silently import the other band. The
    * old single `level` stays as the migration fallback. */
+  /* Placement is a staircase, not a random sample: two correct answers in a
+   * row move the next question up a CEFR band; a miss steps back one. The
+   * learner never sets a level by hand. */
+  function placementStep(state, correct) {
+    var s = state || {};
+    var band = typeof s.band === "number" ? s.band : 0;
+    var streak = typeof s.streak === "number" ? s.streak : 0;
+    var peak = typeof s.peak === "number" ? s.peak : band;
+    s.correct = (s.correct || 0) + (correct ? 1 : 0);
+    if (correct) {
+      streak += 1;
+      if (streak >= 2 && band < CEFR.length - 1) {
+        band += 1;
+        streak = 0;
+      }
+    } else {
+      streak = 0;
+      if (band > 0) band -= 1;
+    }
+    s.band = band;
+    s.streak = streak;
+    s.peak = Math.max(peak, band);
+    return s;
+  }
+
   function levelFor(profile, code) {
     var p = profile || {};
     var by = p.levelByLang && typeof p.levelByLang === "object" ? p.levelByLang : {};
@@ -199,7 +224,8 @@
   var api = { LEVELS: LEVELS, level: level, plan: plan, shouldStop: shouldStop,
               CEFR: CEFR, shelf: shelf, within: within, OPENERS: OPENERS, sessionMix: sessionMix,
               confusionSeed: confusionSeed, dailyGoal: dailyGoal, nextGoal: nextGoal,
-              levelFor: levelFor, dayKey: dayKey, bumpDaily: bumpDaily };
+              levelFor: levelFor, dayKey: dayKey, bumpDaily: bumpDaily,
+              placementStep: placementStep };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.SemaAdaptive = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);

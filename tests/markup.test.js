@@ -208,6 +208,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/writing.js",
     "src/exercises.js",
     "src/ui-strings.js",
+    "src/ui-extra.js",
     "src/srs.js",
     "src/memory.js",
     "src/chat.js",
@@ -363,10 +364,11 @@ test("every track unit has a mode the app can start", () => {
 
 test("every data-i18n key in the markup exists in every locale", () => {
   const U = require("../src/ui-strings.js");
-  const keys = [...html.matchAll(/data-i18n="([^"]+)"/g)].map((m) => m[1]);
+  const X = require("../src/ui-extra.js");
+  const keys = [...new Set([...html.matchAll(/data-i18n="([^"]+)"/g)].map((m) => m[1]))];
   assert.ok(keys.length >= 5, "no strings wired yet");
   for (const k of keys) {
-    for (const lang of ["en", "es"]) assert.ok(U[lang][k], `${lang} missing ${k}`);
+    for (const lang of Object.keys(X)) assert.ok((U[lang] && U[lang][k]) || X[lang][k], `${lang} missing ${k}`);
   }
 });
 
@@ -599,14 +601,15 @@ test("writing practice only reaches a deck whose script is not Latin", () => {
   }
 });
 
-test("the map shows the reading where there is room, and keeps nodes plain", () => {
-  // The list and the info panel route through the shared helper...
-  assert.match(app, /textHTML\(itemOf\(c\.id\)\)/, "the map list/info bypass the ruby helper");
-  // ...the SVG node is a fixed circle, so its label stays plain text and the
-  // reading rides along in the accessible name and the tooltip instead.
-  assert.match(app, /aria-label", c\.word \+ \(c\.sub/, "map nodes lose the reading for screen readers");
-  assert.match(app, /createElementNS\(svgNS, "title"\)/, "no tooltip reading on the node");
-  assert.match(app, /ruby would overflow/, "the reason nodes stay plain is not written down");
+test("progress is a topic roadmap, not a semantic map", () => {
+  assert.equal(/id="view-map"|semantic web|Semantic map/.test(html), false,
+    "the semantic map is still in the markup");
+  assert.match(html, /id="progress-roadmap"/, "no roadmap container");
+  assert.match(app, /progress-roadmap/, "the roadmap is never painted");
+  assert.match(app, /topic-ring/, "no topic progress rings");
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(css, /\.roadmap/, "no roadmap layout");
+  assert.match(css, /conic-gradient/, "the topic rings do not show a fraction");
 });
 
 test("the harder exercises exist only where the data supports them", () => {
@@ -637,11 +640,18 @@ test("the harder exercises exist only where the data supports them", () => {
   assert.match(app, /S\.review\(state, id, ok \? 2 : 0/, "the new exercises bypass the SRS");
 });
 
-test("the level control is per-language and applies immediately", () => {
-  assert.match(html, /data-level="C1"/, "the settings screen cannot reach C1");
-  assert.match(app, /data-level/, "the level control is not wired");
-  assert.match(app, /levelByLang\[ACTIVE\.code\] = level/, "the level is not stored for the live language");
-  assert.match(app, /renderSettingsOptions\(\);\n      renderToday\(\);/, "the level change does not repaint");
+test("interface language cannot equal the language being learned", () => {
+  assert.match(app, /function uiChoices\(except\)/, "uiChoices has no exclusion");
+  assert.match(app, /uiChoices\(ACTIVE && ACTIVE\.code\)/, "the deck language is not excluded");
+  assert.match(app, /function defaultUiFor/, "no fallback interface language");
+});
+
+test("the level is placed by the adaptive test, not by a settings control", () => {
+  assert.equal(/data-level/.test(html), false, "a manual level control came back");
+  assert.match(app, /PLACEMENT_TOTAL = 8/, "placement is not bounded");
+  assert.match(app, /ADAPT\.placementStep/, "placement is not a staircase");
+  assert.match(app, /state\.profile\.levelByLang\[ACTIVE\.code\] = band/,
+    "the placement result is not stored for the live language");
 });
 
 test("every settings option is read, applied now, and remembered", () => {
@@ -652,7 +662,8 @@ test("every settings option is read, applied now, and remembered", () => {
   assert.match(app, /data-length/, "the length control is not wired");
   // audio
   assert.match(app, /function audioEnabled\(\)/, "no audio setting");
-  assert.match(app, /if \(!audioEnabled\(\)\) return;/, "audio still plays when it is off");
+  assert.match(app, /function audioAvailable\(\)/, "no playback-availability check");
+  assert.match(app, /if \(!audioEnabled\(\)\) return false;/, "audio still plays when it is off");
   const cssSettings = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
   assert.match(cssSettings, /\.audio-off \.speak-btn/, "speaker buttons survive audio off");
   assert.match(app, /data-audio/, "the audio control is not wired");

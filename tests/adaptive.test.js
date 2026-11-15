@@ -162,6 +162,35 @@ test("a level belongs to a language, not to the whole profile", () => {
   assert.equal(A.levelFor({ levelByLang: { es: "?" } }, "es"), "A1", "an abandoned placement is A1");
 });
 
+test("placement gets harder after two easy correct answers", () => {
+  const p = { band: 0, streak: 0, correct: 0 };
+  A.placementStep(p, true);
+  assert.equal(p.band, 0, "one correct answer is not a level");
+  A.placementStep(p, true);
+  assert.equal(p.band, 1, "two correct answers move the test up a band");
+  A.placementStep(p, true);
+  assert.equal(p.band, 1);
+  A.placementStep(p, true);
+  assert.equal(p.band, 2);
+});
+
+test("a miss steps placement back one band, never below A1", () => {
+  const p = { band: 2, streak: 0, correct: 0 };
+  A.placementStep(p, false);
+  assert.equal(p.band, 1);
+  A.placementStep(p, false);
+  assert.equal(p.band, 0);
+  A.placementStep(p, false);
+  assert.equal(p.band, 0, "the test cannot fall below A1");
+});
+
+test("eight correct answers reach C1", () => {
+  const p = { band: 0, streak: 0, correct: 0 };
+  for (let i = 0; i < 8; i += 1) A.placementStep(p, true);
+  assert.equal(A.CEFR[p.band], "C1");
+  assert.equal(p.peak, 4);
+});
+
 test("the daily count is once per card and resets on a new day", () => {
   const dayOne = new Date(2026, 0, 1, 9, 0, 0).getTime();
   const dayTwo = new Date(2026, 0, 2, 9, 0, 0).getTime();

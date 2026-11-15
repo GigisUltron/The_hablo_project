@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const U = require("../src/ui-strings.js");
+const X = require("../src/ui-extra.js");
 
 test("every locale has every key", () => {
   const keys = Object.keys(U.en).filter((k) => k !== "t");
@@ -30,6 +31,15 @@ test("the session prompt and correction use the table, not literals", () => {
     "the prompt is still a literal");
   assert.match(app, /tr\("whichOne"/);
   assert.match(app, /tr\("notQuite"/);
+});
+
+test("the extra interface table has every key in every locale", () => {
+  const keys = Object.keys(X.en);
+  assert.ok(keys.length >= 30, "the extra table is too thin");
+  for (const lang of Object.keys(X)) {
+    const missing = keys.filter((k) => !X[lang][k]);
+    assert.deepEqual(missing, [], `${lang} missing extra: ${missing.join(", ")}`);
+  }
 });
 
 test("translation only moves forward", () => {

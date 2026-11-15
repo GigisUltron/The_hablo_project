@@ -8,8 +8,8 @@ on the new card**. The drill data itself carries no English gloss inline; a sepa
 → word, word → picture, or say it aloud. What you miss comes back before the session ends.
 
 42 Spanish concepts and 60 phrases, 43 semantic relations, spaced repetition, a lesson
-builder that chooses what you study, spoken production, a map of the semantic web — and audio
-that ships with the app instead of depending on your operating system.
+builder that chooses what you study, spoken production, a nine-unit path with topic progress —
+and audio that ships with the app instead of depending on your operating system.
 
 ![sema — the Today view](docs/preview.png)
 
@@ -35,7 +35,7 @@ filesystem: browsers gate microphone access behind a secure context, and `file:/
 qualify. Any other static server works too — there is no build step.
 
 Deep links: `#practice` (start a session), `#phrases` (phrase lesson), `#quiz` (quiz
-only, no teaching), `#map`, `#stats`.
+only, no teaching), `#read`, `#stats`.
 
 Keyboard: **Enter** advances, **1–4** pick an answer, **Esc** leaves a session.
 
@@ -66,7 +66,7 @@ worst first. Both choices persist in `localStorage`.
 | In-session requeue | `answer` | A miss reappears before the session ends |
 | Spaced repetition | `src/srs.js` | SM-2; a lapse reschedules to 10 minutes |
 | Confusion tracking | `recordConfusion` | Surfaces as "most confused pairs" in Progress |
-| Semantic map | `buildMap` | 42 nodes, relations drawn as curves, learned nodes lit |
+| Progress roadmap | `renderStats` | One ring per topic, filled by the share of its words met |
 | Audio diagnostics | `audioStatus` | Reports voice availability instead of playing nothing |
 | Lesson builder | `renderBuilder` | Field toggles, words/phrases switch, session size |
 | Phrase deck | `src/phrases.js` | Whole utterances, scene-anchored; English gloss in `glosses.js` |
@@ -152,7 +152,7 @@ sentence-with-a-blank.
 - **The voice is synthesized** (eSpeak), not a native recording — intelligible, robotic.
 - **A demo is not a tutor.** It can drill, schedule and quiz, but it cannot hold a
   conversation, correct spontaneous speech, or adapt to why you got something wrong.
-- **The map is a curated graph**, not something inferred from a corpus.
+- **The roadmap counts cards met**, not a retention study; solid counts are shown separately.
 - **No accounts or sync** — clearing storage resets progress.
 
 ## If this were continued
