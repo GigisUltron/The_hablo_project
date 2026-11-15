@@ -1443,6 +1443,13 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 }
 .gloss-btn:hover, .explain-btn:hover { color: var(--text); }
 .gloss-btn + .explain-btn { margin-left: 18px; }
+.gloss-btn[data-fallback="en"]::after {
+  content: " · EN";
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+}
 
 .feedback .why {
   display: block;
@@ -1690,3 +1697,72 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 }
 
 
+
+/* Today names the lesson, not just the slot. */
+.lesson-kicker {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+/* Progress's own path: which lessons the placement opened. */
+.progress-path {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 2px 0 18px;
+  scrollbar-width: thin;
+}
+.progress-step {
+  flex: 0 0 auto;
+  min-width: 142px;
+  padding: 12px 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: 0 3px 0 var(--border-deep);
+}
+.progress-step .n {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  background: var(--fill);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 800;
+}
+.progress-step .t { display: block; font-size: 14px; font-weight: 700; }
+.progress-step .m { display: block; margin-top: 2px; font-size: 12px; color: var(--text-2); }
+.progress-step.now { border-color: var(--accent); }
+.progress-step.now .n { background: var(--accent); color: var(--on-accent); }
+.progress-step.open .n { color: var(--accent); }
+.progress-step.locked { opacity: 0.55; }
+
+.gloss-fallback {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  vertical-align: super;
+}
+
+/* message completion reads as a chat exchange, not another form */
+.msg-thread { display: grid; gap: 8px; margin: 8px 0 16px; }
+.msg-bubble {
+  justify-self: start;
+  max-width: 86%;
+  padding: 12px 16px;
+  border-radius: var(--radius) var(--radius) var(--radius) var(--radius-sm);
+  background: var(--card);
+  border: 2px solid var(--border);
+  font-size: 17px;
+  line-height: 1.4;
+}
+.msg-bubble.mine { justify-self: end; background: var(--accent-soft); border-color: transparent; }
+.msg-blank { display: inline-block; min-width: 42px; border-bottom: 2px solid var(--text-2); }

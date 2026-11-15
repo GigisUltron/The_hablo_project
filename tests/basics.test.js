@@ -30,6 +30,19 @@ test("no pronouns or forms collide with the phrase deck", () => {
   for (const b of B.items) assert.equal(P.includes(b.text.toLowerCase()), false, b.text);
 });
 
+test("every pack's grammar layer is shaped like a usable lesson", () => {
+  const L = require("../src/lang/index.js");
+  for (const meta of L.list()) {
+    const items = L.load(meta.code).basics.items || [];
+    assert.ok(items.length > 0, meta.code + " has no grammar items");
+    for (const b of items) {
+      assert.ok(b.id && b.text && b.kind, meta.code + ": incomplete basic " + b.id);
+      if (b.kind === "pronoun") assert.ok(b.person, meta.code + ": pronoun without person " + b.id);
+      if (b.kind === "verb") assert.ok(b.of, meta.code + ": verb without lemma " + b.id);
+    }
+  }
+});
+
 test("french has the same grammar layer as spanish", () => {
   const F = require("../src/lang/fr/basics.js");
   const S = require("../src/lang/es/basics.js");

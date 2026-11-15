@@ -168,10 +168,20 @@ var SEMA_TRACK = {
     return rows[0];
   }
 
+  /* Start lesson means the most advanced lesson the learner has opened, not
+   * the earliest milestone their raw card count happens to satisfy. */
+  function highestUnlocked(rows) {
+    var list = rows || [];
+    for (var i = list.length - 1; i >= 0; i -= 1) {
+      if (list[i].unlocked) return list[i];
+    }
+    return list[0] || null;
+  }
+
   var api = {
     units: T.units, titles: T.titles, title: title, unitList: unitList,
     scriptNeeded: scriptNeeded, isLatinLetter: isLatinLetter,
-    map: map, currentUnit: currentUnit
+    map: map, currentUnit: currentUnit, highestUnlocked: highestUnlocked
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.SemaTrack = api;

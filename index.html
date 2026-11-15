@@ -55,13 +55,16 @@
           </div>
           <p class="streak" title="Day streak">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1.2 4.2 5.5 5.6 5.5 11a5.5 5.5 0 01-11 0c0-2.6 1.3-4.1 2.3-5.4.4 1.6 1.4 2.4 2.2 2.4 0-3.3 0-5.6 1-8z"/></svg>
-            <b id="stat-streak">0</b><span class="sr-only"> day streak</span>
+            <b id="stat-streak">0</b><span class="sr-only" data-i18n="dayStreak"> day streak</span>
           </p>
         </header>
 
         <section class="lesson-card" aria-labelledby="lesson-name">
           <div class="lesson-top">
-            <h2 id="lesson-name" data-i18n="nextLesson">Next lesson</h2>
+            <div>
+              <p class="lesson-kicker" data-i18n="nextLesson">Next lesson</p>
+              <h2 id="lesson-name"></h2>
+            </div>
             <span id="lesson-meta">about 1 min</span>
           </div>
           <div class="lesson-pics" id="next-stack" aria-hidden="true"></div>
@@ -182,7 +185,7 @@
               <button class="icon-btn" id="chat-listen" type="button" aria-label="Speak your message" title="Speak your message" hidden>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
               </button>
-              <button class="btn btn-primary" id="chat-send" type="submit">Send</button>
+              <button class="btn btn-primary" id="chat-send" type="submit" data-i18n="send">Send</button>
             </form>
           </div>
         </div>
@@ -260,8 +263,8 @@
             </div>
             <div class="option-group" id="ruby-group" role="group" aria-label="Pinyin">
               <span class="option-label" data-i18n="pinyin">Pinyin</span>
-              <button class="seg" data-ruby="on" type="button">on</button>
-              <button class="seg" data-ruby="off" type="button">off</button>
+              <button class="seg" data-ruby="on" type="button" data-i18n="on">on</button>
+              <button class="seg" data-ruby="off" type="button" data-i18n="off">off</button>
             </div>
           </div>
 
@@ -287,11 +290,12 @@
     <section class="view" id="view-stats" aria-labelledby="stats-title">
       <div class="map-head">
         <div>
-          <h2 id="stats-title">Progress</h2>
+          <h2 id="stats-title" data-i18n="tabProgress">Progress</h2>
           <p id="progress-summary"></p>
         </div>
       </div>
 
+      <div class="progress-path" id="progress-path"></div>
       <div class="roadmap" id="progress-roadmap"></div>
 
       <div class="panel panel-pad">

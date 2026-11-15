@@ -40,6 +40,12 @@ test("the path has an A2 block and a B1 bridge", () => {
   assert.equal(units.find((u) => u.id === "c12").mode, "read");
 });
 
+test("the default lesson is the highest unlocked one", () => {
+  assert.equal(T.highestUnlocked(T.map(0)).id, "c1");
+  assert.equal(T.highestUnlocked(T.map(6)).id, "c2");
+  assert.equal(T.highestUnlocked(T.map(76)).id, "c12");
+});
+
 test("the path covers every field a pack can teach", () => {
   const covered = new Set();
   T.units.forEach((u) => (u.fields || []).forEach((f) => covered.add(f)));

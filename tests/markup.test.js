@@ -468,6 +468,19 @@ test("the revealed gloss is escaped, not injected", () => {
   assert.match(block, /esc\(g\)/, "the UI translation is not escaped");
 });
 
+test("every card surface offers a translation toggle", () => {
+  const count = (app.match(/glossHTML\(/g) || []).length;
+  assert.ok(count >= 10, `only ${count} translation controls are wired`);
+  assert.match(app, /chooseThenCheck\(cls, id, noGloss\)/, "choice cards cannot opt out");
+  assert.match(app, /data-fallback="en"/, "no honest fallback marker");
+});
+
+test("Progress and pinyin controls are translated", () => {
+  assert.match(html, /id="stats-title" data-i18n="tabProgress"/);
+  assert.match(html, /data-ruby="on" type="button" data-i18n="on"/);
+  assert.match(html, /data-ruby="off" type="button" data-i18n="off"/);
+});
+
 test("a beginner's first session opens on phrases, with nothing above A2", () => {
   // Boots the real scripts in a small DOM shim and reads the queue the app
   // actually builds. A shim is enough here: the bug was in the planner, not the
@@ -669,6 +682,36 @@ test("interface language cannot equal the language being learned", () => {
   assert.match(app, /function uiChoices\(except\)/, "uiChoices has no exclusion");
   assert.match(app, /uiChoices\(ACTIVE && ACTIVE\.code\)/, "the deck language is not excluded");
   assert.match(app, /function defaultUiFor/, "no fallback interface language");
+});
+
+test("a chosen interface language is not silently reset by the deck", () => {
+  assert.match(app, /s\.profile\.uiLang !== code/, "same UI/deck is reset on boot");
+  assert.match(app, /choices = choices\.concat\(\[current\]\)/, "the current UI language disappears from the picker");
+  assert.match(app, /toLocaleDateString\(uiLocale\(\)/, "dates do not follow the UI locale");
+  assert.match(app, /renderStats\(\);\n  }/, "placement does not repaint Progress");
+});
+
+test("pronouns are meaning tasks, not self-answering person cards", () => {
+  assert.match(app, /function renderPronoun/, "no pronoun renderer");
+  assert.match(app, /if \(basic\.of && basic\.person\) renderPerson\(id\);/, "verbs and pronouns share a card");
+  assert.match(app, /it\.kind === "basic" && !it\.of/, "pronoun feedback still injects a gloss");
+});
+
+test("message completion is a real task, not a relabeled gap", () => {
+  assert.match(app, /function renderMessage/, "no message renderer");
+  assert.match(app, /type === "message"/, "message task is not routed");
+  assert.match(app, /msg-thread/, "no message layout");
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(css, /\.msg-bubble/, "message bubbles are unstyled");
+});
+
+test("the next lesson names the lesson and Progress mirrors the path", () => {
+  assert.match(html, /class="lesson-kicker" data-i18n="nextLesson"/, "no Next lesson label");
+  assert.match(html, /<h2 id="lesson-name"><\/h2>/, "the lesson name is still static");
+  assert.match(html, /id="progress-path"/, "Progress has no path");
+  assert.match(app, /highestUnlocked/, "Start does not use the highest unlocked lesson");
+  assert.match(app, /function renderTranslateToTarget/, "no UI-to-target task");
+  assert.match(app, /translate-out/, "the reverse task is not in the mix");
 });
 
 test("the level is placed by the adaptive test, not by a settings control", () => {
