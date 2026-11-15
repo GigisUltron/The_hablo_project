@@ -111,6 +111,30 @@
     pt: "🇵🇹", ru: "🇷🇺", tr: "🇹🇷", ar: "🇸🇦", hi: "🇮🇳", ja: "🇯🇵", zh: "🇨🇳"
   };
 
+  /* Small, human transitions for the offline dialogue. They are deliberately
+   * short: the authored turn still carries the actual question. */
+  var CHAT_REACTIONS = {
+    en: { miss: ["Not quite.", "Let's try again.", "Hmm?"], good: ["Nice.", "Good.", "Okay."] },
+    es: { miss: ["Casi.", "Otra vez.", "¿Cómo?"], good: ["Bien.", "Genial.", "Vale."] },
+    fr: { miss: ["Presque.", "On réessaie.", "Pardon ?"], good: ["Bien.", "Super.", "D'accord."] },
+    it: { miss: ["Quasi.", "Riproviamo.", "Come?"], good: ["Bene.", "Ottimo.", "Va bene."] },
+    pt: { miss: ["Quase.", "Vamos tentar outra vez.", "Como?"], good: ["Bem.", "Ótimo.", "Está bem."] },
+    de: { miss: ["Fast.", "Versuch es noch einmal.", "Wie bitte?"], good: ["Gut.", "Super.", "Okay."] },
+    nl: { miss: ["Bijna.", "Probeer het nog eens.", "Pardon?"], good: ["Goed.", "Super.", "Oké."] },
+    ru: { miss: ["Почти.", "Попробуйте ещё раз.", "Как?"], good: ["Хорошо.", "Отлично.", "Ладно."] },
+    tr: { miss: ["Neredeyse.", "Tekrar deneyin.", "Efendim?"], good: ["İyi.", "Harika.", "Tamam."] },
+    ar: { miss: ["تقريباً.", "حاول مرة أخرى.", "ماذا؟"], good: ["جيد.", "رائع.", "حسناً."] },
+    hi: { miss: ["लगभग।", "फिर कोशिश करो।", "क्या?"], good: ["अच्छा।", "बढ़िया।", "ठीक है।"] },
+    ja: { miss: ["惜しい。", "もう一度。", "え？"], good: ["いいね。", "すごい。", "はい。"] },
+    zh: { miss: ["差一点。", "再试一次。", "什么？"], good: ["好。", "很好。", "可以。"] }
+  };
+
+  function chatReaction(kind) {
+    var bank = CHAT_REACTIONS[(ACTIVE && ACTIVE.code) || "en"] || CHAT_REACTIONS.en;
+    var list = bank[kind] || bank.good;
+    return list[Math.floor(Math.random() * list.length)];
+  }
+
   function rememberLang(code) {
     if (!state.profile || !code) return;
     var recent = state.profile.recentLangs || [];
@@ -1903,7 +1927,8 @@
         return said.indexOf(S.normalize(word)) !== -1;
       });
       if (!fits) {
-        addAssistant(turn.es, true, "scripted");
+        addAssistant(chatReaction("miss") + " " + turn.es, true, "scripted");
+        setChatFeedback(tr("notQuite", "Not quite"), "");
         return;
       }
       chat.scripted.turn += 1;
@@ -1912,7 +1937,8 @@
         setChatFeedback(tr("lessonDone", "Lesson done"), "");
         return;
       }
-      addAssistant(next.es, true, "scripted");
+      var lead = Math.random() < 0.5 ? chatReaction("good") + " " : "";
+      addAssistant((lead + next.es).trim(), true, "scripted");
       return;
     }
     if (!CE || !chat) return;
@@ -2858,30 +2884,49 @@
       topics.push("family");
     }
 
+    var STOP = { "going": 1, "want": 1, "need": 1, "with": 1, "that": 1, "this": 1, "there": 1,
+      "about": 1, "from": 1, "have": 1, "will": 1, "would": 1, "into": 1, "your": 1, "their": 1,
+      "other": 1, "some": 1, "just": 1, "really": 1, "very": 1, "going": 1, "i'm": 1, "im": 1,
+      "russian": 1, "italian": 1, "spanish": 1, "french": 1, "german": 1, "family": 1 };
     var words = raw.match(/[a-zà-ÿā-ž]+/g) || [];
-    var contentWords = words.filter(function (w) { return w.length > 3; });
-    var phrases = phraseIds.filter(function (id) {
+    var keywords = words.filter(function (w) { return w.length > 3 && !STOP[w]; });
+
+    function phraseScore(id) {
       var p = phraseById[id];
-      if (topics.length && topics.indexOf(CURR.topicOf(p)) === -1) return false;
-      return true;
+      var topic = CURR.topicOf(p);
+      var hay = (p.text + " " + (p.sub || "") + " " + (glossFor(id) || "")).toLowerCase();
+      var score = 0;
+      if (topics.indexOf(topic) !== -1) score += 4;
+      keywords.forEach(function (w) { if (hay.indexOf(w) !== -1) score += 3; });
+      if (/wedding|marry/.test(raw) && /wedding|mariage|matrimonio|boda|свадьб/.test(hay)) score += 4;
+      if (/cousin|brother|sister|aunt|uncle/.test(raw) && /cousin|brat|cugino|primo|брат|сестр/.test(hay)) score += 4;
+      if (/pizza/.test(raw) && /pizza|пицц|ピザ|披萨/.test(hay)) score += 5;
+      return score;
+    }
+
+    var ranked = phraseIds.slice().sort(function (a, b) {
+      return phraseScore(b) - phraseScore(a);
     });
-    var foodIds = phraseIds.filter(function (id) {
-      var p = phraseById[id];
-      var hay = (p.text + " " + (glossFor(id) || "")).toLowerCase();
-      return contentWords.some(function (w) { return hay.indexOf(w) !== -1; });
+    var phrases = ranked.filter(function (id) {
+      if (!topics.length) return true;
+      if (topics.indexOf(CURR.topicOf(phraseById[id])) !== -1) return true;
+      return phraseScore(id) >= 3;
     });
+    if (!phrases.length) phrases = ranked;
+
     var picked = [];
     function add(id) { if (id && picked.indexOf(id) === -1) picked.push(id); }
-    foodIds.slice(0, 4).forEach(add);
     phrases.slice(0, 8).forEach(add);
-    if (picked.length < 4) phraseIds.slice(0, 8).forEach(add);
 
     var foodWords = allIds.filter(function (id) {
       var c = conceptById[id];
       var hay = (c.word + " " + (glossFor(id) || "")).toLowerCase();
-      return c.cat === "food" || contentWords.some(function (w) { return hay.indexOf(w) !== -1; });
+      return c.cat === "food" || keywords.some(function (w) { return hay.indexOf(w) !== -1; });
+    }).sort(function (a, b) {
+      function score(id) { var h = (conceptById[id].word + " " + (glossFor(id) || "")).toLowerCase(); return keywords.filter(function (w) { return h.indexOf(w) !== -1; }).length; }
+      return score(b) - score(a);
     });
-    foodWords.slice(0, 3).forEach(add);
+    foodWords.slice(0, 2).forEach(add);
     basicIds.slice(0, 2).forEach(add);
     if (termIds.length && /because|although|however|but|so/.test(raw)) termIds.slice(0, 2).forEach(add);
 

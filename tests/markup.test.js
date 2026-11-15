@@ -769,6 +769,14 @@ test("specialized lessons encode two chunks before retrieval", () => {
   assert.match(app, /newSession\("mixed", warm, quizQueue\)/, "the warmup is not part of the session");
 });
 
+test("specialized planning ranks prompt words and chat reactions vary", () => {
+  assert.match(app, /function phraseScore/, "phrases are not ranked against the request");
+  assert.match(app, /wedding\|marry/, "event matching is missing");
+  assert.match(app, /function chatReaction/, "scripted replies have no variation");
+  assert.match(app, /CHAT_REACTIONS/, "no reaction bank");
+  assert.match(app, /chatReaction\("miss"\)/, "misses never react");
+});
+
 test("specialized lessons are saved and can be reopened", () => {
   assert.match(app, /function saveCustomLesson/, "no saved lesson store");
   assert.match(app, /function renderCustomLessons/, "no saved lesson list");
