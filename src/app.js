@@ -2935,6 +2935,28 @@
     session = newSession("mixed", [], queue);
     session.plan = p.plan;
     session.customId = o.customId || "";
+    /* A requested lesson deliberately cycles recognition, production,
+     * translation and sentence construction instead of leaving the mix to
+     * chance. Unsupported kinds are skipped per item. */
+    if (o.customId) {
+      session.types = queue.map(function (id, i) {
+        var it = itemOf(id);
+        var hasTranslation = !!translationFor(id);
+        if (it.kind === "word") {
+          var words = hasTranslation
+            ? ["translate", "type-translation", "translate-out", "write"]
+            : ["write"];
+          return words[i % words.length];
+        }
+        if (it.kind === "phrase") {
+          var phrases = hasTranslation ? ["translate", "translate-out", "write"] : ["write"];
+          if (buildable(id)) phrases.push("build");
+          if (gapFor(id)) phrases.push("message");
+          return phrases[i % phrases.length];
+        }
+        return "pick-word";
+      });
+    }
 
     /* your own sentence, if one is old enough to be worth re-reading */
     var older = MEM.nextToReview(state.memory, now, MEM.DAY_MS / 2);

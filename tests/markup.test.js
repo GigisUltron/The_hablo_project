@@ -691,6 +691,13 @@ test("a chosen interface language is not silently reset by the deck", () => {
   assert.match(app, /renderStats\(\);\n  }/, "placement does not repaint Progress");
 });
 
+test("specialized lessons cycle varied exercises", () => {
+  assert.match(app, /if \(o\.customId\) \{/, "custom lessons do not set their own type mix");
+  assert.match(app, /type-translation/, "typed translation is missing from the mix");
+  assert.match(app, /buildable\(id\)\) phrases\.push\("build"\)/, "sentence building is missing");
+  assert.match(app, /gapFor\(id\)\) phrases\.push\("message"\)/, "message completion is missing");
+});
+
 test("specialized lessons are saved and can be reopened", () => {
   assert.match(app, /function saveCustomLesson/, "no saved lesson store");
   assert.match(app, /function renderCustomLessons/, "no saved lesson list");
