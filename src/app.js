@@ -3180,6 +3180,7 @@
 
     return {
       ids: picked.slice(0, 12),
+      focus: topics.slice(0, 3),
       title: tr("wishTitle", "Plan a lesson"),
       note: (switched ? uiName(ACTIVE.code) + " · " : "") +
         tr("wishReady", "Your lesson is ready.") + " " +
@@ -3217,6 +3218,7 @@
       title: String(text || "").slice(0, 70),
       lang: ACTIVE.code,
       ids: wish.ids.slice(),
+      focus: (wish.focus || []).slice(),
       at: Date.now(),
       last: 0,
       next: 0
@@ -3239,7 +3241,8 @@
       return '<div class="custom-row">' +
         '<button class="row custom-open" type="button" data-custom="' + esc(w.id) + '">' +
           '<span class="row-body"><span class="row-main">' + esc(w.title) + "</span>" +
-          '<span class="row-meta">' + esc(uiName(w.lang)) + (when ? " · " + esc(when) : "") + "</span></span>" +
+          '<span class="row-meta">' + esc(uiName(w.lang)) + (when ? " · " + esc(when) : "") +
+            (w.focus && w.focus.length ? " · " + esc(w.focus.join(" / ")) : "") + "</span></span>" +
         "</button>" +
         '<button class="custom-del" type="button" data-delete-custom="' + esc(w.id) + '" ' +
           'aria-label="' + esc(tr("deleteLesson", "Delete lesson")) + '" title="' + esc(tr("deleteLesson", "Delete lesson")) + '">×</button>' +

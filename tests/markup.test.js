@@ -808,6 +808,11 @@ test("specialized exercise types are shuffled per session", () => {
   assert.match(app, /phrases = S\.shuffle\(phrases, Math\.random\)/, "phrase task types are fixed");
 });
 
+test("planned lessons retain the focus that selected their content", () => {
+  assert.match(app, /focus: topics\.slice\(0, 3\)/, "focus is not recorded");
+  assert.match(app, /focus: \(wish\.focus \|\| \[\]\)\.slice\(\)/, "focus is not saved");
+});
+
 test("planned lessons mix due revision into the situation", () => {
   assert.match(app, /var revision = phraseIds\.filter/, "no revision block");
   assert.match(app, /revision\.slice\(0, 2\)\.forEach\(add\)/, "revision is never included");
