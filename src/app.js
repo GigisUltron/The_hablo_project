@@ -2878,10 +2878,11 @@
     group.hidden = !list.length;
     box.innerHTML = list.map(function (w) {
       var due = w.next && w.next <= Date.now();
+      var when = due ? tr("today", "today") : (w.next ? shortDate(w.next) : "");
       return '<div class="custom-row">' +
         '<button class="row custom-open" type="button" data-custom="' + esc(w.id) + '">' +
           '<span class="row-body"><span class="row-main">' + esc(w.title) + "</span>" +
-          '<span class="row-meta">' + esc(uiName(w.lang)) + (due ? " · " + esc(tr("today", "today")) : "") + "</span></span>" +
+          '<span class="row-meta">' + esc(uiName(w.lang)) + (when ? " · " + esc(when) : "") + "</span></span>" +
         "</button>" +
         '<button class="custom-del" type="button" data-delete-custom="' + esc(w.id) + '" ' +
           'aria-label="' + esc(tr("deleteLesson", "Delete lesson")) + '" title="' + esc(tr("deleteLesson", "Delete lesson")) + '">×</button>' +
@@ -4245,6 +4246,7 @@
     }
     var saved = saveCustomLesson(wish, text);
     if (input) input.value = "";
+    $("wish-note").textContent = "";
     toast(wish.note, 3200);
     startSession({ ids: wish.ids, size: wish.ids.length, title: wish.title, customId: saved.id });
   });
