@@ -2823,7 +2823,8 @@
       baseUrl: chatEndpoint(),
       engine: chatMeta.engine,
       model: chatMeta.model,
-      system: CE.buildSystemPrompt(ACTIVE, learnerLevel(), PERSONA ? PERSONA.prompt(state.profile) : ""),
+      system: CE.buildSystemPrompt(ACTIVE, learnerLevel(), PERSONA ? PERSONA.prompt(state.profile) : "",
+        chat.mission && chat.mission.ids ? chat.mission.ids.map(function (id) { return itemOf(id).text; }) : []),
       history: chat.messages.slice(-CE.MAX_HISTORY),
       vision: chatMeta.vision,
       timeoutMs: 45000

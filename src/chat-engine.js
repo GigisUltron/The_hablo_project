@@ -128,7 +128,7 @@
 
   /* Built only from the live pack: its display name and locale. The learner's
    * level is optional, and anything unrecognised is treated as the default. */
-  function buildSystemPrompt(pack, level, personal) {
+  function buildSystemPrompt(pack, level, personal, focus) {
     var p = pack || {};
     var name = String(p.name || "the target language");
     var locale = String(p.locale || p.code || "");
@@ -155,6 +155,16 @@
         "Chinese characters, and after each sentence put that sentence's pinyin in " +
         "parentheses on its own line, like 你好！ then (nǐ hǎo!). Do not repeat the " +
         "Chinese characters inside the parentheses.");
+    }
+
+    if (Array.isArray(focus) && focus.length) {
+      var wanted = focus.map(function (phrase) {
+        return String(phrase || "").replace(/\s+/g, " ").trim().slice(0, 80);
+      }).filter(Boolean).slice(0, 3);
+      if (wanted.length) {
+        rules.push("During the conversation, create natural chances for the learner to use these phrases: " +
+          wanted.join(" · ") + ". Do not list or quiz them, and do not force them into every reply.");
+      }
     }
 
     if (personal) rules.push(String(personal));

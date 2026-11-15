@@ -116,6 +116,7 @@ The first-run screen offers an optional **Travel / Work / Family / Culture** why
 **Hands-free** is an opt-in voice loop on the conversation screen. Turn it on, speak, and the recognised message is sent; after the assistant replies and finishes speaking, the microphone opens again. It turns off when you leave the screen, when you clear the chat, or when microphone permission is refused. Browser speech recognition still requires a secure context and a supported browser; the typed conversation always remains available.
 
 A **transfer mission** appears above the conversation. It asks you to use two or three weak/due phrases in the conversation. A phrase counts only when you actually write it; completing the mission gives a small XP award. Coach check-ins select real authored phrases and use a rules-first note; the model may open a roleplay or write a practice text, but it is not allowed to replace data-derived coaching with generic self-talk.
+ The mission's phrases are also passed to the conversation model with an instruction to create natural openings for them, not to list or quiz them.
 
 The check-in also shows the learner side from the transcript: turns, words, questions and how many selected target phrases were actually used. These are counts, not model praise.
 

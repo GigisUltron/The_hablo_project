@@ -399,3 +399,11 @@ test("a base URL is accepted with no slash, one slash, or /v1", () => {
   assert.equal(CE.endpointFor(base + "/v1", "openai"), base + "/v1/chat/completions");
   assert.equal(CE.endpointFor(base + "/", "ollama"), base + "/api/chat");
 });
+
+test("the conversation prompt can carry the current transfer phrases", () => {
+  const text = CE.buildSystemPrompt({ name: "Spanish", locale: "es-ES", code: "es" }, "A2", "",
+    ["la cuenta", "el café"]);
+  assert.match(text, /natural chances for the learner to use these phrases/);
+  assert.match(text, /la cuenta/);
+  assert.match(text, /el café/);
+});
