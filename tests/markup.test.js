@@ -522,6 +522,16 @@ test("the technical model settings stay collapsed by default", () => {
   assert.match(app, /settingsSummary\.textContent = line\[1\]/);
 });
 
+test("Today invites personalization only when it is empty, and One more is targeted", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(html, /id="personal-prompt"/);
+  assert.match(html, /id="personal-open"/);
+  assert.match(app, /function oneMoreIds/);
+  assert.match(app, /startSession\(\{ ids: nextIds/);
+  assert.match(app, /MEM\.weakItems\(state, 4\)/);
+  assert.match(app, /personalPrompt\.hidden = !!\(why \|\| interests\)/);
+});
+
 test("the learner can personalize the coach and the Today reason", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(html, /id="personal-details"/);
@@ -533,7 +543,7 @@ test("the learner can personalize the coach and the Today reason", () => {
   assert.match(app, /PERSONA\.ensure\(state\.profile\)/);
   assert.match(app, /PERSONA\.prompt\(state\.profile\)/);
   assert.match(app, /CE\.buildSystemPrompt\(ACTIVE, learnerLevel\(\), PERSONA/);
-  assert.match(app, /personalLine\.hidden = !why/);
+  assert.match(app, /personalLine\.hidden = !bits\.length/);
 });
 
 test("the local model is discovered on 8080, 8081 and 11434", () => {

@@ -2567,6 +2567,8 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   background: var(--accent);
   vertical-align: 1px;
 }
+.personal-prompt { margin: 0; }
+.personal-prompt .foot-link { font-size: 13px; font-weight: 600; }
 .personal-form { gap: 10px; }
 .personal-form .chat-field { display: grid; gap: 4px; }
 .personal-form .type-input { width: 100%; box-sizing: border-box; }

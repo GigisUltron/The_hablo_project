@@ -879,11 +879,14 @@
 
   function speak(text, btn, onDone) {
     var finished = false;
+    var safety = 0;
     function done() {
       if (finished) return;
       finished = true;
+      if (safety) clearTimeout(safety);
       if (onDone) onDone();
     }
+    if (onDone) safety = setTimeout(done, Math.min(30000, 3000 + String(text || "").length * 90));
     if (!audioEnabled() || !hasTTS) { done(); return; }
     var synth = window.speechSynthesis;
     try {
@@ -1355,11 +1358,17 @@
     $("lesson-goal").textContent = next.goal || "";
     var personal = PERSONA && state.profile ? PERSONA.ensure(state.profile) : null;
     var personalLine = $("personal-line");
+    var why = personal && personal.why;
+    var interests = personal && personal.interests;
     if (personalLine) {
-      var why = personal && personal.why;
-      personalLine.hidden = !why;
-      personalLine.textContent = why ? tr("yourWhy", "Why you're learning") + " · " + why : "";
+      var bits = [];
+      if (why) bits.push(tr("yourWhy", "Why you're learning") + " · " + why);
+      if (interests) bits.push(tr("interests", "What you like") + " · " + interests);
+      personalLine.hidden = !bits.length;
+      personalLine.textContent = bits.join(" · ");
     }
+    var personalPrompt = $("personal-prompt");
+    if (personalPrompt) personalPrompt.hidden = !!(why || interests);
     renderReviewList();
   }
 
@@ -5883,6 +5892,14 @@
     renderQuiz();
   }
 
+  function oneMoreIds(missed) {
+    var weak = MEM && MEM.weakItems ? MEM.weakItems(state, 4).filter(function (id) {
+      return atLevel(id);
+    }) : [];
+    if (weak.length) return weak;
+    return (missed || []).slice().filter(function (id) { return itemOf(id); }).slice(0, 4);
+  }
+
   function finishSession() {
     /* A session of only skipped tasks is not a session: no XP, coins, streak,
      * path progress or history entry. */
@@ -5981,6 +5998,7 @@
       toast(tr("savedMemory", "Saved to your memory."));
     });
 
+    var nextIds = oneMoreIds(missed);
     $("actions").innerHTML =
       '<button class="btn btn-primary" id="again">' + esc(tr("oneMore", "One more")) + "</button>" +
       (missed.length ? '<button class="btn btn-ghost btn-sm" id="review-session" type="button">' +
@@ -5988,7 +6006,10 @@
       '<button class="btn btn-ghost btn-sm" id="back" type="button">' + esc(tr("leave", "done for now")) + "</button>";
 
     $("back").addEventListener("click", function () { session = null; show("today"); });
-    $("again").addEventListener("click", function () { startSession(); });
+    $("again").addEventListener("click", function () {
+      if (nextIds.length) startSession({ ids: nextIds, size: nextIds.length, title: tr("oneMore", "One more") });
+      else startSession();
+    });
     var review = $("review-session");
     if (review) review.addEventListener("click", function () {
       startSession({ ids: missed, size: missed.length });
@@ -6188,6 +6209,17 @@
 
   $("start-btn").addEventListener("click", function () {
     startSession({ unit: defaultUnit() });
+  });
+  $("personal-open").addEventListener("click", function () {
+    var details = $("personal-details");
+    if (details) details.open = true;
+    show("settings");
+    setTimeout(function () {
+      var field = $("personal-why");
+      if (field) {
+        try { field.focus({ preventScroll: true }); } catch (err) { field.focus(); }
+      }
+    }, 0);
   });
   $("wish-form").addEventListener("submit", function (ev) {
     ev.preventDefault();
