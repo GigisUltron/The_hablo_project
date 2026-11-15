@@ -1559,9 +1559,10 @@
     localModelAsk(system, prompt).then(function (reply) {
       var parsed = AITOOLS.parseReading(reply);
       if (!parsed) throw new Error("no reading");
+      var questions = AITOOLS.readingQuestions ? AITOOLS.readingQuestions(parsed.body, Math.random) : [];
       reader = {
         text: { id: "ai-" + Date.now(), title: parsed.title, body: parsed.body,
-          level: level, questions: [], ai: true },
+          level: level, questions: questions, ai: true },
         qi: 0, correct: 0, misses: [], done: false
       };
       renderReaderText();

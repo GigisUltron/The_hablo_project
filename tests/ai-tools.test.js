@@ -20,6 +20,17 @@ test("reading parsing removes markdown and splits title from body", () => {
   assert.equal(A.parseReading(""), null);
 });
 
+test("generated reading can produce a small cloze check without another model call", () => {
+  const qs = A.readingQuestions("Hoy fui al café. Pedí un café con leche. Fue un buen día.", () => 0.3);
+  assert.equal(qs.length, 2);
+  for (const q of qs) {
+    assert.match(q.q, /_____/);
+    assert.equal(q.options.length, 4);
+    assert.ok(q.answer >= 0 && q.answer < 4);
+    assert.ok(q.q.includes("_____"));
+  }
+});
+
 test("model output is deduped and capped", () => {
   assert.deepEqual(A.parseList("casa\nCasa\ncasa"), ["casa"]);
   const many = new Array(40).fill(0).map((_, i) => "w" + i).join("\n");

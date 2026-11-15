@@ -454,6 +454,14 @@ test("server.py is the single automatic setup entry point", () => {
   assert.match(server, /setup_ai\(\)/);
 });
 
+test("generated reading gets a local comprehension check", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /AITOOLS\.readingQuestions\(parsed\.body/);
+  assert.match(app, /questions: questions/);
+  const tools = fs.readFileSync(path.join(__dirname, "..", "src", "ai-tools.js"), "utf8");
+  assert.match(tools, /answer: options\.indexOf\(answer\)/);
+});
+
 test("Read a text can ask the local model for a personal text", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(app, /function generateReaderText/);

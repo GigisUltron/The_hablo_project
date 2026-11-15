@@ -51,6 +51,49 @@
     return { title: title, body: body };
   }
 
+  /* Turn a generated reader text into a small comprehension check without a
+   * second model call. Sentence context stays; the answer is a word from the
+   * text, and distractors are other words in the same text. */
+  function readingQuestions(text, rand) {
+    var r = rand || Math.random;
+    var body = String(text == null ? "" : text);
+    var sentences = body.match(/[^.!?。！？]+[.!?。！？]?/g) || [];
+    var all = [];
+    var seen = {};
+    sentences.forEach(function (sentence) {
+      (sentence.match(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu) || []).forEach(function (w) {
+        var key = w.toLowerCase();
+        if (w.length >= 3 && !seen[key]) { seen[key] = true; all.push(w); }
+      });
+    });
+    var out = [];
+    sentences.forEach(function (sentence) {
+      if (out.length >= 2) return;
+      var tokens = (sentence.match(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu) || []);
+      if (tokens.length < 4) return;
+      var candidates = tokens.filter(function (w) { return w.length >= 4; });
+      if (!candidates.length) candidates = tokens.slice();
+      var answer = candidates.sort(function (a, b) { return b.length - a.length; })[0];
+      var at = sentence.indexOf(answer);
+      if (at === -1) return;
+      var blanked = sentence.slice(0, at) + "_____" + sentence.slice(at + answer.length);
+      var options = [answer];
+      var pool = all.filter(function (w) { return w.toLowerCase() !== answer.toLowerCase(); });
+      for (var i = pool.length - 1; i > 0; i -= 1) {
+        var j = Math.floor(r() * (i + 1));
+        var t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+      }
+      pool.forEach(function (w) { if (options.length < 4 && options.indexOf(w) === -1) options.push(w); });
+      if (options.length < 4) return;
+      for (var k = options.length - 1; k > 0; k -= 1) {
+        var m = Math.floor(r() * (k + 1));
+        var z = options[k]; options[k] = options[m]; options[m] = z;
+      }
+      out.push({ q: blanked.trim(), options: options, answer: options.indexOf(answer) });
+    });
+    return out;
+  }
+
   function systemWords(language) {
     return "You are a careful " + String(language || "target-language") +
       " tutor. Answer only with target-language words or phrases, one per line. " +
@@ -78,6 +121,7 @@
     cleanLine: cleanLine,
     parseList: parseList,
     parseReading: parseReading,
+    readingQuestions: readingQuestions,
     systemWords: systemWords,
     wordsPrompt: wordsPrompt,
     systemKeywords: systemKeywords,
