@@ -699,6 +699,11 @@ test("specialized lessons are saved and can be reopened", () => {
   assert.match(app, /wedding|family/, "planner ignores family/wedding requests");
 });
 
+test("the lesson progress bar advances in a normal quiz", () => {
+  assert.match(app, /session\.phase = "quiz";\n    setProgress\(\);/, "the quiz never enters the quiz phase");
+  assert.match(app, /if \(session\.phase === "study"\) return extra \+ session\.si;/, "doneSteps ignores quiz cards");
+});
+
 test("typed translation is a real routed exercise", () => {
   assert.match(app, /function renderTypeTranslation/, "no typed translation renderer");
   assert.match(app, /type === "type-translation"/, "typed translation is not routed");

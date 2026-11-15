@@ -3251,6 +3251,9 @@
       finishSession();
       return;
     }
+    /* Normal lessons start directly in the quiz phase; without this the bar
+     * kept reading the study-phase counter and never advanced. */
+    session.phase = "quiz";
     setProgress();
     clearCard();
     renderSteps("quiz");
