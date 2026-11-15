@@ -145,6 +145,7 @@
         ? tr("translationsOff", "translations off")
         : tr("translationsOn", "translations on");
     }
+    if (typeof updateAudioChip === "function") updateAudioChip();
   }
 
   var TRACK = window.SemaTrack;
@@ -468,7 +469,7 @@
       var sel = $(id);
       if (!sel) return;
       sel.innerHTML = list.map(function (p) {
-        return '<option value="' + esc(p.code) + '">' + esc(p.name) + "</option>";
+        return '<option value="' + esc(p.code) + '">' + esc(uiName(p.code)) + "</option>";
       }).join("");
       if (list.some(function (p) { return p.code === current; })) sel.value = current;
     });
@@ -613,16 +614,16 @@
    * it. Waiting forever is why a silent device looks identical to a loading
    * one, so after a short grace period "no voices" becomes a definite answer. */
   function audioStatus() {
-    if (hasBundled()) return { state: "ok", text: "bundled audio · " + Object.keys(bundled).length + " clips" };
-    if (!hasTTS) return { state: "none", text: "no speech support" };
+    if (hasBundled()) return { state: "ok", text: tr("audio", "audio") + " · " + Object.keys(bundled).length };
+    if (!hasTTS) return { state: "none", text: tr("noVoice", "no usable voice") };
     var all = window.speechSynthesis.getVoices() || [];
     if (!all.length) {
       if (Date.now() - audioCheckedAt < 1500) return { state: "idle", text: "checking audio" };
-      return { state: "none", text: "no voice on this device" };
+      return { state: "none", text: tr("noVoice", "no usable voice") };
     }
     var voices = langVoices();
-    if (voices.length) return { state: "ok", text: voices.length + " " + LANG.name + " voice" + (voices.length > 1 ? "s" : "") };
-    return { state: "no-" + LANG.code, text: "no " + LANG.name + " voice" };
+    if (voices.length) return { state: "ok", text: voices.length + " " + uiName(LANG.code) };
+    return { state: "no-" + LANG.code, text: tr("noVoice", "no usable voice") + " · " + uiName(LANG.code) };
   }
 
   function updateAudioChip() {
@@ -634,8 +635,8 @@
       : "🔇 audio off";
     chip.classList.toggle("warn", st.state !== "ok");
     chip.title = st.state === "ok"
-      ? "Tap to hear a test word"
-      : "No usable speech voice here. Everything still works without audio.";
+      ? tr("tapTestWord", "Tap to hear a test word")
+      : tr("noVoice", "no usable voice") + ".";
   }
 
   if (hasTTS) {
@@ -942,14 +943,13 @@
     $("daily-goal").classList.toggle("is-met", today >= goal);
 
     var date = new Date().toLocaleDateString(uiLocale(), { weekday: "short", day: "numeric", month: "short" });
-    $("today-date").textContent = date + " · " + ACTIVE.name + " · " + learnerLevel();
+    $("today-date").textContent = date + " · " + uiName(ACTIVE.code) + " · " + learnerLevel();
     $("lesson-meta").textContent = tr("aboutMinute", "about 1 min");
 
     var next = renderNextStack();
     $("lesson-name").textContent = next.title;
     $("start-sub").textContent = next.caption || tr("nothingDue", "Nothing new or due. Practise anything.");
     $("lesson-goal").textContent = next.goal || "";
-    $("lesson-focus").textContent = next.focus || "";
     renderReviewList();
   }
 
@@ -979,7 +979,7 @@
         "</span>" +
         '<span class="row-body">' +
           '<span class="row-main">' + articleHTML(it.article) + textHTML(it) + "</span>" +
-          '<span class="row-meta">' + (due <= now ? "Now" : capital(whenFrom(due - now))) + "</span>" +
+          '<span class="row-meta">' + (due <= now ? tr("today", "today") : capital(whenFrom(due - now))) + "</span>" +
         "</span></button>";
     }).join("");
 
@@ -1043,7 +1043,7 @@
       '<p class="prompt">' + esc(tr("read", "Read")) + "</p>" +
       '<h3 class="reader-title">' + esc(t.title) + "</h3>" +
       '<p class="reader-body">' + esc(t.body) + "</p>";
-    $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-go">Questions</button>';
+    $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-go">' + esc(tr("questions", "Questions")) + '</button>';
     $("reader-go").addEventListener("click", renderReaderQuestion);
   }
 
@@ -1084,7 +1084,7 @@
         $("reader-feedback").textContent = ok ? "right" : readerWhy(q, picked);
         $("reader-feedback").className = "feedback " + (ok ? "good" : "bad");
         reader.qi += 1;
-        $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-next">Continue</button>';
+        $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-next">' + esc(tr("continue", "Continue")) + '</button>';
         $("reader-next").addEventListener("click", renderReaderQuestion);
       });
     });
@@ -1321,7 +1321,7 @@
 
     var it = writing.queue[writing.i];
     clearCard();
-    $("counter").textContent = (writing.i + 1) + " of " + writing.queue.length;
+    $("counter").textContent = (writing.i + 1) + "/" + writing.queue.length;
     $("bar-fill").style.width = Math.round((writing.i / writing.queue.length) * 100) + "%";
 
     /* recognise first: reading the script has to come before producing it */
@@ -1338,7 +1338,7 @@
         'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
         'aria-label="the characters" placeholder="the characters" />' +
       '<p class="writing-hint">type or paste the characters</p>' +
-      '<button class="btn btn-primary" id="write-check">Check</button>';
+      '<button class="btn btn-primary" id="write-check">' + esc(tr("check", "Check")) + '</button>';
 
     var input = $("type-input");
     if (input) {
@@ -1411,7 +1411,7 @@
 
     $("feedback").textContent = message;
     $("feedback").className = "feedback " + (ok ? "good" : "bad");
-    $("actions").innerHTML = '<button class="btn btn-primary" id="next">Continue</button>';
+    $("actions").innerHTML = '<button class="btn btn-primary" id="next">' + esc(tr("continue", "Continue")) + '</button>';
     $("next").addEventListener("click", function () {
       writing.i += 1;
       renderWritingCard();
@@ -1497,18 +1497,17 @@
   function chatStatusLine() {
     if (chatMeta.status === "ready" && chatMeta.model) {
       var what = CE && CE.isLocalEndpoint(chatEndpoint()) ? "local model" : "model";
-      return ["ready", what + " · " + chatMeta.model +
-        (chatMeta.vision ? " · sees images" : " · text only")];
+      return ["ready", tr("localModel", "local model") + " · " + chatMeta.model];
     }
-    if (chatMeta.status === "checking") return ["checking", "looking for a local model…"];
-    if (chatMeta.status === "failed") return ["missing", "the model did not answer — scripted practice"];
+    if (chatMeta.status === "checking") return ["checking", tr("checkingModel", "looking for a local model…")];
+    if (chatMeta.status === "failed") return ["missing", tr("modelFailed", "the model did not answer — scripted practice")];
     if (chatMeta.status === "missing") {
       if (CE && !CE.isLocalEndpoint(chatEndpoint())) {
-        return ["missing", "no model answered — check the endpoint"];
+        return ["missing", tr("noModelEndpoint", "no model answered — check the endpoint")];
       }
-      return ["missing", "no local model found — run ollama serve"];
+      return ["missing", tr("noLocalModel", "no local model found — run ollama serve")];
     }
-    return ["idle", "not checked yet"];
+    return ["idle", tr("notChecked", "not checked yet")];
   }
 
   function setChatStatus() {
@@ -1585,18 +1584,18 @@
   }
 
   function emptyChatLine() {
-    var name = (ACTIVE && ACTIVE.name) || "the language";
+    var name = (ACTIVE && uiName(ACTIVE.code)) || "the language";
     return "Say something in " + name + ". Or attach a picture.";
   }
 
   function renderChatHeader() {
     if (ACTIVE) {
       var nm = $("chat-name");
-      if (nm) nm.textContent = ACTIVE.name + " conversation";
+      if (nm) nm.textContent = uiName(ACTIVE.code) + " · " + tr("converse", "conversation");
       var input = $("chat-input");
       if (input) {
-        input.placeholder = "say something in " + ACTIVE.name;
-        input.setAttribute("aria-label", "your message in " + ACTIVE.name);
+        input.placeholder = tr("converse", "say something");
+        input.setAttribute("aria-label", tr("converse", "your message"));
       }
     }
     setChatStatus();
@@ -2193,7 +2192,7 @@
 
   function unlockLine(row) {
     if (!row) return "that lesson opens later";
-    return row.remaining + " more cards to unlock " + row.title;
+    return row.remaining + " " + tr("cards", "cards") + " → " + row.title;
   }
 
   function defaultUnit() {
@@ -2239,8 +2238,8 @@
       var next = rows.filter(function (r) { return !r.unlocked; })[0];
       var hidden = TRACK.unitList(hasScriptLesson()).length - rows.length;
       note.textContent = (next
-        ? next.remaining + (next.remaining === 1 ? " card" : " cards") + " to " + next.title
-        : rows.length + " units open — practise anything.") +
+        ? next.remaining + " " + tr("cards", "cards") + " → " + next.title
+        : rows.length + " " + tr("units", "units") + " · " + tr("done", "done")) +
         (hidden ? " · " + hidden + " " + tr("fullOnly", "full A2/B1 course") : "");
     }
   }
@@ -2280,9 +2279,8 @@
 
   /* A lesson can teach a word or a whole phrase; both present the same shape
    * to the drill, so there is one renderer to maintain instead of two. */
-  /* Translations are a first-class aid, not a hidden reveal: new cards and
-   * answer states show the English meaning by default. The quiz prompt
-   * withholds it so the learner recalls the target, not the translation. */
+  /* Translations are hidden by default. Pressing the reveal control shows the
+   * meaning in the interface language, not English-by-default. */
   function translationsOn() {
     return !state.settings || state.settings.translations !== "off";
   }
@@ -2293,37 +2291,53 @@
     return g ? String(g) : "";
   }
 
-  function glossLine(id, cls) {
-    var g = glossFor(id);
-    if (!g) return "";
-    return '<p class="gloss-text' + (cls ? " " + cls : "") + '">' + esc(g) + "</p>";
-  }
-
-  /* Why the card means what it means: the frame for a connector, the person for
-   * a verb, the sentence for a word. Shown on request, same quiet weight. */
-  function explainHTML(it) {
-    var bits = [];
-    if (it.kind === "basic") {
-      bits.push(it.of ? ("verb " + it.of + ", " + (it.person || "") ) : "pronoun");
-      if (it.sub) bits.push(it.sub);
-    } else if (it.kind === "term") {
-      if (it.frame) bits.push(it.frame.replace("____", it.text));
-      var twin = it.contrast && termById[it.contrast];
-      if (twin) bits.push("opposite: " + twin.text);
-    } else if (it.sub) {
-      bits.push(it.sub);
+  /* The UI-language pack has its own words and glosses. Matching on the shared
+   * English gloss gives a real Chinese/French/Arabic translation where that
+   * pack has the same concept, instead of printing English under a Chinese UI. */
+  var translationIndexCache = {};
+  function translationIndex(code) {
+    if (translationIndexCache[code]) return translationIndexCache[code];
+    var pack = LANGS && LANGS.load(code);
+    if (!pack) return {};
+    var map = {};
+    function add(id, text) {
+      var g = pack.glosses && pack.glosses[id];
+      if (!g || !text) return;
+      var key = String(g).trim().toLowerCase();
+      if (!map[key]) map[key] = String(text);
     }
-    if (!bits.length) return "";
-    return '<button class="explain-btn" type="button" data-why="' + esc(bits.join(" · ")) + '">' +
-      tr("explain", "why?") + "</button>";
+    (pack.concepts.concepts || []).forEach(function (c) {
+      add(c.id, c.article ? c.article + " " + c.word : c.word);
+    });
+    (pack.phrases.phrases || []).forEach(function (p) { add(p.id, p.text); });
+    (pack.terms.terms || []).forEach(function (t) { add(t.id, t.text); });
+    (pack.basics.items || []).forEach(function (b) { add(b.id, b.text); });
+    translationIndexCache[code] = map;
+    return map;
   }
 
-  function wireExplain() {
-    Array.prototype.forEach.call(document.querySelectorAll(".explain-btn"), function (btn) {
+  function translationFor(id) {
+    if (!translationsOn()) return "";
+    var ui = uiLang();
+    if (ui === "en") return glossFor(id);
+    var g = (window.SEMA_GLOSSES || {})[id];
+    if (!g) return "";
+    return translationIndex(ui)[String(g).trim().toLowerCase()] || "";
+  }
+
+  function glossHTML(id) {
+    var g = translationFor(id);
+    if (!g) return "";
+    return '<button class="gloss-btn" type="button" data-gloss="' + esc(g) + '">' +
+      tr("glossShow", "show translation") + "</button>";
+  }
+
+  function wireGloss() {
+    Array.prototype.forEach.call(document.querySelectorAll(".gloss-btn"), function (btn) {
       btn.addEventListener("click", function () {
         var on = btn.getAttribute("data-on") === "1";
         btn.setAttribute("data-on", on ? "0" : "1");
-        btn.textContent = on ? tr("explain", "why?") : btn.getAttribute("data-why");
+        btn.textContent = on ? tr("glossShow", "show translation") : btn.getAttribute("data-gloss");
       });
     });
   }
@@ -2656,8 +2670,7 @@
     return {
       title: title,
       caption: caption,
-      goal: p.unit ? p.unit.goal : "",
-      focus: p.unit ? p.unit.focus : ""
+      goal: p.unit ? tr("goal_" + p.unit.id, p.unit.goal) : ""
     };
   }
 
@@ -2732,9 +2745,6 @@
     session = newSession("words", ids, S.shuffle(ids, Math.random));
     session.types = DEMO_TYPES;
     show("session");
-    var hint = $("kbd-hint");
-    hint.classList.add("is-demo");
-    hint.innerHTML = 'demo · miss one, it comes back<span class="keys"> · 1–4 → choose · Enter → check</span>';
     renderStudy();
     toast("Demo — starts clean; saved progress is untouched.", 3200);
   }
@@ -2759,7 +2769,7 @@
       '<input class="type-input" id="type-input" type="text" autocomplete="off" ' +
         'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
         'aria-label="the missing word" placeholder="the missing word" />' +
-      '<button class="btn btn-primary" id="check">Check</button>';
+      '<button class="btn btn-primary" id="check">' + esc(tr("check", "Check")) + '</button>';
 
     var input = $("type-input");
     if (input) {
@@ -2789,13 +2799,13 @@
     );
 
     $("stage").innerHTML =
-      '<p class="prompt">' + (ok ? "Correct" : tr("notQuite", "Not quite")) + "</p>" +
+      '<p class="prompt">' + (ok ? tr("correct", "Correct") : tr("notQuite", "Not quite")) + "</p>" +
       '<p class="personal-line">' + full + "</p>" +
       '<p class="sentence">your own words, from ' + esc(shortDate(p.sentence.created)) + "</p>";
 
     feedback(ok ? "that was yours" : "the word was “" + p.cloze.answer + "”", ok ? "good" : "bad");
 
-    $("actions").innerHTML = '<button class="btn btn-primary" id="next">Continue</button>';
+    $("actions").innerHTML = '<button class="btn btn-primary" id="next">' + esc(tr("continue", "Continue")) + '</button>';
     $("next").addEventListener("click", function () {
       session.personal = null;
       if (session.study.length) renderStudy();
@@ -2872,7 +2882,7 @@
   function setProgress() {
     var n = Math.max(totalSteps(), 1);
     var done = Math.min(doneSteps(), n);
-    $("counter").textContent = Math.min(done + 1, n) + " of " + n;
+    $("counter").textContent = Math.min(done + 1, n) + "/" + n;
     $("bar-fill").style.width = Math.round((done / n) * 100) + "%";
   }
 
@@ -2917,14 +2927,15 @@
         (it.kind === "phrase" ? " · " + esc(tr("phrase", "phrase")) : "") + "</p>" +
       figureHTML(it, "Hear it") +
       wordsHTML(it) +
-      glossLine(it.id) +
       contextHTML(it);
 
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
 
-    $("actions").innerHTML = '<button class="btn btn-primary" id="next">' +
-      (last ? "Start the quiz" : "Next") + "</button>";
+    $("actions").innerHTML = glossHTML(it.id) +
+      '<button class="btn btn-primary" id="next">' +
+      (last ? esc(tr("startQuiz", "Start the quiz")) : esc(tr("next", "Next"))) + "</button>";
+    wireGloss();
     $("next").addEventListener("click", function () {
       session.si += 1;
       if (session.si < session.study.length) renderStudy();
@@ -2990,7 +3001,7 @@
     if (extra) return extra;
     /* every fourth reviewed card asks for the meaning, so the lesson cannot
      * turn into picture-matching once the first few items are known */
-    if (glossFor(link) && i % 4 === 3) return "translate";
+    if (translationFor(link) && i % 4 === 3) return "translate";
     var prod = (session.plan && session.plan.production) || 0;
     if (prod >= 2 && i % 2 === 1) return "write";
     if (prod >= 1 && i % 3 === 2) return "write";   // production without a microphone
@@ -3052,10 +3063,10 @@
   }
 
   /* A translation exercise is the other direction: the target is the prompt,
-   * the four English glosses are the choices. It teaches meaning without an
-   * emoji and without giving the target away. */
+   * the four meanings in the interface language are the choices. It teaches
+   * meaning without an emoji and without giving the target away. */
   function glossOptionHTML(id, i) {
-    var g = glossFor(id) || itemOf(id).text;
+    var g = translationFor(id) || itemOf(id).text;
     var long = g.length > 24 ? " long" : "";
     return '<button class="option-word' + long + '" data-id="' + esc(id) + '">' +
       '<span class="key" aria-hidden="true">' + (i + 1) + "</span>" +
@@ -3063,13 +3074,13 @@
   }
 
   function glossDistractors(id, count) {
-    var target = glossFor(id).toLowerCase();
+    var target = translationFor(id).toLowerCase();
     var seen = {};
     seen[target] = true;
     var pool = [];
     deckIds().forEach(function (other) {
       if (other === id) return;
-      var g = glossFor(other);
+      var g = translationFor(other);
       var key = g.toLowerCase();
       if (!g || seen[key]) return;
       seen[key] = true;
@@ -3109,7 +3120,6 @@
       '<p class="prompt">' + esc(tr("new", "New")) + "</p>" +
       figureHTML(it, "Hear it") +
       wordsHTML(it) +
-      glossLine(it.id) +
       contextHTML(it);
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
@@ -3120,9 +3130,9 @@
       tile.setAttribute("aria-label", "Play the audio");
       tile.addEventListener("click", function () { sayItem(it); });
     }
-    $("actions").innerHTML = explainHTML(it) +
+    $("actions").innerHTML = glossHTML(id) +
       '<button class="btn btn-primary" id="gotit">' + tr("gotit", "Got it") + '</button>';
-    wireExplain();
+    wireGloss();
     $("gotit").addEventListener("click", function () {
       session.firstCorrect += 1;   // it was taught and acknowledged, not guessed
       S.review(state, id, 2, Date.now());
@@ -3219,7 +3229,7 @@
       '<p class="prompt">' + esc(tr("buildSentence", "Build the sentence")) + "</p>" +
       '<div class="build-line" id="build-line" aria-live="polite"></div>' +
       '<div class="word-options" id="build-pool"></div>';
-    $("actions").innerHTML = '<button class="btn btn-primary" id="build-check" disabled>Check</button>';
+    $("actions").innerHTML = '<button class="btn btn-primary" id="build-check" disabled>' + esc(tr("check", "Check")) + '</button>';
 
     function paint() {
       $("build-pool").innerHTML = pool.map(function (t) {
@@ -3336,7 +3346,7 @@
   function chooseThenCheck(cls, id) {
     var picked = null;
     var opts = $("stage").querySelectorAll(cls);
-    $("actions").innerHTML = '<button class="btn btn-primary" id="check" disabled>Check</button>';
+    $("actions").innerHTML = '<button class="btn btn-primary" id="check" disabled>' + esc(tr("check", "Check")) + '</button>';
 
     Array.prototype.forEach.call(opts, function (btn) {
       btn.addEventListener("click", function () {
@@ -3388,12 +3398,12 @@
     var it = itemOf(id);
 
     $("stage").innerHTML =
-      '<p class="prompt">' + esc(tr("writeIt", "Write it")) + " · " + esc(LANG.name) + "</p>" +
+      '<p class="prompt">' + esc(tr("writeIt", "Write it")) + " · " + esc(uiName(LANG.code)) + "</p>" +
       tileHTML(it) +
       '<input class="type-input" id="type-input" type="text" autocomplete="off" ' +
         'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
         'aria-label="write the word" placeholder="type it" />' +
-      '<button class="btn btn-primary" id="write-check">Check</button>';
+      '<button class="btn btn-primary" id="write-check">' + esc(tr("check", "Check")) + '</button>';
     var input = $("type-input");
     if (input) {
       input.focus();
@@ -3421,7 +3431,7 @@
     var it = itemOf(id);
 
     $("stage").innerHTML =
-      '<p class="prompt">' + esc(tr("sayIt", "Say it")) + " · " + esc(LANG.name) + "</p>" +
+      '<p class="prompt">' + esc(tr("sayIt", "Say it")) + " · " + esc(uiName(LANG.code)) + "</p>" +
       figureHTML(it, "Hear it") +
       (SR ? '<button class="mic" id="mic-btn">' + ICON.mic + 'Say it aloud</button>' : "") +
       '<p class="score" id="score"></p>';
@@ -3452,7 +3462,7 @@
     /* without a recogniser the learner says it aloud and checks themselves */
     $("actions").innerHTML = (SR ? "" : '<button class="btn btn-primary" id="said">I said it</button>') +
       '<button class="btn btn-ghost" id="skip">' + esc(tr("skip", "Skip")) + "</button>" +
-      '<button class="btn btn-ghost" id="reveal">Show the answer</button>';
+      '<button class="btn btn-ghost" id="reveal">' + esc(tr("showAnswer", "Show the answer")) + '</button>';
     if (!SR) $("said").addEventListener("click", function () { answer(true, null); });
     $("skip").addEventListener("click", skipCard);
     $("reveal").addEventListener("click", function () { answer(false, null); });
@@ -3528,7 +3538,7 @@
       /* long enough to read the one-line reason, short enough to keep the loop */
       setTimeout(advance, 900);
     } else {
-      $("actions").innerHTML = '<button class="btn btn-primary" id="next">Continue →</button>';
+      $("actions").innerHTML = '<button class="btn btn-primary" id="next">' + esc(tr("continue", "Continue")) + '</button>';
       $("next").addEventListener("click", advance);
     }
   }
@@ -3580,14 +3590,14 @@
         '<label class="prompt" for="compose-input">' + esc(tr("composeLabel", "one sentence with today's words")) + "</label>" +
         '<textarea class="type-input" id="compose-input" rows="2" maxlength="160" ' +
           'placeholder="' + esc(tr("composePlaceholder", "write a sentence")) + '"></textarea>' +
-        '<button class="btn btn-ghost btn-sm" id="compose-save">keep it</button>' +
+        '<button class="btn btn-ghost btn-sm" id="compose-save">' + esc(tr("keepIt", "keep it")) + '</button>' +
       "</div>");
 
     $("compose-save").addEventListener("click", function () {
       var field = $("compose-input");
       var text = field ? field.value : "";
       var kept = MEM.addSentence(state.memory, text, Object.keys(session.answered), Date.now());
-      if (!kept) { toast("A few more words, in " + LANG.name + "."); return; }
+      if (!kept) { toast("A few more words, in " + uiName(LANG.code) + "."); return; }
       save();
       var form = document.querySelector(".compose");
       if (form) {
@@ -3620,11 +3630,11 @@
 
   function whenFrom(ms) {
     var min = Math.round(ms / 60000);
-    if (min < 60) return "in " + Math.max(1, min) + " min";
+    if (min < 60) return Math.max(1, min) + "m";
     var h = Math.round(min / 60);
-    if (h < 20) return "in " + h + " h";
+    if (h < 20) return h + "h";
     var d = Math.round(h / 24);
-    return d <= 1 ? "tomorrow" : "in " + d + " days";
+    return d <= 1 ? "24h" : d + "d";
   }
 
   function whyText(it) {
@@ -3663,14 +3673,12 @@
     var f = $("feedback");
     var why = whyText(it);
     var note = it ? confusionNote(it.id) : "";
-    /* The English meaning lands with the verdict, not only behind a control.
-     * It is deliberately absent before the answer, where it would give it away. */
-    var gloss = it && it.kind !== "basic" ? glossFor(it.id) : "";
     f.innerHTML = esc(msg) +
-      (gloss ? '<span class="why gloss-line">' + esc(gloss) + "</span>" : "") +
       (why ? '<span class="why">' + esc(why) + "</span>" : "") +
-      (note ? '<span class="why">' + esc(note) + "</span>" : "");
+      (note ? '<span class="why">' + esc(note) + "</span>" : "") +
+      (it ? glossHTML(it.id) : "");
     f.className = "feedback" + (kind ? " " + kind : "");
+    wireGloss();
   }
 
   /* ---------------------------------------------------------------- stats */
@@ -3772,10 +3780,10 @@
     startPlacement();
   });
   $("setup-lang").addEventListener("change", function () {
-    if (switchLang(this.value)) toast(ACTIVE.name + " deck loaded. Progress stays with each language.");
+    if (switchLang(this.value)) toast(uiName(ACTIVE.code) + " · " + tr("done", "loaded"));
   });
   $("settings-lang").addEventListener("change", function () {
-    if (switchLang(this.value)) toast(ACTIVE.name + " deck loaded. Progress stays with each language.");
+    if (switchLang(this.value)) toast(uiName(ACTIVE.code) + " · " + tr("done", "loaded"));
   });
   $("home-conv").addEventListener("click", startConversation);
   $("home-read").addEventListener("click", startReader);
@@ -3883,7 +3891,7 @@
       ? "That was the bundled pronunciation."
       : audioStatus().state === "ok"
         ? "That was the synthesized voice — if you heard nothing, check the system volume."
-        : "No " + LANG.name + " voice on this device; everything still works without audio.");
+        : tr("noVoice", "no usable voice") + " · " + uiName(LANG.code));
   });
   updateAudioChip();
 

@@ -2,9 +2,9 @@
 
 A working front-end demo of a language app that teaches the target first, then checks it.
 
-A concept is introduced as a pair — picture, word, sound — with the **English meaning visible
-on the new card**. The drill data itself carries no English gloss inline; a separate
-`glosses.js` map supplies it. Then the quiz hides one half and asks you for the other: picture
+A concept is introduced as a pair — picture, word, sound — with the meaning hidden behind a
+**show translation** control on the card. The drill data itself carries no English gloss
+inline; a separate `glosses.js` map supplies it. Then the quiz hides one half and asks you for the other: picture
 → word, word → picture, or say it aloud. What you miss comes back before the session ends.
 
 42 Spanish concepts and 60 phrases, 43 semantic relations, spaced repetition, a lesson

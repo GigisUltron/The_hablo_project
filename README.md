@@ -76,10 +76,10 @@ browser can reach the local endpoint and the microphone.
 
 ## What is translated
 
-The **content** is translated: new cards and answer states show the English meaning by
-default, and Settings can turn it off. Quiz prompts stay in the target language so the answer
-is not given away; every fourth reviewed card is a translation exercise instead of a
-picture match. The **interface** is translated into all thirteen deck languages
+The **content** is translated but hidden by default: new cards and answer states offer a
+"show translation" control, and Settings can turn the aid off. Quiz prompts stay in the
+target language so the answer is not given away; every fourth reviewed card is a translation
+exercise instead of a picture match, using the interface language. The **interface** is translated into all thirteen deck languages
 (`src/ui-strings.js` plus `src/ui-langs.js`, chosen with `profile.uiLang`); some session
 summaries, toasts and reader copy are still English only.
 

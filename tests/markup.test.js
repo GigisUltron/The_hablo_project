@@ -448,20 +448,24 @@ test("the path unlocks on every deck card, not only on concepts", () => {
   assert.match(app, /seenDeckCount\(\) >= 46/, "connectors do not unlock with their path node");
 });
 
-test("translations are visible on new cards and can be switched off", () => {
+test("translations are hidden by default and revealed on press", () => {
   assert.match(app, /function glossFor/, "no gloss lookup");
-  assert.match(app, /function glossLine/, "no visible gloss renderer");
-  assert.match(app, /glossLine\(it\.id\)/, "the gloss is never called from a card");
+  assert.match(app, /function translationFor/, "no UI-language translation");
+  assert.match(app, /function translationIndex/, "no interface-language translation index");
+  assert.match(app, /LANGS && LANGS\.load\(code\)/, "translations do not consult the UI pack");
+  assert.match(app, /function glossHTML/, "no reveal control");
+  assert.match(app, /glossHTML\(id\)/, "the reveal control is not on the card");
+  assert.match(app, /wireGloss\(\)/, "the reveal control is not wired");
+  assert.equal(app.includes("glossLine(it.id)"), false, "a gloss is still painted automatically");
   assert.match(app, /gloss-toggle/, "no settings toggle");
   assert.match(app, /function renderTranslate/, "no translation exercise");
   assert.match(app, /return "translate"/, "the mix never asks for the meaning");
   assert.match(app, /function glossDistractors/, "translation options have no distractor pool");
-  assert.equal(app.includes("glossHTML"), false, "the old hidden reveal control survived");
 });
 
-test("the visible gloss is escaped, not injected", () => {
-  const block = app.slice(app.indexOf("function glossLine"), app.indexOf("function explainHTML"));
-  assert.match(block, /esc\(g\)/, "the English gloss is not escaped");
+test("the revealed gloss is escaped, not injected", () => {
+  const block = app.slice(app.indexOf("function glossHTML"), app.indexOf("function itemOf"));
+  assert.match(block, /esc\(g\)/, "the UI translation is not escaped");
 });
 
 test("a beginner's first session opens on phrases, with nothing above A2", () => {
@@ -561,9 +565,10 @@ test("a beginner's first session opens on phrases, with nothing above A2", () =>
     "Spanish must open hola, how are you, colour, where from");
 });
 
-test("the old hidden reveal control is gone", () => {
-  assert.equal(app.includes("data-gloss"), false, "a hidden reveal control survived");
-  assert.equal(app.includes("gloss-btn"), false, "the reveal button survived");
+test("the reveal control is present and the why button is gone", () => {
+  assert.match(app, /data-gloss/, "the reveal control has no gloss payload");
+  assert.equal(app.includes("explain-btn"), false, "the why button survived");
+  assert.equal(app.includes("wireExplain"), false, "the why handler survived");
 });
 
 test("pinyin sits under the character only when the syllables line up", () => {

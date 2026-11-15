@@ -67,7 +67,6 @@
           <div class="lesson-pics" id="next-stack" aria-hidden="true"></div>
           <p class="lesson-sub" id="start-sub"></p>
           <p class="lesson-goal" id="lesson-goal"></p>
-          <p class="lesson-focus" id="lesson-focus"></p>
           <button class="btn btn-primary btn-block" id="start-btn" type="button"><span id="start-label" data-i18n="start">Start lesson</span></button>
           <div class="daily-goal" id="daily-goal">
             <div class="daily-goal-top">
@@ -125,7 +124,6 @@
 
       <ol class="steps" id="steps" aria-label="Lesson steps"></ol>
 
-      <p class="kbd-hint" id="kbd-hint"><span class="keys">1–4 → choose · Enter → check, then next · Esc → leave</span></p>
 
       <article class="card" id="card" aria-live="polite">
         <div class="stage" id="stage"></div>
@@ -171,7 +169,7 @@
         <span class="chat-presence" id="chat-face" data-state="idle" aria-hidden="true"></span>
         <div class="chat-who">
           <span class="chat-name" id="chat-name">Conversation</span>
-          <span class="chat-status" id="chat-status" role="status" aria-live="polite" data-state="idle">not checked yet</span>
+          <span class="chat-status" id="chat-status" role="status" aria-live="polite" data-state="idle" data-i18n="notChecked">not checked yet</span>
         </div>
       </div>
       <article class="card conv-card">
@@ -236,7 +234,7 @@
               <input class="type-input" id="chat-endpoint" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="http://localhost:11434" />
             </label>
             <label class="chat-field"><span data-i18n="model">Model</span>
-              <input class="type-input" id="chat-model" type="text" autocomplete="off" spellcheck="false" placeholder="auto" />
+              <input class="type-input" id="chat-model" type="text" autocomplete="off" spellcheck="false" placeholder="" />
             </label>
             <div class="chat-settings-row">
               <button class="btn btn-ghost" id="chat-check" type="button" data-i18n="checkModel">Check model</button>
@@ -280,7 +278,7 @@
           </div>
         <div class="settings-row">
           <button class="audio-chip" id="audio-chip" type="button">🔊 checking audio…</button>
-          <button class="foot-link" type="button" data-goto="stats">progress</button>
+          <button class="foot-link" type="button" data-goto="stats" data-i18n="tabProgress">progress</button>
         </div>
       </div>
     </section>
