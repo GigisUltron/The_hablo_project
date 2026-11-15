@@ -130,6 +130,7 @@ function boot(save, hash = "", options = {}) {
   const win = {
     document, localStorage: store, location: { hash, reload() {} },
     history: { replaceState() {} }, navigator: {}, console,
+    AbortController,
     setTimeout: schedule, clearTimeout(id) { timers.pending.delete(id); },
     setInterval: () => 0, clearInterval: () => {},
     requestAnimationFrame: () => 0, confirm: () => true, scrollTo: () => {},
@@ -209,6 +210,46 @@ function modelFetch() {
             return {
               read() {
                 return Promise.resolve(i < chunks.length ? { done: false, value: chunks[i++] } : { done: true });
+              },
+              cancel() { return Promise.resolve(); }
+            };
+          }
+        }
+      });
+    }
+    return Promise.reject(new Error("unexpected request " + url));
+  };
+}
+
+/* The same stub, but the reply stalls after its first chunk so the browser
+ * path can exercise Stop. */
+function hangingModelFetch() {
+  return function (url) {
+    if (/\/api\/tags$/.test(url)) {
+      return Promise.resolve({
+        ok: true, status: 200,
+        json: () => Promise.resolve({ models: [{ name: "stub-model" }] })
+      });
+    }
+    if (/\/api\/show$/.test(url)) {
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ capabilities: [] }) });
+    }
+    if (/\/api\/chat$/.test(url)) {
+      let sent = false;
+      return Promise.resolve({
+        ok: true, status: 200,
+        body: {
+          getReader() {
+            return {
+              read() {
+                if (!sent) {
+                  sent = true;
+                  return Promise.resolve({
+                    done: false,
+                    value: JSON.stringify({ message: { content: "Hola" }, done: false }) + "\n"
+                  });
+                }
+                return new Promise(() => {});
               },
               cancel() { return Promise.resolve(); }
             };
@@ -413,6 +454,31 @@ test("a model reply streams into the conversation and then settles", async () =>
   assert.match(log, /Hola, ¿qué tal\?/, "the streamed reply never reached the log");
   assert.equal(registry.get("chat-send").textContent, X.en.send,
     "the send control did not return from its stop state");
+});
+
+test("Stop aborts a streamed reply, keeps the partial text, and restores Send", async () => {
+  const registry = boot(sessionSave(), "", { fetch: hangingModelFetch() });
+  registry.get("home-conv")._l.click();
+  await settle();
+  await settle();
+
+  const input = registry.get("chat-input");
+  input.value = "Hola";
+  registry.get("chat-form")._l.submit({ preventDefault() {} });
+  assert.equal(registry.get("chat-send").textContent, X.en.stop,
+    "the send control did not become Stop while the reply was in flight");
+
+  registry.get("chat-form")._l.submit({ preventDefault() {} });
+  await settle();
+  await settle();
+  await settle();
+
+  assert.equal(registry.get("chat-send").textContent, X.en.send,
+    "aborting left the send control stuck on Stop");
+  assert.equal(registry.get("conv-feedback").textContent, X.en.stopped,
+    "the stop was not reported");
+  assert.match(registry.get("chat").innerHTML, /Hola/,
+    "the partial reply was dropped instead of kept");
 });
 
 test("the browser chrome follows the active look and the system scheme", () => {
