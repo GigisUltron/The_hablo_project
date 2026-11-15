@@ -73,7 +73,7 @@ The manifest, icons and worker are ordinary files in the repository — no build
 - **Build a sentence**
 - **Complete a message**
 - **Match three pairs** — all three must be completed; selected, correct and wrong states are visible
-- **Say it** where the browser supports speech recognition; a model audio button, one low attempt that reveals the target, and a retry before grading
+- **Say it** where the browser supports speech recognition; a model audio button, one low attempt that reveals the target and the words the recogniser missed, and a retry before grading
 - **Roleplay** — one tap from Practice opens an AI scene using the local why/interests, or a friendly café default
 
 ### Vocabulary expansion

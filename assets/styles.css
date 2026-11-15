@@ -758,6 +758,7 @@ ruby rt {
 .feedback.good { color: var(--good); }
 .feedback.bad { color: var(--bad); }
 .say-target { display: block; margin-top: 4px; color: var(--text); font-weight: 700; }
+.say-missing { display: block; margin-top: 4px; color: var(--text-2); font-size: 13px; }
 .coach-debrief {
   margin: 12px 0 0;
   padding: 10px 12px;

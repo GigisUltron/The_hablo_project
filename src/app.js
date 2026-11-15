@@ -30,6 +30,7 @@
   var BACKUP = window.SemaBackup;
   var COACH = window.SemaCoach;
   var CONVERSATION = window.SemaConversation;
+  var PRONUNCIATION = window.SemaPronunciation;
 
   function audioEnabled() {
     return (state && state.settings && state.settings.audio) !== "off";
@@ -5749,7 +5750,13 @@
         if (tries < 1) {
           tries += 1;
           session.sayTries[id] = tries;
-          if (el) el.innerHTML = esc(heard) + '<span class="say-target">' + textHTML(it) + "</span>";
+          if (el) {
+            var gaps = PRONUNCIATION ? PRONUNCIATION.missing(it.text, said) : [];
+            el.innerHTML = esc(heard) + '<span class="say-target">' + textHTML(it) + "</span>" +
+              (gaps.length ? '<span class="say-missing">' +
+                esc(tr("sayMissing", "Words to aim for: {words}").replace("{words}", gaps.join(", "))) +
+                "</span>" : "");
+          }
           try { btn.focus({ preventScroll: true }); } catch (err) { btn.focus(); }
           return;
         }

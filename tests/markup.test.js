@@ -223,6 +223,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/backup.js",
     "src/coach.js",
     "src/conversation.js",
+    "src/pronunciation.js",
     "src/pwa.js",
     "src/mini-chat.js",
     "src/app.js"
@@ -512,6 +513,13 @@ test("Progress can launch a production-only practice session", () => {
   assert.match(app, /productionOnly: true/);
   assert.match(app, /if \(o\.productionOnly\)/);
   assert.match(app, /session\.types = quizQueue\.map/);
+});
+
+test("speaking feedback names missed words without a model", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /PRONUNCIATION\.missing\(it\.text, said\)/);
+  assert.match(app, /tr\("sayMissing"/);
+  assert.match(app, /say-missing/);
 });
 
 test("speaking practice offers a model and one retry before grading", () => {
