@@ -2319,10 +2319,14 @@
     return !state.settings || state.settings.translations !== "off";
   }
 
-  function glossFor(id) {
-    if (!translationsOn()) return "";
+  function rawGloss(id) {
     var g = (window.SEMA_GLOSSES || {})[id];
     return g ? String(g) : "";
+  }
+
+  function glossFor(id) {
+    if (!translationsOn()) return "";
+    return rawGloss(id);
   }
 
   /* The UI-language pack has its own words and glosses. Matching on the shared
@@ -2357,7 +2361,7 @@
      * text here would make the "translation" the answer itself. */
     if (ui === ACTIVE.code) return "";
     if (ui === "en") return glossFor(id);
-    var g = (window.SEMA_GLOSSES || {})[id];
+    var g = rawGloss(id);
     if (!g) return "";
     return translationIndex(ui)[String(g).trim().toLowerCase()] || "";
   }
@@ -2379,6 +2383,23 @@
         btn.textContent = on ? tr("glossShow", "show translation") : btn.getAttribute("data-gloss");
       });
     });
+  }
+
+  /* Extremely basic, concrete items may use a picture as a second cue.
+   * Everything else is taught by meaning. The picture never replaces the
+   * translation toggle; it only supports it. */
+  var EMOJI_BASIC = {
+    "water": 1, "apple": 1, "heart": 1, "hello": 1, "hi": 1,
+    "goodbye": 1, "bye": 1, "thank you": 1, "thanks": 1, "please": 1,
+    "yes": 1, "no": 1, "sorry": 1, "good morning": 1, "good night": 1,
+    "coffee": 1, "tea": 1, "bread": 1, "milk": 1, "cat": 1, "dog": 1,
+    "house": 1, "home": 1, "sun": 1, "moon": 1, "friend": 1, "love": 1
+  };
+
+  function basicEmoji(it) {
+    if (!it || !it.emoji || (it.kind !== "word" && it.kind !== "phrase")) return "";
+    var gloss = rawGloss(it.id).toLowerCase().replace(/[.!?]+/g, "").trim();
+    return EMOJI_BASIC[gloss] ? it.emoji : "";
   }
 
   function meaningHTML(id, cls) {
@@ -2973,20 +2994,24 @@
 
     var it = itemOf(session.study[session.si]);
     var last = session.si === session.study.length - 1;
+    var emoji = basicEmoji(it);
 
     $("stage").innerHTML =
       '<p class="prompt">' + esc(tr("learnPair", "Learn the pair")) + " · " + (session.si + 1) + " / " + session.study.length +
         (it.kind === "phrase" ? " · " + esc(tr("phrase", "phrase")) : "") + "</p>" +
+      (emoji ? '<div class="emoji-basic" aria-hidden="true">' + emoji + "</div>" : "") +
       wordsHTML(it) +
-      meaningHTML(it.id) +
+      (emoji ? "" : meaningHTML(it.id)) +
       contextHTML(it);
 
     sayItem(it);
     var hearStudy = $("hear-btn");
     if (hearStudy) hearStudy.addEventListener("click", function () { sayItem(it, this); });
 
-    $("actions").innerHTML = '<button class="btn btn-primary" id="next">' +
+    $("actions").innerHTML = (emoji ? glossHTML(it.id) : "") +
+      '<button class="btn btn-primary" id="next">' +
       (last ? esc(tr("startQuiz", "Start the quiz")) : esc(tr("next", "Next"))) + "</button>";
+    if (emoji) wireGloss();
     $("next").addEventListener("click", function () {
       session.si += 1;
       if (session.si < session.study.length) renderStudy();
@@ -3209,10 +3234,12 @@
   /* The only honest question for "aunque": which one fits this sentence. */
   function renderTeach(id) {
     var it = itemOf(id);
+    var emoji = basicEmoji(it);
     $("stage").innerHTML =
       '<p class="prompt">' + esc(tr("new", "New")) + "</p>" +
+      (emoji ? '<div class="emoji-basic" aria-hidden="true">' + emoji + "</div>" : "") +
       wordsHTML(it) +
-      meaningHTML(id) +
+      (emoji ? "" : meaningHTML(id)) +
       contextHTML(it);
     sayItem(it);
     var hearTeach = $("hear-btn");
@@ -3224,7 +3251,9 @@
       tile.setAttribute("aria-label", "Play the audio");
       tile.addEventListener("click", function () { sayItem(it); });
     }
-    $("actions").innerHTML = '<button class="btn btn-primary" id="gotit">' + tr("gotit", "Got it") + '</button>';
+    $("actions").innerHTML = (emoji ? glossHTML(id) : "") +
+      '<button class="btn btn-primary" id="gotit">' + tr("gotit", "Got it") + '</button>';
+    if (emoji) wireGloss();
     $("gotit").addEventListener("click", function () {
       /* Taught is exposure, not recall. Do not inflate accuracy or "remembered". */
       session.taughtIds[id] = true;

@@ -1791,3 +1791,10 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* a picture is an extra cue only for the most concrete first words */
+.emoji-basic {
+  font-size: 54px;
+  line-height: 1;
+  margin: 6px 0 2px;
+}

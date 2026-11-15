@@ -691,6 +691,13 @@ test("a chosen interface language is not silently reset by the deck", () => {
   assert.match(app, /renderStats\(\);\n  }/, "placement does not repaint Progress");
 });
 
+test("only concrete first words get a picture, and the translation stays toggleable", () => {
+  assert.match(app, /var EMOJI_BASIC =/, "no basic emoji allowlist");
+  assert.match(app, /function basicEmoji/, "no emoji gate");
+  assert.match(app, /emoji-basic/, "basic pictures are not rendered");
+  assert.match(app, /emoji \? glossHTML\(id\)/, "basic pictures have no translation toggle");
+});
+
 test("the authored dialogue is the offline conversation", () => {
   assert.match(app, /CONV && CONV\.dialogues/, "the authored dialogue is not used");
   assert.match(app, /chat\.scripted\.dialogue/, "the offline dialogue has no turn state");
