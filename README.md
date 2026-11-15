@@ -56,7 +56,7 @@ A lesson mixes:
 - production, listening, matching, sentence building and message completion
 - a short end-of-session review for what you missed
 
-Lessons use spaced repetition. What you miss comes back before the session ends and again when it is due. A missed card offers **Ask coach**: the local model gives one short explanation in the interface language, with a plain fallback when no model answers. The end screen also asks the coach for a two-sentence note built from the actual kept and missed cards, so the review is specific rather than generic. The optional **one sentence with today's words** box now has **Check sentence**: the local model rewrites it and leaves one short note, with a plain fallback when no model answers. **One more** starts a short pass on real weak or missed items rather than a generic new lesson.
+Lessons use spaced repetition. What you miss comes back before the session ends and again when it is due. A missed card offers **Ask coach**, a rules-first explanation built from the correct form, its meaning and your answer; it never asks a model to invent grammar. The end screen's coach note is built from the actual kept and missed cards, not model prose. The optional **one sentence with today's words** box still has **Check sentence**, which asks the local model for a suggestion; its output is guarded and falls back plainly. **One more** starts a short pass on real weak or missed items rather than a generic new lesson.
 
 ### Exercise types
 
@@ -104,7 +104,7 @@ Assistant replies are spoken automatically through the browser’s installed spe
 
 **Hands-free** is an opt-in voice loop on the conversation screen. Turn it on, speak, and the recognised message is sent; after the assistant replies and finishes speaking, the microphone opens again. It turns off when you leave the screen, when you clear the chat, or when microphone permission is refused. Browser speech recognition still requires a secure context and a supported browser; the typed conversation always remains available.
 
-A **transfer mission** appears above the conversation. It asks you to use two or three weak/due phrases in the conversation. A phrase counts only when you actually write it; completing the mission gives a small XP award.
+A **transfer mission** appears above the conversation. It asks you to use two or three weak/due phrases in the conversation. A phrase counts only when you actually write it; completing the mission gives a small XP award. Coach check-ins select real authored phrases and use a rules-first note; the model may open a roleplay or write a practice text, but it is not allowed to replace data-derived coaching with generic self-talk.
 
 A local model is optional but it is now the only conversation-engine path when present: Settings has no engine chooser. Press **Find local model**; the app probes `http://localhost:8080`, `http://localhost:8081` and `http://localhost:11434`, stores the endpoint and model, and uses the first model that answers. Both llama.cpp's `llama-server` / `llama-cpp-python` and Ollama work. Without one, no conversation leaves the device; the authored fallback runs.
 
@@ -154,7 +154,7 @@ The interface-language selector is separate and does not change when you switch 
 
 ## Progress
 
-**Progress** shows the real counts behind the course: level, words met, words solid (interval at least six days), words the learner has produced correctly, cards due, the path, topic rings, confused pairs, kept sentences and session totals. Production is counted only on generated answers, not on multiple-choice recognition, and it does not alter the SRS interval. **Practice producing** starts a short session of cards that were recognized but never produced, using build/write/translate/message tasks instead of multiple choice. A seven-day strip shows the actual cards finished each day from local data; empty days are shown without guilt copy. The **Coach read** is written from those counts, not from invented XP: it names one strength and one next step, falls back to a plain count-based line when no model answers, and never replaces the numbers.
+**Progress** shows the real counts behind the course: level, words met, words solid (interval at least six days), words the learner has produced correctly, cards due, the path, topic rings, confused pairs, kept sentences and session totals. Production is counted only on generated answers, not on multiple-choice recognition, and it does not alter the SRS interval. **Practice producing** starts a short session of cards that were recognized but never produced, using build/write/translate/message tasks instead of multiple choice. A seven-day strip shows the actual cards finished each day from local data; empty days are shown without guilt copy. The **Coach read** is rules-first and written from those counts, not model prose or invented XP. It states the real met/solid/due/produced numbers and a next step; the model is used for generative practice, not for inventing progress.
 
 
 Coins are **earned**, never bought. A finished lesson pays for first-try answers and a clean sheet; expanding vocabulary pays for each correct word; reaching the daily goal pays once. They buy **looks only** — three accent themes in **Settings → Look**:

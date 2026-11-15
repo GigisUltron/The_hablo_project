@@ -221,6 +221,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/chat-engine.js",
     "src/persona.js",
     "src/backup.js",
+    "src/coach.js",
     "src/mini-chat.js",
     "src/app.js"
   ]);
@@ -475,7 +476,8 @@ test("the session summary asks the coach for a brief real review", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(app, /id="coach-debrief"/);
   assert.match(app, /function renderSessionCoach/);
-  assert.match(app, /CE\.buildSessionCoachPrompt/);
+  assert.match(app, /tr\("remembered"/);
+  assert.match(app, /tr\("comesBack"/);
   assert.match(app, /coachDebriefFallback/);
   assert.match(app, /renderSessionCoach\(kept, missed, total\)/);
 });
@@ -545,8 +547,8 @@ test("Progress has an AI coach read built from real counts", () => {
   assert.match(html, /id="coach-read"/);
   assert.match(html, /id="coach-read-text"/);
   assert.match(app, /function renderProgressCoach/);
-  assert.match(app, /CE\.buildProgressPrompt/);
   assert.match(app, /coachProgressFallback/);
+  assert.match(app, /progressCoachText = fallback/);
   assert.match(app, /progressCoachKey/);
   assert.match(app, /weakest: weakest \? catLabel/);
 });
@@ -566,7 +568,7 @@ test("a missed card can ask the coach for one useful correction", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(app, /id="coach-ask"/);
   assert.match(app, /function explainMistake/);
-  assert.match(app, /CE\.buildExplainPrompt/);
+  assert.match(app, /coachExplainFallback/);
   assert.match(app, /session\.lastAnswer/);
   assert.match(app, /coach-explain/);
   assert.equal(app.includes("explain-btn"), false);
@@ -590,9 +592,8 @@ test("the conversation has a coach check-in that can become a lesson", () => {
   assert.match(html, /id="coach-panel"/);
   assert.match(app, /function renderCoach/);
   assert.match(app, /function coachPicks/);
-  assert.match(app, /CE\.buildCoachPrompt/);
+  assert.match(app, /coachFallback/);
   assert.match(app, /startSession\(\{ ids: picks/);
-  assert.match(app, /coachThinking/);
 });
 
 test("the technical model settings stay collapsed by default", () => {

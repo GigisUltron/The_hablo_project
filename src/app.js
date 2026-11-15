@@ -28,6 +28,7 @@
   var SYNONYMS = window.SemaSynonyms;
   var PERSONA = window.SemaPersona;
   var BACKUP = window.SemaBackup;
+  var COACH = window.SemaCoach;
 
   function audioEnabled() {
     return (state && state.settings && state.settings.audio) !== "off";
@@ -2875,29 +2876,9 @@
     });
     var close = $("coach-close");
     if (close) close.addEventListener("click", hideCoach);
-    var transcript = chat.messages.map(function (m) { return m.text || ""; }).join("\n");
-    if (CE && chatMeta.status === "ready" && chatMeta.model) {
-      note.textContent = tr("coachThinking", "Writing a short coach note…");
-      CE.sendChat({
-        baseUrl: chatEndpoint(),
-        engine: chatMeta.engine,
-        model: chatMeta.model,
-        system: CE.buildCoachPrompt(ACTIVE, PERSONA ? PERSONA.prompt(state.profile) : "", uiName(uiLang())),
-        history: [{ role: "user", text: transcript }],
-        timeoutMs: 30000
-      }).then(function (res) {
-        if (!note || !note.isConnected) return;
-        note.textContent = (res && res.ok && res.text)
-          ? String(res.text).trim().slice(0, 320)
-          : tr("coachFallback", "Keep the conversation going — try one of these phrases next time.");
-      }).catch(function () {
-        if (note && note.isConnected) {
-          note.textContent = tr("coachFallback", "Keep the conversation going — try one of these phrases next time.");
-        }
-      });
-    } else {
-      note.textContent = tr("coachFallback", "Keep the conversation going — try one of these phrases next time.");
-    }
+    /* The selected phrases are already the coaching. The model does not get
+     * to replace them with generic self-talk. */
+    if (note) note.textContent = tr("coachFallback", "Keep the conversation going — try one of these phrases next time.");
   }
 
   function startConversation() {
@@ -5910,30 +5891,16 @@
     if (!it || !session) return;
     var btn = $("coach-ask");
     var answer = (session.lastAnswer && session.lastAnswer.text) || "";
-    if (btn) { btn.disabled = true; btn.textContent = tr("coachThinking", "Writing a short coach note…"); }
+    if (btn) btn.disabled = true;
     var feedbackBox = $("feedback");
     if (!feedbackBox) return;
-    feedbackBox.insertAdjacentHTML("beforeend",
-      '<p class="coach-explain" id="coach-explain" role="status">' +
-      esc(tr("coachThinking", "Writing a short coach note…")) + "</p>");
-    var note = $("coach-explain");
     var meaning = glossFor(it.id) || it.sub || "";
-    var fallback = tr("coachExplainFallback", "The correct answer is above. Read it once, then say it aloud.") +
-      (meaning ? " · " + meaning : "");
-    if (!AITOOLS) {
-      if (note) note.textContent = fallback;
-      return;
-    }
-    localModelAsk(
-      CE.buildExplainPrompt(ACTIVE, learnerLevel(), uiName(uiLang()), {
-        text: it.text, meaning: meaning, sentence: it.sentence || it.sub || ""
-      }, answer)
-    ).then(function (reply) {
-      if (!note || !note.isConnected) return;
-      note.textContent = String(reply || "").trim().slice(0, 320) || fallback;
-    }).catch(function () {
-      if (note && note.isConnected) note.textContent = fallback;
-    });
+    var noteText = tr("coachExplainFallback", "The correct answer is above. Read it once, then say it aloud.") +
+      " · " + it.text + (meaning ? " · " + meaning : "");
+    if (answer) noteText += " · " + tr("yourAnswer", "Your answer") + ": " + answer;
+    feedbackBox.insertAdjacentHTML("beforeend",
+      '<p class="coach-explain" id="coach-explain" role="status">' + esc(noteText) + "</p>");
+    if (btn) { btn.disabled = false; btn.textContent = tr("askCoach", "Ask coach"); }
   }
 
   function showPreviousTask() {
@@ -6099,9 +6066,11 @@
         CE.buildWritingPrompt(ACTIVE, learnerLevel(), uiName(uiLang()), text),
         "Check the sentence now."
       ).then(function (reply) {
+        var text = String(reply || "").trim().slice(0, 360);
         if (note && note.isConnected) {
-          note.textContent = String(reply || "").trim().slice(0, 360) ||
-            tr("sentenceCoachFallback", "No model answered; keep the sentence if it uses today's words.");
+          note.textContent = (COACH && !COACH.valid(text))
+            ? tr("sentenceCoachFallback", "No model answered; keep the sentence if it uses today's words.")
+            : (text || tr("sentenceCoachFallback", "No model answered; keep the sentence if it uses today's words."));
         }
       }).catch(function () {
         if (note && note.isConnected) {
@@ -6156,16 +6125,11 @@
     var missedText = (missed || []).map(function (id) { return itemOf(id).text; });
     var fallback = tr("coachDebriefFallback", "You finished {n} cards. Notice the ones that are coming back.")
       .replace("{n}", String(total || 0));
+    var parts = [];
+    if (keptText.length) parts.push(tr("remembered", "Remembered") + ": " + keptText.slice(0, 4).join(", "));
+    if (missedText.length) parts.push(tr("comesBack", "Comes back") + ": " + missedText.slice(0, 4).join(", "));
     box.hidden = false;
-    note.textContent = tr("coachThinking", "Writing a short coach note…");
-    if (!AITOOLS || !CE) { note.textContent = fallback; return; }
-    localModelAsk(CE.buildSessionCoachPrompt(ACTIVE, learnerLevel(), uiName(uiLang()), keptText, missedText),
-      "Write the note now.").then(function (reply) {
-        if (!note || !note.isConnected) return;
-        note.textContent = String(reply || "").trim().slice(0, 320) || fallback;
-      }).catch(function () {
-        if (note && note.isConnected) note.textContent = fallback;
-      });
+    note.textContent = (parts.length ? parts.join(" · ") + " · " : "") + fallback;
   }
 
   /* What stuck is a plain run of words; what comes back says when. */
@@ -6292,16 +6256,8 @@
       return;
     }
     progressCoachKey = key;
-    note.textContent = tr("coachThinking", "Writing a short coach note…");
-    if (!AITOOLS || !CE) { progressCoachText = fallback; note.textContent = fallback; return; }
-    localModelAsk(CE.buildProgressPrompt(ACTIVE, learnerLevel(), uiName(uiLang()), stats,
-      PERSONA ? PERSONA.prompt(state.profile) : ""), "Write the read now.").then(function (reply) {
-        progressCoachText = String(reply || "").trim().slice(0, 320) || fallback;
-        if (note && note.isConnected && $("coach-read-text") === note) note.textContent = progressCoachText;
-      }).catch(function () {
-        progressCoachText = fallback;
-        if (note && note.isConnected && $("coach-read-text") === note) note.textContent = fallback;
-      });
+    progressCoachText = fallback + " · " + String(stats.produced || 0) + " " + tr("canProduce", "can produce");
+    note.textContent = progressCoachText;
   }
 
   function renderWeek() {
