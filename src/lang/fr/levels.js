@@ -211,6 +211,8 @@ var SEMA_LEVELS = {
   "ph-fr-weather-rain": "A2",
   "ph-fr-weather-nice": "A2",
   "ph-fr-weather-was": "A2",
+  "ph-fr-pizza": "A1",
+  "ph-fr-vegetarian": "A2",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
 if (typeof window !== "undefined") {

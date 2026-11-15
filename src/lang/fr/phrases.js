@@ -131,6 +131,8 @@ var SEMA_PHRASES = {
     { id: "ph-fr-weather-rain", emoji: "☔", text: "Aujourd'hui, il pleut.", sub: "Parler du temps.", cat: "phrase", topic: "weather" },
     { id: "ph-fr-weather-nice", emoji: "🌞", text: "Il fait beau aujourd'hui.", sub: "Parler du temps.", cat: "phrase", topic: "weather" },
     { id: "ph-fr-weather-was", emoji: "🌥️", text: "Quel temps faisait-il ?", sub: "Demander le temps passé.", cat: "phrase", topic: "weather" },
+    { id: "ph-fr-pizza", emoji: "🍕", text: "Je voudrais une pizza.", sub: "Au restaurant.", cat: "phrase", topic: "restaurant" },
+    { id: "ph-fr-vegetarian", emoji: "🥦", text: "Je suis végétarien.", sub: "Au restaurant.", cat: "phrase", topic: "restaurant" },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_PHRASES;

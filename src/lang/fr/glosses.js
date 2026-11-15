@@ -211,6 +211,8 @@ var SEMA_GLOSSES = {
   "ph-fr-weather-rain": "It's raining today.",
   "ph-fr-weather-nice": "The weather is nice today.",
   "ph-fr-weather-was": "What was the weather like?",
+  "ph-fr-pizza": "I'd like a pizza.",
+  "ph-fr-vegetarian": "I'm vegetarian.",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {

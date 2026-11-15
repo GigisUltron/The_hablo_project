@@ -220,6 +220,8 @@ var SEMA_LEVELS = {
   "ph-en-weather-rain": "A2",
   "ph-en-weather-nice": "A2",
   "ph-en-weather-was": "A2",
+  "ph-en-pizza": "A1",
+  "ph-en-vegetarian": "A2",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
 if (typeof window !== "undefined") {
