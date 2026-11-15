@@ -39,6 +39,10 @@ var SEMA_PHRASES = {
     { id: "ph-nl-hotel", emoji: "🛎️", text: "Waar is het hotel?", sub: "Een onderkomen zoeken.", cat: "phrase" },
     { id: "ph-nl-colour", emoji: "🎨", text: "Wat is je lievelingskleur?", sub: "Bij het kennismaken.", cat: "phrase" },
     { id: "ph-nl-where-from", emoji: "🏳️", text: "Waar kom je vandaan?", sub: "Naar de herkomst vragen.", cat: "phrase" },
+    { id: "ph-nl-reservation", emoji: "🏨", text: "Ik heb een reservering.", sub: "Bij het inchecken in een hotel.", cat: "phrase" },
+    { id: "ph-nl-train-time", emoji: "🚆", text: "Hoe laat vertrekt de trein?", sub: "Vragen naar de vertrektijd.", cat: "phrase" },
+    { id: "ph-nl-pharmacy", emoji: "💊", text: "Waar is de apotheek?", sub: "Een apotheek zoeken.", cat: "phrase" },
+    { id: "ph-nl-hurts-here", emoji: "🤕", text: "Het doet hier pijn.", sub: "Bij de dokter aanwijzen waar het pijn doet.", cat: "phrase" },
   ]
 };
 
