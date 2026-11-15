@@ -543,6 +543,18 @@ test("Today invites personalization only when it is empty, and One more is targe
   assert.match(app, /personalPrompt\.hidden = !!\(why \|\| interests\)/);
 });
 
+test("Today keeps the primary lesson, path, practice and planner in priority order", () => {
+  const start = html.indexOf('id="view-today"');
+  const end = html.indexOf("</section>", html.indexOf('id="view-session"'));
+  const today = html.slice(start, end);
+  const at = (needle) => today.indexOf(needle);
+  assert.ok(at('id="start-btn"') > -1);
+  assert.ok(at('id="start-btn"') < at('id="track-title"'), "the primary lesson does not come before the path");
+  assert.ok(at('id="track-title"') < at('id="practice-title"'), "practice does not come after the path");
+  assert.ok(at('id="practice-title"') < at('id="wish-details"'), "the planner does not come after practice");
+  assert.ok(at('id="wish-details"') < at('id="review-title"'), "review does not come after the planner");
+});
+
 test("the learner can personalize the coach and the Today reason", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(html, /id="personal-details"/);
