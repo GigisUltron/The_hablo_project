@@ -24,6 +24,7 @@
   var EX = window.SemaExercises;
   var WORDSET = window.SemaWordSet;
   var ECON = window.SemaEconomy;
+  var AITOOLS = window.SemaAiTools;
 
   function audioEnabled() {
     return (state && state.settings && state.settings.audio) !== "off";
@@ -1843,6 +1844,150 @@
     var settingsEl = $("chat-settings-status");
     if (settingsEl) settingsEl.textContent = line[1];
     if (currentView === "conv" && chat) renderChat();
+  }
+
+  /* ------------------------------------------------------- optional local AI
+   *
+   * The browser talks to an OpenAI-compatible local server (llama.cpp, Ollama).
+   * It is an assistant: planned lessons and word suggestions always fall back
+   * to the authored pack when no model answers.
+   */
+  var localCandidates = function () {
+    var out = [];
+    [chatEndpoint(), "http://localhost:8080", "http://localhost:11434"].forEach(function (value) {
+      var base = CE && CE.normaliseBaseUrl ? CE.normaliseBaseUrl(value) : String(value || "");
+      if (base && out.indexOf(base) === -1 && (!CE || CE.isLocalEndpoint(base))) out.push(base);
+    });
+    return out;
+  };
+
+  function discoverLocal() {
+    if (!CE) return Promise.resolve(null);
+    var list = localCandidates();
+    var i = 0;
+    function next() {
+      if (i >= list.length) return null;
+      var base = list[i++];
+      return CE.discover(base, undefined, 1800).then(function (found) {
+        if (found && found.engine && found.models && found.models.length) return found;
+        return next();
+      }).catch(next);
+    }
+    return Promise.resolve().then(next);
+  }
+
+  function localModelAsk(system, prompt) {
+    return discoverLocal().then(function (found) {
+      if (!found) throw new Error("no local model");
+      var wanted = (state.settings && state.settings.chatModel) || "";
+      var model = (found.models.filter(function (m) { return m.name === wanted; })[0] || found.models[0]).name;
+      return CE.sendChat({
+        baseUrl: found.baseUrl,
+        engine: found.engine,
+        model: model,
+        system: system,
+        history: [{ role: "user", text: prompt }],
+        timeoutMs: 20000
+      });
+    }).then(function (reply) {
+      if (!reply || !reply.ok || !reply.text) throw new Error("no reply");
+      return reply.text;
+    });
+  }
+
+  function findLocalModel() {
+    var btn = $("chat-find");
+    var status = $("chat-settings-status");
+    if (btn) { btn.disabled = true; btn.textContent = tr("findingModel", "Looking for a local model…"); }
+    if (status) status.textContent = tr("findingModel", "Looking for a local model…");
+    discoverLocal().then(function (found) {
+      if (!found) {
+        if (status) status.textContent = tr("modelNotFound", "No local model answered.");
+        toast(tr("modelNotFound", "No local model answered."));
+        return;
+      }
+      state.settings.chatEngine = "local";
+      state.settings.chatEndpoint = found.baseUrl;
+      state.settings.chatModel = found.models[0].name;
+      save();
+      refreshChatEngine();
+      renderChatSettings();
+      var name = found.models[0].name;
+      toast(tr("modelFound", "Found {model}").replace("{model}", name));
+    }).catch(function () {
+      if (status) status.textContent = tr("modelNotFound", "No local model answered.");
+      toast(tr("modelNotFound", "No local model answered."));
+    }).then(function () {
+      if (btn) { btn.disabled = false; btn.textContent = tr("findModel", "Find local model"); }
+    });
+  }
+
+  function suggestWordset() {
+    var areaInput = $("wordset-area");
+    var area = areaInput ? areaInput.value.trim() : "";
+    var note = $("wordset-ai-note");
+    var btn = $("wordset-suggest");
+    if (!area) {
+      if (note) note.textContent = tr("wordsetEmpty", "Paste at least one word.");
+      return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = tr("wordsetSuggesting", "Asking the local model…"); }
+    if (note) note.textContent = tr("wordsetSuggesting", "Asking the local model…");
+    localModelAsk(
+      AITOOLS.systemWords(uiName(ACTIVE.code)),
+      AITOOLS.wordsPrompt(uiName(ACTIVE.code), area)
+    ).then(function (text) {
+      var words = AITOOLS.parseList(text, 12);
+      if (!words.length) throw new Error("no words");
+      var input = $("wordset-input");
+      if (input) input.value = words.join("\n");
+      state.settings.wordsetDraft = input ? input.value : "";
+      save();
+      findWordset();
+      if (note) note.textContent = "";
+    }).catch(function () {
+      /* No model is not a dead end: use the pack's own topic planner. */
+      var wish = wishLesson(area, ACTIVE.code);
+      var texts = (wish.ids || []).map(function (id) { return itemOf(id).text; }).filter(Boolean);
+      var input = $("wordset-input");
+      if (texts.length && input) {
+        input.value = texts.join("\n");
+        state.settings.wordsetDraft = input.value;
+        save();
+        findWordset();
+      } else if (input) {
+        input.value = area;
+        state.settings.wordsetDraft = area;
+        save();
+        findWordset();
+      }
+      if (note) note.textContent = tr("wordsetFallback", "Local model is not connected; used the pack's topic matches.");
+    }).then(function () {
+      if (btn) { btn.disabled = false; btn.textContent = tr("wordsetSuggest", "Suggest words"); }
+    });
+  }
+
+  function suggestWish() {
+    var input = $("wish-input");
+    var text = input ? input.value.trim() : "";
+    var note = $("wish-note");
+    var btn = $("wish-ai");
+    if (!text) {
+      if (note) note.textContent = tr("wishEmpty", "Tell me where you are going and what you want to do.");
+      return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = tr("wishAsking", "Asking the local model…"); }
+    if (note) note.textContent = tr("wishAsking", "Asking the local model…");
+    localModelAsk(AITOOLS.systemKeywords(), AITOOLS.keywordsPrompt(text)).then(function (reply) {
+      var keys = AITOOLS.parseList(reply, 8);
+      if (!keys.length) throw new Error("no keywords");
+      buildWishLesson(text + " " + keys.join(" "), $("wish-lang") && $("wish-lang").value);
+    }).catch(function () {
+      if (note) note.textContent = tr("wishFallback", "Local model is not connected; built the lesson from the pack.");
+      buildWishLesson(text, $("wish-lang") && $("wish-lang").value);
+    }).then(function () {
+      if (btn) { btn.disabled = false; btn.textContent = tr("wishAi", "Suggest with local model"); }
+    });
   }
 
   function renderChatSettings() {
@@ -5510,6 +5655,9 @@
   renderWishLangs();
   renderWishPresets();
   $("chat-clear").addEventListener("click", chatClearClick);
+  $("chat-find").addEventListener("click", findLocalModel);
+  $("wordset-suggest").addEventListener("click", suggestWordset);
+  $("wish-ai").addEventListener("click", suggestWish);
   $("confirm-cancel").addEventListener("click", closeConfirm);
   $("confirm-ok").addEventListener("click", function () {
     var fn = confirmState && confirmState.onOk;

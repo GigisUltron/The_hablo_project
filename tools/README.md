@@ -58,6 +58,36 @@ python3 tools/make_audio.py --lang ja --engine piper --voice /path/to/ja_JP-hi_f
 python3 tools/make_audio.py --lang ja --check
 ```
 
+## The local conversation model
+
+`local_model.sh` starts the llama.cpp server built under `.tools/`, using the
+small GGUF model. It is optional: the app keeps Offline practice when it is not
+running, and every AI assist falls back to the authored pack.
+
+```sh
+# once, on a machine with a C++ toolchain and cmake
+cmake -S .tools/llama.cpp -B .tools/llama.cpp/build -DCMAKE_BUILD_TYPE=Release
+cmake --build .tools/llama.cpp/build -j --target llama-server
+
+# download one small model (Qwen 2.5 1.5B Q4 is about 1.1 GB)
+curl -fL -o .tools/models/qwen2.5-1.5b-instruct-q4_k_m.gguf \
+  https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf
+
+# run it on the port the app probes
+tools/local_model.sh
+```
+
+The server exposes an OpenAI-compatible `/v1` API. In **Settings**, press
+**Find local model**; the app probes `http://localhost:8080` and
+`http://localhost:11434`, stores the endpoint and model, and switches the
+conversation engine to the local model. The same endpoint is used by
+**Suggest words** on the word-set screen and **Suggest with local model** on a
+planned lesson. If the server is not running, those buttons use the pack's
+topic planner instead.
+
+The app never loads the model, a Python binding or a browser runtime itself. It
+talks HTTP to the local server, so there is no new runtime dependency.
+
 ## The neural path (a machine with internet)
 
 Piper is not a dependency of the repo. It is only needed when you want to

@@ -92,6 +92,7 @@
               <input id="wish-input" type="text" autocomplete="off" data-i18n-ph="wishExample" placeholder="dinner out, I want pizza" />
               <button class="btn btn-primary" id="wish-go" type="submit" data-i18n="wishGo">Build lesson</button>
             </div>
+            <button class="btn btn-ghost btn-sm" id="wish-ai" type="button" data-i18n="wishAi">Suggest with local model</button>
             <p class="builder-note" id="wish-note"></p>
             <div class="wish-presets" id="wish-presets"></div>
           </form>
@@ -285,6 +286,12 @@
         <label class="setup-lang" for="wordset-lang"><span data-i18n="wishLanguage">Lesson language</span>
           <select id="wordset-lang" class="wish-lang"></select>
         </label>
+        <div class="wordset-area-row">
+          <label class="sr-only" for="wordset-area" data-i18n="wordsetArea">Area to improve</label>
+          <input id="wordset-area" class="type-input" type="text" autocomplete="off" data-i18n-ph="wordsetAreaPlaceholder" placeholder="cooking, the gym, a job interview" />
+          <button class="btn btn-ghost" id="wordset-suggest" type="button" data-i18n="wordsetSuggest">Suggest words</button>
+        </div>
+        <p class="builder-note" id="wordset-ai-note" role="status" aria-live="polite"></p>
         <label class="sr-only" for="wordset-input" data-i18n="wordsetTitle">Words you need</label>
         <textarea id="wordset-input" class="type-input" rows="3" maxlength="600" data-i18n-ph="wordsetPlaceholder" placeholder="invoice, deadline, colleague"></textarea>
         <div class="wordset-actions">
@@ -332,6 +339,7 @@
               <input class="type-input" id="chat-model" type="text" autocomplete="off" spellcheck="false" placeholder="" />
             </label>
             <div class="chat-settings-row">
+              <button class="btn btn-ghost" id="chat-find" type="button" data-i18n="findModel">Find local model</button>
               <button class="btn btn-ghost" id="chat-check" type="button" data-i18n="checkModel">Check model</button>
               <span class="builder-note" id="chat-settings-status" data-i18n="notChecked">not checked yet</span>
             </div>
@@ -600,6 +608,7 @@
 <script src="src/ruby.js"></script>
 <script src="src/writing.js"></script>
 <script src="src/exercises.js"></script>
+<script src="src/ai-tools.js"></script>
 <script src="src/economy.js"></script>
 <script src="src/wordset.js"></script>
 <script src="src/ui-strings.js"></script>

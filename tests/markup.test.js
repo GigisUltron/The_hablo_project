@@ -209,6 +209,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/ruby.js",
     "src/writing.js",
     "src/exercises.js",
+    "src/ai-tools.js",
     "src/economy.js",
     "src/wordset.js",
     "src/ui-strings.js",
@@ -403,6 +404,18 @@ test("coins and the accent shop are wired into Today and Settings", () => {
   assert.match(app, /ECON\.vocabCoins/);
   assert.match(app, /function chooseAccent/);
   assert.match(app, /function payDailyGoal/);
+});
+
+test("the local model assists area suggestions and planned lessons", () => {
+  assert.match(html, /id="wordset-area"/);
+  assert.match(html, /id="wordset-suggest"/);
+  assert.match(html, /id="wish-ai"/);
+  assert.match(html, /id="chat-find"/);
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /function discoverLocal/);
+  assert.match(app, /function suggestWordset/);
+  assert.match(app, /function suggestWish/);
+  assert.match(app, /AITOOLS\.parseList/);
 });
 
 test("the word set is reachable from Today and has its own screen", () => {

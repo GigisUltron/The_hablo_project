@@ -2457,6 +2457,12 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 }
 .vocab-summary-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 
+/* audio sits beside the prompt it plays, not in its own row */
+.listen-line { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.listen-line .prompt { margin: 0; }
+.listen-line .speak-btn { flex: none; }
+.letter-example-text { max-width: 280px; margin: 0 auto; font-size: 16px; color: var(--text-2); }
+
 /* word set: paste the words you actually need, preview, then start */
 .wordset-panel {
   max-width: 720px;
@@ -2465,6 +2471,9 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   gap: 12px;
 }
 .wordset-panel .setup-lang { max-width: 360px; }
+.wordset-area-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.wordset-area-row .type-input { flex: 1 1 220px; min-width: 0; }
+.wordset-area-row .btn { flex: 0 0 auto; }
 .wordset-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .wordset-preview {
   display: grid;
