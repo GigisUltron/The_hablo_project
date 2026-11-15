@@ -268,3 +268,16 @@ test("a reply streams, can be stopped, and a cancel never falls back", () => {
   assert.match(app, /function clearChat[\s\S]{0,160}abortChatStream\(\)/,
     "clearing the conversation does not stop the stream");
 });
+
+test("a deck switch and a roleplay start both reset the chat stream state", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  const start = app.indexOf("function switchLang");
+  const switchBlock = app.slice(start, start + 1200);
+  assert.match(switchBlock, /abortChatStream\(\);\s*setChatBusy\(false\);/,
+    "switching deck can leave the chat controls stuck on Stop");
+
+  const roleStart = app.indexOf("function startRoleplay");
+  const roleBlock = app.slice(roleStart, roleStart + 2200);
+  assert.match(roleBlock, /abortChatStream\(\);\s*setChatBusy\(false\);/,
+    "opening a roleplay can inherit the previous conversation's busy state");
+});

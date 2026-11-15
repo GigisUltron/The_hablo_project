@@ -662,6 +662,12 @@
       return false;
     }
 
+    /* A stream belongs to the deck that started it. Abort and clear the busy
+     * state before the chat object is replaced, or the next conversation
+     * inherits a Stop control that has nothing to stop. */
+    abortChatStream();
+    setChatBusy(false);
+
     /* Remember the language being left before switching, so the flag row can
      * actually become a row instead of only ever containing the new one. */
     rememberLang(ACTIVE && ACTIVE.code);
@@ -4239,6 +4245,8 @@
       switchLang(code);
     }
     var begin = function () {
+      abortChatStream();
+      setChatBusy(false);
       var wish = wishLesson(scene, ACTIVE.code, { areaOnly: true });
       chat = chatState();
       chat.messages = [];
