@@ -6,3 +6,6 @@ __pycache__/
 *.pyc
 .venv/
 *.onnx
+
+# Optional local tooling/models used to regenerate audio; never shipped.
+.tools/

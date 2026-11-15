@@ -20,9 +20,9 @@ const FLOORS = {
 };
 const FLAGSHIP = new Set(["es", "fr", "it", "en"]);
 
-/* eSpeak-ng has no voice named "zh"; its Mandarin voice is "cmn", which this
- * pack's ids do not use. A silent pack is honest; a missing manifest is not. */
-const NO_AUDIO = new Set(["zh"]);
+/* Every pack is voiced now, including Chinese (Piper zh_CN). The exception
+ * list stays as a deliberate place to record a genuinely silent pack. */
+const NO_AUDIO = new Set();
 
 function packItems(dir) {
   const concepts = require(path.join(dir, "concepts.js")).concepts || [];
@@ -142,7 +142,7 @@ test("every pack can hold a conversation", () => {
         assert.ok(turn.es && turn.es.length > 2, `${code}/${dialogue.id}: empty line`);
         assert.ok(turn.speaker && turn.speaker.length > 1, `${code}/${dialogue.id}: no speaker`);
         assert.ok(turn.gloss && turn.gloss.length > 2, `${code}/${dialogue.id}: no gloss`);
-        assert.equal(typeof turn.audio, code === "zh" ? "object" : "string", `${code}/${dialogue.id}: bad audio`);
+        assert.equal(typeof turn.audio, "string", `${code}/${dialogue.id}: bad audio`);
       }
     }
   }

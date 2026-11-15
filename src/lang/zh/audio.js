@@ -1,5 +1,6 @@
-/* No generated audio for this pack: eSpeak has no "zh" voice.
- * The pack stays silent rather than pretending to speak. */
+/* Bind the generated manifest to its pack. Loaded immediately after
+ * assets/audio/zh/manifest.js, before another pack can overwrite
+ * window.SEMA_AUDIO. */
 if (typeof window !== "undefined" && window.SemaLangs) {
-  window.SemaLangs.define("zh", "audio", {});
+  window.SemaLangs.define("zh", "audio", window.SEMA_AUDIO || {});
 }

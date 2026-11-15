@@ -13,6 +13,14 @@ test("article mistakes are named", () => {
   assert.equal(C.classify("la casa", "casa"), "extra-article");
 });
 
+test("article mistakes are named in every deck that has articles", () => {
+  assert.equal(C.classify("le maison", "la maison", "fr"), "article");
+  assert.equal(C.classify("Das Haus", "das Haus", "de"), "accents");
+  assert.equal(C.classify("der Haus", "das Haus", "de"), "article");
+  assert.equal(C.classify("il gatto", "la gatto", "it"), "article");
+  assert.equal(C.classify("the house", "a house", "en"), "article");
+});
+
 test("everything else is spelling", () => {
   assert.equal(C.classify("cassa", "casa"), "spelling");
   assert.equal(C.classify("", "casa"), "empty");

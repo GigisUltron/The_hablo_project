@@ -24,8 +24,8 @@
       </svg>
       <span>hablo</span>
     </div>
-    <div class="lang-switch" id="lang-switch" aria-label="Recent languages" hidden></div>
-    <nav class="tabs" aria-label="Views">
+    <div class="lang-switch" id="lang-switch" aria-label="Recent languages" data-i18n-aria="recentLanguages" hidden></div>
+    <nav class="tabs" aria-label="Views" data-i18n-aria="views">
       <button class="tab is-active" data-view="today" aria-current="page">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>
         <span data-i18n="tabToday">Today</span>
@@ -75,17 +75,23 @@
           <button class="btn btn-primary btn-block" id="start-btn" type="button"><span id="start-label" data-i18n="start">Start lesson</span></button>
         </section>
 
-        <form class="wish-card" id="wish-form">
-          <label for="wish-input" data-i18n="wishTitle">Plan a lesson</label>
-          <label class="wish-lang-label" for="wish-lang" data-i18n="wishLanguage">Lesson language</label>
-          <select id="wish-lang" class="wish-lang"></select>
-          <div class="wish-row">
-            <input id="wish-input" type="text" autocomplete="off" data-i18n-ph="wishExample" placeholder="dinner out, I want pizza" />
-            <button class="btn btn-primary" id="wish-go" type="submit" data-i18n="wishGo">Build lesson</button>
-          </div>
-          <p class="builder-note" id="wish-note"></p>
-          <div class="wish-presets" id="wish-presets"></div>
-        </form>
+        <details class="wish-card" id="wish-details">
+          <summary class="wish-summary">
+            <span data-i18n="wishTitle">Plan a lesson</span>
+            <span class="wish-chevron" aria-hidden="true">›</span>
+          </summary>
+          <form class="wish-form" id="wish-form">
+            <label class="sr-only" for="wish-input" data-i18n="wishTitle">Plan a lesson</label>
+            <label class="wish-lang-label" for="wish-lang" data-i18n="wishLanguage">Lesson language</label>
+            <select id="wish-lang" class="wish-lang"></select>
+            <div class="wish-row">
+              <input id="wish-input" type="text" autocomplete="off" data-i18n-ph="wishExample" placeholder="dinner out, I want pizza" />
+              <button class="btn btn-primary" id="wish-go" type="submit" data-i18n="wishGo">Build lesson</button>
+            </div>
+            <p class="builder-note" id="wish-note"></p>
+            <div class="wish-presets" id="wish-presets"></div>
+          </form>
+        </details>
 
         <section class="group" id="custom-group" hidden>
           <h2 class="group-title" data-i18n="myLessons">My lessons</h2>
@@ -142,13 +148,13 @@
       <h2 id="session-title" class="sr-only" hidden>Learning session</h2>
 
       <div class="session-head">
-        <button class="icon-btn" id="back-btn" aria-label="Previous task" title="Previous task">←</button>
-        <button class="icon-btn" id="quit-btn" aria-label="End session" title="End session"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-        <div class="bar" role="progressbar" aria-label="Session progress"><i id="bar-fill"></i></div>
+        <button class="icon-btn" id="back-btn" aria-label="Previous task" title="Previous task" data-i18n-aria="previousTask" data-i18n-title="previousTask">←</button>
+        <button class="icon-btn" id="quit-btn" aria-label="End session" title="End session" data-i18n-aria="endSession" data-i18n-title="endSession"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <div class="bar" role="progressbar" aria-label="Session progress" data-i18n-aria="sessionProgress"><i id="bar-fill"></i></div>
         <span class="counter" id="counter">0/0</span>
       </div>
 
-      <ol class="steps" id="steps" aria-label="Lesson steps"></ol>
+      <ol class="steps" id="steps" aria-label="Lesson steps" data-i18n-aria="lessonSteps"></ol>
 
 
       <article class="card" id="card" aria-live="polite">
@@ -162,7 +168,7 @@
     <section class="view" id="view-reader" aria-labelledby="reader-title">
       <h2 id="reader-title" class="sr-only" hidden>Reading</h2>
       <div class="session-head">
-        <button class="icon-btn" id="reader-back" aria-label="Back">←</button>
+        <button class="icon-btn" id="reader-back" aria-label="Back" data-i18n-aria="back">←</button>
         <div class="bar"><i id="reader-bar"></i></div>
         <span class="counter" id="reader-count"></span>
       </div>
@@ -177,7 +183,7 @@
     <section class="view" id="view-alphabet" aria-labelledby="alphabet-title">
       <h2 id="alphabet-title" class="sr-only" hidden>Alphabet</h2>
       <div class="session-head">
-        <button class="icon-btn" id="alphabet-back" aria-label="Back">←</button>
+        <button class="icon-btn" id="alphabet-back" aria-label="Back" data-i18n-aria="back">←</button>
         <div class="bar"><i id="alphabet-bar"></i></div>
         <span class="counter" id="alphabet-count"></span>
       </div>
@@ -189,9 +195,9 @@
     </section>
 
     <!-- ====================================================== CONVERSATION -->
-    <section class="view" id="view-conv" aria-label="Conversation">
+    <section class="view" id="view-conv" aria-label="Conversation" data-i18n-aria="conversation">
       <div class="chat-head">
-        <button class="icon-btn" id="conv-back" aria-label="Back">←</button>
+        <button class="icon-btn" id="conv-back" aria-label="Back" data-i18n-aria="back">←</button>
         <span class="chat-presence" id="chat-face" data-state="idle" aria-hidden="true"></span>
         <div class="chat-who">
           <span class="chat-name" id="chat-name">Conversation</span>
@@ -200,13 +206,13 @@
       </div>
       <div class="chat-mission" id="chat-mission" hidden></div>
       <article class="card conv-card">
-        <div class="chat" id="chat" role="log" aria-label="Conversation so far"></div>
+        <div class="chat" id="chat" role="log" aria-label="Conversation so far" data-i18n-aria="conversation"></div>
         <div class="stage" id="conv-stage">
           <div class="chat-stage">
-            <button class="chat-clear" id="chat-clear" type="button" aria-label="clear this conversation" hidden>clear</button>
+            <button class="chat-clear" id="chat-clear" type="button" aria-label="clear this conversation" data-i18n-aria="clearConversation" hidden>clear</button>
             <form class="chat-composer" id="chat-form">
-              <input class="type-input" id="chat-input" type="text" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="send" placeholder="say something" aria-label="your message" />
-              <button class="icon-btn" id="chat-listen" type="button" aria-label="Speak your message" title="Speak your message" hidden>
+              <input class="type-input" id="chat-input" type="text" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="send" placeholder="say something" aria-label="your message" data-i18n-ph="saySomething" data-i18n-aria="yourMessage" />
+              <button class="icon-btn" id="chat-listen" type="button" aria-label="Speak your message" title="Speak your message" data-i18n-aria="speakMessage" data-i18n-title="speakMessage" hidden>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
               </button>
               <button class="btn btn-primary" id="chat-send" type="submit" data-i18n="send">Send</button>
@@ -221,17 +227,17 @@
     <section class="view" id="view-setup" aria-label="Setup">
       <div class="solo">
         <p class="prompt" data-i18n="beforeStart">Before you start</p>
-        <h1 class="setup-q">Have you studied this language before?</h1>
-        <div class="cta-row">
-          <button class="btn btn-primary" id="setup-new" data-i18n="imNew">I'm new</button>
-          <button class="btn btn-ghost" id="setup-test" data-i18n="testMe">Test me</button>
-        </div>
         <label class="setup-lang"><span data-chrome="deckLang">Language</span>
           <select id="setup-lang"></select>
         </label>
         <label class="setup-lang"><span data-chrome="interfaceLang">Interface</span>
           <select id="setup-uilang"></select>
         </label>
+        <h1 class="setup-q">Have you studied this language before?</h1>
+        <div class="cta-row">
+          <button class="btn btn-primary" id="setup-new" data-i18n="imNew">I'm new</button>
+          <button class="btn btn-ghost" id="setup-test" data-i18n="testMe">Test me</button>
+        </div>
         <p class="builder-note" data-i18n="setupNote">Each language keeps its own deck, progress and audio.</p>
       </div>
     </section>
@@ -294,13 +300,13 @@
           </div>
 
           <div class="settings-options">
-            <div class="option-group" role="group" aria-label="Session length">
+            <div class="option-group" role="group" aria-label="Session length" data-i18n-aria="sessionLength">
               <span class="option-label" data-i18n="session">Session</span>
               <button class="seg" data-length="goal" type="button" data-i18n="goal">goal</button>
               <button class="seg" data-length="short" type="button" data-i18n="short">short</button>
               <button class="seg" data-length="long" type="button" data-i18n="long">long</button>
             </div>
-            <div class="option-group" role="group" aria-label="Audio">
+            <div class="option-group" role="group" aria-label="Audio" data-i18n-aria="audio">
               <span class="option-label" data-i18n="audio">Audio</span>
               <button class="seg" data-audio="on" type="button" data-i18n="on">on</button>
               <button class="seg" data-audio="off" type="button" data-i18n="off">off</button>
@@ -309,7 +315,7 @@
               <span class="option-label" data-i18n="translations">Translations</span>
               <button class="seg" id="gloss-toggle" type="button">on</button>
             </div>
-            <div class="option-group" id="ruby-group" role="group" aria-label="Pinyin">
+            <div class="option-group" id="ruby-group" role="group" aria-label="Pinyin" data-i18n-aria="pinyin">
               <span class="option-label" data-i18n="pinyin">Pinyin</span>
               <button class="seg" data-ruby="on" type="button" data-i18n="on">on</button>
               <button class="seg" data-ruby="off" type="button" data-i18n="off">off</button>
@@ -534,6 +540,7 @@
 <script src="src/lang/zh/glosses.js"></script>
 <script src="src/lang/zh/alphabet.js"></script>
 <script src="src/lang/zh/conv.js"></script>
+<script src="assets/audio/zh/manifest.js"></script>
 <script src="src/lang/zh/audio.js"></script>
 <script src="src/lang/en/concepts.js"></script>
 <script src="src/lang/en/phrases.js"></script>

@@ -5,12 +5,12 @@
       id: "cv-first-meeting",
       title: "First meeting",
       turns: [
-        { speaker: "一个人", es: "你好！你好吗？", expects: ["好", "你好"], item: "ph-zh-hello", reply: "我很好，谢谢。", gloss: "Hello! How are you?", audio: null },
-        { speaker: "一个人", es: "你叫什么名字？", expects: ["叫"], item: "ph-zh-my-name-is", reply: "我叫…", gloss: "What's your name?", audio: null },
-        { speaker: "一个人", es: "你是哪里人？", expects: ["从"], item: "ph-zh-where-from", reply: "我是…人。", gloss: "Where are you from?", audio: null },
-        { speaker: "一个人", es: "你最喜欢什么颜色？", expects: ["颜色", "蓝"], item: "ph-zh-colour", reply: "我最喜欢的颜色是蓝色。", gloss: "What's your favourite colour?", audio: null },
-        { speaker: "一个人", es: "你会说英语吗？", expects: ["会", "不会"], item: "ph-zh-speak-english", reply: "会一点。", gloss: "Do you speak English?", audio: null },
-        { speaker: "一个人", es: "明天见。", expects: [], item: "ph-zh-see-you", reply: "", gloss: "See you tomorrow.", audio: null },
+        { speaker: "一个人", es: "你好！你好吗？", expects: ["好", "你好"], item: "ph-zh-hello", reply: "我很好，谢谢。", gloss: "Hello! How are you?", audio: "ph-zh-hello" },
+        { speaker: "一个人", es: "你叫什么名字？", expects: ["叫"], item: "ph-zh-my-name-is", reply: "我叫…", gloss: "What's your name?", audio: "ph-zh-my-name-is" },
+        { speaker: "一个人", es: "你是哪里人？", expects: ["从"], item: "ph-zh-where-from", reply: "我是…人。", gloss: "Where are you from?", audio: "ph-zh-where-from" },
+        { speaker: "一个人", es: "你最喜欢什么颜色？", expects: ["颜色", "蓝"], item: "ph-zh-colour", reply: "我最喜欢的颜色是蓝色。", gloss: "What's your favourite colour?", audio: "ph-zh-colour" },
+        { speaker: "一个人", es: "你会说英语吗？", expects: ["会", "不会"], item: "ph-zh-speak-english", reply: "会一点。", gloss: "Do you speak English?", audio: "ph-zh-speak-english" },
+        { speaker: "一个人", es: "明天见。", expects: [], item: "ph-zh-see-you", reply: "", gloss: "See you tomorrow.", audio: "ph-zh-see-you" },
       ]
     },
   ];

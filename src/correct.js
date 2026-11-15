@@ -6,20 +6,29 @@
  */
 (function (root) {
   var ACCENTS = { a: "á", e: "é", i: "í", o: "ó", u: "ú", n: "ñ" };
-  var ARTICLES = ["el", "la", "los", "las", "un", "una"];
+  var ARTICLES = {
+    es: ["el", "la", "los", "las", "un", "una"],
+    fr: ["le", "la", "les", "un", "une", "des", "du"],
+    it: ["il", "lo", "la", "i", "gli", "le", "un", "una", "uno"],
+    pt: ["o", "a", "os", "as", "um", "uma"],
+    de: ["der", "die", "das", "den", "dem", "des", "ein", "eine", "einen", "einem", "einer"],
+    nl: ["de", "het", "een"],
+    en: ["the", "a", "an"]
+  };
 
   function fold(s) {
     return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
   }
 
-  function classify(said, expected) {
+  function classify(said, expected, code) {
     var a = fold(said), b = fold(expected);
     if (!a) return "empty";
     if (a === b) return said.trim() === expected.trim() ? "ok" : "accents";
 
+    var articles = ARTICLES[String(code || "es").toLowerCase()] || [];
     var wa = a.split(/\s+/), wb = b.split(/\s+/);
-    var artA = wa.length > 1 && ARTICLES.indexOf(wa[0]) !== -1 ? wa[0] : null;
-    var artB = wb.length > 1 && ARTICLES.indexOf(wb[0]) !== -1 ? wb[0] : null;
+    var artA = wa.length > 1 && articles.indexOf(wa[0]) !== -1 ? wa[0] : null;
+    var artB = wb.length > 1 && articles.indexOf(wb[0]) !== -1 ? wb[0] : null;
     if (artA && artB && wa.slice(1).join(" ") === wb.slice(1).join(" ")) return "article";
     if (artA && !artB && wa.slice(1).join(" ") === wb.join(" ")) return "extra-article";
     if (!artA && artB && wa.join(" ") === wb.slice(1).join(" ")) return "missing-article";

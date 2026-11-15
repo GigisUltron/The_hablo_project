@@ -193,6 +193,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/lang/zh/glosses.js",
     "src/lang/zh/alphabet.js",
     "src/lang/zh/conv.js",
+    "assets/audio/zh/manifest.js",
     "src/lang/zh/audio.js",
     "src/lang/en/concepts.js",
     "src/lang/en/phrases.js",
@@ -365,14 +366,75 @@ test("every track unit has a mode the app can start", () => {
   for (const m of modes) assert.ok(["words", "phrases", "terms", "read", "script"].includes(m), "unknown mode " + m);
 });
 
-test("every data-i18n key in the markup exists in every locale", () => {
+test("every translatable attribute key in the markup exists in every locale", () => {
   const U = require("../src/ui-strings.js");
   const X = require("../src/ui-extra.js");
-  const keys = [...new Set([...html.matchAll(/data-i18n="([^"]+)"/g)].map((m) => m[1]))];
+  const attrs = ["data-i18n", "data-i18n-aria", "data-i18n-title", "data-i18n-ph"];
+  const keys = [];
+  for (const attr of attrs) {
+    const re = new RegExp(attr + '="([^"]+)"', "g");
+    for (const m of html.matchAll(re)) if (!keys.includes(m[1])) keys.push(m[1]);
+  }
   assert.ok(keys.length >= 5, "no strings wired yet");
   for (const k of keys) {
-    for (const lang of Object.keys(X)) assert.ok((U[lang] && U[lang][k]) || X[lang][k], `${lang} missing ${k}`);
+    for (const lang of Object.keys(X)) {
+      assert.ok((U[lang] && U[lang][k]) || X[lang][k], `${lang} missing ${k}`);
+    }
   }
+});
+
+test("first run chooses the language before asking the level", () => {
+  const start = html.indexOf('id="view-setup"');
+  const end = html.indexOf("</section>", start);
+  const setup = html.slice(start, end);
+  assert.ok(setup.indexOf('id="setup-lang"') !== -1, "no language picker on first run");
+  assert.ok(setup.indexOf('id="setup-lang"') < setup.indexOf('class="setup-q"'),
+    "the level question comes before the language it asks about");
+});
+
+test("the plan form is one disclosure, not a second filled action", () => {
+  assert.match(html, /<details class="wish-card" id="wish-details">/);
+  assert.match(html, /<summary class="wish-summary">/);
+  assert.match(html, /<form class="wish-form" id="wish-form">/);
+  assert.equal(/<form class="wish-card"/.test(html), false, "the old always-open form is back");
+});
+
+test("lesson titles, duration and the setup note are translated", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  for (const key of ["lessonReview", "lessonPractice", "lessonPhrases", "lessonNewWords", "aboutMinutes"]) {
+    assert.match(app, new RegExp('tr\\("' + key + '"'), `missing tr(\"${key}\")`);
+  }
+  assert.equal(app.includes("Each language keeps its own deck, progress and audio."), false,
+    "renderLangPickers overwrites the translated setup note");
+});
+
+test("every user-facing toast is translated", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  const bare = app.match(/toast\("/g) || [];
+  assert.equal(bare.length, 0, `${bare.length} toast(s) still contain a bare English literal`);
+  assert.match(app, /var key = "correction" \+ kind/, "typed-answer correction is not translated");
+});
+
+test("typed answers cannot pass with the wrong article", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /articleMiss/);
+  assert.match(app, /kind === "article" \|\| kind === "extra-article" \|\| kind === "missing-article"/);
+  assert.match(app, /score >= 0\.8 && !articleMiss/);
+});
+
+test("the chat composer keeps its own placeholder and label", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /input\.placeholder = tr\("saySomething"/);
+  assert.match(app, /setAttribute\("aria-label", tr\("yourMessage"/);
+  assert.equal(/placeholder = tr\("converse"/.test(app), false,
+    "the composer still calls itself 'Have a conversation'");
+});
+
+test("changing view moves focus out of the hidden view", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /var fromView = previous/);
+  assert.match(app, /focusTarget\.focus/);
+  assert.match(app, /if \(fromView && targetView && fromView !== targetView\)/);
 });
 
 test("no card prints null for an item's picture", () => {

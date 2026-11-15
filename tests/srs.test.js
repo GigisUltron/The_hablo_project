@@ -122,6 +122,17 @@ test("normalize ignores accents, articles and case", () => {
   assert.equal(S.normalize("el  árbol!"), "arbol");
 });
 
+test("articles are stripped only in the deck's own language", () => {
+  assert.equal(S.normalize("La maison", "fr"), "maison");
+  assert.equal(S.normalize("Il gatto", "it"), "gatto");
+  assert.equal(S.normalize("Das Haus", "de"), "haus");
+  assert.equal(S.normalize("The house", "en"), "house");
+  assert.equal(S.normalize("La casa", "en"), "la casa", "english must not strip a spanish article");
+  assert.equal(S.normalize("La casa", "zh"), "la casa", "an unknown deck keeps its words");
+  assert.equal(S.similarity("le maison", "la maison", "fr"), 1);
+  assert.equal(S.similarity("el casa", "la casa", "es"), 1);
+});
+
 test("levenshtein and similarity behave", () => {
   assert.equal(S.levenshtein("casa", "casa"), 0);
   assert.equal(S.levenshtein("casa", "cassa"), 1);

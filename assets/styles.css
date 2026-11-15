@@ -1805,6 +1805,27 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   box-shadow: 0 3px 0 var(--border-deep);
 }
 .wish-card label { font-size: 13px; font-weight: 700; }
+/* The plan form is one disclosure, not a second above-the-fold action. */
+.wish-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.wish-summary::-webkit-details-marker { display: none; }
+.wish-chevron {
+  font-size: 22px;
+  line-height: 1;
+  color: var(--text-2);
+  transition: transform 120ms ease-out;
+}
+.wish-card[open] .wish-chevron { transform: rotate(90deg); }
+.wish-form { display: grid; gap: 8px; }
 .wish-row { display: flex; gap: 8px; }
 .wish-row input { flex: 1 1 auto; min-width: 0; }
 .wish-row .btn { flex: 0 0 auto; }

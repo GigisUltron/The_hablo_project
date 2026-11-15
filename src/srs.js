@@ -182,7 +182,21 @@
 
   /* ---- comparing what the learner said with what the card expects ------ */
 
-  function normalize(text) {
+  /* Articles are language-specific. Stripping Spanish "la" from a French or
+   * German answer was a silent pass for the wrong word; stripping English
+   * "a" from a Spanish answer hid a real miss. */
+  var ARTICLES = {
+    es: ["el", "la", "los", "las", "un", "una"],
+    fr: ["le", "la", "les", "un", "une", "des", "du"],
+    it: ["il", "lo", "la", "i", "gli", "le", "un", "una", "uno"],
+    pt: ["o", "a", "os", "as", "um", "uma"],
+    de: ["der", "die", "das", "den", "dem", "des", "ein", "eine", "einen", "einem", "einer"],
+    nl: ["de", "het", "een"],
+    en: ["the", "a", "an"]
+  };
+  var NON_LATIN = /[\u0370-\u03ff\u0400-\u04ff\u0530-\u058f\u0590-\u05ff\u0600-\u06ff\u0900-\u097f\u0e00-\u0e7f\u3040-\u30ff\u4e00-\u9fff\uac00-\ud7af]/;
+
+  function normalize(text, code) {
     var value = String(text || "")
       .toLowerCase()
       .normalize("NFD")
@@ -194,10 +208,11 @@
     } catch (err) {
       value = value.replace(/[!-\/:-@\[-`{-~\u3000-\u303f\uff00-\uffef]+/g, " ");
     }
-    /* Articles are a Latin-only convenience; never strip a target word that
-     * happens to look like one in another script. */
-    if (/^[a-zñ\s]+$/.test(value)) {
-      value = value.replace(/\b(el|la|los|las|un|una)\b/g, " ");
+    /* Never strip a target word that happens to look like an article in
+     * another script. Unknown packs keep their words intact. */
+    var articles = ARTICLES[String(code || "es").toLowerCase()];
+    if (articles && !NON_LATIN.test(value)) {
+      value = value.replace(new RegExp("\\b(" + articles.join("|") + ")\\b", "g"), " ");
     }
     return value.replace(/\s+/g, " ").trim();
   }
@@ -221,9 +236,9 @@
     return prev[b.length];
   }
 
-  function similarity(said, expected) {
-    var a = normalize(said);
-    var b = normalize(expected);
+  function similarity(said, expected, code) {
+    var a = normalize(said, code);
+    var b = normalize(expected, code);
     if (!a || !b) return 0;
     if (a === b) return 1;
     var d = levenshtein(a, b);

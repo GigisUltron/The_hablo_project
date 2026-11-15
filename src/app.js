@@ -203,6 +203,14 @@
       var text = table[el.getAttribute("data-i18n-ph")];
       if (text) el.setAttribute("placeholder", text);
     });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-aria]"), function (el) {
+      var text = table[el.getAttribute("data-i18n-aria")];
+      if (text) el.setAttribute("aria-label", text);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-title]"), function (el) {
+      var text = table[el.getAttribute("data-i18n-title")];
+      if (text) el.setAttribute("title", text);
+    });
     Array.prototype.forEach.call(document.querySelectorAll("[data-chrome]"), function (el) {
       /* A key with no translation keeps the text already in the markup: printing
        * the key name is the one failure mode a learner cannot read. */
@@ -560,12 +568,6 @@
       if (list.some(function (p) { return p.code === current; })) sel.value = current;
     });
 
-    var note = document.querySelector("#view-setup .builder-note");
-    if (note) {
-      note.textContent = list.length > 1
-        ? "Each language keeps its own deck, progress and audio."
-        : "More languages need their own deck and audio.";
-    }
   }
 
   function updateSetupCopy() {
@@ -817,7 +819,7 @@
       };
       u.onerror = function (ev) {
         if (ev && ev.error && ev.error !== "canceled" && ev.error !== "interrupted") {
-          toast("This device could not speak that — try the speaker on a card.");
+          toast(tr("speechFailed", "This device could not speak that — try the speaker on a card."));
         }
         if (btn) btn.classList.remove("is-playing");
         stopFace();
@@ -843,7 +845,7 @@
 
   function listen(expectedWord, onScore) {
     if (!SR) {
-      toast("This browser has no speech recognition — use “I said it” to self-check.");
+      toast(tr("noRecognitionSelfCheck", "This browser has no speech recognition — use “I said it” to self-check."));
       return false;
     }
     if (listening) return false;
@@ -860,7 +862,7 @@
       for (var i = 0; i < ev.results.length; i += 1) {
         for (var j = 0; j < ev.results[i].length; j += 1) {
           var alt = ev.results[i][j];
-          var sc = S.similarity(alt.transcript, expectedWord);
+          var sc = S.similarity(alt.transcript, expectedWord, ACTIVE && ACTIVE.code);
           if (sc > best) { best = sc; said = alt.transcript; }
         }
       }
@@ -869,9 +871,9 @@
     rec.onerror = function (ev) {
       listening = false;
       if (ev.error === "not-allowed" || ev.error === "service-not-allowed") {
-        toast("Microphone permission was refused.");
+        toast(tr("micRefused", "Microphone permission was refused."));
       } else if (ev.error !== "no-speech") {
-        toast("Couldn't hear that — try again.");
+        toast(tr("couldNotHear", "Couldn't hear that — try again."));
       }
     };
     rec.onend = function () { listening = false; };
@@ -896,6 +898,12 @@
 
   function show(view) {
     if (needsSetup() && view !== "setup") view = "setup";
+    /* If the control that opened this view is hidden with it, focus would be
+     * lost in the document. Capture the origin now, and move focus into the new
+     * view once it is visible. Tabs live outside the views, so switching tabs
+     * leaves focus where the learner put it. */
+    var previous = document.activeElement;
+    var fromView = previous && previous.closest ? previous.closest(".view") : null;
     applyStrings();
     currentView = view;
     VIEWS.forEach(function (v) {
@@ -917,6 +925,16 @@
     /* Smooth scrolling is motion; a reduced-motion preference gets the jump. */
     var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+    var targetView = $("view-" + view);
+    if (fromView && targetView && fromView !== targetView) {
+      var focusTarget = targetView.querySelector("h1:not([hidden]), h2:not([hidden])") ||
+        targetView.querySelector(".card") || targetView;
+      if (focusTarget) {
+        if (!focusTarget.hasAttribute("tabindex")) focusTarget.setAttribute("tabindex", "-1");
+        try { focusTarget.focus({ preventScroll: true }); }
+        catch (err) { focusTarget.focus(); }
+      }
+    }
   }
 
   /* ---------------------------------------------------------------- today */
@@ -1049,7 +1067,7 @@
         var i = current.indexOf(cat);
         if (i === -1) current.push(cat);
         else current.splice(i, 1);
-        if (!current.length) { toast("Pick at least one field."); return; }
+        if (!current.length) { toast(tr("pickField", "Pick at least one field.")); return; }
         state.settings.fields = current;
         save();
         renderBuilder();
@@ -1091,15 +1109,16 @@
     var xp = $("stat-xp");
     if (xp) xp.textContent = state.xp || 0;
     var lvl = $("stat-level");
-    if (lvl) lvl.textContent = "Lv " + (Math.floor((state.xp || 0) / 100) + 1);
+    if (lvl) lvl.textContent = tr("levelShort", "Lv") + " " + (Math.floor((state.xp || 0) / 100) + 1);
     $("stat-mastered").textContent = mastered;
     $("known-bar").style.width = Math.round((known / Math.max(allIds.length, 1)) * 100) + "%";
 
     var date = new Date().toLocaleDateString(uiLocale(), { weekday: "short", day: "numeric", month: "short" });
     $("today-date").textContent = date + " · " + uiName(ACTIVE.code) + " · " + learnerLevel();
-    $("lesson-meta").textContent = tr("aboutMinute", "about 1 min");
 
     var next = renderNextStack();
+    $("lesson-meta").textContent = tr("aboutMinutes", "about {n} min")
+      .replace("{n}", String(next.minutes));
     $("lesson-name").textContent = next.title;
     $("start-sub").textContent = next.caption || tr("nothingDue", "Nothing new or due. Practise anything.");
     $("lesson-goal").textContent = next.goal || "";
@@ -1126,7 +1145,7 @@
       var it = itemOf(id);
       var due = state.cards[id].due;
       return '<button class="row" type="button" data-review="' + esc(id) + '"' +
-        ' aria-label="Review ' + esc(it.text) + '">' +
+        ' aria-label="' + esc(tr("reviewOne", "Review") + " " + it.text) + '">' +
         '<span class="row-body">' +
           '<span class="row-main">' + articleHTML(it.article) + textHTML(it) + "</span>" +
           '<span class="row-meta">' + (due <= now ? tr("today", "today") : capital(whenFrom(due - now))) + "</span>" +
@@ -1143,7 +1162,7 @@
   /* A due row is a direct route into a one-card review, not just a label. */
   function reviewOne(id) {
     if (!state.cards[id] || !reviewable(id)) {
-      toast("That one is not ready to review yet.");
+      toast(tr("notReadyReview", "That one is not ready to review yet."));
       return;
     }
     session = newSession("mixed", [], [id]);
@@ -1175,7 +1194,7 @@
 
   function startReader() {
     var shelf = readerShelf();
-    if (!shelf.length) { toast("No texts in this pack yet."); return; }
+    if (!shelf.length) { toast(tr("noTexts", "No texts in this pack yet.")); return; }
     var read = state.readTexts || [];
     var next = shelf.filter(function (t) { return read.indexOf(t.id) === -1; })[0] || shelf[0];
     reader = { text: next, qi: 0, correct: 0, misses: [], done: false };
@@ -1320,7 +1339,7 @@
 
   function startAlphabet() {
     var queue = alphabetChunk();
-    if (!queue.length) { toast("This deck has no alphabet yet."); return; }
+    if (!queue.length) { toast(tr("noAlphabet", "This deck has no alphabet yet.")); return; }
     alphabet = { queue: queue, i: 0, startedAt: Date.now(), done: false };
     show("alphabet");
     renderAlphabetLetter();
@@ -1370,7 +1389,7 @@
     var total = alphabet.queue.length;
     state.alphabet = state.alphabet || {};
     $("alphabet-bar").style.width = "100%";
-    $("alphabet-count").textContent = "done";
+    $("alphabet-count").textContent = tr("done", "done");
     $("alphabet-stage").innerHTML =
       '<p class="prompt">' + esc(tr("theScript", "The script")) + "</p>" +
       '<div class="word">' + alphabetKnown() + "/" + scriptLetters().length + "</div>" +
@@ -1451,7 +1470,7 @@
 
   function startWriting() {
     var queue = writingQueue();
-    if (!queue.length) { toast("This deck has no writing practice yet."); return; }
+    if (!queue.length) { toast(tr("noWriting", "This deck has no writing practice yet.")); return; }
     writing = {
       queue: queue, i: 0, firstCorrect: 0, missed: {}, done: false,
       answers: S.shuffle(queue.map(function (it) { return it.sub; }), Math.random),
@@ -1486,7 +1505,7 @@
       (writingGloss(it) ? '<p class="writing-gloss">' + esc(writingGloss(it)) + "</p>" : "") +
       '<input class="type-input" id="type-input" type="text" autocomplete="off" ' +
         'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
-        'aria-label="the characters" placeholder="the characters" />' +
+        'aria-label="' + esc(tr("characters", "The characters")) + '" placeholder="' + esc(tr("characters", "The characters")) + '" />' +
       '<p class="writing-hint">type or paste the characters</p>' +
       '<button class="btn btn-primary" id="write-check">' + esc(tr("check", "Check")) + '</button>';
 
@@ -1504,9 +1523,9 @@
 
   function checkWriting(it, answer) {
     var result = WRITING.grade(answer, it.text);
-    if (result.reason === "empty") { toast("Type or paste the characters."); return; }
+    if (result.reason === "empty") { toast(tr("typeCharacters", "Type or paste the characters.")); return; }
     if (result.reason === "latin-only") {
-      toast("These characters are not on a Latin keyboard — paste them.");
+      toast(tr("latinKeyboard", "These characters are not on a Latin keyboard — paste them."));
       return;
     }
     if (!result.ok) {
@@ -1761,8 +1780,8 @@
       if (nm) nm.textContent = uiName(ACTIVE.code) + " · " + tr("conversation", "Conversation");
       var input = $("chat-input");
       if (input) {
-        input.placeholder = tr("converse", "say something");
-        input.setAttribute("aria-label", tr("converse", "your message"));
+        input.placeholder = tr("saySomething", "say something");
+        input.setAttribute("aria-label", tr("yourMessage", "your message"));
       }
     }
     setChatStatus();
@@ -2054,9 +2073,9 @@
     }
     if (d && d.turns) {
       var turn = d.turns[chat.scripted.turn] || d.turns[0];
-      var said = S.normalize(userText);
+      var said = S.normalize(userText, ACTIVE && ACTIVE.code);
       var fits = !turn.expects || !turn.expects.length || turn.expects.some(function (word) {
-        return said.indexOf(S.normalize(word)) !== -1;
+        return said.indexOf(S.normalize(word, ACTIVE && ACTIVE.code)) !== -1;
       });
       if (!fits) {
         chat.scripted.misses = (chat.scripted.misses || 0) + 1;
@@ -2226,7 +2245,7 @@
   }
 
   function startConversation() {
-    if (!CE) { toast("The chat engine did not load."); return; }
+    if (!CE) { toast(tr("chatEngineMissing", "The chat engine did not load.")); return; }
     chat = chatState();
     if (!chat.mission) assignMission();
     chatCleared = false;
@@ -2250,7 +2269,7 @@
 
     var rec;
     try { rec = new SR(); } catch (err) {
-      toast("This browser has no speech recognition.");
+      toast(tr("noRecognition", "This browser has no speech recognition."));
       return;
     }
 
@@ -2278,9 +2297,9 @@
     };
     rec.onerror = function (ev) {
       if (ev && (ev.error === "not-allowed" || ev.error === "service-not-allowed")) {
-        toast("Microphone permission was refused.");
+        toast(tr("micRefused", "Microphone permission was refused."));
       } else if (ev && ev.error !== "no-speech") {
-        toast("Couldn't hear that — try again.");
+        toast(tr("couldNotHear", "Couldn't hear that — try again."));
       }
     };
     rec.onend = function () {
@@ -3046,22 +3065,26 @@
         return meaning ? '<span class="pic-text">' + esc(meaning) + "</span>" : "";
       }).join("");
     }
+    var minutes = p.read ? 2 : p.script ? 1 : Math.max(1, Math.round((p.size || 8) * 0.15));
     return {
       title: title,
       caption: caption,
-      goal: p.unit ? tr("goal_" + p.unit.id, p.unit.goal) : ""
+      goal: p.unit ? tr("goal_" + p.unit.id, p.unit.goal) : "",
+      minutes: minutes
     };
   }
 
   /* Named after the field its new words come from, the way a course names a unit. */
   function lessonTitle(p) {
-    if (!p.fresh.length) return p.due.length ? "Review" : "Practice";
+    if (!p.fresh.length) {
+      return p.due.length ? tr("lessonReview", "Review") : tr("lessonPractice", "Practice");
+    }
     var kinds = p.fresh.map(function (id) { return itemOf(id).kind; });
     var phrases = kinds.filter(function (k) { return k === "phrase"; }).length;
-    if (phrases * 2 > kinds.length) return "Phrases";
+    if (phrases * 2 > kinds.length) return tr("lessonPhrases", "Phrases");
     var cats = p.fresh.map(function (id) { return conceptById[id] && conceptById[id].cat; }).filter(Boolean);
     var same = cats.length && cats.every(function (c) { return c === cats[0]; });
-    return same && D.categories[cats[0]] ? catLabel(cats[0]) : "New words";
+    return same && D.categories[cats[0]] ? catLabel(cats[0]) : tr("lessonNewWords", "New words");
   }
 
   /* A small, honest planner: it chooses real pack phrases for the situation
@@ -3140,6 +3163,8 @@
     var saved = saveCustomLesson(wish, text);
     if (input) input.value = "";
     $("wish-note").textContent = "";
+    var details = $("wish-details");
+    if (details) details.open = false;
     toast(wish.note, 3200);
     startSession({ ids: wish.ids, size: wish.ids.length, title: wish.title, customId: saved.id });
   }
@@ -3480,7 +3505,7 @@
 
     if (!queue.length) {
       queue = S.shuffle(deckIds(), Math.random).slice(0, p.size || lessonSize() || 8);
-      toast("Nothing due here — free practice.");
+      toast(tr("noDue", "Nothing due here — free practice."));
     }
 
     /* one card per item: the study step is gone, so a new item is taught by
@@ -3542,7 +3567,7 @@
     session.types = DEMO_TYPES;
     show("session");
     renderStudy();
-    toast("Demo — starts clean; saved progress is untouched.", 3200);
+    toast(tr("demoClean", "Demo — starts clean; saved progress is untouched."), 3200);
   }
 
   /* ---- the personal card: your sentence from a previous day ------------ */
@@ -3564,7 +3589,7 @@
       '<p class="personal-line">' + esc(p.cloze.blanked) + "</p>" +
       '<input class="type-input" id="type-input" type="text" autocomplete="off" ' +
         'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
-        'aria-label="the missing word" placeholder="the missing word" />' +
+        'aria-label="' + esc(tr("missingWord", "The missing word")) + '" placeholder="' + esc(tr("missingWord", "The missing word")) + '" />' +
       '<button class="btn btn-primary" id="check">' + esc(tr("check", "Check")) + '</button>';
 
     var input = $("type-input");
@@ -3581,7 +3606,7 @@
     var p = session.personal;
     var input = $("type-input");
     var value = input ? input.value : "";
-    var score = S.similarity(value, p.cloze.answer);
+    var score = S.similarity(value, p.cloze.answer, ACTIVE && ACTIVE.code);
     var ok = score >= 0.7;
 
     MEM.markReviewed(state.memory, p.sentence.id, Date.now());
@@ -3625,7 +3650,7 @@
       ids = S.topConfusions(state, 12).map(function (r) { return r.target; }).filter(reviewable);
     }
     if (!ids.length) {
-      toast("Nothing to review yet — do a lesson first.");
+      toast(tr("nothingToReview", "Nothing to review yet — do a lesson first."));
       return;
     }
 
@@ -4500,7 +4525,7 @@
       (prompt ? '<p class="word">' + esc(prompt) + "</p>" : "") +
       '<input class="type-input" id="type-input" type="text" autocomplete="off" ' +
         'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
-        'aria-label="write the word" placeholder="type it" />' +
+        'aria-label="' + esc(tr("writeIt", "Write it")) + '" placeholder="' + esc(tr("typeIt", "type it")) + '" />' +
       '<button class="btn btn-primary" id="write-check">' + esc(tr("check", "Check")) + '</button>';
     var input = $("type-input");
     if (input) {
@@ -4517,13 +4542,17 @@
   function submitWrite(id, it) {
     var input = $("type-input");
     var typed = input ? input.value : "";
-    var score = S.similarity(typed, it.text);
-    var kind = CORRECT ? CORRECT.classify(typed, it.text) : "spelling";
+    var score = S.similarity(typed, it.text, ACTIVE && ACTIVE.code);
+    var kind = CORRECT ? CORRECT.classify(typed, it.text, ACTIVE && ACTIVE.code) : "spelling";
+    var articleMiss = kind === "article" || kind === "extra-article" || kind === "missing-article";
 
-    if (score >= 0.8) { answer(true, null); return; }
+    if (score >= 0.8 && !articleMiss) { answer(true, null); return; }
 
     /* A tutor says what was wrong, not just that it was. */
-    toast(CORRECT ? CORRECT.message(kind, it.text) : "not quite");
+    var key = "correction" + kind.replace(/-([a-z])/g, function (_, c) { return c.toUpperCase(); });
+    var message = tr(key, "");
+    if (!message) message = CORRECT ? CORRECT.message(kind, it.text) : tr("notQuite", "Not quite");
+    toast(message.replace("{word}", it.text));
     answer(false, null);
   }
 
@@ -4541,7 +4570,8 @@
       var btn = this;
       var started = listen(it.text, function (score, said) {
         var el = $("score");
-        if (el) el.textContent = "heard “" + said + "” · match " + Math.round(score * 100) + "%";
+        if (el) el.textContent = tr("heard", "heard") + " “" + said + "” · " +
+          tr("match", "match") + " " + Math.round(score * 100) + "%";
         answer(score > 0.6, null);
       });
       if (started) {
@@ -4681,7 +4711,7 @@
     Array.prototype.forEach.call($("stage").querySelectorAll("button, input, select, textarea"), function (el) {
       el.disabled = true;
     });
-    $("actions").innerHTML = '<button class="btn btn-primary" id="return-task" type="button" aria-label="Return to current task">→</button>';
+    $("actions").innerHTML = '<button class="btn btn-primary" id="return-task" type="button" aria-label="' + esc(tr("returnTask", "Return to current task")) + '">→</button>';
     $("return-task").addEventListener("click", function () {
       session.viewing = null;
       $("card").classList.remove("is-reviewing");
@@ -4768,14 +4798,15 @@
       var field = $("compose-input");
       var text = field ? field.value : "";
       var kept = MEM.addSentence(state.memory, text, Object.keys(session.answered), Date.now());
-      if (!kept) { toast("A few more words, in " + uiName(LANG.code) + "."); return; }
+      if (!kept) { toast(tr("moreWords", "A few more words, in {lang}.").replace("{lang}", uiName(LANG.code))); return; }
       save();
       var form = document.querySelector(".compose");
       if (form) {
-        form.innerHTML = '<p class="sentence">kept — “' + esc(kept.text) +
-          '”. It comes back as a card tomorrow.</p>';
+        form.innerHTML = '<p class="sentence">' +
+          esc(tr("keptSentence", "kept — “{text}”. It comes back as a card tomorrow.")
+            .replace("{text}", kept.text)) + "</p>";
       }
-      toast("Saved to your memory.");
+      toast(tr("savedMemory", "Saved to your memory."));
     });
 
     $("actions").innerHTML =
@@ -5183,12 +5214,12 @@
    * and they let the views be driven without a click. */
   $("audio-chip").addEventListener("click", function () {
     var sample = audioTestItem();
-    if (!sample) { toast("This pack has no sample to play yet."); return; }
+    if (!sample) { toast(tr("noSample", "This pack has no sample to play yet.")); return; }
     sayItem(sample);
     toast(hasBundled()
-      ? "That was the bundled pronunciation."
+      ? tr("bundledVoice", "That was the bundled pronunciation.")
       : audioStatus().state === "ok"
-        ? "That was the synthesized voice — if you heard nothing, check the system volume."
+        ? tr("synthVoice", "That was the synthesized voice — if you heard nothing, check the system volume.")
         : tr("noVoice", "no usable voice") + " · " + uiName(LANG.code));
   });
   updateAudioChip();
