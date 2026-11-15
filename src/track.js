@@ -90,8 +90,8 @@ var SEMA_TRACK = {
       id: "c12", key: "c12", mode: "read", fields: null,
       topics: ["past", "opinions", "feelings"],
       need: 76,
-      goal: "Read and tell a short story; hold a longer conversation.",
-      focus: "first · then · in the end"
+      goal: "Read a short text and answer questions about it.",
+      focus: "main idea · detail · answer"
     },
   ],
 
