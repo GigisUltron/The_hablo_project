@@ -206,6 +206,15 @@ var SEMA_LEVELS = {
   "ph-en-colour": "A1",
   "ph-en-where-from": "A1",
   "t-because": "B1",
+  "ph-en-work-home": "A2",
+  "ph-en-study-english": "A2",
+  "ph-en-home-flat": "A2",
+  "ph-en-hobby-reading": "A2",
+  "ph-en-plans-free": "A2",
+  "ph-en-opinion-good": "A2",
+  "ph-en-opinion-agree": "A2",
+  "ph-en-small-talk-job": "A2",
+  "ph-en-feel-tired": "A2",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
 if (typeof window !== "undefined") {

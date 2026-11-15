@@ -129,6 +129,15 @@ var SEMA_PHRASES = {
     { id: "ph-en-hobbies-4", emoji: "💵", text: "It's not my cup of tea.", sub: "Politely disliking something.", cat: "phrase", topic: "hobbies" },
     { id: "ph-en-colour", emoji: "🌈", text: "What's your favourite colour?", sub: "Asking about preferences.", cat: "phrase", topic: "small-talk" },
     { id: "ph-en-where-from", emoji: "🏡", text: "Where are you from?", sub: "Asking where someone comes from.", cat: "phrase", topic: "introductions" },
+    { id: "ph-en-work-home", emoji: "🏠", text: "I work from home.", sub: "I do my job from home.", cat: "phrase", topic: "work" },
+    { id: "ph-en-study-english", emoji: "📚", text: "I'm learning English.", sub: "I am studying English.", cat: "phrase", topic: "study" },
+    { id: "ph-en-home-flat", emoji: "🏢", text: "I live in a small flat.", sub: "my home is a small apartment.", cat: "phrase", topic: "home" },
+    { id: "ph-en-hobby-reading", emoji: "📖", text: "I like reading.", sub: "reading is something I enjoy.", cat: "phrase", topic: "hobbies" },
+    { id: "ph-en-plans-free", emoji: "📅", text: "Are you free on Friday?", sub: "do you have time on Friday?", cat: "phrase", topic: "plans" },
+    { id: "ph-en-opinion-good", emoji: "👍", text: "I think it's good.", sub: "in my view it is good.", cat: "phrase", topic: "opinions" },
+    { id: "ph-en-opinion-agree", emoji: "🤝", text: "I agree.", sub: "I have the same opinion.", cat: "phrase", topic: "opinions" },
+    { id: "ph-en-small-talk-job", emoji: "💼", text: "What do you do?", sub: "what is your job?", cat: "phrase", topic: "small-talk" },
+    { id: "ph-en-feel-tired", emoji: "😴", text: "I'm tired.", sub: "I need rest.", cat: "phrase", topic: "feelings" },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_PHRASES;

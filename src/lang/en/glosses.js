@@ -208,6 +208,15 @@ var SEMA_GLOSSES = {
   "ph-en-colour": "asking which colour someone likes best",
   "ph-en-where-from": "asking about someone's home country or town",
   "t-because": "because",
+  "ph-en-work-home": "I do my job from home.",
+  "ph-en-study-english": "I am studying English.",
+  "ph-en-home-flat": "my home is a small apartment.",
+  "ph-en-hobby-reading": "reading is something I enjoy.",
+  "ph-en-plans-free": "do you have time on Friday?",
+  "ph-en-opinion-good": "in my view it is good.",
+  "ph-en-opinion-agree": "I have the same opinion.",
+  "ph-en-small-talk-job": "what is your job?",
+  "ph-en-feel-tired": "I need rest.",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {
