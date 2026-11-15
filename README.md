@@ -57,7 +57,7 @@ A lesson mixes:
 - production, listening, matching, sentence building and message completion
 - a short end-of-session review for what you missed
 
-Lessons use spaced repetition. What you miss comes back before the session ends and again when it is due. A missed card offers **Ask coach**, a rules-first explanation built from the correct form, its meaning and your answer; it never asks a model to invent grammar. The end screen's coach note is built from the actual kept and missed cards, not model prose. The optional **one sentence with today's words** box still has **Check sentence**, which asks the local model for a wording suggestion; its output is labelled as a suggestion, guarded, and the 0.5B tier refuses grammar claims rather than pretending. **One more** starts a short pass on real weak or missed items rather than a generic new lesson.
+Lessons use spaced repetition. What you miss comes back before the session ends and again when it is due. A missed card offers **Ask coach**, a rules-first explanation built from the correct form, its meaning and your answer; it never asks a model to invent grammar. The end screen's coach note is built from the actual kept and missed cards, not model prose. The optional **one sentence with today's words** box still has **Check sentence**, which asks the local model for a wording suggestion; its output is labelled as a suggestion, guarded, and the 0.5B tier refuses grammar claims rather than pretending. **One more** starts a short pass on real weak or missed items rather than a generic new lesson. **Talk it through** carries the same kept/missed phrases into a conversation mission.
 
 ### Installable and offline
 

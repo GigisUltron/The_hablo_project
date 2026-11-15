@@ -6340,9 +6340,21 @@
       '<button class="btn btn-primary" id="again">' + esc(tr("oneMore", "One more")) + "</button>" +
       (missed.length ? '<button class="btn btn-ghost btn-sm" id="review-session" type="button">' +
         esc(tr("review", "Review my mistakes")) + "</button>" : "") +
+      '<button class="btn btn-ghost btn-sm" id="talk-session" type="button">' + esc(tr("talkItThrough", "Talk it through")) + "</button>" +
       '<button class="btn btn-ghost btn-sm" id="back" type="button">' + esc(tr("leave", "done for now")) + "</button>";
 
     $("back").addEventListener("click", function () { session = null; show("today"); });
+    $("talk-session").addEventListener("click", function () {
+      var focus = missed.concat(kept).filter(function (id, i, all) { return all.indexOf(id) === i; }).slice(0, 3);
+      if (!focus.length) focus = oneMoreIds(missed).slice(0, 3);
+      session = null;
+      startConversation();
+      if (chat) {
+        chat.mission = { ids: focus, used: {} };
+        renderMission();
+        save();
+      }
+    });
     $("again").addEventListener("click", function () {
       if (nextIds.length) startSession({ ids: nextIds, size: nextIds.length, title: tr("oneMore", "One more") });
       else startSession();

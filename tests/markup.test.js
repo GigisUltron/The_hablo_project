@@ -1649,3 +1649,10 @@ test("the empty conversation does not promise a missing attachment feature", () 
   assert.doesNotMatch(app, /Or attach a picture/);
 });
 
+test("the session summary can carry its phrases into a conversation", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /id="talk-session"/);
+  assert.match(app, /chat\.mission = \{ ids: focus, used: \{\} \}/);
+  assert.match(app, /startConversation\(\)/);
+});
+
