@@ -109,6 +109,13 @@ test("distractors are unique, exclude the target, prefer neighbours", () => {
   assert.ok(!many.includes("a"));
 });
 
+test("normalize keeps non-Latin scripts exact", () => {
+  for (const [a, b] of [["你好", "你好"], ["Привет", "привет"], ["مرحبا", "مرحبا"], ["नमस्ते", "नमस्ते"], ["こんにちは", "こんにちは"]]) {
+    assert.equal(S.similarity(a, b), 1, a + " should match itself");
+  }
+  assert.ok(S.similarity("你好", "您好") > 0.4, "one-character variation should still score");
+});
+
 test("normalize ignores accents, articles and case", () => {
   assert.equal(S.normalize("La Casa"), "casa");
   assert.equal(S.normalize("café"), "cafe");

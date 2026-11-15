@@ -2318,6 +2318,9 @@
   function translationFor(id) {
     if (!translationsOn()) return "";
     var ui = uiLang();
+    /* Immersion: the UI language is the target language. Returning the target
+     * text here would make the "translation" the answer itself. */
+    if (ui === ACTIVE.code) return "";
     if (ui === "en") return glossFor(id);
     var g = (window.SEMA_GLOSSES || {})[id];
     if (!g) return "";
@@ -2341,6 +2344,14 @@
         btn.textContent = on ? tr("glossShow", "show translation") : btn.getAttribute("data-gloss");
       });
     });
+  }
+
+  function meaningHTML(id, cls) {
+    var translated = translationFor(id);
+    var g = translated || glossFor(id);
+    if (!g) return "";
+    return '<p class="meaning' + (cls ? " " + cls : "") + '">' + esc(g) +
+      (translated ? "" : ' <span class="gloss-fallback">EN</span>') + "</p>";
   }
 
   function itemOf(id) {
@@ -2439,9 +2450,12 @@
   /* The picture takes the free height of the screen; its sound button sits
    * in the corner, where a thumb finds it without covering the picture. */
   function figureHTML(it, label) {
+    var text = label || tr("hearit", "Hear it");
+    var can = audioAvailable();
     return '<div class="figure">' +
       '<div class="tile" aria-hidden="true">' + it.emoji + "</div>" +
-      '<button class="speak-btn round" id="hear-btn" aria-label="' + label + '" title="' + label + '">' +
+      '<button class="speak-btn round" id="hear-btn" aria-label="' + esc(text) + '" title="' + esc(text) + '"' +
+        (can ? "" : " disabled") + ">" +
         ICON.speaker + "</button></div>";
   }
 
@@ -2864,6 +2878,7 @@
       answered: {},
       counted: {},
       firstCorrect: 0,
+      taughtIds: {},
       unique: 0
     };
   }
@@ -2926,17 +2941,17 @@
     $("stage").innerHTML =
       '<p class="prompt">' + esc(tr("learnPair", "Learn the pair")) + " · " + (session.si + 1) + " / " + session.study.length +
         (it.kind === "phrase" ? " · " + esc(tr("phrase", "phrase")) : "") + "</p>" +
-      figureHTML(it, "Hear it") +
+      (it.kind === "term" || it.kind === "phrase" || it.kind === "basic" ? "" : figureHTML(it, "Hear it")) +
       wordsHTML(it) +
+      meaningHTML(it.id) +
       contextHTML(it);
 
     sayItem(it);
-    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
+    var hearStudy = $("hear-btn");
+    if (hearStudy) hearStudy.addEventListener("click", function () { sayItem(it, this); });
 
-    $("actions").innerHTML = glossHTML(it.id) +
-      '<button class="btn btn-primary" id="next">' +
+    $("actions").innerHTML = '<button class="btn btn-primary" id="next">' +
       (last ? esc(tr("startQuiz", "Start the quiz")) : esc(tr("next", "Next"))) + "</button>";
-    wireGloss();
     $("next").addEventListener("click", function () {
       session.si += 1;
       if (session.si < session.study.length) renderStudy();
@@ -2994,6 +3009,10 @@
     /* harder cards arrive as a minority: one in four, gated on the pack's own
      * sentences and clips */
     var link = session.quiz[i];
+    var concept = conceptById[link];
+    if (concept && ["abstract", "emotion", "time"].indexOf(concept.cat) !== -1 && translationFor(link)) {
+      return i % 2 ? "translate" : "translate-out";
+    }
     var extra = EX ? EX.extraKind(i, {
       listen: listenable(link),
       build: buildable(link),
@@ -3004,8 +3023,16 @@
      * UI meaning → target. No emoji matching, no English under a non-English UI. */
     if (itemOf(link).kind === "phrase" && gapFor(link) && i % 6 === 4) return "message";
     if (translationFor(link)) {
-      if (i % 8 === 3) return "translate";
-      if (i % 8 === 7) return "translate-out";
+      /* A clean session can stop at six; both directions must appear before
+       * the stop rule, so they alternate in the first four reviewed cards. */
+      if (i % 4 === 1) return "translate";
+      if (i % 4 === 3) return "translate-out";
+    }
+    /* A whole sentence cannot be guessed from a copied emoji. Phrases are
+     * built, translated or listened to; pictures stay with concrete words. */
+    if (itemOf(link).kind === "phrase") {
+      if (buildable(link)) return "build";
+      return "translate-out";
     }
     var prod = (session.plan && session.plan.production) || 0;
     if (prod >= 2 && i % 2 === 1) return "write";
@@ -3018,7 +3045,8 @@
     if (session.qi >= session.quiz.length) { finishSession(); return; }
     /* end on a high: a learner who is getting everything right should stop
      * while it still feels good, not grind to the eighth card. */
-    if (ADAPT.shouldStop(session.unique, session.firstCorrect)) {
+    var realAnswered = Math.max(0, session.unique - Object.keys(session.taughtIds || {}).length);
+    if (ADAPT.shouldStop(realAnswered, session.firstCorrect)) {
       session.quiz.length = session.qi;   // so the bar reads finished, not cut off
       finishSession();
       return;
@@ -3050,7 +3078,7 @@
       else renderBasicMeaning(id);
       return;
     }
-    if (itemOf(id).kind === "term") { renderPickFrame(id); return; }
+    if (itemOf(id).kind === "term") { renderTermMeaning(id); return; }
 
     var type = quizType(card, session.qi);
     if (type === "pick-word") renderPickWord(id);
@@ -3109,7 +3137,7 @@
     $("stage").innerHTML =
       '<p class="prompt">' + tr("whichOne", "Which one is this?") + "</p>" +
       '<div class="say-line">' +
-        '<button class="speak-btn round" id="hear-btn" aria-label="Hear it" title="Hear it">' + ICON.speaker + "</button>" +
+        '<button class="speak-btn round" id="hear-btn" aria-label="' + esc(tr("hearit", "Hear it")) + '" title="' + esc(tr("hearit", "Hear it")) + '"' + (audioAvailable() ? "" : " disabled") + ">" + ICON.speaker + "</button>" +
         wordsHTML(it) +
       "</div>" +
       '<div class="word-options">' + set.map(glossOptionHTML).join("") + "</div>";
@@ -3148,11 +3176,13 @@
     var it = itemOf(id);
     $("stage").innerHTML =
       '<p class="prompt">' + esc(tr("new", "New")) + "</p>" +
-      figureHTML(it, "Hear it") +
+      (it.kind === "term" || it.kind === "phrase" || it.kind === "basic" ? "" : figureHTML(it, "Hear it")) +
       wordsHTML(it) +
+      meaningHTML(id) +
       contextHTML(it);
     sayItem(it);
-    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
+    var hearTeach = $("hear-btn");
+    if (hearTeach) hearTeach.addEventListener("click", function () { sayItem(it, this); });
     var tile = $("stage").querySelector(".tile");
     if (tile) {
       tile.style.cursor = "pointer";
@@ -3160,11 +3190,10 @@
       tile.setAttribute("aria-label", "Play the audio");
       tile.addEventListener("click", function () { sayItem(it); });
     }
-    $("actions").innerHTML = glossHTML(id) +
-      '<button class="btn btn-primary" id="gotit">' + tr("gotit", "Got it") + '</button>';
-    wireGloss();
+    $("actions").innerHTML = '<button class="btn btn-primary" id="gotit">' + tr("gotit", "Got it") + '</button>';
     $("gotit").addEventListener("click", function () {
-      session.firstCorrect += 1;   // it was taught and acknowledged, not guessed
+      /* Taught is exposure, not recall. Do not inflate accuracy or "remembered". */
+      session.taughtIds[id] = true;
       S.review(state, id, 2, Date.now());
       countToday(id);
       save();
@@ -3280,6 +3309,23 @@
     wireGloss();
   }
 
+  /* A connector such as "however" cannot be taught by a balance glyph.
+   * Its UI meaning is the prompt; the target connector is the answer. */
+  function renderTermMeaning(id) {
+    var translated = translationFor(id);
+    var prompt = translated || glossFor(id);
+    if (!prompt) { renderPickFrame(id); return; }
+    var pool = termIds.filter(function (other) { return other !== id; });
+    var set = S.shuffle([id].concat(S.shuffle(pool, Math.random).slice(0, 2)), Math.random);
+
+    $("stage").innerHTML =
+      '<p class="prompt">' + esc(tr("translateInto", "Translate into") + " · " + uiName(ACTIVE.code)) + "</p>" +
+      '<p class="word">' + esc(prompt) + (translated ? "" : ' <span class="gloss-fallback">EN</span>') + "</p>" +
+      '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
+    $("actions").innerHTML = "";
+    chooseThenCheck(".option-word", id, true);
+  }
+
   function renderPickFrame(id) {
     var it = itemOf(id);
     var set = S.shuffle([id].concat(S.pickDistractors(id, termIds, [], 3, Math.random)), Math.random);
@@ -3306,7 +3352,19 @@
   function renderBuild(id) {
     var it = itemOf(id);
     var tokens = EX.words(it.text);
-    var pool = S.shuffle(tokens.map(function (w, i) { return { w: w, i: i }; }), Math.random);
+    var bank = tokens.slice();
+    /* Two words that belong to other phrases, so this tests construction,
+     * not just putting the only available words in order. */
+    var decoys = [];
+    phraseIds.forEach(function (other) {
+      if (decoys.length >= 2 || other === id) return;
+      EX.words(phraseById[other].text).forEach(function (word) {
+        if (decoys.length >= 2) return;
+        if (bank.indexOf(word) === -1 && decoys.indexOf(word) === -1) decoys.push(word);
+      });
+    });
+    bank = bank.concat(decoys);
+    var pool = S.shuffle(bank.map(function (w, i) { return { w: w, i: i }; }), Math.random);
     var placed = [];
 
     $("stage").innerHTML =
@@ -3325,10 +3383,10 @@
       }).join("");
       $("build-line").innerHTML = placed.length
         ? placed.map(function (i) {
-            return '<button class="token placed" type="button" data-slot="' + i + '">' + esc(tokens[i]) + "</button>";
+            return '<button class="token placed" type="button" data-slot="' + i + '">' + esc(bank[i]) + "</button>";
           }).join("")
         : '<span class="build-hint">tap the words in order</span>';
-      $("build-check").disabled = placed.length !== tokens.length;
+      $("build-check").disabled = placed.length < tokens.length;
       Array.prototype.forEach.call($("build-pool").querySelectorAll(".token"), function (b) {
         b.addEventListener("click", function () {
           var i = Number(b.getAttribute("data-token"));
@@ -3346,7 +3404,7 @@
     paint();
 
     $("build-check").addEventListener("click", function () {
-      var attempt = placed.map(function (i) { return tokens[i]; }).join(" ");
+      var attempt = placed.map(function (i) { return bank[i]; }).join(" ");
       var ok = EX.sameOrder(attempt, it.text);
       if (!ok) $("stage").innerHTML += '<p class="sentence">the sentence is ' + esc(it.text) + "</p>";
       answer(ok, null);
@@ -3428,7 +3486,7 @@
     $("stage").innerHTML =
       '<p class="prompt">' + esc(tr("listenPick", "Listen and pick")) + "</p>" +
       '<div class="listen-face">' +
-        '<button class="speak-btn round" id="hear-btn" aria-label="Play it again" title="Play it again">' +
+        '<button class="speak-btn round" id="hear-btn" aria-label="' + esc(tr("hearit", "Hear it")) + '" title="' + esc(tr("hearit", "Hear it")) + '"' + (audioAvailable() ? "" : " disabled") + ">" +
           ICON.speaker + "</button>" +
       "</div>" +
       '<div class="word-options">' + set.map(optionHTML).join("") + "</div>";
@@ -3452,6 +3510,7 @@
 
   function renderPickWord(id) {
     var it = itemOf(id);
+    if (it.kind === "phrase") { renderTranslateToTarget(id); return; }
     var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
 
     $("stage").innerHTML =
@@ -3498,12 +3557,13 @@
 
   function renderPickPicture(id) {
     var it = itemOf(id);
+    if (it.kind === "phrase") { renderTranslateToTarget(id); return; }
     var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
 
     $("stage").innerHTML =
       '<p class="prompt">' + esc(tr("findPicture", "Find the picture")) + "</p>" +
       '<div class="say-line">' +
-        '<button class="speak-btn round" id="hear-btn" aria-label="Hear it" title="Hear it">' + ICON.speaker + "</button>" +
+        '<button class="speak-btn round" id="hear-btn" aria-label="' + esc(tr("hearit", "Hear it")) + '" title="' + esc(tr("hearit", "Hear it")) + '"' + (audioAvailable() ? "" : " disabled") + ">" + ICON.speaker + "</button>" +
         wordsHTML(it) +
       "</div>" +
       '<div class="options">' + set.map(function (o, i) {
@@ -3521,10 +3581,11 @@
    * recall success. */
   function renderWrite(id) {
     var it = itemOf(id);
+    var prompt = it.kind === "phrase" ? (translationFor(id) || glossFor(id)) : "";
 
     $("stage").innerHTML =
       '<p class="prompt">' + esc(tr("writeIt", "Write it")) + " · " + esc(uiName(LANG.code)) + "</p>" +
-      tileHTML(it) +
+      (prompt ? '<p class="word">' + esc(prompt) + "</p>" : tileHTML(it)) +
       '<input class="type-input" id="type-input" type="text" autocomplete="off" ' +
         'autocapitalize="off" autocorrect="off" spellcheck="false" ' +
         'aria-label="write the word" placeholder="type it" />' +
@@ -3560,6 +3621,7 @@
     $("stage").innerHTML =
       '<p class="prompt">' + esc(tr("sayIt", "Say it")) + " · " + esc(uiName(LANG.code)) + "</p>" +
       figureHTML(it, "Hear it") +
+      (it.kind === "phrase" ? wordsHTML(it) : "") +
       (SR ? '<button class="mic" id="mic-btn">' + ICON.mic + esc(tr("sayAloud", "Say it aloud")) + '</button>' : "") +
       '<p class="score" id="score"></p>';
 
@@ -3658,7 +3720,7 @@
     var mic = $("mic-btn");
     if (mic) mic.disabled = true;
 
-    feedback(ok ? "got it" : "it comes back at the end", ok ? "good" : "bad", it);
+    feedback(ok ? tr("correct", "Correct") : tr("comesBack", "Comes back"), ok ? "good" : "bad", it);
 
     var advance = function () { session.qi += 1; renderQuiz(); };
     if (ok) {
@@ -3685,7 +3747,9 @@
     var total = session.unique || 1;
     var seen = Object.keys(session.answered);
     var missed = Object.keys(session.missed);
-    var kept = seen.filter(function (id) { return !session.missed[id]; });
+    var kept = seen.filter(function (id) {
+      return !session.missed[id] && !(session.taughtIds && session.taughtIds[id]);
+    });
 
     renderSteps("done");
     $("bar-fill").style.width = "100%";
@@ -3771,9 +3835,9 @@
     if (it.kind === "basic") {
       if (it.of) {
         var who = pronounsFor(it.person).join(" / ");
-        return it.text + " is " + it.of + (who ? " for " + who : "") + " — " + (it.sub || "");
+        return [it.text, it.of, who].filter(Boolean).join(" · ");
       }
-      return it.text + " names who the verb is about.";
+      return it.text;
     }
     if (it.kind === "term" && it.frame) return it.frame.replace("____", it.text);
     if (it.kind === "word") return [it.sub, it.sentence].filter(Boolean).join(" · ");
@@ -3803,7 +3867,8 @@
     var why = whyText(it);
     var note = it ? confusionNote(it.id) : "";
     var aid = it && !(it.kind === "basic" && !it.of) ? glossHTML(it.id) : "";
-    f.innerHTML = esc(msg) +
+    var target = it && it.text ? '<span class="why answer-line"><b>' + esc(it.text) + "</b></span>" : "";
+    f.innerHTML = esc(msg) + target +
       (why ? '<span class="why">' + esc(why) + "</span>" : "") +
       (note ? '<span class="why">' + esc(note) + "</span>" : "") +
       aid;

@@ -53,7 +53,7 @@ var SEMA_TRACK = {
     },
     {
       id: "c7", key: "c7", mode: "words", fields: ["action", "time"],
-      topics: ["work", "study", "home", "hobbies"],
+      topics: ["work", "study", "home", "hobbies", "family"],
       need: 40,
       goal: "Talk about your work, study, home, and free time.",
       focus: "I work · I study · in my free time"

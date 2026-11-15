@@ -183,14 +183,23 @@
   /* ---- comparing what the learner said with what the card expects ------ */
 
   function normalize(text) {
-    return String(text || "")
+    var value = String(text || "")
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // ignore accents: "cafe" ≈ "café"
-      .replace(/[^a-zñ\s]/g, " ")
-      .replace(/\b(el|la|los|las|un|una)\b/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+      .replace(/[\u0300-\u036f]/g, ""); // Latin accents: "cafe" ≈ "café"
+    /* Keep letters, combining marks and digits from every script. The old
+     * [^a-z] rule turned Arabic, Devanagari, kana and Cyrillic into "". */
+    try {
+      value = value.replace(/[^\p{L}\p{M}\p{N}\s]/gu, " ");
+    } catch (err) {
+      value = value.replace(/[!-\/:-@\[-`{-~\u3000-\u303f\uff00-\uffef]+/g, " ");
+    }
+    /* Articles are a Latin-only convenience; never strip a target word that
+     * happens to look like one in another script. */
+    if (/^[a-zñ\s]+$/.test(value)) {
+      value = value.replace(/\b(el|la|los|las|un|una)\b/g, " ");
+    }
+    return value.replace(/\s+/g, " ").trim();
   }
 
   function levenshtein(a, b) {

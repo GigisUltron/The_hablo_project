@@ -691,6 +691,19 @@ test("a chosen interface language is not silently reset by the deck", () => {
   assert.match(app, /renderStats\(\);\n  }/, "placement does not repaint Progress");
 });
 
+test("immersion does not turn a translation into the answer", () => {
+  assert.match(app, /if \(ui === ACTIVE\.code\) return "";/, "same-language UI can still self-answer");
+  assert.match(app, /if \(itemOf\(link\)\.kind === "phrase"\) \{\s*if \(buildable\(link\)\) return "build";/, "phrases can still fall back to emoji pictures");
+});
+
+test("the meaning is the teaching cue for connectors and abstract words", () => {
+  assert.match(app, /function meaningHTML/, "teach cards have no visible meaning line");
+  assert.match(app, /meaningHTML\(id\)/, "the meaning is not painted on a teach card");
+  assert.match(app, /function renderTermMeaning/, "connectors still use a schema-only card");
+  assert.match(app, /\["abstract", "emotion", "time"\]/, "abstract words can still be emoji-only");
+  assert.match(app, /function renderTranslateToTarget/, "no UI-to-target translation task");
+});
+
 test("pronouns are meaning tasks, not self-answering person cards", () => {
   assert.match(app, /function renderPronoun/, "no pronoun renderer");
   assert.match(app, /if \(basic\.of && basic\.person\) renderPerson\(id\);/, "verbs and pronouns share a card");

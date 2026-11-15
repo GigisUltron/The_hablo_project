@@ -1766,3 +1766,12 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 }
 .msg-bubble.mine { justify-self: end; background: var(--accent-soft); border-color: transparent; }
 .msg-blank { display: inline-block; min-width: 42px; border-bottom: 2px solid var(--text-2); }
+
+/* the meaning is the teaching cue, not a picture-only guess */
+.meaning {
+  margin-top: 2px;
+  font-size: 18px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: var(--text);
+}
