@@ -2933,14 +2933,18 @@
 
     /* one card per item: the study step is gone, so a new item is taught by
      * being asked, and the answer is shown the moment it is missed. */
-    session = newSession("mixed", [], queue);
+    /* A requested lesson opens on two short chunks with their meanings, then
+     * retrieves them in the quiz. Encoding before testing is the point. */
+    var warm = o.customId && queue.length > 2 ? queue.slice(0, 2) : [];
+    var quizQueue = warm.length ? queue.slice(2) : queue;
+    session = newSession("mixed", warm, quizQueue);
     session.plan = p.plan;
     session.customId = o.customId || "";
     /* A requested lesson deliberately cycles recognition, production,
      * translation and sentence construction instead of leaving the mix to
      * chance. Unsupported kinds are skipped per item. */
     if (o.customId) {
-      session.types = queue.map(function (id, i) {
+      session.types = quizQueue.map(function (id, i) {
         var it = itemOf(id);
         var hasTranslation = !!translationFor(id);
         if (it.kind === "word") {

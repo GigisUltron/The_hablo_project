@@ -698,6 +698,11 @@ test("specialized lessons cycle varied exercises", () => {
   assert.match(app, /gapFor\(id\)\) phrases\.push\("message"\)/, "message completion is missing");
 });
 
+test("specialized lessons encode two chunks before retrieval", () => {
+  assert.match(app, /var warm = o\.customId && queue\.length > 2 \? queue\.slice\(0, 2\) : \[\];/, "no custom encoding step");
+  assert.match(app, /newSession\("mixed", warm, quizQueue\)/, "the warmup is not part of the session");
+});
+
 test("specialized lessons are saved and can be reopened", () => {
   assert.match(app, /function saveCustomLesson/, "no saved lesson store");
   assert.match(app, /function renderCustomLessons/, "no saved lesson list");
