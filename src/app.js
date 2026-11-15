@@ -1745,7 +1745,16 @@
   }
 
   function seedScriptedIfEmpty() {
-    if (!chat || chat.messages.length || !CE || !ACTIVE || chatCleared) return;
+    if (!chat || chat.messages.length || !ACTIVE || chatCleared) return;
+    /* The authored dialogue is the offline course's real conversation, not
+     * an invented "No local model found." The model, when present, still wins. */
+    var d = CONV && CONV.dialogues && CONV.dialogues[0];
+    if (d && d.turns && d.turns.length) {
+      chat.scripted = { dialogue: d.id, turn: 0, misses: 0 };
+      addAssistant(d.turns[0].es, true, "scripted", true);
+      return;
+    }
+    if (!CE) return;
     var opening = CE.scriptedOpening(ACTIVE.code);
     if (!opening) return;
     chat.scripted = chat.scripted || CE.scriptedStart(ACTIVE.code);
@@ -1832,7 +1841,33 @@
   }
 
   function fallbackReply(userText, note) {
-    if (!CE || !chat || !ACTIVE) return;
+    if (!chat || !ACTIVE) return;
+    var d = null;
+    if (chat.scripted && chat.scripted.dialogue && CONV && CONV.dialogues) {
+      CONV.dialogues.forEach(function (item) {
+        if (item.id === chat.scripted.dialogue) d = item;
+      });
+    }
+    if (d && d.turns) {
+      var turn = d.turns[chat.scripted.turn] || d.turns[0];
+      var said = S.normalize(userText);
+      var fits = !turn.expects || !turn.expects.length || turn.expects.some(function (word) {
+        return said.indexOf(S.normalize(word)) !== -1;
+      });
+      if (!fits) {
+        addAssistant(turn.es, true, "scripted");
+        return;
+      }
+      chat.scripted.turn += 1;
+      var next = d.turns[chat.scripted.turn];
+      if (!next) {
+        setChatFeedback(tr("lessonDone", "Lesson done"), "");
+        return;
+      }
+      addAssistant(next.es, true, "scripted");
+      return;
+    }
+    if (!CE || !chat) return;
     var session = chat.scripted || CE.scriptedStart(ACTIVE.code);
     var res = CE.scriptedRespond(ACTIVE.code, session, userText);
     chat.scripted = session;
@@ -3232,7 +3267,7 @@
     var it = itemOf(id);
     var translated = translationFor(id);
     var prompt = translated || it.sub || it.text;
-    var others = S.shuffle(allPronouns().filter(function (w) { return w !== it.text; }), Math.random).slice(0, 2);
+    var others = S.shuffle(allPronouns().filter(function (w) { return w !== it.text; }), Math.random).slice(0, 3);
     var set = S.shuffle([it.text].concat(others), Math.random);
 
     $("stage").innerHTML =
@@ -3267,7 +3302,7 @@
       var ob = basicById[other];
       return other !== id && ob && ob.kind === b.kind;
     });
-    var set = S.shuffle([id].concat(S.shuffle(pool, Math.random).slice(0, 2)), Math.random);
+    var set = S.shuffle([id].concat(S.shuffle(pool, Math.random).slice(0, 3)), Math.random);
 
     $("stage").innerHTML =
       '<p class="prompt">' + esc(tr("translateInto", "Translate into") + " · " + uiName(ACTIVE.code)) + "</p>" +
@@ -3283,7 +3318,7 @@
     if (!accepted.length) accepted = [it.text];
     var others = allPronouns().filter(function (w) {
       return accepted.indexOf(w) === -1;
-    }).slice(0, 2);
+    }).slice(0, 3);
     var set = S.shuffle(accepted.concat(others), Math.random);
 
     $("stage").innerHTML =
@@ -3315,7 +3350,7 @@
     var prompt = translated || glossFor(id);
     if (!prompt) { renderPickFrame(id); return; }
     var pool = termIds.filter(function (other) { return other !== id; });
-    var set = S.shuffle([id].concat(S.shuffle(pool, Math.random).slice(0, 2)), Math.random);
+    var set = S.shuffle([id].concat(S.shuffle(pool, Math.random).slice(0, 3)), Math.random);
 
     $("stage").innerHTML =
       '<p class="prompt">' + esc(tr("translateInto", "Translate into") + " · " + uiName(ACTIVE.code)) + "</p>" +

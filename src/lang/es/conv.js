@@ -20,7 +20,7 @@
         { speaker: "camarero", es: "Buenas tardes. ¿Qué le pongo?", expects: ["café", "agua"], item: "ph-cafe", reply: "Un café, por favor.", gloss: "Good afternoon. What can I get you?", audio: "ph-cafe" },
         { speaker: "camarero", es: "¿Con leche?", expects: ["leche", "solo", "sin"], item: "ph-cafe", reply: "Solo, por favor.", gloss: "With milk?", audio: "ph-cafe" },
         { speaker: "camarero", es: "¿Algo más?", expects: ["no", "nada", "cuenta"], item: "ph-cuenta", reply: "No, gracias.", gloss: "Anything else?", audio: "ph-cuenta" },
-        { speaker: "camarero", es: "Son dos euros.", expects: ["ecco", "efectivo", "tarjeta"], item: "ph-tarjeta", reply: "Con tarjeta.", gloss: "That's two euros.", audio: "ph-tarjeta" },
+        { speaker: "camarero", es: "Son dos euros.", expects: ["efectivo", "tarjeta"], item: "ph-tarjeta", reply: "Con tarjeta.", gloss: "That's two euros.", audio: "ph-tarjeta" },
         { speaker: "camarero", es: "¿Quiere el recibo?", expects: ["sí", "no"], item: "ph-cuenta", reply: "Sí, gracias.", gloss: "Would you like the receipt?", audio: "ph-cuenta" },
         { speaker: "camarero", es: "Gracias, hasta luego.", expects: [], item: "ph-adios", reply: "", gloss: "Thank you, see you later.", audio: "ph-adios" },
       ]
@@ -32,8 +32,8 @@
         { speaker: "empleado", es: "Buenos días, ¿en qué puedo ayudarle?", expects: ["billete", "tren"], item: "ph-billete", reply: "Quiero un billete.", gloss: "Good morning, how can I help?", audio: "ph-billete" },
         { speaker: "empleado", es: "¿A dónde va?", expects: ["centro", "ciudad"], item: "ph-centro", reply: "Al centro.", gloss: "Where are you going?", audio: "ph-centro" },
         { speaker: "empleado", es: "¿Ida o ida y vuelta?", expects: ["ida", "vuelta"], item: "ph-billete", reply: "Solo ida.", gloss: "One way or return?", audio: "ph-billete" },
-        { speaker: "empleado", es: "¿A qué hora sale?", expects: ["ocho", "nueve"], item: "ph-hora", reply: "A las ocho.", gloss: "What time does it leave?", audio: "ph-hora" },
-        { speaker: "empleado", es: "Son tres euros.", expects: ["ecco", "tarjeta"], item: "ph-tarjeta", reply: "Ecco.", gloss: "That's three euros.", audio: "ph-tarjeta" },
+        { speaker: "empleado", es: "El tren sale a las ocho.", expects: ["gracias", "ocho"], item: "ph-hora", reply: "Gracias.", gloss: "The train leaves at eight.", audio: "ph-hora" },
+        { speaker: "empleado", es: "Son tres euros.", expects: ["efectivo", "tarjeta"], item: "ph-tarjeta", reply: "Con tarjeta.", gloss: "That's three euros.", audio: "ph-tarjeta" },
         { speaker: "empleado", es: "El andén es el dos.", expects: ["gracias"], item: "ph-anden", reply: "Gracias.", gloss: "The platform is number two.", audio: "ph-anden" },
       ]
     },

@@ -691,6 +691,16 @@ test("a chosen interface language is not silently reset by the deck", () => {
   assert.match(app, /renderStats\(\);\n  }/, "placement does not repaint Progress");
 });
 
+test("the authored dialogue is the offline conversation", () => {
+  assert.match(app, /CONV && CONV\.dialogues/, "the authored dialogue is not used");
+  assert.match(app, /chat\.scripted\.dialogue/, "the offline dialogue has no turn state");
+  assert.match(app, /d\.turns\[chat\.scripted\.turn\]/, "the offline dialogue never advances");
+});
+
+test("placement cannot infer B2 from a short easy test", () => {
+  assert.match(app, /Math\.min\(placement\.band, maxBand, 2\)/, "placement is not capped at B1");
+});
+
 test("immersion does not turn a translation into the answer", () => {
   assert.match(app, /if \(ui === ACTIVE\.code\) return "";/, "same-language UI can still self-answer");
   assert.match(app, /if \(itemOf\(link\)\.kind === "phrase"\) \{\s*if \(buildable\(link\)\) return "build";/, "phrases can still fall back to emoji pictures");
