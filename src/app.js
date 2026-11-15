@@ -6261,14 +6261,17 @@
       .replace("{solid}", String(stats.solid || 0))
       .replace("{due}", String(stats.due || 0));
     var key = [ACTIVE && ACTIVE.code, learnerLevel(), stats.known, stats.solid, stats.due,
-      stats.produced, stats.sessions, stats.streak, stats.weakest, stats.confusion].join("|");
+      stats.produced, stats.retention, stats.reviews, stats.sessions, stats.streak, stats.weakest, stats.confusion].join("|");
     box.hidden = false;
     if (key === progressCoachKey && progressCoachText) {
       note.textContent = progressCoachText;
       return;
     }
     progressCoachKey = key;
-    progressCoachText = fallback + " · " + String(stats.produced || 0) + " " + tr("canProduce", "can produce");
+    progressCoachText = fallback + " · " + String(stats.produced || 0) + " " + tr("canProduce", "can produce") +
+      (stats.retention !== null && stats.retention !== undefined
+        ? " · " + stats.retention + "% " + tr("accuracy", "accuracy")
+        : "");
     note.textContent = progressCoachText;
   }
 
@@ -6311,12 +6314,15 @@
     var known = allIds.filter(function (id) { return state.cards[id] && state.cards[id].reps > 0; }).length;
     var solid = allIds.filter(function (id) { return state.cards[id] && state.cards[id].interval >= 6; }).length;
     var produced = allIds.filter(function (id) { return state.cards[id] && state.cards[id].prod > 0; }).length;
+    var reviewTotal = (state.reviews.good || 0) + (state.reviews.again || 0);
+    var retention = reviewTotal ? Math.round(((state.reviews.good || 0) / reviewTotal) * 100) : null;
     var current = defaultUnit();
     $("progress-summary").textContent = learnerLevel() + " · " +
       (current ? current.title + " · " : "") +
       known + "/" + allIds.length + " " + tr("wordsMet", "words met") + " · " +
       solid + " " + tr("solid", "solid") + " · " +
       produced + " " + tr("canProduce", "can produce") + " · " +
+      (retention !== null ? retention + "% " + tr("accuracy", "accuracy") + " · " : "") +
       currentStreak() + " " + tr("dayStreak", "day streak") + " · " +
       (state.coins || 0) + " " + tr("coins", "coins");
 
@@ -6396,7 +6402,8 @@
     var weakest = rows.slice().sort(function (a, b) { return a.pct - b.pct; })[0];
     var confused = S.topConfusions(state, 1)[0];
     renderProgressCoach({
-      known: known, total: allIds.length, solid: solid, produced: produced, due: dueNow,
+      known: known, total: allIds.length, solid: solid, produced: produced,
+      retention: retention, reviews: reviewTotal, due: dueNow,
       sessions: state.sessions || 0, streak: currentStreak(),
       weakest: weakest ? catLabel(weakest.cat) : "",
       confusion: confused ? (conceptById[confused.target] || {}).word + " / " + (conceptById[confused.chosen] || {}).word : ""

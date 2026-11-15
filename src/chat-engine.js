@@ -206,6 +206,7 @@
       "Words met: " + Number(s.known || 0) + " of " + Number(s.total || 0) + ".",
       "Solid (interval at least six days): " + Number(s.solid || 0) + ".",
       "Can produce (a correct production answer): " + Number(s.produced || 0) + ".",
+      "Recall accuracy: " + (s.retention == null ? "not enough data" : Number(s.retention) + "% of " + Number(s.reviews || 0) + " reviews") + ".",
       "Due now: " + Number(s.due || 0) + ".",
       "Sessions: " + Number(s.sessions || 0) + ".",
       "Day streak: " + Number(s.streak || 0) + ".",

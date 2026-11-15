@@ -493,6 +493,14 @@ test("Settings can export and validate a local backup", () => {
   assert.match(app, /localStorage\.setItem\(STORE_KEY/);
 });
 
+test("Progress reports real recall accuracy and requires data", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /var reviewTotal = \(state\.reviews\.good/);
+  assert.match(app, /var retention = reviewTotal \?/);
+  assert.match(app, /retention !== null \? retention \+ "% "/);
+  assert.match(app, /stats\.retention, stats\.reviews/);
+});
+
 test("Progress can launch a production-only practice session", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(html, /id="produce-practice"/);
