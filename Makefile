@@ -27,7 +27,7 @@ test:
 
 # syntax gate for the two languages involved, plus the full suite
 check:
-	@for f in src/*.js tests/*.js; do node --check "$$f" || exit 1; done
+	@for f in src/*.js tests/*.js sw.js; do node --check "$$f" || exit 1; done
 	python3 -m py_compile serve.py server.py tools/install_ai.py
 	@echo "syntax ok"
 	@$(MAKE) test

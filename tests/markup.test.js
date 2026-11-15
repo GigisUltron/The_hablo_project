@@ -222,6 +222,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/persona.js",
     "src/backup.js",
     "src/coach.js",
+    "src/pwa.js",
     "src/mini-chat.js",
     "src/app.js"
   ]);

@@ -166,6 +166,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     previewing a static site.
     """
 
+    extensions_map = dict(http.server.SimpleHTTPRequestHandler.extensions_map, **{
+        ".webmanifest": "application/manifest+json",
+        ".svg": "image/svg+xml",
+    })
+
     def end_headers(self):
         self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
         self.send_header("Pragma", "no-cache")

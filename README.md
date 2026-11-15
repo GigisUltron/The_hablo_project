@@ -59,6 +59,11 @@ A lesson mixes:
 
 Lessons use spaced repetition. What you miss comes back before the session ends and again when it is due. A missed card offers **Ask coach**, a rules-first explanation built from the correct form, its meaning and your answer; it never asks a model to invent grammar. The end screen's coach note is built from the actual kept and missed cards, not model prose. The optional **one sentence with today's words** box still has **Check sentence**, which asks the local model for a wording suggestion; its output is labelled as a suggestion, guarded, and the 0.5B tier refuses grammar claims rather than pretending. **One more** starts a short pass on real weak or missed items rather than a generic new lesson.
 
+### Installable and offline
+
+On `localhost` or HTTPS the app registers a small service worker, advertises a web manifest and can be installed to the home screen. The worker fetches the real shell and every loaded script into a cache, then uses network-first with a cache/offline fallback; it never touches the local-model origin. Audio is cached as it is played. On `file://` or in a browser without service workers nothing changes: the app still runs from disk.
+
+The manifest, icons and worker are ordinary files in the repository — no build step and no dependency.
 ### Exercise types
 
 - **Choose the meaning** and **choose the target**
