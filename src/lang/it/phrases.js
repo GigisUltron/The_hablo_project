@@ -133,6 +133,11 @@ var SEMA_PHRASES = {
     { id: "ph-it-weather-was", emoji: "🌥️", text: "Che tempo faceva?", sub: "Chiedere del tempo passato.", cat: "phrase", topic: "weather" },
     { id: "ph-it-pizza", emoji: "🍕", text: "Vorrei una pizza.", sub: "Al ristorante.", cat: "phrase", topic: "restaurant" },
     { id: "ph-it-vegetarian", emoji: "🥦", text: "Sono vegetariano.", sub: "Al ristorante.", cat: "phrase", topic: "restaurant" },
+    { id: "ph-it-family-cousin", emoji: "👨‍👩‍👧", text: "Mio cugino abita a Bologna.", sub: "Parlando della famiglia.", cat: "phrase", topic: "family" },
+    { id: "ph-it-family-wedding", emoji: "💍", text: "Il matrimonio è sabato.", sub: "Parlando di un matrimonio.", cat: "phrase", topic: "family" },
+    { id: "ph-it-family-congrats", emoji: "🎊", text: "Congratulazioni!", sub: "Facendo gli auguri.", cat: "phrase", topic: "family" },
+    { id: "ph-it-family-how", emoji: "🫂", text: "Come sta la tua famiglia?", sub: "Chiedendo della famiglia.", cat: "phrase", topic: "family" },
+    { id: "ph-it-family-came", emoji: "🥂", text: "Sono venuto per il matrimonio.", sub: "Spiegando perché sei venuto.", cat: "phrase", topic: "family" },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_PHRASES;

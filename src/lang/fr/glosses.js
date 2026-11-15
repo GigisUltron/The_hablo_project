@@ -213,6 +213,11 @@ var SEMA_GLOSSES = {
   "ph-fr-weather-was": "What was the weather like?",
   "ph-fr-pizza": "I'd like a pizza.",
   "ph-fr-vegetarian": "I'm vegetarian.",
+  "ph-fr-family-cousin": "My cousin lives in Lyon.",
+  "ph-fr-family-wedding": "The wedding is on Saturday.",
+  "ph-fr-family-congrats": "Congratulations!",
+  "ph-fr-family-how": "How is your family?",
+  "ph-fr-family-came": "I came for the wedding.",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {

@@ -213,6 +213,11 @@ var SEMA_LEVELS = {
   "ph-fr-weather-was": "A2",
   "ph-fr-pizza": "A1",
   "ph-fr-vegetarian": "A2",
+  "ph-fr-family-cousin": "A2",
+  "ph-fr-family-wedding": "A2",
+  "ph-fr-family-congrats": "A1",
+  "ph-fr-family-how": "A1",
+  "ph-fr-family-came": "A2",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
 if (typeof window !== "undefined") {
