@@ -113,6 +113,8 @@ The first-run screen offers an optional **Travel / Work / Family / Culture** why
 
 A **transfer mission** appears above the conversation. It asks you to use two or three weak/due phrases in the conversation. A phrase counts only when you actually write it; completing the mission gives a small XP award. Coach check-ins select real authored phrases and use a rules-first note; the model may open a roleplay or write a practice text, but it is not allowed to replace data-derived coaching with generic self-talk.
 
+The check-in also shows the learner side from the transcript: turns, words, questions and how many selected target phrases were actually used. These are counts, not model praise.
+
 A local model is optional but it is now the only conversation-engine path when present: Settings has no engine chooser. Press **Find local model**; the app probes `http://localhost:8080`, `http://localhost:8081` and `http://localhost:11434`, stores the endpoint and model, and uses the first model that answers. Both llama.cpp's `llama-server` / `llama-cpp-python` and Ollama work. Without one, no conversation leaves the device; the authored fallback runs.
 
 The same endpoint is used by the word-set **Suggest words** button and the planned-lesson **Suggest with local model** button. `python3 server.py` is the whole setup:

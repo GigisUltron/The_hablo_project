@@ -222,6 +222,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/persona.js",
     "src/backup.js",
     "src/coach.js",
+    "src/conversation.js",
     "src/pwa.js",
     "src/mini-chat.js",
     "src/app.js"
@@ -614,6 +615,14 @@ test("conversation has an opt-in hands-free voice loop", () => {
   assert.match(app, /var listenNext = function/);
   assert.match(app, /if \(chatVoice && !quiet\) listenNext\(\)/);
   assert.match(app, /if \(view !== "conv" && chatVoice\) setVoiceMode\(false\)/);
+});
+
+test("conversation check-in reports the learner side from real messages", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /CONVERSATION\.stats\(chat\.messages/);
+  assert.match(app, /tr\("coachSide"/);
+  assert.match(app, /side\.questions/);
+  assert.match(app, /side\.used/);
 });
 
 test("the conversation has a coach check-in that can become a lesson", () => {

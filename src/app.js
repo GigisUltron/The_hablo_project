@@ -29,6 +29,7 @@
   var PERSONA = window.SemaPersona;
   var BACKUP = window.SemaBackup;
   var COACH = window.SemaCoach;
+  var CONVERSATION = window.SemaConversation;
 
   function audioEnabled() {
     return (state && state.settings && state.settings.audio) !== "off";
@@ -2864,12 +2865,22 @@
     if (!panel) return;
     var picks = coachPicks();
     var turns = chat.messages.filter(function (m) { return m.role === "user"; }).length;
+    var side = CONVERSATION
+      ? CONVERSATION.stats(chat.messages, picks.map(function (id) { return itemOf(id); }))
+      : { turns: turns, words: 0, questions: 0, used: 0, targets: picks.length };
+    var sideText = tr("coachSide", "Your side: {turns} turns · {words} words · {questions} questions · {used}/{targets} target phrases.")
+      .replace("{turns}", String(side.turns))
+      .replace("{words}", String(side.words))
+      .replace("{questions}", String(side.questions))
+      .replace("{used}", String(side.used))
+      .replace("{targets}", String(side.targets));
     panel.hidden = false;
     panel.innerHTML =
       '<p class="coach-kicker">' + esc(tr("coachCheck", "Coach check-in")) + "</p>" +
       '<h3 class="coach-title">' + esc(tr("coachCheck", "Coach check-in")) + "</h3>" +
       '<p class="coach-copy">' + esc(tr("coachTurns", "You kept going for {n} turns. Keep these phrases:")
         .replace("{n}", String(turns))) + "</p>" +
+      '<p class="coach-copy coach-side">' + esc(sideText) + "</p>" +
       '<div class="coach-chips">' + picks.map(function (id) {
         var it = itemOf(id);
         return '<div class="coach-chip"><b>' + textHTML(it) + "</b><span>" +
