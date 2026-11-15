@@ -219,6 +219,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/memory.js",
     "src/chat.js",
     "src/chat-engine.js",
+    "src/persona.js",
     "src/mini-chat.js",
     "src/app.js"
   ]);
@@ -450,6 +451,20 @@ test("server.py is the single automatic setup entry point", () => {
   assert.match(server, /--ai/);
   assert.match(server, /--offline/);
   assert.match(server, /setup_ai\(\)/);
+});
+
+test("the learner can personalize the coach and the Today reason", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(html, /id="personal-details"/);
+  assert.match(html, /id="personal-why"/);
+  assert.match(html, /id="personal-interests"/);
+  assert.match(html, /id="personal-line"/);
+  assert.match(html, /data-i18n="personalHint"/);
+  assert.match(app, /function renderPersonalSettings/);
+  assert.match(app, /PERSONA\.ensure\(state\.profile\)/);
+  assert.match(app, /PERSONA\.prompt\(state\.profile\)/);
+  assert.match(app, /CE\.buildSystemPrompt\(ACTIVE, learnerLevel\(\), PERSONA/);
+  assert.match(app, /personalLine\.hidden = !why/);
 });
 
 test("the local model is discovered on 8080, 8081 and 11434", () => {

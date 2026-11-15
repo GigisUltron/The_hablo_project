@@ -82,6 +82,7 @@
           <div class="lesson-pics" id="next-stack" aria-hidden="true"></div>
           <p class="lesson-sub" id="start-sub"></p>
           <p class="lesson-goal" id="lesson-goal"></p>
+          <p class="personal-note" id="personal-line" hidden></p>
           <button class="btn btn-primary btn-block" id="start-btn" type="button"><span id="start-label" data-i18n="start">Start lesson</span></button>
         </section>
 
@@ -330,6 +331,22 @@
           <label class="settings-lang"><span data-chrome="interfaceLang">Interface</span>
             <select id="settings-uilang"></select>
           </label>
+
+          <details class="wish-card personal-card" id="personal-details">
+            <summary class="wish-summary">
+              <span data-i18n="personalize">Personalize</span>
+              <span class="wish-chevron" aria-hidden="true">›</span>
+            </summary>
+            <div class="wish-form personal-form">
+              <label class="chat-field"><span data-i18n="yourWhy">Why you're learning</span>
+                <input class="type-input" id="personal-why" type="text" maxlength="120" autocomplete="off" spellcheck="false" />
+              </label>
+              <label class="chat-field"><span data-i18n="interests">What you like</span>
+                <input class="type-input" id="personal-interests" type="text" maxlength="180" autocomplete="off" spellcheck="false" />
+              </label>
+              <p class="builder-note" data-i18n="personalHint">Only your local coach uses this. It stays on this device.</p>
+            </div>
+          </details>
 
           <div class="chat-settings">
             <p class="builder-note" data-i18n="localModel">Local model</p>
@@ -625,6 +642,7 @@
 <script src="src/memory.js"></script>
 <script src="src/chat.js"></script>
 <script src="src/chat-engine.js"></script>
+<script src="src/persona.js"></script>
 <script src="src/mini-chat.js"></script>
 <script src="src/app.js"></script>
 </body>

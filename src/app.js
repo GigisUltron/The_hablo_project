@@ -26,6 +26,7 @@
   var ECON = window.SemaEconomy;
   var AITOOLS = window.SemaAiTools;
   var SYNONYMS = window.SemaSynonyms;
+  var PERSONA = window.SemaPersona;
 
   function audioEnabled() {
     return (state && state.settings && state.settings.audio) !== "off";
@@ -468,6 +469,7 @@
           ? defaultUiFor(code)
           : (uiChoicesHere[0] || "en");
       }
+      if (PERSONA) PERSONA.ensure(s.profile);
     }
     /* The local model is the intended conversation engine. If none answers,
      * the scripted practice takes over; there is no engine chooser. */
@@ -719,7 +721,11 @@
     levels[code] = level;
     var languages = (state.profile && state.profile.languages) || [];
     if (languages.indexOf(code) === -1) languages.push(code);
-    state.profile = { level: level, levelByLang: levels, lang: code, byLang: byLang, uiLang: ui, languages: languages };
+    var personal = PERSONA ? PERSONA.ensure(state.profile || {}) : (state.profile || {});
+    state.profile = {
+      level: level, levelByLang: levels, lang: code, byLang: byLang, uiLang: ui,
+      languages: languages, why: personal.why || "", interests: personal.interests || ""
+    };
     save();
   }
 
@@ -1096,6 +1102,15 @@
     toast(uiName(code) + " · " + tr("done", "removed"), 1800);
   }
 
+  function renderPersonalSettings() {
+    var why = $("personal-why");
+    var interests = $("personal-interests");
+    if (!state.profile) return;
+    var p = PERSONA ? PERSONA.ensure(state.profile) : state.profile;
+    if (why) why.value = p.why || "";
+    if (interests) interests.value = p.interests || "";
+  }
+
   function renderSettingsOptions() {
     function mark(selector, attr, value) {
       Array.prototype.forEach.call(document.querySelectorAll(selector), function (b) {
@@ -1119,6 +1134,7 @@
       gloss.classList.toggle("is-on", on);
       gloss.setAttribute("aria-pressed", String(on));
     }
+    renderPersonalSettings();
     renderAccentPicker();
   }
 
@@ -1327,6 +1343,13 @@
     $("lesson-name").textContent = next.title;
     $("start-sub").textContent = next.caption || tr("nothingDue", "Nothing new or due. Practise anything.");
     $("lesson-goal").textContent = next.goal || "";
+    var personal = PERSONA && state.profile ? PERSONA.ensure(state.profile) : null;
+    var personalLine = $("personal-line");
+    if (personalLine) {
+      var why = personal && personal.why;
+      personalLine.hidden = !why;
+      personalLine.textContent = why ? tr("yourWhy", "Why you're learning") + " · " + why : "";
+    }
     renderReviewList();
   }
 
@@ -2554,7 +2577,7 @@
       baseUrl: chatEndpoint(),
       engine: chatMeta.engine,
       model: chatMeta.model,
-      system: CE.buildSystemPrompt(ACTIVE, learnerLevel()),
+      system: CE.buildSystemPrompt(ACTIVE, learnerLevel(), PERSONA ? PERSONA.prompt(state.profile) : ""),
       history: chat.messages.slice(-CE.MAX_HISTORY),
       vision: chatMeta.vision,
       timeoutMs: 45000
@@ -5954,6 +5977,22 @@
       save();
       renderSettingsOptions();
       renderToday();
+    });
+  });
+
+  [["personal-why", "why"], ["personal-interests", "interests"]].forEach(function (pair) {
+    var input = $(pair[0]);
+    if (!input) return;
+    input.addEventListener("input", function () {
+      if (!state.profile) return;
+      state.profile[pair[1]] = PERSONA ? PERSONA.clean(input.value, PERSONA.LIMITS[pair[1]]) : input.value;
+      save();
+    });
+    input.addEventListener("change", function () {
+      if (!state.profile) return;
+      state.profile[pair[1]] = PERSONA ? PERSONA.clean(input.value, PERSONA.LIMITS[pair[1]]) : input.value;
+      input.value = state.profile[pair[1]];
+      save();
     });
   });
 

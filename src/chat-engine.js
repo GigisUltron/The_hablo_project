@@ -128,7 +128,7 @@
 
   /* Built only from the live pack: its display name and locale. The learner's
    * level is optional, and anything unrecognised is treated as the default. */
-  function buildSystemPrompt(pack, level) {
+  function buildSystemPrompt(pack, level, personal) {
     var p = pack || {};
     var name = String(p.name || "the target language");
     var locale = String(p.locale || p.code || "");
@@ -153,6 +153,8 @@
         "parentheses on its own line, like 你好！ then (nǐ hǎo!). Do not repeat the " +
         "Chinese characters inside the parentheses.");
     }
+
+    if (personal) rules.push(String(personal));
 
     return rules.join(" ");
   }

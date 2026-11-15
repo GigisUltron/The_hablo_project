@@ -96,6 +96,8 @@ Each full course has eight reading texts across A1–B2. Starter courses have fi
 
 Assistant replies are spoken automatically through the browser’s installed speech voices when audio is on. A local target-language voice is preferred; if the device exposes only another installed voice, that is used as a fallback so the reply is not silent. If the voice list arrives late, the reply is queued until a voice appears. **Settings → Speak replies** turns the automatic voice off without muting card audio.
 
+**Settings → Personalize** stores two short local notes: why you are learning and what you like. They are shown on Today, used by the local coach for examples and scenarios, and never sent to a remote service by the app. They are not a quiz and not required.
+
 A **transfer mission** appears above the conversation. It asks you to use two or three weak/due phrases in the conversation. A phrase counts only when you actually write it; completing the mission gives a small XP award.
 
 A local model is optional but it is now the only conversation-engine path when present: Settings has no engine chooser. Press **Find local model**; the app probes `http://localhost:8080`, `http://localhost:8081` and `http://localhost:11434`, stores the endpoint and model, and uses the first model that answers. Both llama.cpp's `llama-server` / `llama-cpp-python` and Ollama work. Without one, no conversation leaves the device; the authored fallback runs.

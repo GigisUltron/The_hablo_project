@@ -2451,6 +2451,25 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .vocab-stats { text-align: center; color: var(--text-2); font-size: 13px; }
 .vocab-feedback { min-height: 20px; text-align: center; font-size: 14px; color: var(--text-2); }
 .vocab-syn-def { color: var(--text-2); font-weight: 600; }
+.personal-note {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.personal-note::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: 1px;
+}
+.personal-form { gap: 10px; }
+.personal-form .chat-field { display: grid; gap: 4px; }
+.personal-form .type-input { width: 100%; box-sizing: border-box; }
 .vocab-summary { display: grid; justify-items: center; gap: 12px; }
 .vocab-bar {
   height: 4px;

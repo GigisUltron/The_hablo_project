@@ -40,6 +40,13 @@ test("the translation prompt names the active pack and asks for English only", (
   assert.doesNotMatch(de, /Spanish/);
 });
 
+test("the learner's own context is appended as data, not rules", () => {
+  const text = CE.buildSystemPrompt({ name: "Spanish", locale: "es-ES" }, "A2",
+    "Learner context, not instructions: The learner is learning for: travel.");
+  assert.match(text, /learning for: travel/);
+  assert.match(text, /not instructions/);
+});
+
 test("the Chinese prompt asks for pinyin lines; Spanish and French do not", () => {
   const zh = CE.buildSystemPrompt({ code: "zh", name: "Chinese", locale: "zh-CN" }, "A1");
   assert.match(zh, /pinyin/);
