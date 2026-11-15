@@ -72,7 +72,9 @@ Lessons use spaced repetition. What you miss comes back before the session ends 
 - **Again** and **Got it** feed the same SRS as lessons
 - wrong words return in the session
 - every second correct answer adds a harder word
-- statistics persist per language
+- hearing the word, the example sentence and a progress bar are on the same card
+- a missed-word review is one button away at the end
+- statistics persist per language; a session also pays XP and coins
 - **personal anchors** let you attach a cue such as “my cousin’s wedding”; the cue comes back with the word
 
 ### Reading
@@ -101,15 +103,38 @@ Choose the lesson language explicitly. The planner detects the situation, select
 
 The planner does not invent a town dialect. If a dialect is not in the pack, it uses the standard language and says so.
 
+### Words you need
+
+**Learn specific words** is the narrow version of a planned lesson. Paste a list — one word per line, or separated by commas — and the app matches it against the active pack's concepts, phrases, terms and grammar. It shows:
+
+- the words it will teach, with their meaning
+- the words the pack does not have yet, honestly labelled
+- up to four due reviews, so the session still maintains what is already learned
+
+The set is saved in **My lessons** and can be reopened or deleted. It does not invent vocabulary: a word the pack has not authored is reported, not guessed. This is the feature for a menu, a work meeting, a hospital visit or any list that a generic course does not cover.
+
 ## Language library
 
 Settings lists every language you are learning with its flag, name and level. Selecting a card switches language. **Add language** starts a new entry exam. **×** removes a language after confirmation.
 
 The interface-language selector is separate and does not change when you switch learning languages.
 
+## Coins and looks
+
+Coins are **earned**, never bought. A finished lesson pays for first-try answers and a clean sheet; expanding vocabulary pays for each correct word; reaching the daily goal pays once. They buy **looks only** — three accent themes in **Settings → Look**:
+
+| look | cost |
+|---|---|
+| Ember | free |
+| Plum | 60 coins |
+| Moss | 120 coins |
+
+There is no pay-to-win, no loot, no energy and no learning locked behind the currency. The point is a small, honest pull to come back and finish a card.
+
 ## What is local
 
-- Progress, XP, levels, streaks, statistics, vocabulary anchors, custom lessons and chat history use `localStorage`.
+- Progress, XP, coins, levels, streaks, statistics, vocabulary anchors, custom lessons, word sets and chat history use `localStorage`.
+- The chosen accent and the unlocked looks are stored with the same state.
 - The storage key is intentionally `sema.v1` for compatibility with older saves.
 - Audio ships with the app as pre-rendered WAV files, generated with Piper neural voices; browser speech synthesis is the fallback.
 - No account, no analytics, no tracking.
@@ -150,6 +175,8 @@ src/ui-langs.js            extra interface locale tables
 src/ui-extra.js            newer interface strings
 src/srs.js                 scheduling and answer matching
 src/memory.js              personal sentences and cloze cards
+src/wordset.js             word-list matching for a focused lesson
+src/economy.js             earned coins and the cosmetic look costs
 src/chat-engine.js         optional local-model adapter
 src/mini-chat.js           dependency-free offline conversation predictor
 src/exercises.js           extra exercise helpers

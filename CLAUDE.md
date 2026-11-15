@@ -10,10 +10,11 @@ subject, `AGENTS.md` wins.
 > current interface truth; the visual and home-screen specifics below are
 > historical, while the product principles (speed, one obvious action, no
 > compulsion, no runtime dependency) still bind. The owner lifted the
-> gamification ban on this date for a proposal only: see
-> [docs/GAMIFICATION.md](docs/GAMIFICATION.md), and implement nothing from it
-> until the checklist is approved. Content, audio and docs were explicitly opened
-> for the current pass.
+> gamification ban and explicitly asked for coins on this date: earned coins and
+> three cosmetic accent looks are shipped, and the word-list learner is in. See
+> [docs/GAMIFICATION.md](docs/GAMIFICATION.md); the unchecked mechanics there
+> still need approval before they are built. Content, audio and docs were
+> explicitly opened for the current pass.
 
 
 ## Your role
