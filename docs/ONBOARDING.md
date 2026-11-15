@@ -267,21 +267,20 @@ per-language progress — is identical.
 
 ## First run: level
 
-`state.profile.level` ∈ A1 · A2 · B1.
+`state.profile.level` ∈ A1 · A2 · B1 · B2 · C1.
 
 - **"I'm new"** → A1, skip placement, start at unit 1
-- **"Test me"** → the eight-question placement: 0–2 correct A1, 3–5 A2, 6–8 B1
+- **"Test me"** → a twelve-question adaptive staircase. Three correct answers in a row move it up a band; a miss steps it back one. A perfect run can reach C1; the band is shown beside the counter.
 
 The level sets the starting unit (the floor in `track.js`) and is the field a
 per-item level filter would use. It is stored per profile, not per language.
 
 ## Item level
 
-Every item needs `level: "A1" | "A2" | "B1"`. Without it, "personalised by
-level" is a starting point, not a filter — a B1 learner still meets `la cama`.
-This is a content field, one line per item, and it is the single highest-value
-data change left: it turns the track from five fixed units into a curriculum
-that can be personalised per learner.
+Every item carries `level: "A1" | "A2" | "B1" | "B2" | "C1"` in its pack's
+`levels.js`. The placement and the per-item filter read the same field, so a B1
+learner does not keep meeting A1 nouns unless the deck has nothing else at
+their band.
 
 Suggested rule for the existing decks: A1 words and greetings, A2 phrases and
 food/travel, B1 connectors and abstracts.

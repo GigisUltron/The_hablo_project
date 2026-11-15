@@ -33,7 +33,7 @@ The app has no build step and no package installation.
 1. Choose the **language you want to learn**.
 2. Choose the **interface language**. It stays independent of the learning language.
 3. Press **I'm new** to start at the beginning, or **Test me** to take the entry exam.
-4. The entry exam adapts while you answer and can open A1–B1. B2 and C1 are earned by studying.
+4. The entry exam adapts while you answer: three correct answers in a row move it up a band, a miss steps it back, and a perfect run can open C1. The current band is shown in the counter.
 
 Your first language is added automatically. To add another later, open **Settings → Your languages → Add language**, choose a language, and complete that language's entry exam. Each language keeps its own level, cards, XP, statistics, custom lessons and conversation history.
 
@@ -87,7 +87,9 @@ Each full course has eight reading texts across A1–B2. Starter courses have fi
 
 A **transfer mission** appears above the conversation. It asks you to use two or three weak/due phrases in the conversation. A phrase counts only when you actually write it; completing the mission gives a small XP award.
 
-A local model is optional. Open **Settings → Conversation engine → Local model**, set an endpoint, and check the model. Both Ollama (`http://localhost:11434`) and an OpenAI-compatible server such as llama.cpp's `llama-server` (`http://localhost:8080`) work; the app detects which is answering. Without one, no network request is made for conversation.
+A local model is optional. Open **Settings → Conversation engine → Local model**, then press **Find local model**; the app probes `http://localhost:8080` and `http://localhost:11434`, stores the endpoint and model, and switches the conversation engine over. Both llama.cpp's `llama-server` and Ollama work. Without one, no network request is made for conversation.
+
+The same endpoint is used by the word-set **Suggest words** button and the planned-lesson **Suggest with local model** button. The server can be a small GGUF model; see [tools/README.md](tools/README.md) and `tools/local_model.sh`. If it is not running, those assists fall back to the authored pack rather than failing.
 
 ### Planned lessons
 
@@ -101,7 +103,7 @@ A local model is optional. Open **Settings → Conversation engine → Local mod
 
 Choose the lesson language explicitly. The planner detects the situation, selects the strongest matching phrases, adds due revision, and saves the lesson’s language and focus. Saved lessons can be reopened or deleted from Today.
 
-The planner does not invent a town dialect. If a dialect is not in the pack, it uses the standard language and says so.
+The planner does not invent a town dialect. If a dialect is not in the pack, it uses the standard language and says so. With a local model connected, **Suggest with local model** extracts extra keywords and situations from your request; if no model answers, the rule-based planner still builds the lesson.
 
 ### Words you need
 
@@ -112,6 +114,8 @@ The planner does not invent a town dialect. If a dialect is not in the pack, it 
 - up to four due reviews, so the session still maintains what is already learned
 
 The set is saved in **My lessons** and can be reopened or deleted. It does not invent vocabulary: a word the pack has not authored is reported, not guessed. This is the feature for a menu, a work meeting, a hospital visit or any list that a generic course does not cover.
+
+You do not have to bring the list yourself. Name an area — “cooking”, “the gym”, “a job interview” — and press **Suggest words**. With a local model connected, hablo asks it for target words and then matches only authored items; without one, it uses the pack’s topic planner and says so.
 
 ## Language library
 
