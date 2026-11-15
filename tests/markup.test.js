@@ -483,6 +483,16 @@ test("Settings can export and validate a local backup", () => {
   assert.match(app, /localStorage\.setItem\(STORE_KEY/);
 });
 
+test("production is counted separately from recognition", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /session\.currentType = type/);
+  assert.match(app, /EX\.isProduction\(session\.currentType\)/);
+  assert.match(app, /card\.prod = \(card\.prod \|\| 0\) \+ 1/);
+  assert.match(html, /id="stat-produce"/);
+  assert.match(app, /stat-produce/);
+  assert.match(app, /produced \+ " " \+ tr\("canProduce"/);
+});
+
 test("Progress has a seven-day activity strip from real daily counts", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(html, /id="week-strip"/);

@@ -37,6 +37,14 @@
   var SPREAD = 4;
   var HARD = ["listen", "build", "gap"];
 
+  /* Production means the learner generated the target, not picked it out of
+   * a line-up. This drives an honest "can produce" count; it does not change
+   * the SRS interval or the scheduling. */
+  function isProduction(type) {
+    return ["write", "type-translation", "translate-out", "listen-type", "say", "build", "message", "gap"]
+      .indexOf(String(type || "")) !== -1;
+  }
+
   /* The harder kind for this card, or null. At most one card in four is hard;
    * the three kinds rotate through those slots so a session is not a wall of
    * the same exercise, and a kind the data cannot support is passed over. */
@@ -91,7 +99,8 @@
     gapWord: gapWord,
     blank: blank,
     gradeGap: gradeGap,
-    extraKind: extraKind
+    extraKind: extraKind,
+    isProduction: isProduction
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.SemaExercises = api;

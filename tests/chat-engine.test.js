@@ -51,10 +51,11 @@ test("the writing coach rewrites in the target language and notes the change", (
 
 test("the progress coach receives real counts, not invented progress", () => {
   const text = CE.buildProgressPrompt({ name: "Spanish" }, "A2", "English",
-    { known: 42, total: 120, solid: 18, due: 7, sessions: 9, streak: 3,
+    { known: 42, total: 120, solid: 18, produced: 11, due: 7, sessions: 9, streak: 3,
       weakest: "city", confusion: "casa / calle" });
   assert.match(text, /42 of 120/);
   assert.match(text, /interval at least six days/);
+  assert.match(text, /Can produce \(a correct production answer\): 11/);
   assert.match(text, /Due now: 7/);
   assert.match(text, /casa \/ calle/);
   assert.match(text, /one concrete next step/);

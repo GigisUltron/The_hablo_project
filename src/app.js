@@ -5004,6 +5004,7 @@
     if (itemOf(id).kind === "term") { renderTermMeaning(id); return; }
 
     var type = quizType(card, session.qi);
+    session.currentType = type;
     if (type === "pick-word") renderPickWord(id);
     else if (type === "write") renderWrite(id);
     else if (type === "say") renderSay(id);
@@ -5815,6 +5816,10 @@
       }
       S.review(state, id, ok ? 2 : 0, Date.now());
       state.trackMet[id] = true;
+      var card = state.cards[id];
+      if (ok && card && EX && EX.isProduction(session.currentType)) {
+        card.prod = (card.prod || 0) + 1;
+      }
     }
     var wasReplay = replay;
     var answerEl = $("type-input");
@@ -6220,7 +6225,7 @@
       .replace("{solid}", String(stats.solid || 0))
       .replace("{due}", String(stats.due || 0));
     var key = [ACTIVE && ACTIVE.code, learnerLevel(), stats.known, stats.solid, stats.due,
-      stats.sessions, stats.streak, stats.weakest, stats.confusion].join("|");
+      stats.produced, stats.sessions, stats.streak, stats.weakest, stats.confusion].join("|");
     box.hidden = false;
     if (key === progressCoachKey && progressCoachText) {
       note.textContent = progressCoachText;
@@ -6277,11 +6282,13 @@
 
     var known = allIds.filter(function (id) { return state.cards[id] && state.cards[id].reps > 0; }).length;
     var solid = allIds.filter(function (id) { return state.cards[id] && state.cards[id].interval >= 6; }).length;
+    var produced = allIds.filter(function (id) { return state.cards[id] && state.cards[id].prod > 0; }).length;
     var current = defaultUnit();
     $("progress-summary").textContent = learnerLevel() + " · " +
       (current ? current.title + " · " : "") +
       known + "/" + allIds.length + " " + tr("wordsMet", "words met") + " · " +
       solid + " " + tr("solid", "solid") + " · " +
+      produced + " " + tr("canProduce", "can produce") + " · " +
       currentStreak() + " " + tr("dayStreak", "day streak") + " · " +
       (state.coins || 0) + " " + tr("coins", "coins");
 
@@ -6349,6 +6356,8 @@
     var vs = state.vocabStats || { sessions: 0, correct: 0 };
     var vstat = $("stat-vocab");
     if (vstat) vstat.textContent = vs.sessions + " · " + vs.correct;
+    var produce = $("stat-produce");
+    if (produce) produce.textContent = String(produced);
     var daily = $("stat-daily");
     if (daily) daily.textContent = (state.daily && state.daily.cards) || 0;
     $("stat-good").textContent = state.reviews.good;
@@ -6359,7 +6368,7 @@
     var weakest = rows.slice().sort(function (a, b) { return a.pct - b.pct; })[0];
     var confused = S.topConfusions(state, 1)[0];
     renderProgressCoach({
-      known: known, total: allIds.length, solid: solid, due: dueNow,
+      known: known, total: allIds.length, solid: solid, produced: produced, due: dueNow,
       sessions: state.sessions || 0, streak: currentStreak(),
       weakest: weakest ? catLabel(weakest.cat) : "",
       confusion: confused ? (conceptById[confused.target] || {}).word + " / " + (conceptById[confused.chosen] || {}).word : ""

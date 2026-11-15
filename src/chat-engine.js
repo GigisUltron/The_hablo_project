@@ -202,6 +202,7 @@
       "Learner level: " + String(level || "A1") + ".",
       "Words met: " + Number(s.known || 0) + " of " + Number(s.total || 0) + ".",
       "Solid (interval at least six days): " + Number(s.solid || 0) + ".",
+      "Can produce (a correct production answer): " + Number(s.produced || 0) + ".",
       "Due now: " + Number(s.due || 0) + ".",
       "Sessions: " + Number(s.sessions || 0) + ".",
       "Day streak: " + Number(s.streak || 0) + ".",

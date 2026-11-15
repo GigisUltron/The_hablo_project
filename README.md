@@ -154,7 +154,7 @@ The interface-language selector is separate and does not change when you switch 
 
 ## Progress
 
-**Progress** shows the real counts behind the course: level, words met, words solid (interval at least six days), cards due, the path, topic rings, confused pairs, kept sentences and session totals. A seven-day strip shows the actual cards finished each day from local data; empty days are shown without guilt copy. The **Coach read** is written from those counts, not from invented XP: it names one strength and one next step, falls back to a plain count-based line when no model answers, and never replaces the numbers.
+**Progress** shows the real counts behind the course: level, words met, words solid (interval at least six days), words the learner has produced correctly, cards due, the path, topic rings, confused pairs, kept sentences and session totals. Production is counted only on generated answers, not on multiple-choice recognition, and it does not alter the SRS interval. A seven-day strip shows the actual cards finished each day from local data; empty days are shown without guilt copy. The **Coach read** is written from those counts, not from invented XP: it names one strength and one next step, falls back to a plain count-based line when no model answers, and never replaces the numbers.
 
 
 Coins are **earned**, never bought. A finished lesson pays for first-try answers and a clean sheet; expanding vocabulary pays for each correct word; reaching the daily goal pays once. They buy **looks only** — three accent themes in **Settings → Look**:
