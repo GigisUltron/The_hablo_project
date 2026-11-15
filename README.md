@@ -92,7 +92,20 @@ A **transfer mission** appears above the conversation. It asks you to use two or
 
 A local model is optional. Open **Settings → Conversation engine → Local model**, then press **Find local model**; the app probes `http://localhost:8080` and `http://localhost:11434`, stores the endpoint and model, and switches the conversation engine over. Both llama.cpp's `llama-server` and Ollama work. Without one, no network request is made for conversation.
 
-The same endpoint is used by the word-set **Suggest words** button and the planned-lesson **Suggest with local model** button. The server can be a small GGUF model; see [tools/README.md](tools/README.md) and `tools/local_model.sh`. If it is not running, those assists fall back to the authored pack rather than failing.
+The same endpoint is used by the word-set **Suggest words** button and the planned-lesson **Suggest with local model** button. The simplest setup is one command:
+
+```sh
+make ai
+```
+
+or, without make:
+
+```sh
+python3 tools/install_ai.py
+python3 serve.py --ai
+```
+
+The installer creates an isolated `.tools/ai-venv`, installs `llama-cpp-python[server]` from [tools/requirements-ai.txt](tools/requirements-ai.txt), and downloads a small Qwen 2.5 0.5B Q4 model (~490 MB). `serve.py --ai` then starts the app and the model together; the app probes `8080`, `8081` and `11434`, so it finds the model without changing Settings. If no model is running, those assists fall back to the authored pack rather than failing.
 
 ### Planned lessons
 
