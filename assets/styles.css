@@ -2056,3 +2056,33 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 @media (max-width: 560px) {
   .topbar .lang-switch { margin-left: auto; margin-right: 0; }
 }
+
+/* lesson mode is immersive: chrome belongs to navigation, not the drill */
+.app:has(#view-session.is-active) .tabs,
+.app:has(#view-session.is-active) .lang-switch,
+.app:has(#view-reader.is-active) .tabs,
+.app:has(#view-reader.is-active) .lang-switch,
+.app:has(#view-alphabet.is-active) .tabs,
+.app:has(#view-alphabet.is-active) .lang-switch { display: none; }
+
+/* the lesson sits under its prompt; actions follow content instead of
+   floating at the bottom of a mostly empty viewport */
+#view-session .card,
+#view-reader .card,
+#view-alphabet .card { min-height: 0; }
+#view-session .card .stage,
+#view-reader .card .stage,
+#view-alphabet .card .stage { flex: 0 0 auto; }
+#view-session .card .card-actions,
+#view-reader .card .card-actions,
+#view-alphabet .card .card-actions { margin-top: 8px; }
+
+/* labels start with a capital in every cased script */
+.card .prompt::first-letter,
+.card .feedback::first-letter,
+.card .btn::first-letter,
+.gloss-btn::first-letter { text-transform: uppercase; }
+.gloss-btn, .seg { text-transform: capitalize; }
+
+.card .meaning::first-letter,
+.card .sentence::first-letter { text-transform: uppercase; }

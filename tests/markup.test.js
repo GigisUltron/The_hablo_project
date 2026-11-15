@@ -737,6 +737,14 @@ test("recent languages and XP are wired into the lesson loop", () => {
   assert.match(css, /answer-shake/, "no incorrect-answer animation");
 });
 
+test("lesson mode is compact and starts labels with capitals", () => {
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(css, /#view-session \.card,[\s\S]*min-height: 0;/, "lesson still reserves an empty viewport");
+  assert.match(css, /#view-session \.card \.card-actions,[\s\S]*margin-top: 8px;/, "actions are still pushed to the floor");
+  assert.match(css, /\.app:has\(#view-session\.is-active\) \.tabs/, "lesson still shows navigation chrome");
+  assert.match(css, /\.gloss-btn, \.seg \{ text-transform: capitalize; \}/, "short labels are not capitalised");
+});
+
 test("the lesson card has one consistent type and action scale", () => {
   const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
   assert.match(css, /\.card \.prompt \{/, "lesson prompt has no consistency rule");
