@@ -183,7 +183,7 @@ def main():
     except ValueError:
         label = model
     say("ready: %s" % label)
-    say("open the app, Settings, Find local model, or let it probe port %d" % args.port)
+    say("start the app; the conversation view finds the model on port %d automatically" % args.port)
     if not args.start:
         say("start with: %s -m llama_cpp.server --model %s --port %d" % (
             short(python), short(model), args.port))

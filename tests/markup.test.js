@@ -417,6 +417,15 @@ test("skipping typing removes the task instead of grading it", () => {
   assert.doesNotMatch(writing, /firstCorrect/);
 });
 
+test("server.py is the single automatic setup entry point", () => {
+  const server = fs.readFileSync(path.join(__dirname, "..", "server.py"), "utf8");
+  assert.match(server, /tools.*install_ai\.py/);
+  assert.match(server, /serve\.py/);
+  assert.match(server, /--ai/);
+  assert.match(server, /--offline/);
+  assert.match(server, /setup_ai\(\)/);
+});
+
 test("the local model is discovered on 8080, 8081 and 11434", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(app, /http:\/\/localhost:8081/);

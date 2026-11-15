@@ -9,3 +9,6 @@ __pycache__/
 
 # Optional local tooling/models used to regenerate audio; never shipped.
 .tools/
+
+# Local backups created after a pushed snapshot.
+backups/

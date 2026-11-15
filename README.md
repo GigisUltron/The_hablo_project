@@ -10,23 +10,29 @@ There are no accounts, no analytics, no server and no model required. Progress l
 
 ## Start it
 
-Use Python 3 (standard library only):
+Use Python 3:
 
 ```sh
-python3 serve.py
+python3 server.py
 ```
 
-The server picks a free port from 8080, prints the URL, opens your browser and disables caching.
+On first run this creates an isolated `.tools/ai-venv`, installs
+`llama-cpp-python[server]`, downloads the small local model (~490 MB), then
+starts the app and model together and opens the browser. Later runs reuse the
+model and start immediately. The model is optional: if setup cannot finish,
+the app still starts with the authored/scripted practice.
 
 ```sh
-python3 serve.py --port 9000     # pin a port
-python3 serve.py --no-open       # do not open a browser
-make serve                       # same as python3 serve.py
+python3 server.py --offline      # app only, no model setup
+python3 server.py --port 9000    # pin a port
+python3 server.py --no-open      # do not open a browser
+make ai                          # same as python3 server.py
 ```
+
+The app itself is still standard-library only and has no build step. For the
+app without the automatic model, use `python3 serve.py` (or `make serve`).
 
 Open the printed `http://localhost:…` address rather than `index.html` directly. Microphone features need a secure context, and `file://` does not provide one.
-
-The app has no build step and no package installation.
 
 ## First run
 
@@ -93,20 +99,15 @@ A **transfer mission** appears above the conversation. It asks you to use two or
 
 A local model is optional but it is now the only conversation-engine path when present: Settings has no engine chooser. Press **Find local model**; the app probes `http://localhost:8080`, `http://localhost:8081` and `http://localhost:11434`, stores the endpoint and model, and uses the first model that answers. Both llama.cpp's `llama-server` / `llama-cpp-python` and Ollama work. Without one, no conversation leaves the device; the authored fallback runs.
 
-The same endpoint is used by the word-set **Suggest words** button and the planned-lesson **Suggest with local model** button. The simplest setup is one command:
+The same endpoint is used by the word-set **Suggest words** button and the planned-lesson **Suggest with local model** button. `python3 server.py` is the whole setup:
 
 ```sh
-make ai
+python3 server.py
 ```
 
-or, without make:
+It runs [tools/install_ai.py](tools/install_ai.py), which creates an isolated `.tools/ai-venv`, installs `llama-cpp-python[server]` from [tools/requirements-ai.txt](tools/requirements-ai.txt), and downloads a small Qwen 2.5 0.5B Q4 model (~490 MB). It then starts the app and model together. The app probes `8080`, `8081` and `11434`, so it finds the model without changing Settings. It checks free RAM before starting, reduces the context when memory is tight, and stops the model if free memory falls below 350 MB. If no model is running, conversation and the assists fall back to the authored pack rather than failing.
 
-```sh
-python3 tools/install_ai.py
-python3 serve.py --ai
-```
-
-The installer creates an isolated `.tools/ai-venv`, installs `llama-cpp-python[server]` from [tools/requirements-ai.txt](tools/requirements-ai.txt), and downloads a small Qwen 2.5 0.5B Q4 model (~490 MB). `serve.py --ai` then starts the app and the model together; the app probes `8080`, `8081` and `11434`, so it finds the model without changing Settings. It checks free RAM before starting, reduces the context when memory is tight, and stops the model if free memory falls below 350 MB. If no model is running, conversation and the assists fall back to the authored pack rather than failing.
+The individual pieces remain available for a custom setup: `python3 tools/install_ai.py` installs/downloads only, and `python3 serve.py --ai` starts an already-installed app + model.
 
 ### Planned lessons
 

@@ -60,16 +60,20 @@ python3 tools/make_audio.py --lang ja --check
 
 ## The local conversation model
 
-The supported path is one command. It creates an isolated Python environment,
-installs the `llama-cpp-python[server]` wheel/source package, downloads a small
-GGUF, starts the app, and starts the OpenAI-compatible server alongside it:
+The supported path is one command from the repository root. It creates an
+isolated Python environment, installs the `llama-cpp-python[server]`
+wheel/source package, downloads a small GGUF, then starts the app and the
+OpenAI-compatible server alongside it:
 
 ```sh
-make ai
+python3 server.py
 # or
-python3 tools/install_ai.py
-python3 serve.py --ai
+make ai
 ```
+
+`server.py` is the automatic wrapper. The individual steps remain available:
+`python3 tools/install_ai.py` installs/downloads only, and
+`python3 serve.py --ai` starts an already-installed app + model.
 
 `python3 tools/install_ai.py --start` starts only the model server (port 8080),
 which is useful if you run the app separately. `serve.py --ai` starts the model
