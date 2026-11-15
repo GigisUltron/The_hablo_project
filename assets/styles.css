@@ -742,6 +742,22 @@ ruby rt {
 .feedback { min-height: 22px; font-size: 15px; font-weight: 600; color: var(--text-2); }
 .feedback.good { color: var(--good); }
 .feedback.bad { color: var(--bad); }
+.coach-debrief {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+  border-left: 2px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+}
+.coach-debrief p {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.coach-debrief .coach-kicker { color: var(--accent); }
 .coach-explain {
   margin: 8px 0 0;
   padding: 7px 0 7px 10px;

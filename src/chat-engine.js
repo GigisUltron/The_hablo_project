@@ -179,6 +179,20 @@
 
   /* The wrap-up is a one-off coaching turn, not part of the conversation. It
    * asks for English notes so they stay readable under any interface. */
+  /* The end-of-session note is generated from the review data, not from a
+   * transcript. It names one strength and one next focus. */
+  function buildSessionCoachPrompt(pack, level, uiLanguage, kept, missed) {
+    var name = String((pack && pack.name) || "the target language");
+    var reply = String(uiLanguage || "English");
+    var good = (kept || []).slice(0, 8).join(", ");
+    var back = (missed || []).slice(0, 8).join(", ");
+    return "You are a concise " + name + " coach. The learner just finished a lesson at " + String(level || "A1") +
+      ". Reply in " + reply + " only, in at most two short sentences. " +
+      "Say one specific thing they remembered" + (good ? " (" + good + ")" : "") +
+      " and one thing to notice next time" + (back ? " (" + back + ")" : "") +
+      ". Do not shame, do not give a long grammar lecture, and do not use emoji.";
+  }
+
   /* An explanation is a one-off micro-lesson, not a conversation turn. */
   function buildExplainPrompt(pack, level, uiLanguage, item, learnerAnswer) {
     var name = String((pack && pack.name) || "the target language");
@@ -622,6 +636,7 @@
     buildCoachPrompt: buildCoachPrompt,
     buildScenePrompt: buildScenePrompt,
     buildExplainPrompt: buildExplainPrompt,
+    buildSessionCoachPrompt: buildSessionCoachPrompt,
     buildMessages: buildMessages,
     buildRequest: buildRequest,
     normaliseBaseUrl: normaliseBaseUrl,

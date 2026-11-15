@@ -5886,7 +5886,11 @@
       "</div>" +
       '<p class="sum-meta">' + session.firstCorrect + "/" + total + " " +
         esc(tr("rightFirst", "right the first time")) + " · " + days + " " +
-        esc(tr("dayStreak", "day streak")) + "</p>";
+        esc(tr("dayStreak", "day streak")) + "</p>" +
+      '<div class="coach-debrief" id="coach-debrief" hidden>' +
+        '<span class="coach-kicker">' + esc(tr("coachDebriefKicker", "Coach note")) + "</span>" +
+        '<p id="coach-debrief-text"></p>' +
+      "</div>";
 
     feedback("", "");
     $("stage").insertAdjacentHTML("beforeend",
@@ -5924,6 +5928,27 @@
     if (review) review.addEventListener("click", function () {
       startSession({ ids: missed, size: missed.length });
     });
+    renderSessionCoach(kept, missed, total);
+  }
+
+  function renderSessionCoach(kept, missed, total) {
+    var box = $("coach-debrief");
+    var note = $("coach-debrief-text");
+    if (!box || !note) return;
+    var keptText = (kept || []).map(function (id) { return itemOf(id).text; });
+    var missedText = (missed || []).map(function (id) { return itemOf(id).text; });
+    var fallback = tr("coachDebriefFallback", "You finished {n} cards. Notice the ones that are coming back.")
+      .replace("{n}", String(total || 0));
+    box.hidden = false;
+    note.textContent = tr("coachThinking", "Writing a short coach note…");
+    if (!AITOOLS || !CE) { note.textContent = fallback; return; }
+    localModelAsk(CE.buildSessionCoachPrompt(ACTIVE, learnerLevel(), uiName(uiLang()), keptText, missedText),
+      "Write the note now.").then(function (reply) {
+        if (!note || !note.isConnected) return;
+        note.textContent = String(reply || "").trim().slice(0, 320) || fallback;
+      }).catch(function () {
+        if (note && note.isConnected) note.textContent = fallback;
+      });
   }
 
   /* What stuck is a plain run of words; what comes back says when. */

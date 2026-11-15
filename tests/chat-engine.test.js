@@ -40,6 +40,16 @@ test("the translation prompt names the active pack and asks for English only", (
   assert.doesNotMatch(de, /Spanish/);
 });
 
+test("the session coach uses the real kept and missed items", () => {
+  const text = CE.buildSessionCoachPrompt({ name: "Spanish" }, "A2", "English",
+    ["la casa", "el pan"], ["la cuenta"]);
+  assert.match(text, /la casa/);
+  assert.match(text, /la cuenta/);
+  assert.match(text, /one specific thing/);
+  assert.match(text, /one thing to notice/);
+  assert.match(text, /English only/);
+});
+
 test("the mistake prompt carries the correct and learner answers without shame", () => {
   const text = CE.buildExplainPrompt({ name: "Spanish" }, "A2", "English",
     { text: "la cuenta", meaning: "the bill", sentence: "La cuenta, por favor." }, "el cuenta");

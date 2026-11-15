@@ -462,6 +462,15 @@ test("Read a text can ask the local model for a personal text", () => {
   assert.match(app, /readerNoModel/);
 });
 
+test("the session summary asks the coach for a brief real review", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /id="coach-debrief"/);
+  assert.match(app, /function renderSessionCoach/);
+  assert.match(app, /CE\.buildSessionCoachPrompt/);
+  assert.match(app, /coachDebriefFallback/);
+  assert.match(app, /renderSessionCoach\(kept, missed, total\)/);
+});
+
 test("a planned scene becomes a roleplay conversation", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(html, /id="wish-roleplay"/);
