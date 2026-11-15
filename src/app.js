@@ -1033,6 +1033,9 @@
   }
 
   function show(view) {
+    /* Leaving the conversation stops a reply that is still streaming; it must
+     * not keep writing into a view the learner has left. */
+    if (view !== "conv") abortChatStream();
     if (needsSetup() && view !== "setup") view = "setup";
     if (view !== "conv" && chatVoice) setVoiceMode(false);
     /* If the control that opened this view is hidden with it, focus would be
@@ -2272,6 +2275,7 @@
   var chatMeta = { status: "idle", engine: null, model: null, vision: false };
   var chatCheck = 0;
   var chatPending = false;
+  var chatStream = null;
   var chatListening = false;
   var chatRec = null;
   var chatVoice = false;
@@ -2664,6 +2668,7 @@
 
   function clearChat() {
     if (!chat) return;
+    abortChatStream();
     chat.messages = [];
     chat.scripted = null;
     chat.scene = null;
@@ -2780,6 +2785,19 @@
     chat.messages = chat.messages.slice(-CHAT_MAX_MESSAGES);
   }
 
+  /* Speech is the same for a complete reply and a stream that just finished,
+   * so both paths hand the final text to this one function. */
+  function afterAssistant(clean, quiet) {
+    var listenNext = function () {
+      if (!chatVoice || !SR) return;
+      setTimeout(function () {
+        if (chatVoice && currentView === "conv" && !chatPending && chat) listenChat();
+      }, 260);
+    };
+    if (autoSpeakOn() && hasTTS && allVoices().length && !quiet) speak(clean, null, listenNext);
+    else if (chatVoice && !quiet) listenNext();
+  }
+
   function addAssistant(text, scripted, note, quiet) {
     if (!chat) return;
     var clean = String(text == null ? "" : text).trim();
@@ -2795,14 +2813,7 @@
     trimChat();
     save();
     renderChat(true);
-    var listenNext = function () {
-      if (!chatVoice || !SR) return;
-      setTimeout(function () {
-        if (chatVoice && currentView === "conv" && !chatPending && chat) listenChat();
-      }, 260);
-    };
-    if (autoSpeakOn() && hasTTS && allVoices().length && !quiet) speak(clean, null, listenNext);
-    else if (chatVoice && !quiet) listenNext();
+    afterAssistant(clean, quiet);
   }
 
   function addUser(text) {
@@ -2830,12 +2841,19 @@
     chatPending = !!busy;
     var send = $("chat-send");
     if (send) {
-      send.disabled = !!busy;
-      send.textContent = busy ? tr("sending", "Sending…") : tr("send", "Send");
+      /* While a reply is streaming the same button stops it: a model that
+       * never finishes must not trap the learner. It stays enabled. */
+      send.disabled = false;
+      send.textContent = busy ? tr("stop", "Stop") : tr("send", "Send");
     }
     var log = $("chat");
     if (log) log.setAttribute("aria-busy", busy ? "true" : "false");
     setChatFeedback(busy ? "thinking…" : "", "");
+  }
+
+  function abortChatStream() {
+    if (!chatStream || typeof chatStream.abort !== "function") return;
+    try { chatStream.abort(); } catch (err) { /* already closed */ }
   }
 
   function escapeRegExp(s) {
@@ -2962,7 +2980,9 @@
   }
 
   function sendChatTurn() {
-    if (chatPending || !chat || !ACTIVE) return;
+    /* A second press while a reply is streaming is the stop control. */
+    if (chatPending) { abortChatStream(); return; }
+    if (!chat || !ACTIVE) return;
     if (chatListening && chatRec) {
       try { chatRec.stop(); } catch (err) { /* stopped */ }
     }
@@ -2985,29 +3005,120 @@
     var target = chat;
     var code = ACTIVE.code;
     var epoch = chatEpoch;
+    var mission = chat.mission && chat.mission.ids
+      ? chat.mission.ids.map(function (id) { return itemOf(id).text; })
+      : [];
+    /* Retrieval, not generation: hand the model authored phrases from the live
+     * pack that overlap what the learner just wrote. The learner's message is
+     * used locally to choose them and is not copied into the prompt. */
+    var grounded = typeof CE.pickContext === "function" && P && P.phrases
+      ? CE.pickContext(P.phrases, text, 3)
+      : [];
+    var system = CE.buildSystemPrompt(ACTIVE, learnerLevel(), PERSONA ? PERSONA.prompt(state.profile) : "",
+      mission, grounded.length ? { grounding: grounded } : undefined);
+
     setChatBusy(true);
-    CE.sendChat({
+
+    var controller = null;
+    var pending = null;
+    var streamed = "";
+    var paintTimer = 0;
+    var paint = function () {
+      if (paintTimer) return;
+      paintTimer = setTimeout(function () {
+        paintTimer = 0;
+        if (chat !== target || !pending) return;
+        pending.text = streamed;
+        renderChat(true);
+      }, 60);
+    };
+    var clearPaint = function () {
+      if (!paintTimer) return;
+      clearTimeout(paintTimer);
+      paintTimer = 0;
+    };
+    var stream = {
+      abort: function () {
+        if (controller && typeof controller.abort === "function") controller.abort();
+      }
+    };
+    chatStream = stream;
+
+    var request = {
       baseUrl: chatEndpoint(),
       engine: chatMeta.engine,
       model: chatMeta.model,
-      system: CE.buildSystemPrompt(ACTIVE, learnerLevel(), PERSONA ? PERSONA.prompt(state.profile) : "",
-        chat.mission && chat.mission.ids ? chat.mission.ids.map(function (id) { return itemOf(id).text; }) : []),
+      system: system,
       history: chat.messages.slice(-CE.MAX_HISTORY),
       vision: chatMeta.vision,
-      timeoutMs: 45000
-    }).then(function (res) {
+      timeoutMs: 45000,
+      abortFactory: function () {
+        if (typeof AbortController !== "function") return null;
+        try { controller = new AbortController(); } catch (err) { controller = null; }
+        return controller;
+      },
+      onChunk: function (delta) {
+        if (chat !== target || !ACTIVE || ACTIVE.code !== code || epoch !== chatEpoch) return;
+        streamed += String(delta == null ? "" : delta);
+        if (!pending) {
+          /* A blank bubble before the first token looks broken; create it on
+           * the first delta and grow it from there. */
+          pending = { id: newChatId(), role: "assistant", text: "", scripted: false, note: "", at: Date.now() };
+          chat.messages.push(pending);
+          trimChat();
+        }
+        paint();
+      }
+    };
+
+    var call = typeof CE.streamChat === "function" ? CE.streamChat(request) : CE.sendChat(request);
+    call.then(function (res) {
+      if (chatStream === stream) chatStream = null;
+      clearPaint();
       if (chat !== target || !ACTIVE || ACTIVE.code !== code || epoch !== chatEpoch) return;
       setChatBusy(false);
-      if (res && res.ok && res.text) {
-        addAssistant(res.text, false, "");
+      if (res && res.ok) {
+        if (pending) {
+          pending.text = String(res.text || streamed || pending.text || "").trim();
+          save();
+          renderChat(true);
+          if (pending.text) afterAssistant(pending.text);
+          return;
+        }
+        if (res.text) { addAssistant(res.text, false, ""); return; }
+      }
+      if (res && res.error === "aborted") {
+        /* Keep whatever arrived; a cancel must never start the scripted
+         * fallback as if the model had failed. */
+        if (pending) {
+          pending.text = String(streamed || pending.text || "").trim();
+          save();
+          renderChat(true);
+        }
+        setChatFeedback(tr("stopped", "stopped"), "");
+        return;
+      }
+      if (pending) {
+        /* Text already reached the screen: finishing beats double-sending. */
+        pending.text = String(streamed || pending.text || "").trim();
+        save();
+        renderChat(true);
         return;
       }
       chatMeta = { status: "failed", engine: null, model: null, vision: false };
       setChatStatus();
       fallbackReply(text, "the model did not answer — using scripted practice");
     }).catch(function () {
+      if (chatStream === stream) chatStream = null;
+      clearPaint();
       if (chat !== target || !ACTIVE || ACTIVE.code !== code || epoch !== chatEpoch) return;
       setChatBusy(false);
+      if (pending) {
+        pending.text = String(streamed || pending.text || "").trim();
+        save();
+        renderChat(true);
+        return;
+      }
       chatMeta = { status: "failed", engine: null, model: null, vision: false };
       setChatStatus();
       fallbackReply(text, "the model did not answer — using scripted practice");
@@ -3168,6 +3279,7 @@
 
   function startConversation() {
     if (!CE) { toast(tr("chatEngineMissing", "The chat engine did not load.")); return; }
+    abortChatStream();
     chat = chatState();
     setVoiceMode(false);
     hideCoach();
@@ -4883,22 +4995,26 @@
     if (o.customId) {
       session.types = quizQueue.map(function (id, i) {
         var it = itemOf(id);
-        var hasTranslation = !!translationFor(id);
+        /* A prompt exists only when the meaning can be shown without leaking
+         * the answer. With translations off it cannot, so the requested lesson
+         * uses meaning-free tasks instead of a prompt-less "write". */
+        var hasPrompt = !!(translationFor(id) || glossFor(id));
         if (it.kind === "word") {
-          var words = hasTranslation
+          var words = hasPrompt
             ? ["translate", "type-translation", "translate-out", "write"]
-            : ["write"];
-          if (listenable(id)) words.push("listen-type");
-          if (hasTranslation) words.push("match");
+            : ["listen-type", "listen"];
+          if (hasPrompt && listenable(id)) words.push("listen-type");
+          if (hasPrompt) words.push("match");
           words = S.shuffle(words, Math.random);
           return words[i % words.length];
         }
         if (it.kind === "phrase") {
-          var phrases = hasTranslation ? ["translate", "translate-out", "write"] : ["write"];
+          var phrases = hasPrompt ? ["translate", "translate-out", "write"] : [];
           if (buildable(id)) phrases.push("build");
           if (gapFor(id)) phrases.push("message");
           if (listenable(id)) phrases.push("listen-type");
-          if (hasTranslation) phrases.push("match");
+          if (!phrases.length) phrases.push("listen");
+          if (hasPrompt) phrases.push("match");
           phrases = S.shuffle(phrases, Math.random);
           return phrases[i % phrases.length];
         }
@@ -5229,6 +5345,9 @@
 
   function quizType(card, i) {
     if (session.types) return session.types[i] || "pick-picture";
+    /* With translations off there is no interface-language prompt to translate
+     * into or out of, so the task mix must not ask for one. */
+    if (!translationsOn()) return "no-gloss";
     if (session.forceWrite) return "write";
     if (card.last === null) return "pick-word";
     /* harder cards arrive as a minority: one in four, gated on the pack's own
@@ -5299,10 +5418,16 @@
     /* never seen it? teach on this card, then move on. One screen per item,
      * but the first exposure informs instead of interrogating. */
     /* teach the first few, then ask: a session of eight brand-new items used to
-     * be eight teach cards and zero questions, and every answer counted zero. */
+     * be eight teach cards and zero questions, and every answer counted zero.
+     * With translations off every new item is taught here: a cold item cannot
+     * be quizzed through a meaning the learner has never been shown. */
     var taught = session.taught || 0;
     /* a lesson that opened with study cards (the demo) has taught them already */
-    if (!session.study.length && card.last === null && taught < 3) { session.taught = taught + 1; renderTeach(id); return; }
+    if (!session.study.length && card.last === null && (taught < 3 || !translationsOn())) {
+      session.taught = taught + 1;
+      renderTeach(id);
+      return;
+    }
 
     if (itemOf(id).kind === "basic") {
       var basic = itemOf(id);
@@ -5327,6 +5452,7 @@
     else if (type === "type-translation") renderTypeTranslation(id);
     else if (type === "listen-type") renderListenType(id);
     else if (type === "match") renderMatch(id);
+    else if (type === "no-gloss") renderNoGloss(id);
     else renderPickPicture(id);
   }
 
@@ -5389,7 +5515,10 @@
   function renderTranslateToTarget(id) {
     var translated = translationFor(id);
     var prompt = translated || glossFor(id);
-    if (!prompt) { renderPickWord(id); return; }
+    /* No prompt means translations are off (or the item has no meaning yet).
+     * Falling back to renderPickWord here was an infinite loop: that function
+     * calls this one again. A meaning-free task is the honest answer. */
+    if (!prompt) { renderNoGloss(id); return; }
     var set = S.shuffle([id].concat(distractorsFor(id, 3)), Math.random);
 
     $("stage").innerHTML =
@@ -5399,6 +5528,30 @@
     $("actions").innerHTML = "";
 
     chooseThenCheck(".option-word", id, true);
+  }
+
+  /* A task that never needs an interface-language translation: build, complete
+   * a message, or listen. Used when translations are off and as the safety net
+   * behind every meaning-first renderer. It must never route back into the
+   * translation renderers, or the fallback becomes a loop. */
+  function renderNoGloss(id) {
+    var tick = session ? session.qi : 0;
+    var it = itemOf(id);
+    if (it.kind === "phrase") {
+      if (buildable(id)) { session.currentType = "build"; renderBuild(id); return; }
+      if (gapFor(id)) { session.currentType = "message"; renderMessage(id); return; }
+      session.currentType = "listen-type";
+      renderListenType(id);
+      return;
+    }
+    if (listenable(id)) {
+      if (tick % 3 === 2) { session.currentType = "listen"; renderListen(id); }
+      else { session.currentType = "listen-type"; renderListenType(id); }
+      return;
+    }
+    /* No audio either: renderListen states that plainly and offers a skip. */
+    session.currentType = "listen";
+    renderListen(id);
   }
 
   function markChoices(cls, targetId) {
@@ -6575,6 +6728,16 @@
 
   function productionExercise(id, i) {
     var it = itemOf(id);
+    /* Production needs something to produce from. With translations off there
+     * is no meaning prompt, so construction and dictation replace "write". */
+    if (!translationFor(id) && !glossFor(id)) {
+      if (it.kind === "phrase") {
+        if (buildable(id)) return i % 2 ? "build" : "listen-type";
+        if (gapFor(id)) return "message";
+        return listenable(id) ? "listen-type" : "listen";
+      }
+      return listenable(id) ? "listen-type" : "listen";
+    }
     if (it.kind === "phrase") {
       if (i % 2 === 0 && buildable(id)) return "build";
       if (i % 3 === 0 && gapFor(id)) return "message";
@@ -6587,7 +6750,9 @@
 
   function productionPracticeIds() {
     var now = Date.now();
-    return allIds.filter(function (id) {
+    /* deckIds, not allIds: production practice is about every kind of item a
+     * lesson teaches, phrases included. allIds only ever held concepts. */
+    return deckIds().filter(function (id) {
       var it = itemOf(id);
       var card = state.cards[id];
       return (it.kind === "word" || it.kind === "phrase") && atLevel(id) &&

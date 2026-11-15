@@ -330,6 +330,8 @@ var SEMA_UI_EXTRA = (function () {
     "on": ["on", "activado", "activé", "attivo", "ativado", "an", "aan", "вкл", "açık", "مفعّل", "चालू", "オン", "开"],
     "off": ["off", "desactivado", "désactivé", "disattivato", "desativado", "aus", "uit", "выкл", "kapalı", "معطّل", "बंद", "オフ", "关"],
     "startWithThese": ["Start with these", "Empezar con esto", "Commencer avec", "Inizia con questi", "Começar com estes", "Damit starten", "Hiermee starten", "Начать с этого", "Bunlarla başla", "ابدأ بهذه", "इनसे शुरू करो", "これで始める", "用这些开始"],
+    "stop": ["Stop", "Detener", "Arrêter", "Ferma", "Parar", "Stopp", "Stop", "Стоп", "Durdur", "إيقاف", "रोकें", "停止", "停止"],
+    "stopped": ["stopped", "detenido", "arrêté", "fermato", "parado", "gestoppt", "gestopt", "остановлено", "durduruldu", "متوقف", "रुका", "停止しました", "已停止"],
     "cat_home": ["Home", "Casa", "Maison", "Casa", "Casa", "Zuhause", "Huis", "Дом", "Ev", "المنزل", "घर", "家", "家"],
     "cat_food": ["Food", "Comida", "Cuisine", "Cibo", "Comida", "Essen", "Eten", "Еда", "Yemek", "طعام", "खाना", "食べ物", "食物"],
     "cat_nature": ["Nature", "Naturaleza", "Nature", "Natura", "Natureza", "Natur", "Natuur", "Природа", "Doğa", "طبيعة", "प्रकृति", "自然", "自然"],

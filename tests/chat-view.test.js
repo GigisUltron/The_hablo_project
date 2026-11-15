@@ -239,3 +239,32 @@ test("opening the chat lands at the newest message", () => {
   assert.match(app, /renderChat\(true\)/, "entry does not force the bottom");
   assert.match(app, /requestAnimationFrame/, "entry does not settle the scroll after layout");
 });
+
+test("a reply streams, can be stopped, and a cancel never falls back", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  const start = app.indexOf("function sendChatTurn");
+  const end = app.indexOf("function assignMission");
+  const block = app.slice(start, end);
+
+  assert.match(block, /CE\.streamChat\(/);
+  assert.match(block, /onChunk: function \(delta\)/);
+  assert.match(block, /abortFactory/);
+  assert.match(block, /if \(chatPending\) \{ abortChatStream\(\); return; \}/,
+    "a second press while streaming is not a stop control");
+  assert.match(block, /res\.error === "aborted"/);
+  assert.match(block, /setChatFeedback\(tr\("stopped"/,
+    "a cancel is not reported in the interface language");
+  assert.match(block, /Text already reached the screen: finishing beats double-sending/,
+    "text already on screen has no path that skips the fallback");
+  assert.match(block, /if \(pending\) \{[\s\S]{0,260}return;\n      \}\n      chatMeta = \{ status: "failed"/,
+    "a failed stream with text on screen still falls back");
+  assert.match(block, /CE\.pickContext\(P\.phrases, text, 3\)/,
+    "the prompt is not grounded in authored phrases");
+  assert.match(block, /grounding: grounded/);
+  assert.match(app, /function setChatBusy[\s\S]{0,320}tr\("stop"/,
+    "the send control never becomes a stop control");
+  assert.match(app, /if \(view !== "conv"\) abortChatStream\(\)/,
+    "leaving the conversation does not stop the stream");
+  assert.match(app, /function clearChat[\s\S]{0,160}abortChatStream\(\)/,
+    "clearing the conversation does not stop the stream");
+});
