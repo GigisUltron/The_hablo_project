@@ -230,7 +230,7 @@ test("clearing the chat touches only the active language conversation", () => {
   assert.match(block, /chat\.scripted = null/);
   assert.match(block, /chatEpoch \+= 1/);
   assert.doesNotMatch(block, /state\.memory|state\.cards|byLang/);
-  assert.match(app, /CE\.clearTap\(clearState, state\.chat, ACTIVE\.code\)/);
+  assert.match(app, /askConfirm\(/);
   assert.match(block, /renderChat\(\)/, "the empty state is not rendered after clearing");
 });
 

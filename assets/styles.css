@@ -2020,3 +2020,31 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 
 /* attribute visibility must win over the group display rule */
 .group[hidden] { display: none; }
+
+/* sema-style confirmation, never a browser confirm */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: var(--bar);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+.modal[hidden] { display: none; }
+.modal-card {
+  width: min(420px, 100%);
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: 0 6px 0 var(--border-deep);
+}
+.modal-card h2 { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+.modal-card p { font-size: 16px; line-height: 1.45; color: var(--text-2); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+.modal-actions .btn { width: auto; min-height: 44px; }

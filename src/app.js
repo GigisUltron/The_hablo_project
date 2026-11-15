@@ -1688,12 +1688,9 @@
     if (!btn) return;
     var has = !!(chat && chat.messages.length);
     if (!has) clearState.armed = false;
-    var view = CE && CE.clearControl
-      ? CE.clearControl(clearState, has)
-      : { hidden: !has, armed: false, label: "clear" };
-    btn.hidden = view.hidden;
-    btn.textContent = view.armed ? tr("clearAgain", "tap again to clear") : tr("clear", "clear");
-    btn.classList.toggle("is-armed", view.armed);
+    btn.hidden = !has;
+    btn.textContent = tr("clear", "clear");
+    btn.classList.remove("is-armed");
     btn.setAttribute("aria-label", btn.textContent);
   }
 
@@ -1721,15 +1718,13 @@
   }
 
   function chatClearClick() {
-    if (!chat || !ACTIVE) return;
-    var result = CE && CE.clearTap
-      ? CE.clearTap(clearState, state.chat, ACTIVE.code)
-      : { action: "none" };
-    if (result.action === "arm") {
-      updateChatClear();
-      return;
-    }
-    if (result.action === "clear") clearChat();
+    if (!chat || !ACTIVE || !chat.messages.length) return;
+    askConfirm(
+      tr("clear", "clear"),
+      tr("clearChatConfirm", "Clear this conversation? This cannot be undone."),
+      tr("clear", "clear"),
+      clearChat
+    );
   }
 
   function translateMessage(id) {
@@ -2886,6 +2881,28 @@
     };
   }
 
+  var confirmState = null;
+
+  function closeConfirm() {
+    var modal = $("confirm-modal");
+    if (modal) modal.hidden = true;
+    var last = confirmState && confirmState.last;
+    confirmState = null;
+    if (last && last.focus) last.focus();
+  }
+
+  function askConfirm(title, body, okLabel, onOk) {
+    var modal = $("confirm-modal");
+    if (!modal) { if (window.confirm(body)) onOk(); return; }
+    confirmState = { onOk: onOk, last: document.activeElement };
+    $("confirm-title").textContent = title;
+    $("confirm-body").textContent = body;
+    $("confirm-ok").textContent = okLabel;
+    modal.hidden = false;
+    var cancel = $("confirm-cancel");
+    if (cancel) cancel.focus();
+  }
+
   function saveCustomLesson(wish, text) {
     state.customLessons = state.customLessons || [];
     var lesson = {
@@ -2926,11 +2943,17 @@
     });
     Array.prototype.forEach.call(box.querySelectorAll("[data-delete-custom]"), function (b) {
       b.addEventListener("click", function () {
-        if (!window.confirm(tr("deleteLessonConfirm", "Delete this lesson? This cannot be undone."))) return;
         var id = b.getAttribute("data-delete-custom");
-        state.customLessons = (state.customLessons || []).filter(function (w) { return w.id !== id; });
-        save();
-        renderCustomLessons();
+        askConfirm(
+          tr("deleteLesson", "Delete lesson"),
+          tr("deleteLessonConfirm", "Delete this lesson? This cannot be undone."),
+          tr("deleteLesson", "Delete lesson"),
+          function () {
+            state.customLessons = (state.customLessons || []).filter(function (w) { return w.id !== id; });
+            save();
+            renderCustomLessons();
+          }
+        );
       });
     });
   }
@@ -4314,15 +4337,34 @@
   $("home-read").addEventListener("click", startReader);
   $("review-all").addEventListener("click", reviewMistakes);
   $("reset-btn").addEventListener("click", function () {
-    if (!window.confirm("Clear all progress in every language on this device?")) return;
-    try { localStorage.removeItem(STORE_KEY); } catch (err) { /* ignore */ }
-    window.location.reload();
+    askConfirm(
+      tr("reset", "Reset progress"),
+      tr("resetConfirm", "Clear all progress in every language on this device? This cannot be undone."),
+      tr("reset", "Reset progress"),
+      function () {
+        try { localStorage.removeItem(STORE_KEY); } catch (err) { /* ignore */ }
+        window.location.reload();
+      }
+    );
   });
   $("conv-back").addEventListener("click", function () {
     resetChatClear();
     show("today");
   });
   $("chat-clear").addEventListener("click", chatClearClick);
+  $("confirm-cancel").addEventListener("click", closeConfirm);
+  $("confirm-ok").addEventListener("click", function () {
+    var fn = confirmState && confirmState.onOk;
+    closeConfirm();
+    if (fn) fn();
+  });
+  $("confirm-modal").addEventListener("click", function (ev) {
+    if (ev.target === this) closeConfirm();
+  });
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key !== "Escape" || !confirmState) return;
+    closeConfirm();
+  });
   $("chat-form").addEventListener("submit", function (ev) {
     ev.preventDefault();
     sendChatTurn();

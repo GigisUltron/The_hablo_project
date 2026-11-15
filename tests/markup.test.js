@@ -704,10 +704,18 @@ test("an empty My lessons group does not render", () => {
   assert.match(app, /group\.hidden = !list\.length/, "the group is never hidden when empty");
 });
 
+test("destructive actions use the sema confirmation dialog", () => {
+  assert.match(html, /id="confirm-modal"/, "no modal markup");
+  assert.match(app, /function askConfirm/, "no modal confirm helper");
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(css, /\.modal-card \{/, "modal has no sema card style");
+  assert.match(app, /clearChatConfirm/, "chat clear has no confirmation copy");
+});
+
 test("saved lessons can be deleted only after confirmation", () => {
   assert.match(app, /data-delete-custom/, "no delete control on saved lessons");
   assert.match(app, /deleteLessonConfirm/, "delete has no confirmation copy");
-  assert.match(app, /window\.confirm\(tr\("deleteLessonConfirm"/, "delete is not confirmed");
+  assert.match(app, /askConfirm\(/, "delete is not confirmed in sema UI");
 });
 
 test("recent languages and XP are wired into the lesson loop", () => {
