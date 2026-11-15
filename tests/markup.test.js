@@ -383,6 +383,36 @@ test("no item is ever built with a null emoji", () => {
     "itemOf must give an empty string, not null - every renderer concatenates it");
 });
 
+test("the person drill gets its pronouns from the live pack", () => {
+  assert.equal(app.includes("PRONOUN"), false, "a fixed pronoun table survived");
+  assert.equal(app.includes("¿Quién?"), false, "the prompt is hardcoded Spanish");
+  assert.match(app, /function pronounsFor/, "no pack-driven pronoun helper");
+  assert.match(app, /pronounsFor\(it\.person\)/, "the drill never reads the pack's pronouns");
+});
+
+test("the audio chip tests the active pack, not a Spanish word", () => {
+  assert.equal(app.includes('itemOf("noche")'), false, "the chip still plays a fixed Spanish word");
+  assert.match(app, /function audioTestItem/, "no active-pack sample picker");
+});
+
+test("the scripted chat does not fall back to a Spanish goodbye", () => {
+  assert.equal(app.includes("¡Hasta pronto!"), false, "a Spanish closing survives for every deck");
+  assert.equal(app.includes("À bientôt"), false, "a French closing survives for every deck");
+});
+
+test("today shows a real daily goal and a per-language level", () => {
+  assert.match(html, /id="stat-daily"/);
+  assert.match(html, /id="goal-meter"/);
+  assert.match(app, /ADAPT\.bumpDaily/, "the daily counter never advances");
+  assert.match(app, /levelByLang/, "the profile has no per-language level");
+  assert.match(app, /ADAPT\.levelFor/, "the app never reads the per-language level");
+});
+
+test("the path unlocks on every deck card, not only on concepts", () => {
+  assert.match(app, /TRACK\.map\(solidDeckCount\(\)/, "the track still counts concepts only");
+  assert.match(app, /function solidDeckCount/, "no all-deck solid count");
+});
+
 test("translations are rendered and can be switched off", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(app, /function glossHTML/, "no gloss renderer");
@@ -465,8 +495,8 @@ test("a beginner's first session opens on phrases, with nothing above A2", () =>
 
   for (const deck of ["es", "fr", "it", "ja", "zh"]) {
     const C0 = require("../src/lang/" + deck + "/concepts.js").concepts;
-    /* a script deck opens on its alphabet first; six solid concepts move the
-     * path on to the mixed lesson this test is about (solid counts concepts) */
+    /* a script deck opens on its alphabet first; six solid cards move the
+     * path on to the mixed lesson this test is about */
     const seen = ["ja", "zh"].includes(deck) ? C0.slice(0, 6).map((c) => c.id) : [];
     const { queue, A } = firstQueue(deck, "A1", seen);
     const q = Array.from(queue || []);   // the queue is built in another realm
@@ -592,6 +622,13 @@ test("the harder exercises exist only where the data supports them", () => {
   assert.match(app, /function renderListen\(/, "no listen and pick");
   assert.match(app, /EX\.extraKind/, "the mix ignores the exercise rule");
   assert.match(app, /S\.review\(state, id, ok \? 2 : 0/, "the new exercises bypass the SRS");
+});
+
+test("the level control is per-language and applies immediately", () => {
+  assert.match(html, /data-level="C1"/, "the settings screen cannot reach C1");
+  assert.match(app, /data-level/, "the level control is not wired");
+  assert.match(app, /levelByLang\[ACTIVE\.code\] = level/, "the level is not stored for the live language");
+  assert.match(app, /renderSettingsOptions\(\);\n      renderToday\(\);/, "the level change does not repaint");
 });
 
 test("every settings option is read, applied now, and remembered", () => {

@@ -157,6 +157,30 @@
     return Math.max(lo, Math.min(hi, Math.round(avg)));
   }
 
+  /* A profile keeps one level per language: a B1 Spanish learner is not B1 in
+   * Arabic, and switching decks must not silently import the other band. The
+   * old single `level` stays as the migration fallback. */
+  function levelFor(profile, code) {
+    var p = profile || {};
+    var by = p.levelByLang && typeof p.levelByLang === "object" ? p.levelByLang : {};
+    var band = by[code] || p.level;
+    return CEFR.indexOf(band) === -1 ? "A1" : band;
+  }
+
+  /* The local calendar day, not UTC: "today" has to agree with the learner. */
+  function dayKey(now) {
+    var d = new Date(now == null ? Date.now() : now);
+    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+  }
+
+  /* Count each card once per day. A requeued miss is still one card, and a
+   * new day starts from zero rather than carrying yesterday's total. */
+  function bumpDaily(daily, now) {
+    var key = dayKey(now);
+    var cards = daily && daily.date === key ? Number(daily.cards) || 0 : 0;
+    return { date: key, cards: cards + 1 };
+  }
+
   /* A goal that cannot run away: three short sessions in a row lower it,
    * three long ones raise it, one session never moves it. */
   function nextGoal(goal, recent, floor, ceiling) {
@@ -174,7 +198,8 @@
 
   var api = { LEVELS: LEVELS, level: level, plan: plan, shouldStop: shouldStop,
               CEFR: CEFR, shelf: shelf, within: within, OPENERS: OPENERS, sessionMix: sessionMix,
-              confusionSeed: confusionSeed, dailyGoal: dailyGoal, nextGoal: nextGoal };
+              confusionSeed: confusionSeed, dailyGoal: dailyGoal, nextGoal: nextGoal,
+              levelFor: levelFor, dayKey: dayKey, bumpDaily: bumpDaily };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.SemaAdaptive = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);

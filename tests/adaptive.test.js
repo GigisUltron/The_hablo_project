@@ -152,3 +152,23 @@ test("reading has five shelves, one per band", () => {
   assert.equal(A.shelf("?"), 1, "an unknown band reads from shelf one");
   assert.equal(A.shelf(undefined), 1);
 });
+
+test("a level belongs to a language, not to the whole profile", () => {
+  const profile = { level: "B1", levelByLang: { es: "B1", fr: "A1" } };
+  assert.equal(A.levelFor(profile, "es"), "B1");
+  assert.equal(A.levelFor(profile, "fr"), "A1");
+  assert.equal(A.levelFor({ level: "A2" }, "de"), "A2", "old single-level profiles still migrate");
+  assert.equal(A.levelFor({}, "es"), "A1", "no profile yet is a beginner, not B1");
+  assert.equal(A.levelFor({ levelByLang: { es: "?" } }, "es"), "A1", "an abandoned placement is A1");
+});
+
+test("the daily count is once per card and resets on a new day", () => {
+  const dayOne = new Date(2026, 0, 1, 9, 0, 0).getTime();
+  const dayTwo = new Date(2026, 0, 2, 9, 0, 0).getTime();
+  let daily = A.bumpDaily(null, dayOne);
+  assert.deepEqual(daily, { date: "2026-01-01", cards: 1 });
+  daily = A.bumpDaily(daily, dayOne);
+  assert.equal(daily.cards, 2);
+  daily = A.bumpDaily(daily, dayTwo);
+  assert.deepEqual(daily, { date: "2026-01-02", cards: 1 });
+});

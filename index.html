@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>sema — learn by meaning, not by translation</title>
-<meta name="description" content="A language-learning demo that never shows a translation. Concepts are learned image-to-sound, then connected into a semantic web." />
+<meta name="description" content="A free, open-source language course: picture, word and sound first, with the English meaning on request and after every answer." />
 <meta name="color-scheme" content="light dark" />
 <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)" />
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
@@ -66,16 +66,24 @@
         <section class="lesson-card" aria-labelledby="lesson-name">
           <div class="lesson-top">
             <h2 id="lesson-name">Next lesson</h2>
-            <span data-chrome="aboutMinute">about 1 min</span>
+            <span id="lesson-meta">about 1 min</span>
           </div>
           <div class="lesson-pics" id="next-stack" aria-hidden="true"></div>
           <p class="lesson-sub" id="start-sub"></p>
           <button class="btn btn-primary btn-block" id="start-btn" type="button"><span id="start-label" data-i18n="start">Start lesson</span></button>
+          <div class="daily-goal" id="daily-goal">
+            <div class="daily-goal-top">
+              <span data-i18n="tabToday">Today</span>
+              <span><b id="stat-daily">0</b> / <span id="stat-goal">8</span></span>
+            </div>
+            <div class="meter" id="goal-meter" role="progressbar" aria-label="Daily goal" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0"><i id="goal-bar"></i></div>
+          </div>
         </section>
 
         <section class="group" aria-labelledby="track-title">
           <h2 class="group-title" id="track-title" data-chrome="yourPath">Your path</h2>
           <div class="track" id="track"></div>
+          <p class="track-note" id="track-note"></p>
         </section>
 
         <div class="list">
@@ -83,11 +91,16 @@
             <span class="row-pic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5h14v10H10l-4 4v-4H5z"/></svg></span>
             <span class="row-body"><span class="row-main" data-i18n="converse">Have a conversation</span><span class="row-meta" aria-hidden="true">›</span></span>
           </button>
+          <button class="row" id="home-read" type="button">
+            <span class="row-pic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 016.5 3H20v16H6.5A2.5 2.5 0 004 21.5z"/><path d="M4 18.5A2.5 2.5 0 016.5 16H20"/></svg></span>
+            <span class="row-body"><span class="row-main" data-i18n="read">Read a text</span><span class="row-meta" aria-hidden="true">›</span></span>
+          </button>
         </div>
 
         <section class="group" aria-labelledby="review-title">
           <h2 class="group-title" id="review-title" data-chrome="upForReview">Up for review</h2>
           <div class="list" id="review-list"></div>
+          <button class="btn btn-ghost btn-sm group-action" id="review-all" type="button" data-i18n="review">Review my mistakes</button>
         </section>
 
         <section class="group" aria-labelledby="words-title">
@@ -255,6 +268,14 @@
               <span class="option-label">Pinyin</span>
               <button class="seg" data-ruby="on" type="button">on</button>
               <button class="seg" data-ruby="off" type="button">off</button>
+            </div>
+            <div class="option-group" role="group" aria-label="Level">
+              <span class="option-label">Level</span>
+              <button class="seg" data-level="A1" type="button">A1</button>
+              <button class="seg" data-level="A2" type="button">A2</button>
+              <button class="seg" data-level="B1" type="button">B1</button>
+              <button class="seg" data-level="B2" type="button">B2</button>
+              <button class="seg" data-level="C1" type="button">C1</button>
             </div>
           </div>
 

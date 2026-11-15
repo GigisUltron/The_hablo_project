@@ -48,28 +48,33 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: var(--text);
-    --card: var(--text);
-    --fill: var(--text);
-    --fill-2: var(--text-2);
-    --line: var(--text-2);
-    --border: var(--text-2);
-    --text: var(--card);
-    --text-2: var(--text-3);
-    --text-3: var(--text-3);
-    --accent: var(--accent);
-    --accent-hover: var(--accent);
-    --accent-soft: var(--text);
-    --on-accent: var(--text);
-    --tint: var(--text);
-    --good: var(--good);
-    --good-soft: var(--good-deep);
-    --bad: var(--bad);
-    --bad-soft: var(--bad-deep);
-    --accent-deep: var(--accent);
-    --good-deep: var(--good);
-    --bad-deep: var(--bad);
-    --border-deep: var(--text-2);
+    /* Dark values are written out, never derived from the light tokens by
+     * swapping names. A two-variable swap (--card: var(--text) and
+     * --text: var(--card)) is a cycle: the browser invalidates both, and the
+     * whole screen falls back to transparent backgrounds and default ink. */
+    --bg: #000000;
+    --card: #1c1c1e;
+    --fill: #2c2c2e;
+    --fill-2: #3a3a3c;
+    --line: #38383a;
+    --border: #48484a;
+    --text: #f2f2f7;
+    --text-2: #aeaeb2;
+    --text-3: #8e8e93;
+    --accent: #ff8a5c;
+    --accent-hover: #ffa07a;
+    --accent-soft: #3a1a0e;
+    --on-accent: #1c1c1e;
+    --tint: #2a211c;
+    --good: #30d158;
+    --good-soft: #10331a;
+    --bad: #ff453a;
+    --bad-soft: #3a1512;
+    /* the lower edge of raised buttons */
+    --accent-deep: #c8410c;
+    --good-deep: #1b6a2f;
+    --bad-deep: #a30010;
+    --border-deep: #5a5a5e;
     --bar: rgba(22, 22, 24, 0.94);
     --edge: rgba(255, 255, 255, 0.18);
     --edge-dim: rgba(255, 255, 255, 0.05);
@@ -244,7 +249,7 @@ svg { flex: none; }
 .btn-primary:hover { background: var(--accent-hover); }
 .btn-ghost { background: var(--fill); color: var(--text); }
 .btn-ghost:hover { background: var(--fill-2); }
-.btn-sm { min-height: 36px; padding: 7px 14px; font-size: 15px; }
+.btn-sm { min-height: 44px; padding: 10px 14px; font-size: 15px; }
 .btn-block { width: 100%; min-height: 50px; }
 
 .panel {
@@ -341,7 +346,7 @@ button.row {
   cursor: pointer;
 }
 button.row:active { background: var(--fill); }
-.row { display: flex; align-items: center; gap: 12px; padding-left: 14px; min-height: 52px; }
+.row { display: flex; align-items: center; gap: 12px; padding: 0 0 0 14px; min-height: 52px; }
 .row-pic { width: 32px; text-align: center; font-size: 26px; line-height: 1; }
 .row-body {
   flex: 1;
@@ -425,8 +430,8 @@ button.row:active { background: var(--fill); }
   border: 0;
   background: var(--fill);
   border-radius: var(--radius-pill);
-  min-height: 34px;
-  padding: 6px 14px;
+  min-height: 44px;
+  padding: 8px 14px;
   font-size: 15px;
   cursor: pointer;
 }
@@ -716,8 +721,8 @@ ruby rt {
 .sheet .sentence { color: var(--text-2); }
 .sheet-note { font-size: 15px; font-weight: 600; }
 .sheet-hear {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border: 0;
   border-radius: 50%;
   background: var(--card);
@@ -916,8 +921,8 @@ ruby rt {
 .audio-chip {
   border: 0;
   border-radius: var(--radius-pill);
-  min-height: 32px;
-  padding: 5px 12px;
+  min-height: 44px;
+  padding: 8px 14px;
   font-size: 13px;
   background: var(--fill);
   color: var(--text-2);
@@ -1042,6 +1047,22 @@ ruby rt {
 
 .lesson-card { gap: 16px; padding: 18px; }
 .lesson-top h2 { font-size: 22px; font-weight: 800; }
+
+/* the daily target is a real count of cards finished today, not a currency */
+.daily-goal { display: grid; gap: 8px; margin-top: 2px; }
+.daily-goal-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 600;
+}
+.daily-goal-top b { color: var(--text); font-size: 15px; font-variant-numeric: tabular-nums; }
+.daily-goal .meter { height: 8px !important; }
+.daily-goal .meter i { background: var(--accent); }
+.daily-goal.is-met .meter i { background: var(--good); }
 .lesson-pics .pic { border-radius: var(--radius); box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.06); }
 .lesson-pics .pic:nth-child(2n) { transform: rotate(-3deg); }
 .lesson-pics .pic:nth-child(2n+1) { transform: rotate(2deg); }
@@ -1085,7 +1106,7 @@ button.row:active .row-pic { transform: scale(0.92); }
 
 /* segmented controls: the chosen part lights up and stands raised */
 .size-pick, .map-mode { padding: 3px; gap: 3px; border-radius: var(--radius-sm); }
-.size, .map-mode button { border-radius: var(--radius-sm); font-weight: 700; }
+.size, .map-mode button { border-radius: var(--radius-sm); font-weight: 700; min-height: 44px; }
 .size.is-on, .map-mode button.is-on {
   background: var(--card);
   color: var(--accent);
@@ -1184,13 +1205,34 @@ button.row:active .row-pic { transform: scale(0.92); }
 .step.done .step-n { background: var(--good-soft); color: var(--good); box-shadow: 0 5px 0 var(--good-deep); }
 .step.done .step-t { color: var(--text-2); font-weight: 600; }
 .step.done .ico { width: 26px; height: 26px; }
+.step-need {
+  min-width: 26px;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--fill);
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
 .step:not(.locked):active .step-n { transform: translateY(4px); box-shadow: 0 1px 0 var(--accent-deep); }
 .step:focus-visible { outline: none; }
 .step:focus-visible .step-n { outline: 3px solid var(--accent); outline-offset: 3px; }
+.track-note { padding: 2px 0 0 4px; color: var(--text-2); font-size: 13px; font-weight: 600; }
+.group-action { justify-self: start; margin: 0 16px; }
 
-/* the conversation row's icon */
-#home-conv .row-pic svg { width: 22px; height: 22px; fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
-#home-conv .row-meta { font-size: 22px; color: var(--text-3); }
+/* the quiet rows' line icons */
+#home-conv .row-pic svg, #home-read .row-pic svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+#home-conv .row-meta, #home-read .row-meta { font-size: 22px; color: var(--text-3); }
 
 /* ------------------------------------------------------------ text inputs */
 .type-input {
@@ -1340,6 +1382,9 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 
 /* the two aids, styled like the rest of look E: quiet secondary text, no chrome */
 .gloss-btn, .explain-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   border: 0;
   background: none;
   padding: 8px 0 0;
@@ -1361,6 +1406,7 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   font-weight: 400;
   color: var(--text-2);
 }
+.feedback .gloss-line { color: var(--text); font-weight: 500; }
 
 /* ------------------------------------------------------------------- chat
    The conversation view. Append-only: no existing rule is edited. Tokens

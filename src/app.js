@@ -4,7 +4,8 @@
  * and it runs. State lives in localStorage; audio uses the browser's own speech
  * synthesis, recognition uses the browser's own recogniser when it exists.
  *
- * The one rule the whole UI obeys: a learner is never shown a translation.
+ * A translation is available on request and on the answer state, but never
+ * before the learner has tried to recall the item.
  */
 (function () {
   "use strict";
@@ -45,6 +46,11 @@
 
   function uiLang() {
     return (state && state.profile && state.profile.uiLang) || "en";
+  }
+
+  /* Dates follow the interface language, not a hardcoded en-GB. */
+  function uiLocale() {
+    return uiLang() === "en" ? "en-GB" : uiLang();
   }
 
   /* Chrome in the learner's interface language, not the deck's. */
@@ -91,6 +97,10 @@
   }
 
   function applyStrings() {
+    /* The document language follows the interface language, so screen readers
+     * and hyphenation do not keep announcing an English page in Arabic or
+     * Japanese. Direction stays LTR until the RTL layout is audited. */
+    if (document.documentElement) document.documentElement.lang = uiLang();
     var table = uiTable(uiLang());
     Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (el) {
       var text = table[el.getAttribute("data-i18n")];
@@ -286,10 +296,24 @@
     if (s.profile) {
       s.profile.lang = code;
       s.profile.byLang = s.profile.byLang || {};
+      /* Levels are per language: leaving Spanish at B1 must not make a brand
+       * new Arabic deck report B1 too. Older saves carry one global level, so
+       * adopt it for the language they were on and start others at A1. */
+      s.profile.levelByLang = s.profile.levelByLang && typeof s.profile.levelByLang === "object"
+        ? s.profile.levelByLang
+        : {};
+      if (s.profile.level && !s.profile.levelByLang[code]) {
+        s.profile.levelByLang[code] = s.profile.level;
+      }
       /* Older saves kept one deck at the top level. Adopt it as that pack's
        * archive instead of throwing it away. */
       if (!s.profile.byLang[code]) s.profile.byLang[code] = bucketOf(s);
       else loadBucket(s, s.profile.byLang[code]);
+    }
+
+    /* A day starts clean; an old save with no counter starts at zero. */
+    if (!s.daily || s.daily.date !== dayKey(Date.now()) || typeof s.daily.cards !== "number") {
+      s.daily = { date: dayKey(Date.now()), cards: 0 };
     }
 
     s.settings = s.settings || {};
@@ -355,6 +379,7 @@
     state.placement = null;
     state.memory = fresh.memory;
     state.alphabet = {};
+    state.daily = { date: dayKey(Date.now()), cards: 0 };
   }
 
   function bucketOf(s) {
@@ -420,7 +445,7 @@
     if (note) {
       note.textContent = list.length > 1
         ? "Each language keeps its own deck, progress and audio."
-        : "More languages need their own deck and audio — Spanish is the only pack so far.";
+        : "More languages need their own deck and audio.";
     }
   }
 
@@ -466,6 +491,14 @@
       state.settings.fields = Object.keys(D.categories);
     }
 
+    /* A language with no placement of its own starts at the beginning. The
+     * level of the deck you left stays with that deck. */
+    if (state.profile) {
+      state.profile.levelByLang = state.profile.levelByLang || {};
+      if (!state.profile.levelByLang[code]) state.profile.levelByLang[code] = "A1";
+      state.profile.level = state.profile.levelByLang[code];
+    }
+
     seedDeck(state);
     session = null;
     reader = null;
@@ -478,6 +511,7 @@
     renderLangPickers();
     updateSetupCopy();
     renderToday();
+    if (currentView === "settings") renderSettingsOptions();
     if (currentView === "map") buildMap();
     if (currentView === "stats") renderStats();
     return true;
@@ -486,9 +520,11 @@
   function beginProfile(level) {
     var code = (ACTIVE && ACTIVE.code) || "es";
     var byLang = (state.profile && state.profile.byLang) || {};
+    var levels = (state.profile && state.profile.levelByLang) || {};
     var ui = state.profile && state.profile.uiLang;
     byLang[code] = bucketOf(state);
-    state.profile = { level: level, lang: code, byLang: byLang };
+    levels[code] = level;
+    state.profile = { level: level, levelByLang: levels, lang: code, byLang: byLang };
     if (ui) state.profile.uiLang = ui;
     save();
   }
@@ -565,6 +601,16 @@
 
   function hasBundled() {
     return !!(bundled && Object.keys(bundled).length);
+  }
+
+  /* Test the active pack, not a hardcoded Spanish word: the settings chip used
+   * to say "noche" while a French or Arabic deck was loaded. */
+  function audioTestItem() {
+    var ids = deckIds();
+    for (var i = 0; i < ids.length; i += 1) {
+      if (bundled && bundled[ids[i]]) return itemOf(ids[i]);
+    }
+    return ids.length ? itemOf(ids[0]) : null;
   }
 
   /* Prefer the WAV shipped with the app: it works on a machine with no
@@ -720,7 +766,9 @@
     if (window.history && window.history.replaceState) {
       window.history.replaceState(null, "", "#" + view);
     }
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    /* Smooth scrolling is motion; a reduced-motion preference gets the jump. */
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
   }
 
   /* ---------------------------------------------------------------- today */
@@ -738,6 +786,7 @@
     mark("[data-length]", "data-length", (state.settings && state.settings.length) || "goal");
     mark("[data-audio]", "data-audio", audioEnabled() ? "on" : "off");
     mark("[data-ruby]", "data-ruby", rubyOn() ? "on" : "off");
+    mark("[data-level]", "data-level", learnerLevel());
 
     var group = $("ruby-group");
     if (group) group.hidden = !hasScriptLesson();
@@ -816,8 +865,8 @@
     var due = S.dueList(state, Date.now()).filter(function (id) {
       return state.cards[id] && state.cards[id].last !== null;
     }).length;
-    var known = allIds.filter(function (id) { return state.cards[id].reps > 0; }).length;
-    var mastered = allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
+    var known = allIds.filter(function (id) { return state.cards[id] && state.cards[id].reps > 0; }).length;
+    var mastered = allIds.filter(function (id) { return state.cards[id] && state.cards[id].interval >= 6; }).length;
 
     $("stat-due").textContent = due;
     $("stat-learned").textContent = known;
@@ -825,7 +874,19 @@
     $("stat-streak").textContent = currentStreak();
     $("stat-mastered").textContent = mastered;
     $("known-bar").style.width = Math.round((known / Math.max(allIds.length, 1)) * 100) + "%";
-    $("today-date").textContent = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+
+    var goal = ADAPT ? ADAPT.dailyGoal(state.history) : 8;
+    var today = state.daily && state.daily.date === dayKey(Date.now()) ? state.daily.cards : 0;
+    $("stat-daily").textContent = today;
+    $("stat-goal").textContent = goal;
+    $("goal-bar").style.width = Math.min(100, Math.round((today / Math.max(goal, 1)) * 100)) + "%";
+    $("goal-meter").setAttribute("aria-valuenow", String(today));
+    $("goal-meter").setAttribute("aria-valuemax", String(Math.max(goal, today)));
+    $("daily-goal").classList.toggle("is-met", today >= goal);
+
+    var date = new Date().toLocaleDateString(uiLocale(), { weekday: "long", day: "numeric", month: "long" });
+    $("today-date").textContent = date + " · " + ACTIVE.name + " · " + learnerLevel();
+    $("lesson-meta").textContent = tr("aboutMinute", "about 1 min");
 
     var next = renderNextStack();
     $("lesson-name").textContent = next.title;
@@ -837,7 +898,9 @@
   function renderReviewList() {
     var box = $("review-list");
     var now = Date.now();
-    var ids = allIds.concat(phraseIds).filter(function (id) {
+    /* Grammar basics have no picture or schema glyph, so they stay out of this
+     * visual list; they are still scheduled and still appear in a lesson. */
+    var ids = allIds.concat(phraseIds, termIds).filter(function (id) {
       return state.cards[id] && state.cards[id].last !== null;
     }).sort(function (a, b) {
       return state.cards[a].due - state.cards[b].due;
@@ -850,15 +913,33 @@
     box.innerHTML = ids.map(function (id) {
       var it = itemOf(id);
       var due = state.cards[id].due;
-      return '<div class="row">' +
+      return '<button class="row" type="button" data-review="' + esc(id) + '"' +
+        ' aria-label="Review ' + esc(it.text) + '">' +
         '<span class="row-pic" aria-hidden="true">' +
           (it.schema && typeof schemaSVG === "function" ? schemaSVG(it.schema) : (it.emoji || "")) +
         "</span>" +
         '<span class="row-body">' +
           '<span class="row-main">' + articleHTML(it.article) + textHTML(it) + "</span>" +
           '<span class="row-meta">' + (due <= now ? "Now" : capital(whenFrom(due - now))) + "</span>" +
-        "</span></div>";
+        "</span></button>";
     }).join("");
+
+    Array.prototype.forEach.call(box.querySelectorAll("[data-review]"), function (btn) {
+      btn.addEventListener("click", function () {
+        reviewOne(btn.getAttribute("data-review"));
+      });
+    });
+  }
+
+  /* A due row is a direct route into a one-card review, not just a label. */
+  function reviewOne(id) {
+    if (!state.cards[id] || !reviewable(id)) {
+      toast("That one is not ready to review yet.");
+      return;
+    }
+    session = newSession("mixed", [], [id]);
+    show("session");
+    renderQuiz();
   }
 
   function capital(s) {
@@ -978,6 +1059,7 @@
       if (state.history.length > 50) state.history = state.history.slice(-50);
       state.sessions += 1;
       state.lastSession = Date.now();
+      bumpDaily();
       bumpStreak();
       save();
     }
@@ -1091,6 +1173,7 @@
       if (state.history.length > 50) state.history = state.history.slice(-50);
       state.sessions += 1;
       state.lastSession = Date.now();
+      bumpDaily();
       bumpStreak();
       save();
     }
@@ -1283,6 +1366,7 @@
     if (state.history.length > 50) state.history = state.history.slice(-50);
     state.sessions += 1;
     state.lastSession = Date.now();
+    bumpDaily();
     bumpStreak();
     save();
 
@@ -1701,9 +1785,12 @@
     chat.scripted = session;
 
     var reply = [res.reply, res.next].filter(Boolean).join(" ").trim();
-    if (!reply && res.done) reply = ACTIVE.code === "fr" ? "À bientôt !" : "¡Hasta pronto!";
     if (!reply) {
-      setChatFeedback("the scripted partner has nothing more to say.", "");
+      /* Never invent a Spanish goodbye for an Arabic or Japanese deck: when
+       * the script is out of turns, say so in the interface language and stop. */
+      setChatFeedback(res.done
+        ? "that's the end of this scripted conversation."
+        : "the scripted partner has nothing more to say.", "");
       return;
     }
 
@@ -1737,7 +1824,7 @@
       baseUrl: chatEndpoint(),
       engine: chatMeta.engine,
       model: chatMeta.model,
-      system: CE.buildSystemPrompt(ACTIVE, state.profile && state.profile.level),
+      system: CE.buildSystemPrompt(ACTIVE, learnerLevel()),
       history: chat.messages.slice(-CE.MAX_HISTORY),
       vision: chatMeta.vision,
       timeoutMs: 45000
@@ -1889,9 +1976,12 @@
     var units = trackUnits();
     var ratio = correct / total;
     var floor = Math.min(units.length - 1, Math.floor(ratio * units.length));
+    var band = floor >= 3 ? "B1" : floor >= 1 ? "A2" : "A1";
     state.placement = { floor: floor, score: correct, total: total, at: Date.now() };
     if (state.profile) {
-      state.profile.level = floor >= 3 ? "B1" : floor >= 1 ? "A2" : "A1";
+      state.profile.level = band;
+      state.profile.levelByLang = state.profile.levelByLang || {};
+      state.profile.levelByLang[ACTIVE.code] = band;
     }
     placement = null;
     save();
@@ -1906,7 +1996,17 @@
   /* ---------------------------------------------------------------- track */
 
   function solidCount() {
-    return allIds.filter(function (id) { return state.cards[id].interval >= 6; }).length;
+    return allIds.filter(function (id) { return state.cards[id] && state.cards[id].interval >= 6; }).length;
+  }
+
+  /* The path is measured in everything the deck teaches, not only its nouns.
+   * A starter pack has 24 concepts but 80 cards, so a concept-only count made
+   * its last units permanently locked. This count is what the track unlocks
+   * on; the adaptive session still uses concept solidity above. */
+  function solidDeckCount() {
+    return deckIds().filter(function (id) {
+      return state.cards[id] && state.cards[id].interval >= 6;
+    }).length;
   }
 
   /* ------------------------------------------------------------- the script */
@@ -1971,7 +2071,7 @@
   }
 
   function trackRows() {
-    var rows = TRACK ? TRACK.map(solidCount(), trackOpts()) : [];
+    var rows = TRACK ? TRACK.map(solidDeckCount(), trackOpts()) : [];
     var floor = placementFloor();
     rows.forEach(function (r) {
       r.unlocked = r.unlocked || r.index <= floor;
@@ -1999,9 +2099,8 @@
   }
 
   function unlockLine(row) {
-    var rows = trackRows();
-    var prev = row && row.index > 0 ? rows[row.index - 1] : null;
-    return prev ? "finish " + prev.title + " first" : "that lesson opens later";
+    if (!row) return "that lesson opens later";
+    return row.remaining + " more cards to unlock " + row.title;
   }
 
   function defaultUnit() {
@@ -2023,11 +2122,13 @@
       var done = u.unlocked && !u.current && u.index < currentIndex;
       var cls = "step" + (u.unlocked ? "" : " locked") + (u.current ? " now" : "") + (done ? " done" : "");
       var face = done ? ICON.check : u.unlocked ? u.index + 1 : ICON.lock;
+      var label = u.title + (u.unlocked ? "" : ", " + u.remaining + " more cards to unlock");
       return '<button class="' + cls + '" type="button" data-unit="' + esc(u.id) + '"' +
+        ' aria-label="' + esc(label) + '"' +
         (u.unlocked ? "" : ' aria-disabled="true"') + ">" +
         '<span class="step-n">' + face + "</span>" +
         '<span class="step-t">' + esc(u.title) + "</span>" +
-        (u.unlocked ? "" : '<span class="sr-only">locked</span>') +
+        (u.unlocked ? "" : '<span class="step-need" aria-hidden="true">' + u.remaining + "</span>") +
       "</button>";
     }).join("");
 
@@ -2039,12 +2140,20 @@
         startSession({ unit: unit });
       });
     });
+
+    var note = $("track-note");
+    if (note) {
+      var next = rows.filter(function (r) { return !r.unlocked; })[0];
+      note.textContent = next
+        ? next.remaining + (next.remaining === 1 ? " card" : " cards") + " to " + next.title
+        : rows.length + " units open — practise anything.";
+    }
   }
 
   /* --------------------------------------------------------------- streak */
 
   function dayKey(d) {
-    var x = d || new Date();
+    var x = d == null ? new Date() : (d instanceof Date ? d : new Date(d));
     return x.getFullYear() + "-" + ("0" + (x.getMonth() + 1)).slice(-2) + "-" + ("0" + x.getDate()).slice(-2);
   }
 
@@ -2076,8 +2185,8 @@
 
   /* A lesson can teach a word or a whole phrase; both present the same shape
    * to the drill, so there is one renderer to maintain instead of two. */
-  /* The English meaning, on request. Hidden by default in settings, and never
-   * on the answer state, where the Spanish is already visible. */
+  /* The English meaning on the teach card. The quiz prompt withholds it; the
+   * answer state prints it in `feedback`, after the learner has committed. */
   function glossHTML(id) {
     if ((state.settings && state.settings.translations) === "off") return "";
     var g = (window.SEMA_GLOSSES || {})[id];
@@ -2295,8 +2404,9 @@
    * beginner. Treating an unknown band as permission is how a B1 connector
    * reached someone who had not met "hola" yet. */
   function learnerLevel() {
-    var band = state.profile && state.profile.level;
-    return ADAPT.CEFR.indexOf(band) === -1 ? "A1" : band;
+    return ADAPT && ADAPT.levelFor
+      ? ADAPT.levelFor(state.profile, ACTIVE && ACTIVE.code)
+      : "A1";
   }
 
   function atLevel(id) {
@@ -2557,6 +2667,7 @@
 
     MEM.markReviewed(state.memory, p.sentence.id, Date.now());
     MEM.recordAttempt(state.memory, ok, 0);
+    countToday("personal:" + p.sentence.id);
     save();
 
     var answer = esc(p.cloze.answer);
@@ -2627,6 +2738,7 @@
       times: [],
       qStart: 0,
       answered: {},
+      counted: {},
       firstCorrect: 0,
       unique: 0
     };
@@ -2852,6 +2964,7 @@
     $("gotit").addEventListener("click", function () {
       session.firstCorrect += 1;   // it was taught and acknowledged, not guessed
       S.review(state, id, 2, Date.now());
+      countToday(id);
       save();
       session.qi += 1;
       renderQuiz();
@@ -2859,21 +2972,41 @@
   }
 
   /* The first question that tests a rule, not a word. */
-  /* Some persons have two valid pronouns: "es" is either él or ella. Both must
-   be offered and both accepted, or the question punishes a coin flip. */
-  var PRONOUN = { "1s": ["yo"], "2s": ["tú"], "3s": ["él", "ella"], "1p": ["nosotros"], "3p": ["ellos"] };
+  /* Pronouns come from the live pack's grammar deck, never a Spanish table:
+   * French needs "je / tu / il / elle", Japanese needs its own words, and a
+   * learner should never be shown "yo" while studying Arabic. Some persons
+   * have two valid pronouns, and both are accepted. */
+  function pronounsFor(person) {
+    var out = [];
+    basicIds.forEach(function (id) {
+      var b = basicById[id];
+      if (!b || b.kind !== "pronoun" || b.person !== person || !b.text) return;
+      if (out.indexOf(b.text) === -1) out.push(b.text);
+    });
+    return out;
+  }
+
+  function allPronouns() {
+    var out = [];
+    basicIds.forEach(function (id) {
+      var b = basicById[id];
+      if (!b || b.kind !== "pronoun" || !b.text) return;
+      if (out.indexOf(b.text) === -1) out.push(b.text);
+    });
+    return out;
+  }
 
   function renderPerson(id) {
     var it = itemOf(id);
-    var accepted = PRONOUN[it.person] || ["yo"];
-    var others = Object.keys(PRONOUN).reduce(function (acc, k) {
-      if (k === it.person) return acc;
-      return acc.concat(PRONOUN[k]);
-    }, []).slice(0, 2);
+    var accepted = pronounsFor(it.person);
+    if (!accepted.length) accepted = [it.text];
+    var others = allPronouns().filter(function (w) {
+      return accepted.indexOf(w) === -1;
+    }).slice(0, 2);
     var set = S.shuffle(accepted.concat(others), Math.random);
 
     $("stage").innerHTML =
-      '<p class="prompt">¿Quién?</p>' +
+      '<p class="prompt">' + esc(tr("whichOne", "Which one is this?")) + "</p>" +
       '<div class="word">' + esc(it.text) + "</div>" +
       '<p class="sentence">' + esc(it.sub || "") + "</p>" +
       '<div class="word-options">' + set.map(function (w) {
@@ -3160,6 +3293,23 @@
     $("reveal").addEventListener("click", function () { answer(false, null); });
   }
 
+  /* Count a whole lesson (a text, a script chunk) toward today's goal. */
+  function bumpDaily() {
+    state.daily = ADAPT && ADAPT.bumpDaily
+      ? ADAPT.bumpDaily(state.daily, Date.now())
+      : { date: dayKey(Date.now()), cards: ((state.daily && state.daily.cards) || 0) + 1 };
+  }
+
+  /* One card counts once for the day, even when a miss brings it back later. */
+  function countToday(id) {
+    if (!session) return;
+    session.counted = session.counted || {};
+    if (session.counted[id]) return;
+    session.counted[id] = true;
+    bumpDaily();
+    save();
+  }
+
   function answer(ok, chosenId) {
     var id = session.quiz[session.qi];
     var it = itemOf(id);
@@ -3167,6 +3317,7 @@
       session.times.push(Date.now() - session.qStart);
       session.qStart = 0;
     }
+    countToday(id);
 
     if (ok) {
       if (!session.missed[id]) session.firstCorrect += 1;
@@ -3197,7 +3348,8 @@
     if (ok) {
       /* correct: no confirmation tap. It moves on by itself. */
       $("actions").innerHTML = "";
-      setTimeout(advance, 650);
+      /* long enough to read the one-line reason, short enough to keep the loop */
+      setTimeout(advance, 900);
     } else {
       $("actions").innerHTML = '<button class="btn btn-primary" id="next">Continue →</button>';
       $("next").addEventListener("click", advance);
@@ -3257,7 +3409,7 @@
       var field = $("compose-input");
       var text = field ? field.value : "";
       var kept = MEM.addSentence(state.memory, text, Object.keys(session.answered), Date.now());
-      if (!kept) { toast("A few more words, in Spanish."); return; }
+      if (!kept) { toast("A few more words, in " + LANG.name + "."); return; }
       save();
       var form = document.querySelector(".compose");
       if (form) {
@@ -3301,8 +3453,8 @@
     if (!it) return "";
     if (it.kind === "basic") {
       if (it.of) {
-        var who = { "1s": "yo", "2s": "tú", "3s": "él o ella", "1p": "nosotros", "3p": "ellos" }[it.person] || "";
-        return it.text + " is " + it.of + " for " + who + " — " + (it.sub || "");
+        var who = pronounsFor(it.person).join(" / ");
+        return it.text + " is " + it.of + (who ? " for " + who : "") + " — " + (it.sub || "");
       }
       return it.text + " names who the verb is about.";
     }
@@ -3333,7 +3485,13 @@
     var f = $("feedback");
     var why = whyText(it);
     var note = it ? confusionNote(it.id) : "";
+    /* The English meaning lands with the verdict, not only behind a control.
+     * It is deliberately absent before the answer, where it would give it away. */
+    var gloss = it && it.kind !== "basic" && (!state.settings || state.settings.translations !== "off")
+      ? (window.SEMA_GLOSSES || {})[it.id]
+      : "";
     f.innerHTML = esc(msg) +
+      (gloss ? '<span class="why gloss-line">' + esc(gloss) + "</span>" : "") +
       (why ? '<span class="why">' + esc(why) + "</span>" : "") +
       (note ? '<span class="why">' + esc(note) + "</span>" : "");
     f.className = "feedback" + (kind ? " " + kind : "");
@@ -3663,6 +3821,8 @@
     if (switchLang(this.value)) toast(ACTIVE.name + " deck loaded. Progress stays with each language.");
   });
   $("home-conv").addEventListener("click", startConversation);
+  $("home-read").addEventListener("click", startReader);
+  $("review-all").addEventListener("click", reviewMistakes);
   $("reset-btn").addEventListener("click", function () {
     if (!window.confirm("Clear all progress in every language on this device?")) return;
     try { localStorage.removeItem(STORE_KEY); } catch (err) { /* ignore */ }
@@ -3723,10 +3883,28 @@
       redraw();
     });
   });
+
+  /* A level belongs to the language on screen. Setting it here is how an
+   * advanced learner reaches B2/C1 material that placement tops out below. */
+  Array.prototype.forEach.call(document.querySelectorAll("[data-level]"), function (b) {
+    b.addEventListener("click", function () {
+      var level = b.getAttribute("data-level");
+      if (ADAPT.CEFR.indexOf(level) === -1) return;
+      state.profile = state.profile || {};
+      state.profile.levelByLang = state.profile.levelByLang || {};
+      state.profile.levelByLang[ACTIVE.code] = level;
+      state.profile.level = level;
+      save();
+      renderSettingsOptions();
+      renderToday();
+      toast(ACTIVE.name + " set to " + level + ".");
+    });
+  });
   $("quit-btn").addEventListener("click", function () {
     session = null;
     // backing out of the placement returns to the question, not to a lesson
-    if (state.profile && state.profile.level === "?") { show("setup"); return; }
+    var lvl = state.profile && state.profile.levelByLang && state.profile.levelByLang[ACTIVE.code];
+    if ((lvl || (state.profile && state.profile.level)) === "?") { show("setup"); return; }
     show("today");
   });
   $("map-practice").addEventListener("click", function () { startSession(); });
@@ -3758,15 +3936,20 @@
   /* Deep links: #map, #stats and #practice are shareable — useful for sharing,
    * and they let the views be driven without a click. */
   $("audio-chip").addEventListener("click", function () {
-    sayItem(itemOf("noche"));
-    toast(audioStatus().state === "ok"
-      ? "That was the synthesized voice — if you heard nothing, check the system volume."
-      : "No " + LANG.name + " voice on this device; everything still works without audio.");
+    var sample = audioTestItem();
+    if (!sample) { toast("This pack has no sample to play yet."); return; }
+    sayItem(sample);
+    toast(hasBundled()
+      ? "That was the bundled pronunciation."
+      : audioStatus().state === "ok"
+        ? "That was the synthesized voice — if you heard nothing, check the system volume."
+        : "No " + LANG.name + " voice on this device; everything still works without audio.");
   });
   updateAudioChip();
 
   /* a chosen interface language is not onboarding: setup still asks a level */
-  if (!state.profile || !state.profile.level) show("setup");
+  var currentLevel = state.profile && state.profile.levelByLang && state.profile.levelByLang[ACTIVE.code];
+  if (!state.profile || !currentLevel || currentLevel === "?") show("setup");
   var initial = String(window.location.hash || "").replace("#", "");
   renderToday();
   if (initial === "practice") startSession();

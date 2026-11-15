@@ -20,8 +20,17 @@ test("no styles reference the retired poster skin", () => {
   assert.deepEqual(hits, [], "legacy tokens still used: " + hits.join(", "));
 });
 
+test("the dark theme never derives its palette from itself", () => {
+  const start = css.indexOf("@media (prefers-color-scheme: dark)");
+  assert.notEqual(start, -1, "no dark theme");
+  const end = css.indexOf("color-scheme: dark", start);
+  const dark = css.slice(start, end);
+  assert.equal(/var\(--/.test(dark), false,
+    "dark tokens must be literal values; a var() reference can form a cycle");
+});
+
 test("hardcoded colours and radii only decrease", () => {
-  const body = css.replace(/:root\s*\{[^}]*\}/, "");
+  const body = css.replace(/:root\s*\{[^}]*\}/g, "");
   const hex = new Set([...body.matchAll(/#[0-9a-fA-F]{3,8}\b/g)].map((m) => m[0].toLowerCase()));
   const radii = new Set([...body.matchAll(/border-radius:\s*([^;]+)/g)].map((m) => m[1].trim()));
   // ceilings measured today; they may fall, never rise

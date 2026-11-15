@@ -18,7 +18,23 @@ test("unlocks step by step with solid cards", () => {
 test("the current unit is the furthest unlocked one", () => {
   assert.equal(T.currentUnit(0).id, "u1");
   assert.equal(T.currentUnit(7).id, "u2");
-  assert.equal(T.currentUnit(99).id, "u6");
+  assert.equal(T.currentUnit(99).id, "u9");
+});
+
+test("the path covers every field a pack can teach", () => {
+  const covered = new Set();
+  T.units.forEach((u) => (u.fields || []).forEach((f) => covered.add(f)));
+  for (const field of ["home", "food", "nature", "animals", "body", "city", "time", "emotion", "action", "abstract"]) {
+    assert.ok(covered.has(field), "no lesson teaches " + field);
+  }
+});
+
+test("every unit is reachable in the smallest starter deck", () => {
+  // A starter pack ships 24 concepts + 32 phrases + 8 terms + 16 basics.
+  const starterCards = 24 + 32 + 8 + 16;
+  const last = T.units[T.units.length - 1];
+  assert.ok(last.need < starterCards,
+    `last unit needs ${last.need} solid cards; a starter deck only has ${starterCards}`);
 });
 
 test("remaining counts down to the next unlock", () => {
