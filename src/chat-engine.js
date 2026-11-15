@@ -179,6 +179,19 @@
 
   /* The wrap-up is a one-off coaching turn, not part of the conversation. It
    * asks for English notes so they stay readable under any interface. */
+  /* Writing practice is checked as a draft, not graded for SRS. The model
+   * rewrites in the target language and leaves one short note in the UI. */
+  function buildWritingPrompt(pack, level, uiLanguage, sentence) {
+    var name = String((pack && pack.name) || "the target language");
+    var reply = String(uiLanguage || "English");
+    var text = String(sentence || "").trim().slice(0, 300);
+    return "You are a kind " + name + " writing coach. The learner is at level " + String(level || "A1") +
+      ". They wrote: " + text + ". " +
+      "Reply in " + reply + " only. First, rewrite the sentence naturally in " + name +
+      ". Then add one short note about what changed. If it is already correct, say so and repeat it. " +
+      "Keep the whole reply under 60 words. No grammar lecture, no emoji.";
+  }
+
   /* Progress is read from real counts, never from a model's guess. */
   function buildProgressPrompt(pack, level, uiLanguage, stats, personal) {
     var name = String((pack && pack.name) || "the target language");
@@ -659,6 +672,7 @@
     buildExplainPrompt: buildExplainPrompt,
     buildSessionCoachPrompt: buildSessionCoachPrompt,
     buildProgressPrompt: buildProgressPrompt,
+    buildWritingPrompt: buildWritingPrompt,
     buildMessages: buildMessages,
     buildRequest: buildRequest,
     normaliseBaseUrl: normaliseBaseUrl,

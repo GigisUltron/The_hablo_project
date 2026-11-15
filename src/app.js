@@ -5980,9 +5980,49 @@
         '<label class="prompt" for="compose-input">' + esc(tr("composeLabel", "one sentence with today's words")) + "</label>" +
         '<textarea class="type-input" id="compose-input" rows="2" maxlength="160" ' +
           'placeholder="' + esc(tr("composePlaceholder", "write a sentence")) + '"></textarea>' +
-        '<button class="btn btn-ghost btn-sm" id="compose-save">' + esc(tr("keepIt", "keep it")) + '</button>' +
+        '<div class="compose-actions">' +
+          '<button class="btn btn-ghost btn-sm" id="compose-check" type="button">' +
+            esc(tr("checkSentence", "Check sentence")) + "</button>" +
+          '<button class="btn btn-ghost btn-sm" id="compose-save">' + esc(tr("keepIt", "keep it")) + '</button>' +
+        "</div>" +
+        '<p class="builder-note" id="compose-feedback" role="status"></p>' +
       "</div>");
 
+    $("compose-check").addEventListener("click", function () {
+      var field = $("compose-input");
+      var text = field ? String(field.value || "").trim() : "";
+      var btn = $("compose-check");
+      var note = $("compose-feedback");
+      if (!text) {
+        if (note) note.textContent = tr("composeEmpty", "Write a sentence first.");
+        return;
+      }
+      if (!AITOOLS || !CE) {
+        if (note) note.textContent = tr("sentenceCoachFallback", "No model answered; keep the sentence if it uses today's words.");
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = tr("coachThinking", "Writing a short coach note…");
+      if (note) note.textContent = tr("coachThinking", "Writing a short coach note…");
+      localModelAsk(
+        CE.buildWritingPrompt(ACTIVE, learnerLevel(), uiName(uiLang()), text),
+        "Check the sentence now."
+      ).then(function (reply) {
+        if (note && note.isConnected) {
+          note.textContent = String(reply || "").trim().slice(0, 360) ||
+            tr("sentenceCoachFallback", "No model answered; keep the sentence if it uses today's words.");
+        }
+      }).catch(function () {
+        if (note && note.isConnected) {
+          note.textContent = tr("sentenceCoachFallback", "No model answered; keep the sentence if it uses today's words.");
+        }
+      }).then(function () {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = tr("checkSentence", "Check sentence");
+        }
+      });
+    });
     $("compose-save").addEventListener("click", function () {
       var field = $("compose-input");
       var text = field ? field.value : "";
