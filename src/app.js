@@ -1713,51 +1713,138 @@
   function startAlphabet() {
     var queue = alphabetChunk();
     if (!queue.length) { toast(tr("noAlphabet", "This deck has no alphabet yet.")); return; }
-    alphabet = { queue: queue, i: 0, startedAt: Date.now(), done: false };
+    alphabet = { queue: queue, i: 0, startedAt: Date.now(), done: false, revealed: false, grid: false, spoke: false };
     show("alphabet");
     renderAlphabetLetter();
   }
 
+  function alphabetNote() {
+    return (ACTIVE && ACTIVE.alphabet && ACTIVE.alphabet.note) || "";
+  }
+
+  function letterDirection() {
+    return /^(ar|fa|he|ur)(-|$)/i.test(String((LANG && LANG.locale) || "")) ? "rtl" : "ltr";
+  }
+
+  function renderAlphabetGrid() {
+    if (!alphabet) return;
+    var letters = scriptLetters();
+    alphabet.grid = true;
+    $("alphabet-count").textContent = alphabetKnown() + "/" + letters.length;
+    $("alphabet-bar").style.width = Math.round((alphabetKnown() / Math.max(1, letters.length)) * 100) + "%";
+    $("alphabet-feedback").textContent = "";
+    $("alphabet-feedback").className = "feedback";
+    $("alphabet-stage").innerHTML =
+      '<p class="prompt">' + esc(tr("allLetters", "All letters")) + "</p>" +
+      (alphabetNote() ? '<details class="letter-note"><summary>' + esc(tr("theScript", "The script")) +
+        "</summary><p>" + esc(alphabetNote()) + "</p></details>" : "") +
+      '<p class="letter-question">' + esc(tr("tapLetter", "Tap a letter to hear it")) + "</p>" +
+      '<div class="letter-grid">' + letters.map(function (l, i) {
+        return '<button class="letter-tile" type="button" data-letter-index="' + i + '">' +
+          '<b lang="' + esc((LANG && LANG.locale) || "") + '" dir="' + letterDirection() + '">' +
+          esc(l.letter) + "</b><span>" + esc(l.name || "") + "</span></button>";
+      }).join("") + "</div>";
+    Array.prototype.forEach.call(document.querySelectorAll("[data-letter-index]"), function (btn) {
+      btn.addEventListener("click", function () {
+        var index = Number(btn.getAttribute("data-letter-index"));
+        var l = letters[index];
+        if (!l) return;
+        $("alphabet-feedback").textContent = l.hint || "";
+        sayExample(l, btn);
+      });
+    });
+    $("alphabet-actions").innerHTML =
+      '<button class="btn btn-primary" id="alphabet-cards" type="button">' +
+        esc(tr("backToCards", "Back to cards")) + "</button>" +
+      '<button class="btn btn-ghost btn-sm" id="alphabet-done" type="button">' +
+        esc(tr("leave", "done for now")) + "</button>";
+    $("alphabet-cards").addEventListener("click", function () {
+      alphabet.grid = false;
+      renderAlphabetLetter();
+    });
+    $("alphabet-done").addEventListener("click", function () { alphabet = null; show("today"); });
+  }
+
   function renderAlphabetLetter() {
     if (!alphabet) return;
+    if (alphabet.grid) { renderAlphabetGrid(); return; }
     if (alphabet.i >= alphabet.queue.length) { finishAlphabet(); return; }
 
     var l = alphabet.queue[alphabet.i];
     var last = alphabet.i === alphabet.queue.length - 1;
+    var revealed = !!alphabet.revealed;
     $("alphabet-count").textContent = (alphabet.i + 1) + "/" + alphabet.queue.length;
     $("alphabet-bar").style.width = Math.round((alphabet.i / alphabet.queue.length) * 100) + "%";
     $("alphabet-feedback").textContent = "";
     $("alphabet-feedback").className = "feedback";
-    $("alphabet-stage").innerHTML =
-      '<p class="prompt">' + esc(tr("theScript", "The script")) + "</p>" +
-      '<div class="letter-big" lang="' + esc((LANG && LANG.locale) || "") + '">' + esc(l.letter) + "</div>" +
-      (String(l.name || "").toLowerCase() !== String(l.letter || "").toLowerCase()
-        ? '<p class="letter-name">' + esc(l.name) + "</p>" : "") +
-      (l.hint ? '<p class="letter-hint">' + esc(l.hint) + "</p>" : "") +
-      (l.example
-        ? (audioAvailable()
+
+    var detail = "";
+    if (revealed) {
+      var example = "";
+      if (l.example) {
+        example = audioAvailable()
           ? '<button class="letter-example" id="letter-hear" type="button" aria-label="' +
               esc(tr("hearit", "Hear it")) + '">' + ICON.speaker + "<span>" + esc(l.example) + "</span></button>"
-          : '<p class="letter-example-text">' + esc(l.example) + "</p>")
-        : "");
+          : '<p class="letter-example-text">' + esc(l.example) + "</p>";
+      }
+      detail =
+        '<div class="letter-detail">' +
+          (String(l.name || "").toLowerCase() !== String(l.letter || "").toLowerCase()
+            ? '<p class="letter-name">' + esc(l.name) + "</p>" : "") +
+          (l.hint ? '<p class="letter-hint">' + esc(l.hint) + "</p>" : "") +
+          example +
+        "</div>";
+    } else {
+      detail = '<p class="letter-question">' + esc(tr("letterQuestion", "What sound does this letter make?")) + "</p>";
+    }
 
-    var hear = $("letter-hear");
-    if (hear) hear.addEventListener("click", function () { sayExample(l, hear); });
-    /* only the bundled clip plays on arrival; a synthesized voice on every
-     * letter would talk over the learner */
-    var exampleId = exampleIdFor(l.example);
-    if (exampleId && audioAvailable() && bundled && bundled[exampleId]) sayItem(itemOf(exampleId));
+    $("alphabet-stage").innerHTML =
+      '<p class="prompt">' + esc(tr("theScript", "The script")) + "</p>" +
+      '<div class="letter-card' + (revealed ? " is-revealed" : "") + '">' +
+        '<div class="letter-big" lang="' + esc((LANG && LANG.locale) || "") + '" dir="' + letterDirection() + '">' +
+          esc(l.letter) + "</div>" + detail +
+      "</div>" +
+      (alphabetNote() ? '<details class="letter-note"><summary>' + esc(tr("theScript", "The script")) +
+        "</summary><p>" + esc(alphabetNote()) + "</p></details>" : "");
+
+    if (revealed) {
+      var hear = $("letter-hear");
+      if (hear) hear.addEventListener("click", function () { sayExample(l, hear); });
+      if (!alphabet.spoke) {
+        alphabet.spoke = true;
+        sayExample(l);
+      }
+    }
 
     $("alphabet-actions").innerHTML =
-      '<button class="btn btn-primary" id="letter-next">' +
-        esc(last ? tr("finish", "Finish") : tr("nextLetter", "Next letter")) + "</button>";
-    $("letter-next").addEventListener("click", function () {
+      (revealed
+        ? '<button class="btn btn-primary" id="letter-next" type="button">' +
+            esc(last ? tr("finish", "Finish") : tr("nextLetter", "Next letter")) + "</button>"
+        : '<button class="btn btn-primary" id="letter-reveal" type="button">' +
+            esc(tr("showSound", "Show the sound")) + "</button>") +
+      '<button class="btn btn-ghost btn-sm" id="letter-all" type="button">' +
+        esc(tr("allLetters", "All letters")) + "</button>";
+
+    var reveal = $("letter-reveal");
+    if (reveal) reveal.addEventListener("click", function () {
+      alphabet.revealed = true;
+      renderAlphabetLetter();
+    });
+    var next = $("letter-next");
+    if (next) next.addEventListener("click", function () {
       var known = state.alphabet || (state.alphabet = {});
       var reps = (known[l.letter] && known[l.letter].reps) || 0;
       known[l.letter] = { reps: reps + 1, at: Date.now() };
       save();
       alphabet.i += 1;
+      alphabet.revealed = false;
+      alphabet.spoke = false;
       renderAlphabetLetter();
+    });
+    var all = $("letter-all");
+    if (all) all.addEventListener("click", function () {
+      alphabet.grid = true;
+      renderAlphabetGrid();
     });
   }
 
@@ -1787,8 +1874,9 @@
     var more = alphabetKnown() < scriptLetters().length;
     var canWrite = !more && writingPool().length > 0;
     $("alphabet-actions").innerHTML =
-      '<button class="btn btn-primary" id="alphabet-again">' +
+      '<button class="btn btn-primary" id="alphabet-again" type="button">' +
         esc(more ? tr("nextLetter", "Next letter") : canWrite ? tr("writeCharacters", "Write the characters") : tr("start", "Start lesson")) + "</button>" +
+      '<button class="btn btn-ghost btn-sm" id="alphabet-all" type="button">' + esc(tr("allLetters", "All letters")) + "</button>" +
       '<button class="btn btn-ghost btn-sm" id="alphabet-done" type="button">' + esc(tr("leave", "done for now")) + "</button>";
     $("alphabet-again").addEventListener("click", function () {
       if (canWrite) startWriting();

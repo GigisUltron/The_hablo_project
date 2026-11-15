@@ -64,6 +64,10 @@ Lessons use spaced repetition. What you miss comes back before the session ends 
 On `localhost` or HTTPS the app registers a small service worker, advertises a web manifest and can be installed to the home screen. The worker fetches the real shell and every loaded script into a cache, then uses network-first with a cache/offline fallback; it never touches the local-model origin. Audio is cached as it is played. On `file://` or in a browser without service workers nothing changes: the app still runs from disk.
 
 The manifest, icons and worker are ordinary files in the repository — no build step and no dependency.
+### Scripts
+
+Non-Latin packs open on a script lesson. Each letter is a recall card: the shape is shown alone first, **Show the sound** reveals its name, an English sound hint and an example word with audio, and only then does **Next letter** save it. A short **All letters** grid is available from any card and at the finish, so the whole alphabet can be scanned and heard quickly. The script's own note (direction, joined forms, inherent vowels) is available in the card.
+
 ### Exercise types
 
 - **Choose the meaning** and **choose the target**

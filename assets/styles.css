@@ -2306,6 +2306,98 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
 .modal-actions .btn { width: auto; min-height: 44px; }
 
+
+/* Alphabet: a recall card, not a form. */
+.alphabet-card { text-align: center; padding: 20px; }
+.alphabet-card .stage { width: 100%; }
+.alphabet-card .prompt { margin-bottom: 10px; }
+.letter-card {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 20px 16px;
+  border-radius: var(--radius);
+  background: var(--fill);
+}
+.letter-card.is-revealed { background: var(--accent-soft); }
+.letter-big {
+  font-size: clamp(88px, 18vw, 132px);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--text);
+}
+.letter-question { margin: 2px 0 0; color: var(--text-2); font-size: 16px; line-height: 1.35; }
+.letter-detail { display: grid; justify-items: center; gap: 4px; }
+.letter-name { margin: 0; font-size: 20px; font-weight: 700; color: var(--text); }
+.letter-hint { margin: 0; font-size: 16px; line-height: 1.4; color: var(--text-2); }
+.letter-example {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 4px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.letter-example:hover { border-color: var(--accent); color: var(--accent); }
+.letter-example svg { width: 18px; height: 18px; }
+.letter-example-text { margin: 4px 0 0; font-size: 18px; font-weight: 600; }
+.letter-note {
+  width: 100%;
+  margin-top: 12px;
+  text-align: left;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.letter-note summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-2);
+  font-weight: 600;
+}
+.letter-note p { margin: 0; }
+.letter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+}
+.letter-tile {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 4px;
+  min-height: 76px;
+  padding: 8px 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.letter-tile:hover { border-color: var(--accent); color: var(--accent); }
+.letter-tile b { font-size: 28px; line-height: 1.1; }
+.letter-tile span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); font-size: 11px; }
+@media (max-width: 390px) {
+  .letter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
 /* hidden must beat the flex container, as with the other sections */
 .lang-switch[hidden] { display: none; }
 /* sit the recent flags next to the tabs, not floating in the middle */
