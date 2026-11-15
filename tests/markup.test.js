@@ -795,6 +795,16 @@ test("typed translation is a real routed exercise", () => {
   assert.match(app, /i % 7 === 5\) return "type-translation"/, "typed translation is unreachable");
 });
 
+test("Plan a lesson requires an explicit language", () => {
+  assert.match(html, /id="wish-lang"/, "no lesson-language picker");
+  assert.match(app, /function renderWishLangs/, "picker is never populated");
+  assert.match(app, /wishLesson\(text, code\)/, "selected language is not passed into planning");
+  assert.match(app, /dinner out, I want pizza/, "preset still names a language/place");
+  assert.doesNotMatch(app, /my Russian cousin's wedding in Novgorod/, "preset still forces a country");
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(css, /\.wish-lang \{/, "picker is unstyled");
+});
+
 test("Plan a lesson offers situation presets and more topics", () => {
   assert.match(app, /var WISH_PRESETS =/, "no prompt presets");
   assert.match(html, /id="wish-presets"/, "presets have no container");

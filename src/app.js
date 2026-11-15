@@ -993,6 +993,7 @@
     renderBuilder();
     renderTrack();
     renderCustomLessons();
+    renderWishLangs();
     renderLangSwitch();
 
     var due = S.dueList(state, Date.now()).filter(function (id) {
@@ -2856,12 +2857,25 @@
   ];
 
   var WISH_PRESETS = {
-    food: "dinner in Rome, I want pizza",
-    family: "my Russian cousin's wedding in Novgorod",
+    food: "dinner out, I want pizza",
+    family: "a cousin's wedding",
     hotel: "hotel check-in tomorrow",
     health: "I need a pharmacy and a doctor",
     travel: "train to the airport"
   };
+
+  function renderWishLangs() {
+    var sel = $("wish-lang");
+    if (!sel) return;
+    var current = sel.value || (ACTIVE && ACTIVE.code) || "en";
+    var list = (LANGS && LANGS.list && LANGS.list()) || [];
+    sel.innerHTML = list.map(function (p) {
+      var flag = LANG_FLAGS[p.code] || "";
+      return '<option value="' + esc(p.code) + '">' + flag + " " + esc(uiName(p.code)) + "</option>";
+    }).join("");
+    if (list.some(function (p) { return p.code === current; })) sel.value = current;
+    else if (ACTIVE) sel.value = ACTIVE.code;
+  }
 
   function renderWishPresets() {
     var box = $("wish-presets");
@@ -2872,18 +2886,24 @@
     }).join("");
     Array.prototype.forEach.call(box.querySelectorAll("[data-wish-preset]"), function (b) {
       b.addEventListener("click", function () {
-        buildWishLesson(WISH_PRESETS[b.getAttribute("data-wish-preset")]);
+        buildWishLesson(WISH_PRESETS[b.getAttribute("data-wish-preset")], $("wish-lang") && $("wish-lang").value);
       });
     });
   }
 
-  function buildWishLesson(text) {
+  function buildWishLesson(text, lang) {
     var input = $("wish-input");
+    var selected = $("wish-lang");
+    var code = lang || (selected && selected.value) || "";
     if (!text) {
       $("wish-note").textContent = tr("wishEmpty", "Tell me where you are going and what you want to do.");
       return;
     }
-    var wish = wishLesson(text);
+    if (!code) {
+      $("wish-note").textContent = tr("wishLanguage", "Lesson language");
+      return;
+    }
+    var wish = wishLesson(text, code);
     if (!wish.ids.length) {
       $("wish-note").textContent = tr("wishEmpty", "Tell me where you are going and what you want to do.");
       return;
@@ -2895,12 +2915,14 @@
     startSession({ ids: wish.ids, size: wish.ids.length, title: wish.title, customId: saved.id });
   }
 
-  function wishLesson(text) {
+  function wishLesson(text, requestedCode) {
     var raw = String(text || "").toLowerCase();
-    var code = "";
-    WISH_PLACES.forEach(function (pair) {
-      if (!code && new RegExp("\\b" + pair[0] + "\\b").test(raw)) code = pair[1];
-    });
+    var code = requestedCode || "";
+    if (!code) {
+      WISH_PLACES.forEach(function (pair) {
+        if (!code && new RegExp("\\b" + pair[0] + "\\b").test(raw)) code = pair[1];
+      });
+    }
     var switched = false;
     if (code && LANGS && LANGS.has(code) && ACTIVE && ACTIVE.code !== code) {
       switched = switchLang(code) !== false;
@@ -4390,7 +4412,7 @@
   $("wish-form").addEventListener("submit", function (ev) {
     ev.preventDefault();
     var input = $("wish-input");
-    buildWishLesson(input ? input.value.trim() : "");
+    buildWishLesson(input ? input.value.trim() : "", $("wish-lang") && $("wish-lang").value);
   });
   $("build-start").addEventListener("click", function () { startSession({ custom: true }); });
   $("review-missed").addEventListener("click", reviewMistakes);
@@ -4433,6 +4455,7 @@
     resetChatClear();
     show("today");
   });
+  renderWishLangs();
   renderWishPresets();
   $("chat-clear").addEventListener("click", chatClearClick);
   $("confirm-cancel").addEventListener("click", closeConfirm);
