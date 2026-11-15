@@ -534,6 +534,7 @@
     state.placement = null;
     state.memory = fresh.memory;
     state.alphabet = {};
+    state.trackMet = {};
     /* Daily progress is device-wide, not per deck: switching language must
      * not erase the cards already finished today. */
   }

@@ -410,6 +410,8 @@ test("vocabulary expansion tests synonyms and does not unlock the path", () => {
   const start = app.indexOf("function startVocab");
   const end = app.indexOf("function vocabHarder");
   assert.doesNotMatch(app.slice(start, end), /trackMet/, "vocabulary writes path progress");
+  const reset = app.slice(app.indexOf("function resetLive"), app.indexOf("function bucketOf"));
+  assert.match(reset, /state\.trackMet = \{\}/, "a new deck inherits the old path");
   const pool = app.slice(app.indexOf("function vocabPool"), app.indexOf("function startVocab"));
   assert.match(pool, /learnerLevel/);
   assert.match(pool, /rank\(id\) >= me - 1/);
