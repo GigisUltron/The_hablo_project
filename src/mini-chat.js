@@ -40,6 +40,7 @@
     var candidates = [];
     var bigrams = {};
     var starts = [];
+    var edges = [];
 
     function add(text, kind) {
       var clean = String(text == null ? "" : text).trim();
@@ -64,9 +65,13 @@
     var conv = (pack && pack.conv && pack.conv.dialogues) || [];
 
     conv.forEach(function (d) {
-      ((d && d.turns) || []).forEach(function (t) {
+      var turns = (d && d.turns) || [];
+      turns.forEach(function (t, i) {
         add(t.es, "dialogue");
         add(t.reply, "reply");
+        if (i + 1 < turns.length && t.es && turns[i + 1].es) {
+          edges.push({ from: words(t.es), to: turns[i + 1].es });
+        }
       });
     });
     phrases.forEach(function (p) { add(p.text, "phrase"); });
@@ -133,7 +138,17 @@
       });
       var best = ranked.filter(function (c) { return score(c, userTokens, contextTokens) > 0; });
       var choice = "";
-      if (best.length) {
+      /* Follow an authored dialogue turn when the learner's line clearly
+       * matches it. This is retrieval, not invented dialogue. */
+      if (userTokens.length) {
+        var followed = edges.map(function (e) {
+          return { edge: e, score: score({ tokens: e.from }, userTokens, contextTokens) };
+        }).sort(function (a, b) { return b.score - a.score; })[0];
+        if (followed && followed.score >= 10) {
+          choice = followed.edge.to;
+        }
+      }
+      if (!choice && best.length) {
         var pool = best.slice(0, Math.min(4, best.length)).filter(function (c) { return c.text !== (o.last || ""); });
         if (greeting) {
           var hello = pool.filter(function (c) { return /^(hi|hello|hey|hola|bonjour|ciao|hallo|olá|привет|merhaba|مرحبا|नमस्ते|こんにちは|你好)/i.test(c.text); });

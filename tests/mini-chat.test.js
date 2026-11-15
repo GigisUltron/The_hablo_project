@@ -43,6 +43,11 @@ test("mini chat always returns target-language text", () => {
   }
 });
 
+test("mini chat follows an authored dialogue turn", () => {
+  const m = M.build({ conv: { dialogues: [{ turns: [{ es: "Hola" }, { es: "¿Cómo estás?" }] }] } });
+  assert.equal(m.reply("Hola"), "¿Cómo estás?");
+});
+
 test("mini chat follows recent context and matches CJK by character", () => {
   const m = M.build(pack);
   assert.match(m.reply("", { context: "pizza" }), /pizza|Hola|dónde|llamo/);
