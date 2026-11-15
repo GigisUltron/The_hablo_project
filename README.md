@@ -1,6 +1,6 @@
 # Hablo
-Track: Language + AI
-Team: Lev Dudin, Aleksandr Loginov, Ian Akopian
+Track: Language + AI.
+The team: Lev Dudin, Aleksandr Loginov, Ian Akopian
 
 ## The problem
 
