@@ -36,6 +36,17 @@
     return String(text || "").split(/[.!?。！？؟]+/).map(function (s) { return s.trim(); }).filter(Boolean);
   }
 
+  function intent(text) {
+    var lower = String(text == null ? "" : text).toLowerCase().trim();
+    if (!lower) return "empty";
+    if (/^(hi|hello|hey|hola|bonjour|ciao|hallo|olá|привет|merhaba|مرحبا|नमस्ते|こんにちは|你好)/i.test(lower)) return "greeting";
+    if (/thank|thanks|gracias|merci|grazie|obrigad|спасибо|teşekk|شكر|धन्यवाद|ありがとう|谢谢/i.test(lower)) return "thanks";
+    if (/^(yes|yeah|yep|no|nope|sí|si|oui|non|ja|nein|ja|nee|да|нет|evet|hayır|نعم|لا|हाँ|नहीं|はい|いいえ|是|不)[.!]?$/i.test(lower)) return "yesno";
+    if (/my name is|me llamo|je m'appelle|ich heiße|ik heet|меня зовут|benim adım|اسمي|मेरा नाम|私の名前|我叫/i.test(lower)) return "name";
+    if (/[?？؟]\s*$/.test(lower) || /^(where|what|who|when|why|how|dónde|qué|quién|cuándo|por qué|cómo|où|quoi|qui|quand|pourquoi|comment|wo|was|wer|wann|warum|wie|где|что|кто|когда|почему|как|nerede|ne|kim|ne zaman|neden|nasıl|أين|ماذا|من|متى|لماذا|كيف|कहाँ|क्या|कौन|कब|क्यों|कैसे|どこ|何|誰|いつ|なぜ|どう|哪里|什么|谁|什么时候|为什么|怎么)/i.test(lower)) return "question";
+    return "statement";
+  }
+
   function build(pack) {
     var candidates = [];
     var bigrams = {};
@@ -134,8 +145,9 @@
       var userTokens = words(text);
       var contextTokens = words(o.context || "");
       var lower = String(text || "").toLowerCase();
-      var greeting = /^(hi|hello|hey|hola|bonjour|ciao|hallo|olá|привет|merhaba|مرحبا|नमस्ते|こんにちは|你好)/i.test(lower);
-      var thanks = /thank|thanks|gracias|merci|grazie|obrigad|спасибо|teşekk|شكر|धन्यवाद|ありがとう|谢谢/i.test(lower);
+      var kindIntent = intent(text);
+      var greeting = kindIntent === "greeting";
+      var thanks = kindIntent === "thanks";
       var ranked = candidates.slice().sort(function (a, b) {
         return score(b, userTokens, contextTokens) - score(a, userTokens, contextTokens);
       });
@@ -191,7 +203,7 @@
     return { reply: reply, opening: opening, size: candidates.length };
   }
 
-  var api = { build: build, words: words };
+  var api = { build: build, words: words, intent: intent };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.SemaMiniChat = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);

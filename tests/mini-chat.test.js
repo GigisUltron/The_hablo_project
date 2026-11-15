@@ -30,6 +30,15 @@ test("mini chat retrieves a relevant authored line", () => {
   assert.match(r, /llamo|Ana|Hola|pizza|dónde/);
 });
 
+test("mini chat classifies greeting, thanks, yes/no, name and questions", () => {
+  assert.equal(M.intent("Hola"), "greeting");
+  assert.equal(M.intent("gracias"), "thanks");
+  assert.equal(M.intent("yes"), "yesno");
+  assert.equal(M.intent("my name is Ana"), "name");
+  assert.equal(M.intent("Where is the station?"), "question");
+  assert.equal(M.intent("I work here"), "statement");
+});
+
 test("mini chat never echoes the learner or returns runaway text", () => {
   const fs = require("node:fs");
   const source = fs.readFileSync(require("node:path").join(__dirname, "..", "src", "mini-chat.js"), "utf8");
