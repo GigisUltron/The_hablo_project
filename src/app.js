@@ -4788,6 +4788,7 @@
       advanceTimer: 0,
       firstCorrect: 0,
       taughtIds: {},
+      sayTries: {},
       unique: 0
     };
   }
@@ -5719,6 +5720,7 @@
 
   function renderSay(id) {
     var it = itemOf(id);
+    var tries = session.sayTries[id] || 0;
 
     $("stage").innerHTML =
       '<p class="prompt">' + esc(tr("sayIt", "Say it")) + " · " + esc(uiName(LANG.code)) + "</p>" +
@@ -5731,9 +5733,22 @@
       var btn = this;
       var started = listen(it.text, function (score, said) {
         var el = $("score");
-        if (el) el.textContent = tr("heard", "heard") + " “" + said + "” · " +
+        var heard = tr("heard", "heard") + " “" + said + "” · " +
           tr("match", "match") + " " + Math.round(score * 100) + "%";
-        answer(score > 0.6, null);
+        if (score > 0.6) {
+          if (el) el.textContent = heard;
+          answer(true, null);
+          return;
+        }
+        if (tries < 1) {
+          tries += 1;
+          session.sayTries[id] = tries;
+          if (el) el.innerHTML = esc(heard) + '<span class="say-target">' + textHTML(it) + "</span>";
+          try { btn.focus({ preventScroll: true }); } catch (err) { btn.focus(); }
+          return;
+        }
+        if (el) el.textContent = heard;
+        answer(false, null);
       });
       if (started) {
         btn.classList.add("is-live");
@@ -5748,12 +5763,19 @@
       }
     });
 
-    /* without a recogniser the learner says it aloud and checks themselves */
-    $("actions").innerHTML = glossHTML(id) +
+    /* The target audio is a model, not a spoiler: hearing it before trying is
+     * standard pronunciation practice. One low attempt gets the target and a
+     * second try before the card is graded. */
+    var hear = audioAvailable()
+      ? '<button class="btn btn-ghost" id="hear-say" type="button">' + esc(tr("hearit", "Hear it")) + "</button>"
+      : "";
+    $("actions").innerHTML = glossHTML(id) + hear +
       (SR ? "" : '<button class="btn btn-primary" id="said">I said it</button>') +
       '<button class="btn btn-ghost" id="skip">' + esc(tr("skip", "Skip")) + "</button>" +
       '<button class="btn btn-ghost" id="reveal">' + esc(tr("showAnswer", "Show the answer")) + '</button>';
     wireGloss();
+    var hearBtn = $("hear-say");
+    if (hearBtn) hearBtn.addEventListener("click", function () { sayItem(it, hearBtn); });
     if (!SR) $("said").addEventListener("click", function () { answer(true, null); });
     $("skip").addEventListener("click", skipCard);
     $("reveal").addEventListener("click", function () { answer(false, null); });

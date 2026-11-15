@@ -742,6 +742,7 @@ ruby rt {
 .feedback { min-height: 22px; font-size: 15px; font-weight: 600; color: var(--text-2); }
 .feedback.good { color: var(--good); }
 .feedback.bad { color: var(--bad); }
+.say-target { display: block; margin-top: 4px; color: var(--text); font-weight: 700; }
 .coach-debrief {
   margin: 12px 0 0;
   padding: 10px 12px;

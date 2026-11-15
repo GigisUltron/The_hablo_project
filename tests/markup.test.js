@@ -502,6 +502,16 @@ test("Progress can launch a production-only practice session", () => {
   assert.match(app, /session\.types = quizQueue\.map/);
 });
 
+test("speaking practice offers a model and one retry before grading", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /sayTries: \{\}/);
+  assert.match(app, /id="hear-say"/);
+  assert.match(app, /if \(tries < 1\)/);
+  assert.match(app, /session\.sayTries\[id\] = tries/);
+  assert.match(app, /say-target/);
+  assert.match(app, /if \(score > 0\.6\)/);
+});
+
 test("production is counted separately from recognition", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(app, /session\.currentType = type/);
