@@ -106,6 +106,35 @@
     return String(code).toUpperCase();
   }
 
+  var LANG_FLAGS = {
+    es: "🇪🇸", fr: "🇫🇷", it: "🇮🇹", en: "🇬🇧", de: "🇩🇪", nl: "🇳🇱",
+    pt: "🇵🇹", ru: "🇷🇺", tr: "🇹🇷", ar: "🇸🇦", hi: "🇮🇳", ja: "🇯🇵", zh: "🇨🇳"
+  };
+
+  function rememberLang(code) {
+    if (!state.profile || !code) return;
+    var recent = (state.profile.recentLangs || []).filter(function (x) { return x !== code; });
+    state.profile.recentLangs = [code].concat(recent).slice(0, 3);
+  }
+
+  function renderLangSwitch() {
+    var box = $("lang-switch");
+    if (!box) return;
+    if (!state.profile || !ACTIVE) { box.hidden = true; return; }
+    var codes = [ACTIVE.code].concat(state.profile.recentLangs || []).filter(function (code, i, all) {
+      return LANGS && LANGS.has(code) && all.indexOf(code) === i;
+    }).slice(0, 3);
+    box.hidden = codes.length < 2;
+    box.innerHTML = codes.map(function (code) {
+      return '<button class="lang-flag' + (code === ACTIVE.code ? " is-active" : "") +
+        '" type="button" data-lang="' + esc(code) + '" aria-label="' + esc(uiName(code)) +
+        '" title="' + esc(uiName(code)) + '">' + (LANG_FLAGS[code] || code.toUpperCase()) + "</button>";
+    }).join("");
+    Array.prototype.forEach.call(box.querySelectorAll("[data-lang]"), function (b) {
+      b.addEventListener("click", function () { switchLang(b.getAttribute("data-lang")); });
+    });
+  }
+
   function renderUiLangPickers() {
     var choices = uiChoices(ACTIVE && ACTIVE.code);
     var current = uiLang();
@@ -151,6 +180,7 @@
         : tr("translationsOn", "translations on");
     }
     if (typeof updateAudioChip === "function") updateAudioChip();
+    if (typeof renderLangSwitch === "function") renderLangSwitch();
   }
 
   var TRACK = window.SemaTrack;
@@ -323,6 +353,7 @@
     s.confusions = s.confusions || {};
     s.reviews = s.reviews || { good: 0, again: 0 };
     s.sessions = s.sessions || 0;
+    if (typeof s.xp !== "number") s.xp = 0;
     if (!s.memory || !Array.isArray(s.memory.sentences)) s.memory = MEM.empty();
 
     if (s.profile) {
@@ -557,6 +588,7 @@
     chatEpoch += 1;
     resetChatClear();
     placement = null;
+    rememberLang(code);
     save();
     applyStrings();
     renderUiLangPickers();
@@ -922,6 +954,7 @@
     renderBuilder();
     renderTrack();
     renderCustomLessons();
+    renderLangSwitch();
 
     var due = S.dueList(state, Date.now()).filter(function (id) {
       return state.cards[id] && state.cards[id].last !== null;
@@ -3995,6 +4028,9 @@
 
     var now = Date.now();
     var total = session.unique || 1;
+    var xpEarned = Math.max(3, total * 3 + (session.firstCorrect || 0) * 2);
+    state.xp = (state.xp || 0) + xpEarned;
+    save();
     var seen = Object.keys(session.answered);
     var missed = Object.keys(session.missed);
     var kept = seen.filter(function (id) {
@@ -4019,6 +4055,7 @@
       '<p class="prompt">' + esc(tr("lessonDone", "Lesson done")) + "</p>" +
       '<p class="sum-big">' + total + "</p>" +
       '<p class="sum-line">' + esc(noun) + " · " + took + "</p>" +
+      '<p class="xp-line">+' + xpEarned + " XP</p>" +
       '<div class="sum-cols">' +
         (kept.length ? sumGroup("kept", tr("remembered", "Remembered") + " · " + kept.length, kept, now) : "") +
         (missed.length ? sumGroup("back", tr("comesBack", "Comes back") + " · " + missed.length, missed, now) : "") +

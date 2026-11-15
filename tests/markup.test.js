@@ -704,6 +704,16 @@ test("saved lessons can be deleted only after confirmation", () => {
   assert.match(app, /window\.confirm\(tr\("deleteLessonConfirm"/, "delete is not confirmed");
 });
 
+test("recent languages and XP are wired into the lesson loop", () => {
+  assert.match(html, /id="lang-switch"/, "no recent-language switcher");
+  assert.match(app, /function renderLangSwitch/, "no recent-language renderer");
+  assert.match(app, /recentLangs/, "recent languages are not stored");
+  assert.match(app, /xpEarned/, "no XP award");
+  assert.match(app, /xp-line/, "XP is not shown in the summary");
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(css, /answer-shake/, "no incorrect-answer animation");
+});
+
 test("the lesson card has one consistent type and action scale", () => {
   const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
   assert.match(css, /\.card \.prompt \{/, "lesson prompt has no consistency rule");

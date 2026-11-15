@@ -1955,3 +1955,65 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .card .reader-body { font-size: 17px; line-height: 1.55; }
 .card .reader-q { font-size: 19px; }
 .card .msg-bubble { font-size: 16px; }
+
+
+/* ---------------------------------------------------- recent languages + XP */
+.lang-switch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--fill);
+}
+.lang-flag {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+}
+.lang-flag:hover { background: var(--card); }
+.lang-flag.is-active { background: var(--card); box-shadow: 0 2px 0 var(--border-deep); }
+.lang-flag:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.xp-line {
+  display: inline-block;
+  margin-top: 2px;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+@media (max-width: 640px) {
+  .lang-flag { width: 34px; height: 34px; font-size: 19px; }
+}
+
+/* a correct answer lands, a wrong one shakes, but colour still carries meaning */
+@keyframes answer-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.035); }
+  100% { transform: scale(1); }
+}
+@keyframes answer-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+.pick-correct { animation: answer-pop 0.32s ease-out; }
+.pick-wrong { animation: answer-shake 0.34s ease-in-out; }
+.feedback.good { animation: answer-pop 0.3s ease-out; }
+.feedback.bad { animation: answer-shake 0.34s ease-in-out; }
+@media (prefers-reduced-motion: reduce) {
+  .pick-correct, .pick-wrong, .feedback.good, .feedback.bad { animation: none; }
+}
+
+/* fast language switching belongs to navigation, not inside a lesson */
+.app:has(#view-session.is-active) .lang-switch,
+.app:has(#view-setup.is-active) .lang-switch { display: none; }
