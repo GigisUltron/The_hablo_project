@@ -173,6 +173,8 @@
         var questions = candidates.filter(function (c) { return c.question && c.text !== (o.last || ""); });
         choice = questions.length ? pick(questions).text : (candidates.length ? pick(candidates).text : "");
       }
+      var prompt = String(text || "").trim().toLowerCase();
+      if (choice && (choice.trim().toLowerCase() === prompt || choice.length > 180)) choice = "";
       if (choice && !/[?？؟]\s*$/.test(choice) && Math.random() < 0.4) {
         var follow = candidates.filter(function (c) { return c.question && c.text !== choice && recent.indexOf(c.text) === -1; })
           .sort(function (a, b) {

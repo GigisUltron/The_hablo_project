@@ -30,6 +30,13 @@ test("mini chat retrieves a relevant authored line", () => {
   assert.match(r, /llamo|Ana|Hola|pizza|dónde/);
 });
 
+test("mini chat never echoes the learner or returns runaway text", () => {
+  const fs = require("node:fs");
+  const source = fs.readFileSync(require("node:path").join(__dirname, "..", "src", "mini-chat.js"), "utf8");
+  assert.match(source, /choice\.trim\(\)\.toLowerCase\(\) === prompt/);
+  assert.match(source, /choice\.length > 180/);
+});
+
 test("mini chat avoids recently used replies", () => {
   const fs = require("node:fs");
   const source = fs.readFileSync(require("node:path").join(__dirname, "..", "src", "mini-chat.js"), "utf8");
