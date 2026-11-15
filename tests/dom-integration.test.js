@@ -18,7 +18,26 @@ function node(id) {
     addEventListener(t, f) { this._l[t] = f; }, removeEventListener() {},
     setAttribute(k, v) { this._attrs[k] = String(v); }, getAttribute(k) { return this._attrs[k] == null ? null : this._attrs[k]; }, removeAttribute(k) { delete this._attrs[k]; },
     appendChild(c) { return c; }, insertAdjacentHTML() {},
-    querySelectorAll() { return []; }, querySelector() { return null; }, closest() { return null; },
+    querySelectorAll(selector) {
+      if (!String(selector).includes("option")) return [];
+      if (this._optionCache && this._optionCache.html === this._html && this._optionCache.selector === selector) {
+        return this._optionCache.nodes;
+      }
+      const out = [];
+      String(this._html || "").replace(/<button([^>]*)>([\s\S]*?)<\/button>/g, (all, attrs, inner) => {
+        if (!/class="[^"]*\boption/.test(attrs)) return all;
+        const child = node("option-" + out.length);
+        const parsed = {};
+        attrs.replace(/([\w-]+)="([^"]*)"/g, (m, key, value) => { parsed[key] = value; return m; });
+        child._attrs = parsed;
+        child.textContent = inner.replace(/<[^>]*>/g, "");
+        out.push(child);
+        return all;
+      });
+      this._optionCache = { html: this._html, selector, nodes: out };
+      return out;
+    },
+    querySelector() { return null; }, closest() { return null; },
     focus() {}, click() { if (this._l.click) this._l.click.call(this); },
     set innerHTML(v) { this._html = String(v); }, get innerHTML() { return this._html; }
   };
@@ -123,6 +142,10 @@ test("the alphabet screen reveals a flashcard and opens the all-letters grid", (
   quiz._l.click();
   assert.match(stage.innerHTML, /letter-quiz-options/);
   assert.match(stage.innerHTML, /option-word/);
+  const quizOptions = stage.querySelectorAll("[data-quiz-option]");
+  assert.ok(quizOptions.length === 3, "quiz options did not parse");
+  quizOptions[0]._l.click();
+  assert.ok(registry.get("alphabet-feedback").textContent.length > 0, "quiz did not grade an answer");
 });
 
 test("a brand-new learner can pick a why, start fresh and reach a card", () => {
@@ -169,6 +192,14 @@ test("Progress, Settings and Reader can be opened from the real controls", () =>
   assert.ok(registry.get("reader-go")._l.click, "Reader questions are not wired");
   registry.get("reader-go")._l.click();
   assert.match(registry.get("reader-stage").innerHTML, /option-word/);
+  const readerOptions = registry.get("reader-stage").querySelectorAll(".option-word");
+  assert.ok(readerOptions.length >= 3, "reader options did not parse");
+  readerOptions[0]._l.click();
+  const readerCheck = registry.get("reader-check");
+  assert.ok(readerCheck && readerCheck._l.click, "reader has no Check control");
+  assert.equal(readerCheck.disabled, false, "reader Check did not enable after a selection");
+  readerCheck._l.click();
+  assert.ok(registry.get("reader-feedback").textContent.length > 0, "reader did not grade an answer");
 });
 
 test("a conversation opens with an honest empty state and accepts a message", () => {
@@ -196,3 +227,4 @@ test("a conversation opens with an honest empty state and accepts a message", ()
   form._l.submit({ preventDefault() {} });
   assert.match(log.innerHTML, /Hola, me llamo Ana/);
 });
+

@@ -1602,6 +1602,7 @@
     if (reader.qi >= reader.text.questions.length) { finishReader(); return; }
 
     var q = reader.text.questions[reader.qi];
+    var picked = null;
     $("reader-bar").style.width = Math.round(((reader.qi + 1) / reader.text.questions.length) * 100) + "%";
     $("reader-count").textContent = (reader.qi + 1) + "/" + reader.text.questions.length;
     $("reader-stage").innerHTML =
@@ -1610,25 +1611,39 @@
       '<div class="word-options">' + q.options.map(function (o, i) {
         return '<button class="option-word" data-i="' + i + '">' + esc(o) + "</button>";
       }).join("") + "</div>";
-    $("reader-actions").innerHTML = "";
+    $("reader-actions").innerHTML =
+      '<button class="btn btn-primary" id="reader-check" type="button" disabled>' +
+        esc(tr("check", "Check")) + "</button>";
+    $("reader-check").disabled = true;
 
-    Array.prototype.forEach.call($("reader-stage").querySelectorAll(".option-word"), function (btn) {
+    var options = $("reader-stage").querySelectorAll(".option-word");
+    Array.prototype.forEach.call(options, function (btn) {
       btn.addEventListener("click", function () {
-        var picked = Number(btn.getAttribute("data-i"));
-        var ok = picked === q.answer;
-        if (ok) reader.correct += 1;
-        else reader.misses.push({ q: q.q, why: readerWhy(q, picked) });
-        btn.classList.add(ok ? "pick-correct" : "pick-wrong");
-        Array.prototype.forEach.call($("reader-stage").querySelectorAll(".option-word"), function (b) {
-          b.disabled = true;
-          if (Number(b.getAttribute("data-i")) === q.answer) b.classList.add("pick-correct");
+        picked = Number(btn.getAttribute("data-i"));
+        Array.prototype.forEach.call(options, function (b) {
+          b.classList.toggle("is-selected", b === btn);
+          b.setAttribute("aria-pressed", String(b === btn));
         });
-        $("reader-feedback").textContent = ok ? "right" : readerWhy(q, picked);
-        $("reader-feedback").className = "feedback " + (ok ? "good" : "bad");
-        reader.qi += 1;
-        $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-next">' + esc(tr("continue", "Continue")) + '</button>';
-        $("reader-next").addEventListener("click", renderReaderQuestion);
+        $("reader-check").disabled = false;
       });
+    });
+    $("reader-check").addEventListener("click", function () {
+      if (picked === null) return;
+      var ok = picked === q.answer;
+      if (ok) reader.correct += 1;
+      else reader.misses.push({ q: q.q, why: readerWhy(q, picked) });
+      Array.prototype.forEach.call(options, function (b) {
+        b.disabled = true;
+        b.classList.remove("is-selected");
+        if (Number(b.getAttribute("data-i")) === picked) b.classList.add(ok ? "pick-correct" : "pick-wrong");
+        if (Number(b.getAttribute("data-i")) === q.answer) b.classList.add("pick-correct");
+      });
+      $("reader-feedback").textContent = ok ? tr("correct", "Correct") : readerWhy(q, picked);
+      $("reader-feedback").className = "feedback " + (ok ? "good" : "bad");
+      reader.qi += 1;
+      $("reader-actions").innerHTML = '<button class="btn btn-primary" id="reader-next" type="button">' +
+        esc(tr("continue", "Continue")) + "</button>";
+      $("reader-next").addEventListener("click", renderReaderQuestion);
     });
   }
 
