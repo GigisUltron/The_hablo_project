@@ -113,6 +113,57 @@ var SEMA_TEXTS = {
         }
       ]
     },
+    {
+      "id": "tx-nl-vrijwilliger",
+      "title": "Vrijwilligerswerk",
+      "level": 4,
+      "band": "B2",
+      "body": "Toen ik met pensioen ging, had ik plotseling veel tijd. Na een paar maanden besloot ik vrijwilliger te worden in een buurtcentrum. Ik help daar met koken en lees voor aan kinderen. In het begin vond ik het spannend: ik was geen leraar en mijn Nederlands was niet perfect. Maar de kinderen luisterden geduldig en de andere vrijwilligers hielpen mij. Nu kom ik drie keer per week en ken ik bijna iedereen. Ik verdien geen geld, maar ik krijg iets beters: verhalen, gezelschap en het gevoel dat ik nodig ben.",
+      "questions": [
+        {
+          "q": "Wanneer besloot hij vrijwilliger te worden?",
+          "options": [
+            "na zijn pensionering",
+            "na school",
+            "na een vakantie"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "school wordt niet genoemd",
+            "een vakantie wordt niet genoemd"
+          ]
+        },
+        {
+          "q": "Wat doet hij daar?",
+          "options": [
+            "koken en voorlezen",
+            "lesgeven",
+            "tuinieren"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "hij is geen leraar",
+            "tuinieren wordt niet genoemd"
+          ]
+        },
+        {
+          "q": "Wat krijgt hij?",
+          "options": [
+            "verhalen en gezelschap",
+            "geld",
+            "een diploma"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "hij verdient geen geld",
+            "een diploma wordt niet genoemd"
+          ]
+        }
+      ]
+    },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TEXTS;

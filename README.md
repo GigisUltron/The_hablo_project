@@ -103,7 +103,7 @@ Every pack now carries five B1/B2 abstract words — decision, purpose, challeng
 
 ### Reading
 
-Each full course has eight reading texts across A1–B2. Starter courses have six, including a B1 text that uses the advanced layer. Every text has three multiple-choice questions and an explanation for each wrong option. The text screen also has **Listen to text**, which reads the title and body through the same installed voice used by conversation, and **Write me a text**, which asks the local model for a short new text at the learner's level using the personal context. Generated texts get a short cloze comprehension check built from their own sentences; if no model answers, the packed text stays.
+Each full course has eight reading texts across A1–B2. Starter courses have seven, including B1 and B2 texts that use the advanced layer. Every text has three multiple-choice questions and an explanation for each wrong option. The text screen also has **Listen to text**, which reads the title and body through the same installed voice used by conversation, and **Write me a text**, which asks the local model for a short new text at the learner's level using the personal context. Generated texts get a short cloze comprehension check built from their own sentences; if no model answers, the packed text stays.
 
 ### Conversation
 

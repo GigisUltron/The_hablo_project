@@ -113,6 +113,57 @@ var SEMA_TEXTS = {
         }
       ]
     },
+    {
+      "id": "tx-de-ohne-auto",
+      "title": "Ein Jahr ohne Auto",
+      "level": 4,
+      "band": "B2",
+      "body": "Ich wohnte zwölf Jahre in einer Stadt und fuhr jeden Tag mit dem Auto zur Arbeit. Letztes Jahr beschloss ich, das Auto zu verkaufen und nur noch Fahrrad und Bahn zu benutzen. Am Anfang war der Weg anstrengend, besonders im Regen. Nach einigen Wochen kannte ich alle Abkürzungen und merkte, dass ich unterwegs mehr sah. Ich sprach mit Nachbarn im Zug und kaufte Brot auf dem Weg. Natürlich war ich manchmal langsamer, aber ich war selten gestresst. Nach einem Jahr habe ich kein Auto mehr gekauft. Die Entscheidung hat mein Leben nicht einfacher, aber ruhiger gemacht.",
+      "questions": [
+        {
+          "q": "Wie lange wohnte er in der Stadt?",
+          "options": [
+            "zwölf Jahre",
+            "zwei Jahre",
+            "ein Jahr"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "zwei Jahre stehen nicht im Text",
+            "ein Jahr ist die Dauer ohne Auto"
+          ]
+        },
+        {
+          "q": "Was benutzt er jetzt?",
+          "options": [
+            "Fahrrad und Bahn",
+            "ein Auto",
+            "ein Taxi"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "er hat das Auto verkauft",
+            "ein Taxi wird nicht genannt"
+          ]
+        },
+        {
+          "q": "Wie fühlt er sich meist?",
+          "options": [
+            "ruhiger",
+            "gestresster",
+            "einsamer"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "er war selten gestresst",
+            "Einsamkeit wird nicht genannt"
+          ]
+        }
+      ]
+    },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TEXTS;

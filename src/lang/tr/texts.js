@@ -113,6 +113,57 @@ var SEMA_TEXTS = {
         }
       ]
     },
+    {
+      "id": "tx-tr-gonullu",
+      "title": "Gönüllü olmak",
+      "level": 4,
+      "band": "B2",
+      "body": "Emekli olduktan sonra evde çok zaman geçiriyordum. Bir gün mahalledeki gençlik merkezinde gönüllü öğretmen aradıklarını gördüm. Başta çekindim; çünkü öğretmen değildim. Yine de denemeye karar verdim. Haftada iki akşam çocuklara matematik ve okuma yardım ediyorum. Bazen yoruluyorum, ama onların küçük başarılarını görünce mutlu oluyorum. Bana para vermiyorlar; buna karşılık sabrı, dinlemeyi ve başka bir hayatı öğreniyorum. Gönüllülük bana emekli olmanın son değil, yeni bir başlangıç olduğunu gösterdi.",
+      "questions": [
+        {
+          "q": "Ne zaman gönüllü oldu?",
+          "options": [
+            "emekli olduktan sonra",
+            "gençken",
+            "işten önce"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "metin gençlikten söz etmiyor",
+            "metin işten önceyi anlatmıyor"
+          ]
+        },
+        {
+          "q": "Ne öğretiyor?",
+          "options": [
+            "matematik ve okuma",
+            "müzik",
+            "resim"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "müzikten söz edilmiyor",
+            "resimden söz edilmiyor"
+          ]
+        },
+        {
+          "q": "Ne öğreniyor?",
+          "options": [
+            "sabır ve dinleme",
+            "para",
+            "araba"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "para vermiyorlar",
+            "arabadan söz edilmiyor"
+          ]
+        }
+      ]
+    },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TEXTS;

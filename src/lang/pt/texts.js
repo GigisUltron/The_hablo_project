@@ -113,6 +113,57 @@ var SEMA_TEXTS = {
         }
       ]
     },
+    {
+      "id": "tx-pt-mudanca",
+      "title": "A mudança",
+      "level": 4,
+      "band": "B2",
+      "body": "Durante anos, sonhei em viver noutro país. Quando finalmente recebi uma proposta de trabalho, senti entusiasmo e medo ao mesmo tempo. Vendi quase tudo, despedi-me dos amigos e cheguei a uma cidade onde não conhecia ninguém. Nos primeiros meses, até pedir um café parecia uma vitória. Aos poucos, aprendi a ouvir o ritmo da língua e a perceber que os erros não eram falhas, mas passos. Hoje ainda sinto saudades, mas já tenho uma vida aqui. A mudança não me tornou outra pessoa; mostrou-me o que consigo suportar.",
+      "questions": [
+        {
+          "q": "O que sentiu ao receber a proposta?",
+          "options": [
+            "entusiasmo e medo",
+            "indiferença",
+            "raiva"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "o texto fala de entusiasmo e medo",
+            "não há raiva no texto"
+          ]
+        },
+        {
+          "q": "O que parecia uma vitória?",
+          "options": [
+            "pedir um café",
+            "comprar uma casa",
+            "falar na rádio"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "o texto não fala de comprar casa",
+            "o texto não fala de rádio"
+          ]
+        },
+        {
+          "q": "O que aprendeu sobre os erros?",
+          "options": [
+            "que eram passos, não falhas",
+            "que eram um segredo",
+            "que nunca acontecem"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "o texto diz o contrário",
+            "o texto diz que os erros são passos"
+          ]
+        }
+      ]
+    },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TEXTS;
