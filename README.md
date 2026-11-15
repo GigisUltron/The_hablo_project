@@ -73,8 +73,11 @@ Lessons use spaced repetition. What you miss comes back before the session ends 
 - wrong words return in the session
 - every second correct answer adds a harder word
 - hearing the word, the example sentence and a progress bar are on the same card
+- the pool starts near your placed band, so a C1 learner is not opened with `casa`
+- every third card is a synonym check where the pack authors a synonym
 - a missed-word review is one button away at the end
 - statistics persist per language; a session also pays XP and coins
+- **Got it** feeds the SRS, but it does **not** unlock the next path lesson — only a lesson does that
 - **personal anchors** let you attach a cue such as “my cousin’s wedding”; the cue comes back with the word
 
 ### Reading
@@ -133,7 +136,7 @@ Coins are **earned**, never bought. A finished lesson pays for first-try answers
 | Plum | 60 coins |
 | Moss | 120 coins |
 
-There is no pay-to-win, no loot, no energy and no learning locked behind the currency. The point is a small, honest pull to come back and finish a card.
+There is no pay-to-win, no loot, no energy and no learning locked behind the currency. The point is a small, honest pull to come back and finish a card. Today also shows a thin daily-goal bar, and crossing a 100-XP level adds a short, earned level line to the session summary.
 
 ## What is local
 
@@ -180,6 +183,8 @@ src/ui-extra.js            newer interface strings
 src/srs.js                 scheduling and answer matching
 src/memory.js              personal sentences and cloze cards
 src/wordset.js             word-list matching for a focused lesson
+src/synonyms.js            authored synonym questions in vocabulary expansion
+src/ai-tools.js            local-model output parsing
 src/economy.js             earned coins and the cosmetic look costs
 src/chat-engine.js         optional local-model adapter
 src/mini-chat.js           dependency-free offline conversation predictor

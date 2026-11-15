@@ -53,6 +53,12 @@ cannot buy learning, so farming it only changes a colour.
 the content, the schedule or the difficulty. The shop is in
 **Settings → Look**.
 
+**Daily goal bar.** Today shows today's real card count against the adaptive
+goal. It pays 5 coins once when reached and does not punish a miss.
+
+**Level line.** The session summary shows a level only when it actually rose
+past 100 XP. There is no separate level-up animation or notification.
+
 **Word list.** Not a gamification mechanic, but the same problem — a generic
 course does not cover the words a person actually needs. Paste a list, see what
 the pack has, start a focused lesson. See `README.md`.
