@@ -395,6 +395,7 @@
     s.sessions = s.sessions || 0;
     if (typeof s.xp !== "number") s.xp = 0;
     s.vocabStats = s.vocabStats || { sessions: 0, correct: 0, again: 0 };
+    s.anchors = s.anchors || {};
     if (!s.memory || !Array.isArray(s.memory.sentences)) s.memory = MEM.empty();
 
     if (s.profile) {
@@ -1055,6 +1056,8 @@
     $("stat-streak").textContent = currentStreak();
     var xp = $("stat-xp");
     if (xp) xp.textContent = state.xp || 0;
+    var lvl = $("stat-level");
+    if (lvl) lvl.textContent = "Lv " + (Math.floor((state.xp || 0) / 100) + 1);
     $("stat-mastered").textContent = mastered;
     $("known-bar").style.width = Math.round((known / Math.max(allIds.length, 1)) * 100) + "%";
 
@@ -3204,7 +3207,7 @@
         return atLevel(id) && itemOf(id).kind !== "term";
       }), Math.random).slice(0, 12);
     }
-    vocab = { queue: ids, i: 0, correct: 0, again: 0, retry: {}, done: false, revealed: false };
+    vocab = { queue: ids, i: 0, correct: 0, again: 0, retry: {}, done: false, revealed: false, anchorDraft: "" };
     show("vocab");
     renderVocab();
   }
@@ -3224,6 +3227,11 @@
     if (!vocab || vocab.done) return;
     var id = vocab.queue[vocab.i];
     if (!id) { finishVocab(); return; }
+    var anchorInput = $("vocab-anchor");
+    if (anchorInput) {
+      var anchor = String(anchorInput.value || "").trim().slice(0, 120);
+      if (anchor) state.anchors[id] = anchor;
+    }
     S.review(state, id, ok ? 2 : 0, Date.now());
     if (ok) {
       vocab.correct += 1;
@@ -3239,6 +3247,7 @@
     save();
     vocab.i += 1;
     vocab.revealed = false;
+    vocab.anchorDraft = "";
     if (vocab.i >= vocab.queue.length) finishVocab();
     else renderVocab();
   }
@@ -3273,6 +3282,7 @@
     var it = itemOf(id);
     var meaning = translationFor(id) || glossFor(id) || "";
     var reveal = vocab.revealed;
+    var anchor = state.anchors[id] || vocab.anchorDraft || "";
     $("vocab-count").textContent = (vocab.i + 1) + "/" + vocab.queue.length;
     $("vocab-stats").textContent = vocab.correct + " ✓ · " + vocab.again + " ↺";
     $("vocab-stage").innerHTML =
@@ -3280,10 +3290,12 @@
       '<p class="vocab-word">' + esc(it.text) + "</p>" +
       '<button class="vocab-reveal" id="vocab-reveal" type="button">' + esc(reveal ? tr("glossHide", "hide translation") : tr("glossShow", "show translation")) + "</button>" +
       '<p class="vocab-meaning"' + (reveal ? "" : " hidden") + ">" + esc(meaning) + "</p>" +
+      '<input class="vocab-anchor-input" id="vocab-anchor" type="text" maxlength="120" autocomplete="off" placeholder="' + esc(tr("vocabAnchor", "Personal cue (optional)")) + '" value="' + esc(anchor) + '" />' +
       '<div class="vocab-actions">' +
         '<button class="btn btn-ghost" id="vocab-again" type="button">' + esc(tr("again", "Again")) + "</button>" +
         '<button class="btn btn-primary" id="vocab-got" type="button">' + esc(tr("gotit", "Got it")) + "</button>" +
       "</div>";
+    $("vocab-anchor").addEventListener("input", function () { vocab.anchorDraft = this.value; });
     $("vocab-reveal").addEventListener("click", function () {
       vocab.revealed = !vocab.revealed;
       renderVocab();

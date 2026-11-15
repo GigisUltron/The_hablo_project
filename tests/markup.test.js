@@ -808,6 +808,12 @@ test("specialized exercise types are shuffled per session", () => {
   assert.match(app, /phrases = S\.shuffle\(phrases, Math\.random\)/, "phrase task types are fixed");
 });
 
+test("vocabulary memory anchors and XP level are wired", () => {
+  assert.match(app, /state\.anchors/, "personal anchors are not stored");
+  assert.match(app, /vocab-anchor/, "no anchor control");
+  assert.match(html, /id="stat-level"/, "no level on Today");
+});
+
 test("vocabulary expansion is a real adaptive mode", () => {
   assert.match(html, /id="view-vocab"/, "no vocabulary view");
   assert.match(html, /id="home-vocab"/, "no vocabulary entry point");
