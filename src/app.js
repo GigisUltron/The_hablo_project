@@ -1052,6 +1052,8 @@
     $("stat-learned").textContent = known;
     $("stat-total").textContent = allIds.length;
     $("stat-streak").textContent = currentStreak();
+    var xp = $("stat-xp");
+    if (xp) xp.textContent = state.xp || 0;
     $("stat-mastered").textContent = mastered;
     $("known-bar").style.width = Math.round((known / Math.max(allIds.length, 1)) * 100) + "%";
 
@@ -4128,7 +4130,9 @@
     Array.prototype.forEach.call($("stage").querySelectorAll("[data-target]"), function (b) {
       b.addEventListener("click", function () {
         if (b.disabled) return;
-        Array.prototype.forEach.call($("stage").querySelectorAll("[data-target]"), function (x) { x.classList.remove("is-selected"); });
+        Array.prototype.forEach.call($("stage").querySelectorAll("[data-target]"), function (x) {
+          x.classList.remove("is-selected");
+        });
         picked = b.getAttribute("data-target");
         b.classList.add("is-selected");
       });
@@ -4137,20 +4141,32 @@
       b.addEventListener("click", function () {
         if (!picked || b.disabled) return;
         var target = picked;
+        var targetButton = null;
+        Array.prototype.forEach.call($("stage").querySelectorAll("[data-target]"), function (x) {
+          if (x.getAttribute("data-target") === target) targetButton = x;
+        });
         if (b.getAttribute("data-meaning") !== target) {
+          if (targetButton) targetButton.classList.add("pick-wrong");
           b.classList.add("pick-wrong");
-          setTimeout(function () { b.classList.remove("pick-wrong"); }, 320);
+          setTimeout(function () {
+            if (targetButton) targetButton.classList.remove("pick-wrong", "is-selected");
+            b.classList.remove("pick-wrong");
+          }, 360);
+          picked = null;
           return;
         }
         matched[target] = true;
-        Array.prototype.forEach.call($("stage").querySelectorAll("[data-target]"), function (x) {
-          if (x.getAttribute("data-target") === target) { x.disabled = true; x.classList.add("pick-correct"); }
-        });
-        Array.prototype.forEach.call($("stage").querySelectorAll("[data-meaning]"), function (x) {
-          if (x.getAttribute("data-meaning") === target) { x.disabled = true; x.classList.add("pick-correct"); }
-        });
+        if (targetButton) {
+          targetButton.disabled = true;
+          targetButton.classList.remove("is-selected");
+          targetButton.classList.add("pick-correct");
+        }
+        b.disabled = true;
+        b.classList.add("pick-correct");
         picked = null;
-        if (target === id) answer(true, null);
+        if (Object.keys(matched).length === pairs.length) {
+          setTimeout(function () { answer(true, null); }, 280);
+        }
       });
     });
   }

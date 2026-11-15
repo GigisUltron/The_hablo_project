@@ -2236,3 +2236,26 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   font: inherit;
   font-size: 15px;
 }
+
+/* matching: a clear selected state before the pair is committed */
+.match-btn.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.match-btn.pick-correct { border-color: var(--good); background: var(--good-soft); color: var(--text); }
+.match-btn.pick-wrong { border-color: var(--bad); background: var(--bad-soft); }
+
+
+.today-badges { display: flex; align-items: center; gap: 8px; }
+.xp-pill {
+  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  border: 2px solid var(--border);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.xp-pill b { color: var(--accent); }

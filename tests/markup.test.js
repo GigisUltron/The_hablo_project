@@ -808,6 +808,14 @@ test("specialized exercise types are shuffled per session", () => {
   assert.match(app, /phrases = S\.shuffle\(phrases, Math\.random\)/, "phrase task types are fixed");
 });
 
+test("matching completes only after all pairs and XP is on Today", () => {
+  assert.match(app, /Object\.keys\(matched\)\.length === pairs\.length/, "matching ends after one pair");
+  assert.match(app, /classList\.add\("is-selected"\)/, "matching has no selected state");
+  assert.match(app, /classList\.add\("pick-wrong"\)/, "matching has no wrong state");
+  assert.match(html, /id="stat-xp"/, "XP is not on Today");
+  assert.match(app, /stat-xp/, "XP is never painted");
+});
+
 test("matching pairs is a routed exercise", () => {
   assert.match(app, /function renderMatch/, "no match renderer");
   assert.match(app, /type === "match"/, "match is not routed");
