@@ -22,6 +22,8 @@
   var RUBY = window.SemaRuby;
   var WRITING = window.SemaWriting;
   var EX = window.SemaExercises;
+  var WORDSET = window.SemaWordSet;
+  var ECON = window.SemaEconomy;
 
   function audioEnabled() {
     return (state && state.settings && state.settings.audio) !== "off";
@@ -225,6 +227,7 @@
         : tr("translationsOn", "translations on");
     }
     if (typeof updateAudioChip === "function") updateAudioChip();
+    if (typeof renderCoins === "function") renderCoins();
     if (typeof renderLangSwitch === "function") renderLangSwitch();
   }
 
@@ -380,6 +383,8 @@
   var DEMO_TYPES = ["pick-word", "pick-picture", "say", "pick-picture", "pick-word"];
 
   var state = boot();
+  applyAccent();
+  renderCoins();
   renderLangPickers();
   renderUiLangPickers();
   updateSetupCopy();
@@ -435,6 +440,18 @@
     }
 
     s.settings = s.settings || {};
+    if (typeof s.settings.wordsetDraft !== "string") s.settings.wordsetDraft = "";
+    var themeIds = ((ECON && ECON.THEMES) || []).map(function (t) { return t.id; });
+    s.coins = Math.max(0, Math.floor(Number(s.coins) || 0));
+    s.settings.unlockedAccents = (Array.isArray(s.settings.unlockedAccents) ? s.settings.unlockedAccents : [])
+      .filter(function (id) { return themeIds.indexOf(id) !== -1; });
+    if (s.settings.unlockedAccents.indexOf("ember") === -1) s.settings.unlockedAccents.unshift("ember");
+    if (themeIds.indexOf(s.settings.accent) === -1 || s.settings.unlockedAccents.indexOf(s.settings.accent) === -1) {
+      s.settings.accent = "ember";
+    }
+    s.dailyGoalReward = s.dailyGoalReward && s.dailyGoalReward.date === dayKey(Date.now())
+      ? s.dailyGoalReward
+      : { date: dayKey(Date.now()), paid: false };
     s.alphabet = s.alphabet && typeof s.alphabet === "object" && !Array.isArray(s.alphabet) ? s.alphabet : {};
     if (s.profile) {
       var uiChoicesHere = uiChoices(code);
@@ -583,6 +600,7 @@
     save();
     applyStrings();
     renderUiLangPickers();
+    if (typeof renderAccentPicker === "function") renderAccentPicker();
     if (typeof renderWishPresets === "function") renderWishPresets();
   }
 
@@ -640,6 +658,7 @@
     reader = null;
     writing = null;
     alphabet = null;
+    wordset = null;
     chat = null;
     chatEpoch += 1;
     resetChatClear();
@@ -655,7 +674,7 @@
     if (currentView === "stats") renderStats();
     /* A deck switch must not leave a half-finished lesson from the old pack on
      * screen. Settings and setup are the only views that belong to the switch. */
-    if (currentView !== "setup" && currentView !== "settings") show("today");
+    if (currentView !== "setup" && currentView !== "settings" && currentView !== "wordset") show("today");
     return true;
   }
 
@@ -883,7 +902,7 @@
 
   /* ---------------------------------------------------------------- views */
 
-  var VIEWS = ["today", "session", "reader", "alphabet", "vocab", "conv", "setup", "settings", "stats"];
+  var VIEWS = ["today", "session", "reader", "alphabet", "vocab", "wordset", "conv", "setup", "settings", "stats"];
   var currentView = "today";
 
   /* Setup is a gate, not a suggestion: tabs, deep links and buttons cannot
@@ -917,7 +936,8 @@
       else t.removeAttribute("aria-current");
     });
     if (view === "today" || view === "settings") renderToday();
-    if (view === "settings") { renderChatSettings(); renderLanguageLibrary(); }
+    if (view === "settings") { renderSettingsOptions(); renderChatSettings(); renderLanguageLibrary(); }
+    if (view === "wordset") renderWordset();
     if (view === "stats") renderStats();
     if (window.history && window.history.replaceState) {
       window.history.replaceState(null, "", "#" + view);
@@ -1028,6 +1048,7 @@
       gloss.classList.toggle("is-on", on);
       gloss.setAttribute("aria-pressed", String(on));
     }
+    renderAccentPicker();
   }
 
   function applyAudioSetting() {
@@ -1039,6 +1060,110 @@
       try { window.speechSynthesis.cancel(); } catch (err) { /* no voice */ }
     }
     updateAudioChip();
+  }
+
+  function applyAccent() {
+    var id = (state && state.settings && state.settings.accent) || "ember";
+    var rootEl = document.documentElement;
+    if (!rootEl) return;
+    if (id === "ember") rootEl.removeAttribute("data-accent");
+    else rootEl.setAttribute("data-accent", id);
+  }
+
+  function accentLabel(theme) {
+    var key = "accent" + theme.id.charAt(0).toUpperCase() + theme.id.slice(1);
+    return tr(key, theme.name);
+  }
+
+  function renderAccentPicker() {
+    var box = $("accent-list");
+    if (!box || !ECON) return;
+    var unlocked = (state.settings && state.settings.unlockedAccents) || ["ember"];
+    var active = (state.settings && state.settings.accent) || "ember";
+    box.innerHTML = ECON.THEMES.map(function (theme) {
+      var owned = unlocked.indexOf(theme.id) !== -1;
+      var on = theme.id === active;
+      var meta = owned
+        ? (on ? tr("equipped", "equipped") : tr("use", "use"))
+        : theme.cost + " " + tr("coins", "coins");
+      return '<button class="accent-swatch' + (on ? " is-active" : "") + '" type="button" ' +
+        'data-accent-theme="' + esc(theme.id) + '" aria-pressed="' + on + '">' +
+        '<span class="swatch swatch-' + esc(theme.id) + '" aria-hidden="true"></span>' +
+        '<span class="accent-name">' + esc(accentLabel(theme)) + "</span>" +
+        '<span class="accent-price">' + esc(meta) + "</span></button>";
+    }).join("");
+    Array.prototype.forEach.call(box.querySelectorAll("[data-accent-theme]"), function (b) {
+      b.addEventListener("click", function () { chooseAccent(b.getAttribute("data-accent-theme")); });
+    });
+  }
+
+  function chooseAccent(id) {
+    if (!ECON) return;
+    var theme = ECON.theme(id);
+    if (!theme) return;
+    var unlocked = state.settings.unlockedAccents || ["ember"];
+    var owned = unlocked.indexOf(theme.id) !== -1;
+    if (!owned) {
+      if (!ECON.canBuy(state.coins || 0, theme.id)) {
+        var missing = theme.cost - (state.coins || 0);
+        toast(tr("notEnoughCoins", "Need {n} more coins.").replace("{n}", String(missing)));
+        return;
+      }
+      state.coins = (state.coins || 0) - theme.cost;
+      unlocked.push(theme.id);
+      state.settings.unlockedAccents = unlocked;
+    }
+    state.settings.accent = theme.id;
+    save();
+    applyAccent();
+    renderAccentPicker();
+    renderCoins();
+    renderToday();
+    var picked = document.querySelector('[data-accent-theme="' + theme.id + '"]');
+    if (picked) {
+      try { picked.focus({ preventScroll: true }); }
+      catch (err) { picked.focus(); }
+    }
+    toast((owned ? tr("accentEquipped", "{name} in use.") : tr("accentBought", "{name} unlocked."))
+      .replace("{name}", accentLabel(theme)));
+  }
+
+  function renderCoins() {
+    var count = (state && state.coins) || 0;
+    var el = $("stat-coins");
+    if (el) el.textContent = String(count);
+    var pill = document.querySelector(".coin-pill");
+    if (pill) pill.setAttribute("aria-label", tr("coins", "coins") + " " + count);
+  }
+
+  function addCoins(n) {
+    var gain = Math.max(0, Math.round(Number(n) || 0));
+    if (!gain) return 0;
+    state.coins = (state.coins || 0) + gain;
+    save();
+    renderCoins();
+    return gain;
+  }
+
+  function dailyGoalTarget() {
+    var hist = (state.history || []).map(function (h) {
+      return typeof h === "number" ? h : h && h.size;
+    });
+    return ADAPT ? ADAPT.dailyGoal(hist) : 8;
+  }
+
+  /* The goal pays once per day, on reaching it, not for opening the app. */
+  function payDailyGoal() {
+    var today = dayKey(Date.now());
+    var reward = state.dailyGoalReward;
+    if (!reward || reward.date !== today) {
+      reward = state.dailyGoalReward = { date: today, paid: false };
+    }
+    if (reward.paid) return;
+    if ((state.daily && state.daily.cards || 0) < dailyGoalTarget()) return;
+    reward.paid = true;
+    var gain = addCoins(ECON ? ECON.dailyGoalCoins() : 5);
+    toast(tr("dailyGoalCoins", "Daily goal · +{n} coins").replace("{n}", String(gain)));
   }
 
   /* A setting must change what is on screen now, not after a reload. */
@@ -1110,6 +1235,7 @@
     if (xp) xp.textContent = state.xp || 0;
     var lvl = $("stat-level");
     if (lvl) lvl.textContent = tr("levelShort", "Lv") + " " + (Math.floor((state.xp || 0) / 100) + 1);
+    renderCoins();
     $("stat-mastered").textContent = mastered;
     $("known-bar").style.width = Math.round((known / Math.max(allIds.length, 1)) * 100) + "%";
 
@@ -3354,6 +3480,182 @@
     startSession({ ids: wish.ids, size: wish.ids.length, customId: wish.id });
   }
 
+  /* The word set: paste the words you need, see what the pack has, start a
+   * focused lesson. Matching lives in src/wordset.js so it can be tested. */
+  var wordset = null;
+
+  function wordsetLabel(id) {
+    var it = itemOf(id);
+    return (it.article ? it.article + " " : "") + it.text;
+  }
+
+  function wordsetCandidates() {
+    var items = [];
+    allIds.forEach(function (id) {
+      var c = conceptById[id];
+      if (!c) return;
+      items.push({
+        id: id, kind: "word",
+        text: (c.article ? c.article + " " : "") + c.word,
+        gloss: rawGloss(id), sub: c.sentence || ""
+      });
+    });
+    phraseIds.forEach(function (id) {
+      var p = phraseById[id];
+      if (p) items.push({ id: id, kind: "phrase", text: p.text, gloss: rawGloss(id), sub: p.sub || "" });
+    });
+    termIds.forEach(function (id) {
+      var t = termById[id];
+      if (t) items.push({ id: id, kind: "term", text: t.text, gloss: rawGloss(id), sub: t.frame || "" });
+    });
+    basicIds.forEach(function (id) {
+      var b = basicById[id];
+      if (b) items.push({ id: id, kind: "basic", text: b.text, gloss: rawGloss(id), sub: "" });
+    });
+    return items;
+  }
+
+  function wordsetRevisionIds() {
+    var now = Date.now();
+    var out = [];
+    allIds.concat(phraseIds).forEach(function (id) {
+      if (!atLevel(id)) return;
+      var c = state.cards[id];
+      if (c && c.last !== null && c.due <= now) out.push(id);
+    });
+    out.sort(function (a, b) {
+      return (state.cards[a].due || 0) - (state.cards[b].due || 0);
+    });
+    return out.slice(0, 8);
+  }
+
+  function renderWordsetLangs() {
+    var sel = $("wordset-lang");
+    if (!sel) return;
+    var list = packList();
+    var current = sel.value || (ACTIVE && ACTIVE.code) || "es";
+    sel.innerHTML = list.map(function (p) {
+      var flag = LANG_FLAGS[p.code] || "";
+      return '<option value="' + esc(p.code) + '">' + flag + " " + esc(uiName(p.code)) + "</option>";
+    }).join("");
+    if (list.some(function (p) { return p.code === current; })) sel.value = current;
+    else if (ACTIVE) sel.value = ACTIVE.code;
+  }
+
+  function setWordsetStatus(text) {
+    var el = $("wordset-status");
+    if (el) el.textContent = text || "";
+  }
+
+  function clearWordsetPreview() {
+    var preview = $("wordset-preview");
+    var find = $("wordset-find");
+    if (preview) { preview.hidden = true; preview.innerHTML = ""; }
+    if (find) {
+      find.hidden = false;
+      find.classList.add("btn-primary");
+      find.classList.remove("btn-ghost");
+    }
+    setWordsetStatus("");
+  }
+
+  function renderWordset() {
+    renderWordsetLangs();
+    var input = $("wordset-input");
+    if (input && !input.value) input.value = state.settings.wordsetDraft || "";
+    if (!wordset) return;
+    if (wordset.code !== (ACTIVE && ACTIVE.code)) { wordset = null; clearWordsetPreview(); return; }
+    renderWordsetPreview();
+  }
+
+  function openWordset() {
+    if (needsSetup()) { show("setup"); return; }
+    wordset = null;
+    show("wordset");
+    var input = $("wordset-input");
+    if (input) input.value = state.settings.wordsetDraft || "";
+    clearWordsetPreview();
+    renderWordsetLangs();
+    if (input) input.focus();
+  }
+
+  function findWordset() {
+    var input = $("wordset-input");
+    var text = input ? input.value : "";
+    var queries = WORDSET.parseList(text);
+    state.settings.wordsetDraft = text;
+    save();
+    if (!queries.length) {
+      setWordsetStatus(tr("wordsetEmpty", "Paste at least one word."));
+      return;
+    }
+    var code = $("wordset-lang") ? $("wordset-lang").value : (ACTIVE && ACTIVE.code);
+    if (code && ACTIVE && code !== ACTIVE.code && LANGS && LANGS.has(code)) {
+      if (!switchLang(code)) { setWordsetStatus(tr("wordsetUnavailable", "That language is not available.")); return; }
+    }
+    var candidates = wordsetCandidates();
+    var result = WORDSET.build(queries, candidates, wordsetRevisionIds().slice(0, 4), { limit: 12 });
+    wordset = { code: ACTIVE.code, queries: queries, result: result };
+    renderWordsetPreview();
+  }
+
+  function renderWordsetPreview() {
+    var preview = $("wordset-preview");
+    var find = $("wordset-find");
+    if (!preview || !wordset) return;
+    var result = wordset.result;
+    var found = result.matched.length;
+    var missing = result.missing;
+    if (find) {
+      find.classList.remove("btn-primary");
+      find.classList.add("btn-ghost");
+    }
+    preview.hidden = false;
+    var review = Math.max(0, result.ids.length - found);
+    preview.innerHTML =
+      '<p class="settings-label">' + esc(tr("wordsetWillTeach", "These will be taught")) + "</p>" +
+      (found
+        ? '<div class="wordset-chips">' + result.matched.map(function (row) {
+            var gloss = glossFor(row.id);
+            return '<span class="wordset-chip"><b>' + esc(wordsetLabel(row.id)) + "</b>" +
+              (gloss ? '<span>' + esc(gloss) + "</span>" : "") + "</span>";
+          }).join("") + "</div>"
+        : '<p class="builder-note">' + esc(tr("wordsetNoMatch", "None of these are in this pack yet.")) + "</p>") +
+      (missing.length
+        ? '<p class="wordset-missing">' + esc(tr("wordsetMissing", "{n} not in this pack")
+            .replace("{n}", String(missing.length))) + ": " + esc(missing.join(", ")) + "</p>"
+        : "") +
+      (found && review
+        ? '<p class="wordset-missing">' + esc(tr("wordsetPlusReview", "{n} due reviews included")
+            .replace("{n}", String(review))) + "</p>"
+        : "") +
+      (found
+        ? '<button class="btn btn-primary wordset-start" id="wordset-start" type="button">' +
+          esc(tr("wordsetStart", "Start with these")) + "</button>"
+        : "");
+    var bits = [tr("wordsetFound", "{n} found").replace("{n}", String(found))];
+    if (missing.length) bits.push(tr("wordsetMissing", "{n} not in this pack").replace("{n}", String(missing.length)));
+    setWordsetStatus(bits.join(" · "));
+    var start = $("wordset-start");
+    if (start) start.addEventListener("click", startWordset);
+  }
+
+  function startWordset() {
+    if (!wordset || !wordset.result.ids.length) return;
+    var title = wordset.queries.slice(0, 3).join(", ");
+    if (wordset.queries.length > 3) title += "…";
+    var saved = saveCustomLesson({ ids: wordset.result.ids, focus: [] }, title);
+    saved.type = "wordset";
+    saved.missing = wordset.result.missing.slice();
+    save();
+    startSession({
+      ids: wordset.result.ids,
+      size: wordset.result.ids.length,
+      title: title,
+      customId: saved.id
+    });
+  }
+
   /* Vocabulary expansion is deliberately not a lesson: one word, recall,
    * reveal, decide. It feeds the same SRS store as lessons. */
   function vocabPool() {
@@ -3428,6 +3730,7 @@
     vocab.done = true;
     var gained = Math.max(2, vocab.correct * 2);
     state.xp = (state.xp || 0) + gained;
+    var coinGain = addCoins(ECON ? ECON.vocabCoins(vocab.correct) : 0);
     state.vocabStats = state.vocabStats || { sessions: 0, correct: 0, again: 0 };
     state.vocabStats.sessions += 1;
     state.vocabStats.correct += vocab.correct;
@@ -3437,10 +3740,31 @@
     stage.innerHTML =
       '<div class="vocab-summary">' +
         '<p class="vocab-word">' + vocab.correct + " / " + (vocab.correct + vocab.again) + "</p>" +
-        '<p class="vocab-meaning">' + esc(tr("vocabDone", "Vocabulary session done")) + " · +" + gained + " XP</p>" +
-        '<button class="btn btn-primary" id="vocab-more">' + esc(tr("oneMore", "One more")) + "</button>" +
+        '<p class="vocab-meaning">' + esc(tr("vocabDone", "Vocabulary session done")) +
+          " · +" + gained + " XP · +" + coinGain + " " + esc(tr("coins", "coins")) + "</p>" +
+        '<div class="vocab-summary-actions">' +
+          '<button class="btn btn-primary" id="vocab-more">' + esc(tr("oneMore", "One more")) + "</button>" +
+          (vocab.again
+            ? '<button class="btn btn-ghost btn-sm" id="vocab-review" type="button">' +
+              esc(tr("vocabReview", "Review missed")) + "</button>"
+            : "") +
+        "</div>" +
       "</div>";
+    var bar = $("vocab-bar");
+    if (bar) bar.style.width = "100%";
     $("vocab-more").addEventListener("click", startVocab);
+    try { $("vocab-more").focus({ preventScroll: true }); }
+    catch (err) { $("vocab-more").focus(); }
+    var review = $("vocab-review");
+    if (review) review.addEventListener("click", function () {
+      var ids = Object.keys(vocab.retry || {}).filter(function (id) { return !!state.cards[id]; });
+      if (!ids.length) return;
+      vocab = {
+        queue: ids, i: 0, correct: 0, again: 0, retry: {},
+        done: false, revealed: false, anchorDraft: ""
+      };
+      renderVocab();
+    });
     $("vocab-count").textContent = "";
     $("vocab-stats").textContent = "";
   }
@@ -3455,12 +3779,21 @@
     var reveal = vocab.revealed;
     var anchor = state.anchors[id] || vocab.anchorDraft || "";
     $("vocab-count").textContent = (vocab.i + 1) + "/" + vocab.queue.length;
+    $("vocab-bar").style.width = Math.round((vocab.i / Math.max(vocab.queue.length, 1)) * 100) + "%";
     $("vocab-stats").textContent = vocab.correct + " ✓ · " + vocab.again + " ↺";
+    var context = it.sentence || (it.kind === "phrase" ? it.sub : "");
     $("vocab-stage").innerHTML =
       '<p class="prompt">' + esc(tr("vocabHint", "Recall the meaning before revealing")) + "</p>" +
       '<p class="vocab-word">' + esc(it.text) + "</p>" +
-      '<button class="vocab-reveal" id="vocab-reveal" type="button">' + esc(reveal ? tr("glossHide", "hide translation") : tr("glossShow", "show translation")) + "</button>" +
+      '<div class="vocab-word-actions">' +
+        '<button class="vocab-reveal" id="vocab-reveal" type="button">' + esc(reveal ? tr("glossHide", "hide translation") : tr("glossShow", "show translation")) + "</button>" +
+        (audioAvailable()
+          ? '<button class="icon-btn vocab-hear" id="vocab-hear" type="button" aria-label="' +
+            esc(tr("hearit", "Hear it")) + '" title="' + esc(tr("hearit", "Hear it")) + '">' + ICON.speaker + "</button>"
+          : "") +
+      "</div>" +
       '<p class="vocab-meaning"' + (reveal ? "" : " hidden") + ">" + esc(meaning) + "</p>" +
+      (context && reveal ? '<p class="vocab-sentence">' + esc(context) + "</p>" : "") +
       '<input class="vocab-anchor-input" id="vocab-anchor" type="text" maxlength="120" autocomplete="off" placeholder="' + esc(tr("vocabAnchor", "Personal cue (optional)")) + '" value="' + esc(anchor) + '" />' +
       '<div class="vocab-actions">' +
         '<button class="btn btn-ghost" id="vocab-again" type="button">' + esc(tr("again", "Again")) + "</button>" +
@@ -3471,8 +3804,15 @@
       vocab.revealed = !vocab.revealed;
       renderVocab();
     });
+    var hear = $("vocab-hear");
+    if (hear) hear.addEventListener("click", function () { sayItem(it, this); });
     $("vocab-again").addEventListener("click", function () { answerVocab(false); });
     $("vocab-got").addEventListener("click", function () { answerVocab(true); });
+    var revealBtn = $("vocab-reveal");
+    if (revealBtn) {
+      try { revealBtn.focus({ preventScroll: true }); }
+      catch (err) { revealBtn.focus(); }
+    }
   }
 
   function startSession(opts) {
@@ -4614,6 +4954,7 @@
     if (session.counted[id]) return;
     session.counted[id] = true;
     bumpDaily();
+    payDailyGoal();
     save();
   }
 
@@ -4759,6 +5100,7 @@
     var kept = seen.filter(function (id) {
       return !session.missed[id] && !(session.taughtIds && session.taughtIds[id]);
     });
+    var coinGain = addCoins(ECON ? ECON.sessionCoins(session.firstCorrect, missed.length === 0) : 0);
 
     renderSteps("done");
     $("bar-fill").style.width = "100%";
@@ -4778,7 +5120,8 @@
       '<p class="prompt">' + esc(tr("lessonDone", "Lesson done")) + "</p>" +
       '<p class="sum-big">' + total + "</p>" +
       '<p class="sum-line">' + esc(noun) + " · " + took + "</p>" +
-      '<p class="xp-line">+' + xpEarned + " XP</p>" +
+      '<p class="xp-line">+' + xpEarned + " XP · +" + coinGain + " " +
+        esc(tr("coins", "coins")) + "</p>" +
       '<div class="sum-cols">' +
         (kept.length ? sumGroup("kept", tr("remembered", "Remembered") + " · " + kept.length, kept, now) : "") +
         (missed.length ? sumGroup("back", tr("comesBack", "Comes back") + " · " + missed.length, missed, now) : "") +
@@ -4912,7 +5255,8 @@
       (current ? current.title + " · " : "") +
       known + "/" + allIds.length + " " + tr("wordsMet", "words met") + " · " +
       solid + " " + tr("solid", "solid") + " · " +
-      currentStreak() + " " + tr("dayStreak", "day streak");
+      currentStreak() + " " + tr("dayStreak", "day streak") + " · " +
+      (state.coins || 0) + " " + tr("coins", "coins");
 
     /* The path is repeated here so a placement that skips lessons is visible
      * on Progress too, not only on Today. */
@@ -5029,6 +5373,27 @@
   $("home-conv").addEventListener("click", startConversation);
   $("home-read").addEventListener("click", startReader);
   $("home-vocab").addEventListener("click", startVocab);
+  $("home-wordset").addEventListener("click", openWordset);
+  $("wordset-back").addEventListener("click", function () {
+    state.settings.wordsetDraft = ($("wordset-input") || {}).value || state.settings.wordsetDraft;
+    save();
+    wordset = null;
+    show("today");
+  });
+  $("wordset-find").addEventListener("click", findWordset);
+  $("wordset-lang").addEventListener("change", function () {
+    wordset = null;
+    clearWordsetPreview();
+  });
+  $("wordset-input").addEventListener("input", function () {
+    state.settings.wordsetDraft = this.value;
+    wordset = null;
+    clearWordsetPreview();
+  });
+  $("wordset-input").addEventListener("blur", function () {
+    state.settings.wordsetDraft = this.value;
+    save();
+  });
   $("vocab-back").addEventListener("click", function () { vocab = null; show("today"); renderToday(); });
   $("review-all").addEventListener("click", reviewMistakes);
   $("reset-btn").addEventListener("click", function () {

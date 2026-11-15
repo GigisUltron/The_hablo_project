@@ -35,6 +35,18 @@
   --bad-soft: #fdeaec;
   /* the lower edge of raised buttons */
   --accent-deep: #8f2e08;
+  /* earned accent looks: the base values live here so theme blocks use var() */
+  --accent-ember: #c8410c;
+  --accent-plum: #7a2e57;
+  --accent-plum-hover: #632449;
+  --accent-plum-soft: #f7e9f0;
+  --accent-plum-deep: #4e1b37;
+  --on-accent-plum: #ffffff;
+  --accent-moss: #3f6b3a;
+  --accent-moss-hover: #33572f;
+  --accent-moss-soft: #eaf3e8;
+  --accent-moss-deep: #284522;
+  --on-accent-moss: #ffffff;
   --good-deep: #1b6a2f;
   --bad-deep: #a30010;
   --border-deep: #c7c7cc;
@@ -74,6 +86,17 @@
     --bad-soft: #3a1512;
     /* the lower edge of raised buttons */
     --accent-deep: #c8410c;
+    --accent-ember: #ff8a5c;
+    --accent-plum: #e07aa8;
+    --accent-plum-hover: #f09abc;
+    --accent-plum-soft: #3a1b2c;
+    --accent-plum-deep: #b85d88;
+    --on-accent-plum: #1c1c1e;
+    --accent-moss: #8fc98a;
+    --accent-moss-hover: #a6d8a1;
+    --accent-moss-soft: #1e2f1c;
+    --accent-moss-deep: #6da868;
+    --on-accent-moss: #1c1c1e;
     --good-deep: #1b6a2f;
     --bad-deep: #a30010;
     --border-deep: #5a5a5e;
@@ -82,6 +105,22 @@
     --edge-dim: rgba(255, 255, 255, 0.05);
     color-scheme: dark;
   }
+}
+
+/* A look is a cosmetic accent, bought with earned coins and never with money. */
+:root[data-accent="plum"] {
+  --accent: var(--accent-plum);
+  --accent-hover: var(--accent-plum-hover);
+  --accent-soft: var(--accent-plum-soft);
+  --accent-deep: var(--accent-plum-deep);
+  --on-accent: var(--on-accent-plum);
+}
+:root[data-accent="moss"] {
+  --accent: var(--accent-moss);
+  --accent-hover: var(--accent-moss-hover);
+  --accent-soft: var(--accent-moss-soft);
+  --accent-deep: var(--accent-moss-deep);
+  --on-accent: var(--on-accent-moss);
 }
 
 /* ----------------------------------------------------------------- reset */
@@ -2297,7 +2336,7 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .match-btn.pick-wrong { border-color: var(--bad); background: var(--bad-soft); }
 
 
-.today-badges { display: flex; align-items: center; gap: 8px; }
+.today-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .xp-pill {
   padding: 6px 10px;
   border-radius: var(--radius-pill);
@@ -2309,6 +2348,29 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   font-variant-numeric: tabular-nums;
 }
 .xp-pill b { color: var(--accent); }
+.coin-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 9px;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--border);
+  background: var(--card);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.coin-pill svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  color: var(--accent);
+}
+.coin-pill b { color: var(--accent); }
 
 /* vocabulary expansion: one word, one decision, no chrome */
 .vocab-panel {
@@ -2358,6 +2420,67 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .vocab-actions .btn { flex: 1 1 0; }
 .vocab-stats { text-align: center; color: var(--text-2); font-size: 13px; }
 .vocab-summary { display: grid; justify-items: center; gap: 12px; }
+.vocab-bar {
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--fill);
+  overflow: hidden;
+}
+.vocab-bar i {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--accent);
+  transition: width 240ms ease-out;
+}
+.vocab-word-actions { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.vocab-hear {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--text-2);
+}
+.vocab-hear svg { width: 20px; height: 20px; }
+.vocab-sentence {
+  max-width: 34ch;
+  font-size: 15px;
+  color: var(--text-2);
+  font-style: italic;
+}
+.vocab-summary-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
+/* word set: paste the words you actually need, preview, then start */
+.wordset-panel {
+  max-width: 720px;
+  margin: 0 auto;
+  display: grid;
+  gap: 12px;
+}
+.wordset-panel .setup-lang { max-width: 360px; }
+.wordset-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.wordset-preview {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 2px solid var(--fill);
+}
+.wordset-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.wordset-chip {
+  display: inline-grid;
+  gap: 2px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--fill);
+}
+.wordset-chip b { font-size: 15px; font-weight: 700; }
+.wordset-chip span { font-size: 12px; color: var(--text-2); }
+.wordset-missing { font-size: 13px; color: var(--text-2); }
+.wordset-start { justify-self: start; min-height: 44px; }
 
 
 .vocab-anchor-input {
@@ -2373,6 +2496,40 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   font-size: 14px;
 }
 
+
+/* the look shop: coins buy an accent, never an advantage */
+.look-section { display: grid; gap: 8px; margin: 18px 0; }
+.accent-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.accent-swatch {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  align-items: center;
+  min-height: 56px;
+  padding: 8px 10px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.accent-swatch .swatch {
+  grid-row: span 2;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-pill);
+}
+.accent-swatch .accent-name { font-size: 14px; font-weight: 700; }
+.accent-swatch .accent-price { font-size: 12px; color: var(--text-2); }
+.accent-swatch.is-active { border-color: var(--accent); background: var(--accent-soft); }
+.accent-swatch:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.swatch-ember { background: var(--accent-ember); }
+.swatch-plum { background: var(--accent-plum); }
+.swatch-moss { background: var(--accent-moss); }
 
 /* transfer mission: the lesson words must survive contact with conversation */
 .chat-mission {

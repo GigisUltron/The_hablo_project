@@ -209,6 +209,8 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/ruby.js",
     "src/writing.js",
     "src/exercises.js",
+    "src/economy.js",
+    "src/wordset.js",
     "src/ui-strings.js",
     "src/ui-extra.js",
     "src/srs.js",
@@ -366,6 +368,35 @@ test("every track unit has a mode the app can start", () => {
   for (const m of modes) assert.ok(["words", "phrases", "terms", "read", "script"].includes(m), "unknown mode " + m);
 });
 
+test("vocabulary expansion keeps audio, context and a way back to misses", () => {
+  assert.match(html, /id="vocab-bar"/);
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /id="vocab-hear"/);
+  assert.match(app, /vocab-sentence/);
+  assert.match(app, /id="vocab-review"/);
+  assert.match(app, /vocabReview/);
+});
+
+test("coins and the accent shop are wired into Today and Settings", () => {
+  assert.match(html, /id="stat-coins"/);
+  assert.match(html, /id="accent-list"/);
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /ECON\.sessionCoins/);
+  assert.match(app, /ECON\.vocabCoins/);
+  assert.match(app, /function chooseAccent/);
+  assert.match(app, /function payDailyGoal/);
+});
+
+test("the word set is reachable from Today and has its own screen", () => {
+  assert.match(html, /id="home-wordset"/);
+  assert.match(html, /id="view-wordset"/);
+  assert.match(html, /id="wordset-input"/);
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /function openWordset/);
+  assert.match(app, /WORDSET\.build/);
+  assert.match(app, /function startWordset/);
+});
+
 test("every translatable attribute key in the markup exists in every locale", () => {
   const U = require("../src/ui-strings.js");
   const X = require("../src/ui-extra.js");
@@ -479,10 +510,10 @@ test("setup cannot be skipped through the tabs or a lesson", () => {
 
 test("switching decks clears every in-flight lesson surface", () => {
   const block = app.slice(app.indexOf("function switchLang"), app.indexOf("function beginProfile"));
-  for (const name of ["session", "reader", "writing", "alphabet", "placement"]) {
+  for (const name of ["session", "reader", "writing", "alphabet", "wordset", "placement"]) {
     assert.match(block, new RegExp(name + " = null"), "switchLang leaves " + name + " alive");
   }
-  assert.match(block, /currentView !== "setup" && currentView !== "settings"\) show\("today"\)/,
+  assert.match(block, /currentView !== "setup" && currentView !== "settings" && currentView !== "wordset"\) show\("today"\)/,
     "a switch can leave a lesson from the old deck on screen");
 });
 

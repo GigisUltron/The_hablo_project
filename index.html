@@ -58,6 +58,10 @@
               <b id="stat-streak">0</b><span class="sr-only" data-i18n="dayStreak"> day streak</span>
             </p>
             <p class="xp-pill"><span id="stat-level">Lv 1</span> · <b id="stat-xp">0</b> XP</p>
+            <p class="coin-pill" title="Coins" aria-label="Coins" data-i18n-title="coins">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M9.5 10h5M9.5 14h5"/></svg>
+              <b id="stat-coins">0</b>
+            </p>
           </div>
         </header>
 
@@ -122,6 +126,16 @@
           <button class="row" id="home-vocab" type="button">
             <span class="row-pic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h6"/></svg></span>
             <span class="row-body"><span class="row-main" data-i18n="expandVocab">Expand vocabulary</span><span class="row-meta" aria-hidden="true">›</span></span>
+          </button>
+          <button class="row" id="home-wordset" type="button">
+            <span class="row-pic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>
+            <span class="row-body">
+              <span class="row-copy">
+                <span class="row-main" data-i18n="wordsetRow">Learn specific words</span>
+                <span class="row-sub" data-i18n="wordsetRowSub">Paste a list</span>
+              </span>
+              <span class="row-meta" aria-hidden="true">›</span>
+            </span>
           </button>
         </div>
 
@@ -252,8 +266,32 @@
       </div>
       <div class="vocab-panel">
         <p class="vocab-count" id="vocab-count"></p>
-        <div id="vocab-stage" class="vocab-stage"></div>
+        <div class="vocab-bar" role="progressbar" aria-label="Vocabulary progress"><i id="vocab-bar"></i></div>
+        <div id="vocab-stage" class="vocab-stage" aria-live="polite"></div>
         <p class="vocab-stats" id="vocab-stats"></p>
+      </div>
+    </section>
+
+    <!-- ========================================================= WORD SET -->
+    <section class="view" id="view-wordset" aria-labelledby="wordset-title">
+      <div class="map-head">
+        <div>
+          <h2 id="wordset-title" data-i18n="wordsetTitle">Words you need</h2>
+          <p class="builder-note" data-i18n="wordsetIntro">Paste the words or phrases you need, one per line.</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="wordset-back" data-i18n="done">Done</button>
+      </div>
+      <div class="panel panel-pad wordset-panel">
+        <label class="setup-lang" for="wordset-lang"><span data-i18n="wishLanguage">Lesson language</span>
+          <select id="wordset-lang" class="wish-lang"></select>
+        </label>
+        <label class="sr-only" for="wordset-input" data-i18n="wordsetTitle">Words you need</label>
+        <textarea id="wordset-input" class="type-input" rows="3" maxlength="600" data-i18n-ph="wordsetPlaceholder" placeholder="invoice, deadline, colleague"></textarea>
+        <div class="wordset-actions">
+          <button class="btn btn-primary" id="wordset-find" type="button" data-i18n="wordsetFind">Find these words</button>
+          <span class="builder-note" id="wordset-status" role="status" aria-live="polite"></span>
+        </div>
+        <div class="wordset-preview" id="wordset-preview" hidden></div>
       </div>
     </section>
 
@@ -320,6 +358,12 @@
               <button class="seg" data-ruby="on" type="button" data-i18n="on">on</button>
               <button class="seg" data-ruby="off" type="button" data-i18n="off">off</button>
             </div>
+          </div>
+
+          <div class="look-section">
+            <p class="settings-label" data-i18n="look">Look</p>
+            <p class="builder-note" data-i18n="lookHint">Earn coins by finishing sessions; spend them on a look.</p>
+            <div class="accent-list" id="accent-list"></div>
           </div>
 
           <div class="fields" id="fields"></div>
@@ -556,6 +600,8 @@
 <script src="src/ruby.js"></script>
 <script src="src/writing.js"></script>
 <script src="src/exercises.js"></script>
+<script src="src/economy.js"></script>
+<script src="src/wordset.js"></script>
 <script src="src/ui-strings.js"></script>
 <script src="src/ui-extra.js"></script>
 <script src="src/srs.js"></script>
