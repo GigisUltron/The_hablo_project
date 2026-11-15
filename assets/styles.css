@@ -1854,3 +1854,104 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 }
 .custom-del:hover { color: var(--text); border-color: var(--text-2); }
 .custom-del:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ------------------------------------------------------------------
+   Lesson consistency layer.
+   The session is one card with one type scale, one input style and one
+   action row. Everything below is scoped to the card so the rest of the
+   app keeps its own display type.
+   ------------------------------------------------------------------ */
+.card {
+  width: 100%;
+  max-width: 720px;
+  margin-inline: auto;
+  gap: 14px;
+}
+.card, .card button, .card input, .card textarea {
+  font-family: var(--font);
+}
+.card .stage {
+  gap: 14px;
+  justify-content: flex-start;
+}
+.card .prompt {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-2);
+}
+.card .word {
+  font-size: clamp(28px, 6.5vw, 40px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+.card .word.long, .card .word.phrase {
+  font-size: clamp(22px, 5vw, 30px);
+}
+.card .meaning,
+.card .sentence,
+.card .roman {
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.card .meaning { color: var(--text); font-weight: 600; }
+.card .word-options { gap: 8px; }
+.card .option-word {
+  min-height: 52px;
+  padding: 9px 13px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.card .option-word.long,
+.card .option-word.phrase { font-size: 15px; }
+.card .feedback {
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.card .feedback::first-letter { text-transform: uppercase; }
+.card .feedback .why {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: 400;
+}
+.card .card-actions { gap: 8px; }
+.card .card-actions .btn,
+.card .card-actions .btn-primary,
+.card .card-actions .btn-ghost {
+  min-height: 50px;
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.card .card-actions .btn-ghost {
+  border: 2px solid var(--border);
+  background: var(--card);
+  color: var(--accent);
+}
+.card .card-actions .btn-ghost:hover { background: var(--accent-soft); }
+.card .type-input {
+  min-height: 48px;
+  padding: 10px 12px;
+  font-size: 16px;
+}
+.card .personal-line { font-size: 22px; }
+.card .gap-sentence,
+.card .term-blank { font-size: 20px; }
+.card .sum-big { line-height: 1; }
+.card .sum-line,
+.card .sum-meta { line-height: 1.4; }
+.card .reader-title { font-size: 22px; }
+.card .reader-body { font-size: 17px; line-height: 1.55; }
+.card .reader-q { font-size: 19px; }
+.card .msg-bubble { font-size: 16px; }

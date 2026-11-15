@@ -704,6 +704,14 @@ test("saved lessons can be deleted only after confirmation", () => {
   assert.match(app, /window\.confirm\(tr\("deleteLessonConfirm"/, "delete is not confirmed");
 });
 
+test("the lesson card has one consistent type and action scale", () => {
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(css, /\.card \.prompt \{/, "lesson prompt has no consistency rule");
+  assert.match(css, /\.card \.word \{/, "lesson word has no consistency rule");
+  assert.match(css, /\.card \.card-actions \.btn,[\s\S]*text-transform: none;/, "lesson buttons still use display caps");
+  assert.match(css, /\.card, \.card button, \.card input, \.card textarea \{/, "lesson controls can inherit another font");
+});
+
 test("the plan-a-lesson field is styled as a real input", () => {
   const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
   assert.match(css, /\.wish-row input \{/, "the request input has no styling");
