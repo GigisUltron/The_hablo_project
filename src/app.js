@@ -415,7 +415,7 @@
 
   function save() {
     if (DEMO) return;
-    if (state && state.profile && state.profile.byLang) {
+    if (state && state.profile && state.profile.byLang && state.profile.lang) {
       state.profile.byLang[state.profile.lang] = bucketOf(state);
     }
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (err) { /* private mode */ }
@@ -431,7 +431,7 @@
 
   function renderLangPickers() {
     var list = packList();
-    var current = state.profile ? state.profile.lang : (ACTIVE && ACTIVE.code);
+    var current = (state.profile && state.profile.lang) || (ACTIVE && ACTIVE.code);
     ["setup-lang", "settings-lang"].forEach(function (id) {
       var sel = $(id);
       if (!sel) return;
@@ -471,7 +471,12 @@
       return false;
     }
 
-    if (state.profile) state.profile.byLang[state.profile.lang] = bucketOf(state);
+    /* Choosing an interface language on first run creates a profile before it
+     * has a deck or a byLang archive. Do not assume either exists. */
+    if (state.profile) {
+      state.profile.byLang = state.profile.byLang || {};
+      if (state.profile.lang) state.profile.byLang[state.profile.lang] = bucketOf(state);
+    }
     activatePack(code);
 
     if (state.profile) {

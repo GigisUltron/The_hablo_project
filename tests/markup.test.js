@@ -395,6 +395,13 @@ test("the audio chip tests the active pack, not a Spanish word", () => {
   assert.match(app, /function audioTestItem/, "no active-pack sample picker");
 });
 
+test("first run can change interface language before choosing a level", () => {
+  assert.match(app, /state\.profile\.byLang = state\.profile\.byLang \|\| \{\}/,
+    "switchLang assumes byLang exists before onboarding finishes");
+  assert.match(app, /if \(state\.profile\.lang\) state\.profile\.byLang/,
+    "switchLang archives an undefined language");
+});
+
 test("the scripted chat does not fall back to a Spanish goodbye", () => {
   assert.equal(app.includes("¡Hasta pronto!"), false, "a Spanish closing survives for every deck");
   assert.equal(app.includes("À bientôt"), false, "a French closing survives for every deck");
