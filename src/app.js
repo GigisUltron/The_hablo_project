@@ -113,7 +113,10 @@
 
   function rememberLang(code) {
     if (!state.profile || !code) return;
-    var recent = (state.profile.recentLangs || []).filter(function (x) { return x !== code; });
+    var recent = state.profile.recentLangs || [];
+    /* Existing flags keep their positions. A genuinely new language enters
+     * at the front and pushes the oldest one out. */
+    if (recent.indexOf(code) !== -1) return;
     state.profile.recentLangs = [code].concat(recent).slice(0, 3);
   }
 
@@ -121,9 +124,13 @@
     var box = $("lang-switch");
     if (!box) return;
     if (!state.profile || !ACTIVE) { box.hidden = true; return; }
-    var codes = [ACTIVE.code].concat(state.profile.recentLangs || []).filter(function (code, i, all) {
+    var recent = (state.profile.recentLangs || []).filter(function (code, i, all) {
       return LANGS && LANGS.has(code) && all.indexOf(code) === i;
-    }).slice(0, 3);
+    });
+    /* If the active language is not in the saved row, add it without
+     * reshuffling the languages that are already there. */
+    if (recent.indexOf(ACTIVE.code) === -1) recent.unshift(ACTIVE.code);
+    var codes = recent.slice(0, 3);
     box.hidden = codes.length < 2;
     box.innerHTML = codes.map(function (code) {
       return '<button class="lang-flag' + (code === ACTIVE.code ? " is-active" : "") +

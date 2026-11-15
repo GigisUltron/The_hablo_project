@@ -718,6 +718,11 @@ test("saved lessons can be deleted only after confirmation", () => {
   assert.match(app, /askConfirm\(/, "delete is not confirmed in sema UI");
 });
 
+test("clicking an existing flag does not reshuffle the recent row", () => {
+  assert.match(app, /if \(recent\.indexOf\(code\) !== -1\) return;/, "existing languages still move to the front");
+  assert.match(app, /var codes = recent\.slice\(0, 3\);/, "rendering reorders the saved recent list");
+});
+
 test("recent-language flags keep the old language and cap at three", () => {
   assert.match(app, /rememberLang\(ACTIVE && ACTIVE\.code\)/, "the language being left is not remembered");
   assert.match(app, /recentLangs = \[code\]\.concat\(recent\)\.slice\(0, 3\)/, "recent list is not capped");
