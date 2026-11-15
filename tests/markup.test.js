@@ -70,6 +70,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/lang/es/basics.js",
     "src/lang/es/levels.js",
     "src/track.js",
+    "src/curriculum.js",
     "src/lang/es/texts.js",
     "src/adaptive.js",
     "src/correct.js",

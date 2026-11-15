@@ -38,6 +38,7 @@ var SEMA_UI_EXTRA = (function () {
     "sessions": ["sessions", "sesiones", "sessions", "sessioni", "sessões", "Sitzungen", "sessies", "занятий", "oturum", "جلسات", "सत्र", "セッション", "课程"],
     "recalled": ["recalled", "recordadas", "rappelées", "ricordate", "lembradas", "erinnert", "herinnerd", "вспомнено", "hatırlanan", "مسترجعة", "याद किए", "思い出した", "回忆"],
     "lapses": ["lapses", "fallos", "oublis", "lapsus", "falhas", "Fehler", "fouten", "промахи", "hatalar", "أخطاء", "चूक", "間違い", "失误"],
+    "fullOnly": ["full A2/B1 course", "curso completo A2/B1", "cours complet A2/B1", "corso completo A2/B1", "curso completo A2/B1", "vollständiger A2/B1-Kurs", "volledige A2/B1-cursus", "полный курс A2/B1", "tam A2/B1 kursu", "دورة A2/B1 كاملة", "पूरा A2/B1 कोर्स", "A2/B1 フルコース", "完整 A2/B1 课程"],
     "nextLesson": ["Next lesson", "Próxima lección", "Prochaine leçon", "Prossima lezione", "Próxima lição", "Nächste Lektion", "Volgende les", "Следующий урок", "Sonraki ders", "الدرس التالي", "अगला पाठ", "次のレッスン", "下一课"],
     "session": ["Session", "Sesión", "Session", "Sessione", "Sessão", "Sitzung", "Sessie", "Занятие", "Oturum", "جلسة", "सत्र", "セッション", "课程"],
     "audio": ["Audio", "Audio", "Audio", "Audio", "Áudio", "Audio", "Audio", "Аудио", "Ses", "صوت", "ऑडियो", "音声", "音频"],

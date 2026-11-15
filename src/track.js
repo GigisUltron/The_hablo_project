@@ -147,6 +147,7 @@ var SEMA_TRACK = {
     var n = Number(solid) || 0;
     var o = opts || {};
     var units = unitList(!!o.script);
+    if (o.only) units = units.filter(function (u) { return o.only.indexOf(u.id) !== -1; });
     var current = -1;
     units.forEach(function (u, i) { if (n >= u.need) current = i; });
     return units.map(function (u, i) {

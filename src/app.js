@@ -148,6 +148,7 @@
   }
 
   var TRACK = window.SemaTrack;
+  var CURR = window.SemaCurriculum;
   var ADAPT = window.SemaAdaptive;
   var CORRECT = window.SemaCorrect;
   var CE = window.SemaChatEngine;
@@ -2127,13 +2128,22 @@
     return {
       script: hasScriptLesson(),
       lang: ACTIVE && ACTIVE.code,
+      only: allowedTrackUnits().map(function (u) { return u.id; }),
       titles: titles && typeof titles === "object" ? titles : null
     };
   }
 
+  /* A starter deck honestly shows fewer lessons: do not offer "opinions" if
+   * the pack has no opinion phrases, and do not fill the gap with a random
+   * deck slice. Full packs carry the whole twelve-lesson arc. */
+  function allowedTrackUnits() {
+    var units = TRACK ? TRACK.unitList(hasScriptLesson()) : [];
+    return CURR ? CURR.available(units, phraseIds.map(function (id) { return phraseById[id]; })) : units;
+  }
+
   /* The units this pack actually shows, in order. */
   function trackUnits() {
-    return TRACK ? TRACK.unitList(hasScriptLesson()) : [];
+    return allowedTrackUnits();
   }
 
   function unitById(id) {
@@ -2146,10 +2156,11 @@
    * only opens a door. A finished alphabet steps aside for the next unit. */
   function currentTrackIndex() {
     var rows = trackRows();
+    var floor = Math.min(placementFloor(), Math.max(0, rows.length - 1));
     for (var i = rows.length - 1; i >= 0; i -= 1) {
-      if (rows[i].current) return Math.max(i, placementFloor());
+      if (rows[i].current) return Math.max(i, floor);
     }
-    return placementFloor();
+    return floor;
   }
 
   function trackRows() {
@@ -2226,9 +2237,11 @@
     var note = $("track-note");
     if (note) {
       var next = rows.filter(function (r) { return !r.unlocked; })[0];
-      note.textContent = next
+      var hidden = TRACK.unitList(hasScriptLesson()).length - rows.length;
+      note.textContent = (next
         ? next.remaining + (next.remaining === 1 ? " card" : " cards") + " to " + next.title
-        : rows.length + " units open — practise anything.";
+        : rows.length + " units open — practise anything.") +
+        (hidden ? " · " + hidden + " " + tr("fullOnly", "full A2/B1 course") : "");
     }
   }
 
@@ -2562,37 +2575,6 @@
    * The deal is deterministic - due items first, then new ones in the deck's own
    * order - so the Today card shows the cards that will actually be taught, not
    * a different random draw. */
-  /* Topics let the tutor choose a conversation, not a random deck slice. The
-   * starter packs predate `topic`; their ids still name the situation. */
-  var TOPIC_OF_SLUG = {
-    "hello": "greetings", "good-morning": "greetings", "good-night": "greetings",
-    "goodbye": "greetings", "see-you": "greetings", "how-are-you": "greetings",
-    "nice-to-meet": "introductions", "my-name-is": "introductions",
-    "what-is-your-name": "introductions", "where-from": "introductions",
-    "speak-english": "introductions", "dont-speak": "introductions",
-    "thank-you": "courtesy", "please": "courtesy", "excuse-me": "courtesy",
-    "yes": "courtesy", "no": "courtesy", "this-please": "courtesy",
-    "repeat": "courtesy", "speak-slower": "courtesy", "dont-understand": "courtesy",
-    "coffee": "café", "water": "café", "bill": "café", "how-much": "café",
-    "where-bathroom": "directions", "where-station": "directions", "lost": "directions",
-    "need-help": "emergency", "need-doctor": "emergency", "hotel": "hotel", "colour": "small-talk"
-  };
-
-  function phraseTopic(p) {
-    if (!p) return "";
-    if (p.topic) return p.topic;
-    var id = String(p.id || "");
-    var m = id.match(/^ph-([a-z]{2})-(.+)$/);
-    var slug = m ? m[2] : id.replace(/^ph-/, "");
-    return TOPIC_OF_SLUG[slug] || "";
-  }
-
-  function phraseInScope(p, unit) {
-    if (!unit || !unit.topics || !unit.topics.length) return true;
-    var topic = phraseTopic(p);
-    return !!topic && unit.topics.indexOf(topic) !== -1;
-  }
-
   function lessonPlan(opts) {
     var o = opts || {};
     var solid = solidCount();
@@ -2625,7 +2607,7 @@
     var openers = (!unit || unit.openers)
       ? openersFor().filter(function (id) { return ADAPT.within(itemLevel(id), "A2"); })
       : [];
-    var topicPhrases = phraseIds.filter(function (id) { return phraseInScope(phraseById[id], unit); });
+    var topicPhrases = phraseIds.filter(function (id) { return CURR.matches(phraseById[id], unit); });
     var phrases = topicPhrases.filter(atLevel);
     /* A tutor does not cancel the café lesson because only one café phrase is
      * graded A1. Top the topic up to a session's opening run with A2 phrases;
