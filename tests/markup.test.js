@@ -804,6 +804,13 @@ test("every translatable attribute key in the markup exists in every locale", ()
   }
 });
 
+test("the first-run primary choice comes before the optional why", () => {
+  const choice = html.indexOf('id="setup-new"');
+  const why = html.indexOf('id="setup-why"');
+  assert.ok(choice > -1 && why > -1);
+  assert.ok(choice < why, "the optional why block is in front of the primary choice");
+});
+
 test("first run can capture a why without adding a gate", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(html, /id="setup-why"/);

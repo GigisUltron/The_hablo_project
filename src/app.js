@@ -1773,8 +1773,10 @@
     var l = alphabet.queue[alphabet.i];
     var last = alphabet.i === alphabet.queue.length - 1;
     var revealed = !!alphabet.revealed;
-    $("alphabet-count").textContent = (alphabet.i + 1) + "/" + alphabet.queue.length;
-    $("alphabet-bar").style.width = Math.round((alphabet.i / alphabet.queue.length) * 100) + "%";
+    var total = Math.max(1, scriptLetters().length);
+    var overall = Math.min(total, alphabetKnown() + alphabet.i + 1);
+    $("alphabet-count").textContent = overall + "/" + total;
+    $("alphabet-bar").style.width = Math.round(((overall - 1) / total) * 100) + "%";
     $("alphabet-feedback").textContent = "";
     $("alphabet-feedback").className = "feedback";
 

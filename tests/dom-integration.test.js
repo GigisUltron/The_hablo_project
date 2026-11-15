@@ -14,8 +14,9 @@ function node(id) {
   return {
     id, style: {}, value: "", disabled: false, hidden: false, textContent: "", _html: "", _l: {},
     classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
+    _attrs: {},
     addEventListener(t, f) { this._l[t] = f; }, removeEventListener() {},
-    setAttribute() {}, getAttribute() { return null; }, removeAttribute() {},
+    setAttribute(k, v) { this._attrs[k] = String(v); }, getAttribute(k) { return this._attrs[k] == null ? null : this._attrs[k]; }, removeAttribute(k) { delete this._attrs[k]; },
     appendChild(c) { return c; }, insertAdjacentHTML() {},
     querySelectorAll() { return []; }, querySelector() { return null; }, closest() { return null; },
     focus() {}, click() { if (this._l.click) this._l.click.call(this); },
@@ -25,15 +26,22 @@ function node(id) {
 
 function boot(save, hash = "") {
   const registry = new Map();
+  const why = ["travel", "work", "family", "culture"].map((value) => {
+    const chip = node("why-" + value);
+    chip._attrs["data-why"] = value;
+    registry.set(chip.id, chip);
+    return chip;
+  });
   const document = {
     getElementById(id) { if (!registry.has(id)) registry.set(id, node(id)); return registry.get(id); },
-    querySelectorAll() { return []; }, querySelector() { return null; },
+    querySelectorAll(selector) { return selector === "[data-why]" ? why : []; },
+    querySelector(selector) { return selector === "#view-setup .setup-q" ? registry.get("setup-q") || null : null; },
     createElement() { return node(); }, createElementNS() { return node(); },
     addEventListener() {}, body: node("body"),
     documentElement: node("html"), activeElement: null
   };
   const store = {
-    getItem(k) { return k === "sema.v1" ? JSON.stringify(save) : null; },
+    getItem(k) { return k === "sema.v1" && save ? JSON.stringify(save) : null; },
     setItem() {}, removeItem() {}
   };
   const win = {
@@ -100,4 +108,22 @@ test("the alphabet screen reveals a flashcard and opens the all-letters grid", (
   all._l.click();
   assert.match(stage.innerHTML, /letter-grid/);
   assert.match(stage.innerHTML, /letter-tile/);
+});
+
+test("a brand-new learner can pick a why, start fresh and reach a card", () => {
+  const registry = boot(null);
+  const whyChip = registry.get("why-travel");
+  assert.ok(whyChip && whyChip._l.click, "why chip is not wired");
+  whyChip._l.click();
+  const fresh = registry.get("setup-new");
+  assert.ok(fresh && fresh._l.click, "I'm new is not wired");
+  fresh._l.click();
+  const reason = registry.get("personal-line");
+  assert.equal(reason.hidden, false, "the selected why is not shown on Today");
+  assert.match(reason.textContent, /Travel/);
+  const start = registry.get("start-btn");
+  assert.ok(start && start._l.click, "Start is not wired");
+  start._l.click();
+  const stage = registry.get("stage");
+  assert.ok(stage.innerHTML.length > 20, "Start did not render a card");
 });
