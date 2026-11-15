@@ -445,6 +445,16 @@
     if (!s.daily || s.daily.date !== dayKey(Date.now()) || typeof s.daily.cards !== "number") {
       s.daily = { date: dayKey(Date.now()), cards: 0 };
     }
+    s.days = s.days && typeof s.days === "object" && !Array.isArray(s.days) ? s.days : {};
+    var todayKey = dayKey(Date.now());
+    if (s.daily && s.daily.date === todayKey) {
+      s.days[todayKey] = Math.max(Number(s.days[todayKey]) || 0, Number(s.daily.cards) || 0);
+    }
+    var cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    Object.keys(s.days).forEach(function (key) {
+      var at = new Date(key + "T12:00:00").getTime();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(key) || !isFinite(at) || at < cutoff) delete s.days[key];
+    });
 
     s.settings = s.settings || {};
     if (typeof s.settings.wordsetDraft !== "string") s.settings.wordsetDraft = "";
@@ -5703,6 +5713,10 @@
     state.daily = ADAPT && ADAPT.bumpDaily
       ? ADAPT.bumpDaily(state.daily, Date.now())
       : { date: dayKey(Date.now()), cards: ((state.daily && state.daily.cards) || 0) + 1 };
+    state.days = state.days && typeof state.days === "object" ? state.days : {};
+    if (state.daily && state.daily.date) {
+      state.days[state.daily.date] = Number(state.daily.cards) || 0;
+    }
   }
 
   /* One card counts once for the day, even when a miss brings it back later. */
@@ -6180,6 +6194,33 @@
       });
   }
 
+  function renderWeek() {
+    var box = $("week-strip");
+    var totalEl = $("week-total");
+    if (!box) return;
+    var days = [];
+    var total = 0;
+    for (var i = 6; i >= 0; i -= 1) {
+      var date = new Date();
+      date.setDate(date.getDate() - i);
+      var key = dayKey(date);
+      var count = Number(state.days && state.days[key]) || 0;
+      total += count;
+      days.push({ date: date, key: key, count: count, today: i === 0 });
+    }
+    var max = Math.max(1, Math.max.apply(null, days.map(function (d) { return d.count; })));
+    box.innerHTML = days.map(function (d) {
+      var pct = d.count ? Math.max(8, Math.round((d.count / max) * 100)) : 0;
+      var label = d.date.toLocaleDateString(uiLocale(), { weekday: "short" });
+      var full = d.date.toLocaleDateString(uiLocale(), { day: "numeric", month: "short" });
+      return '<div class="week-day' + (d.today ? " is-today" : "") + (d.count ? "" : " is-zero") + '" aria-label="' +
+        esc(full + ": " + d.count + " " + tr("cards", "cards")) + '">' +
+        '<span class="week-bar" aria-hidden="true"><i style="height:' + pct + '%"></i></span>' +
+        '<b>' + d.count + '</b><span class="week-label">' + esc(label) + "</span></div>";
+    }).join("");
+    if (totalEl) totalEl.textContent = total + " " + tr("cards", "cards");
+  }
+
   function renderStats() {
     var cats = Object.keys(D.categories);
     var rows = cats.map(function (cat) {
@@ -6278,6 +6319,7 @@
       weakest: weakest ? catLabel(weakest.cat) : "",
       confusion: confused ? (conceptById[confused.target] || {}).word + " / " + (conceptById[confused.chosen] || {}).word : ""
     });
+    renderWeek();
   }
 
   /* ----------------------------------------------------------------- wire */
