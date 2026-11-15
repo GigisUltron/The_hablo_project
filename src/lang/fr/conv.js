@@ -32,7 +32,7 @@
         { speaker: "employé", es: "Bonjour, je peux vous aider ?", expects: ["billet", "train"], item: "ph-aller-simple", reply: "Je voudrais un billet.", gloss: "Hello, can I help you?", audio: "ph-aller-simple" },
         { speaker: "employé", es: "Vous allez où ?", expects: ["centre", "ville"], item: "ph-centre-ville", reply: "Au centre-ville.", gloss: "Where are you going?", audio: "ph-centre-ville" },
         { speaker: "employé", es: "Aller simple ou aller-retour ?", expects: ["aller simple", "aller-retour"], item: "ph-aller-simple", reply: "Aller simple.", gloss: "One way or return?", audio: "ph-aller-simple" },
-        { speaker: "employé", es: "Il part à quelle heure ?", expects: ["huit", "neuf"], item: "ph-heure", reply: "À huit heures.", gloss: "What time does it leave?", audio: "ph-heure" },
+        { speaker: "employé", es: "Il part à huit heures.", expects: ["merci"], item: "ph-heure", reply: "Merci.", gloss: "It leaves at eight.", audio: "ph-heure" },
         { speaker: "employé", es: "Ça fait trois euros.", expects: ["carte", "espèces"], item: "ph-par-carte", reply: "Par carte.", gloss: "That's three euros.", audio: "ph-par-carte" },
         { speaker: "employé", es: "Le quai est le deux.", expects: ["merci"], item: "ph-quai", reply: "Merci.", gloss: "The platform is number two.", audio: "ph-quai" },
       ]

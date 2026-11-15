@@ -32,7 +32,7 @@
         { speaker: "impiegato", es: "Buongiorno, come posso aiutarla?", expects: ["biglietto", "treno"], item: "ph-it-billete", reply: "Vorrei un biglietto.", gloss: "Good morning, how can I help?", audio: "ph-it-billete" },
         { speaker: "impiegato", es: "Dove va?", expects: ["centro", "città"], item: "ph-it-centro", reply: "In centro.", gloss: "Where are you going?", audio: "ph-it-centro" },
         { speaker: "impiegato", es: "Solo andata o andata e ritorno?", expects: ["solo andata", "andata e ritorno"], item: "ph-it-billete", reply: "Solo andata.", gloss: "One way or return?", audio: "ph-it-billete" },
-        { speaker: "impiegato", es: "A che ora parte?", expects: ["otto", "nove"], item: "ph-it-hora", reply: "Alle otto.", gloss: "What time does it leave?", audio: "ph-it-hora" },
+        { speaker: "impiegato", es: "Parte alle otto.", expects: ["grazie"], item: "ph-it-hora", reply: "Grazie.", gloss: "It leaves at eight.", audio: "ph-it-hora" },
         { speaker: "impiegato", es: "Sono tre euro.", expects: ["carta", "contanti"], item: "ph-it-tarjeta", reply: "Con la carta.", gloss: "That's three euros.", audio: "ph-it-tarjeta" },
         { speaker: "impiegato", es: "Il binario è il due.", expects: ["grazie"], item: "ph-it-anden", reply: "Grazie.", gloss: "The platform is number two.", audio: "ph-it-anden" },
       ]

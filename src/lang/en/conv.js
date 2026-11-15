@@ -32,7 +32,7 @@
         { speaker: "clerk", es: "Good morning, how can I help?", expects: ["ticket", "train"], item: "ph-en-tickets-1", reply: "I'd like a ticket.", gloss: "Good morning, how can I help?", audio: "ph-en-tickets-1" },
         { speaker: "clerk", es: "Where are you going?", expects: ["centre", "city"], item: "ph-en-directions-1", reply: "To the centre.", gloss: "Where are you going?", audio: "ph-en-directions-1" },
         { speaker: "clerk", es: "One way or return?", expects: ["one way", "return"], item: "ph-en-tickets-1", reply: "One way, please.", gloss: "One way or return?", audio: "ph-en-tickets-1" },
-        { speaker: "clerk", es: "What time does it leave?", expects: ["eight", "nine"], item: "ph-en-tickets-3", reply: "At eight.", gloss: "What time does it leave?", audio: "ph-en-tickets-3" },
+        { speaker: "clerk", es: "The train leaves at eight.", expects: ["thanks", "thank you"], item: "ph-en-tickets-3", reply: "Thanks.", gloss: "The train leaves at eight.", audio: "ph-en-tickets-3" },
         { speaker: "clerk", es: "That's three pounds.", expects: ["card", "cash"], item: "ph-en-money-4", reply: "By card.", gloss: "That's three pounds.", audio: "ph-en-money-4" },
         { speaker: "clerk", es: "The platform is number two.", expects: ["thanks", "thank you"], item: "ph-en-station-1", reply: "Thanks.", gloss: "The platform is number two.", audio: "ph-en-station-1" },
       ]

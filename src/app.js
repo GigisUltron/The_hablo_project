@@ -1748,7 +1748,8 @@
     if (!chat || chat.messages.length || !ACTIVE || chatCleared) return;
     /* The authored dialogue is the offline course's real conversation, not
      * an invented "No local model found." The model, when present, still wins. */
-    var d = CONV && CONV.dialogues && CONV.dialogues[0];
+    var dialogues = (CONV && CONV.dialogues) || [];
+    var d = dialogues.length ? dialogues[Math.floor(Math.random() * dialogues.length)] : null;
     if (d && d.turns && d.turns.length) {
       chat.scripted = { dialogue: d.id, turn: 0, misses: 0 };
       addAssistant(d.turns[0].es, true, "scripted", true);
