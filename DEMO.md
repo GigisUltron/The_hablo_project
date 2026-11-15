@@ -8,7 +8,8 @@ on the new card**. The drill data itself carries no English gloss inline; a sepa
 → word, word → picture, or say it aloud. What you miss comes back before the session ends.
 
 42 Spanish concepts and 60 phrases, 43 semantic relations, spaced repetition, a lesson
-builder that chooses what you study, spoken production, a nine-unit path with topic progress —
+builder that chooses what you study, spoken production, a twelve-lesson tutor path from first
+contact to a B1 bridge —
 and audio that ships with the app instead of depending on your operating system.
 
 ![sema — the Today view](docs/preview.png)

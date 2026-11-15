@@ -1090,6 +1090,8 @@ ruby rt {
 
 .lesson-card { gap: 16px; padding: 18px; }
 .lesson-top h2 { font-size: 22px; font-weight: 800; }
+.lesson-goal { font-size: 15px; line-height: 1.35; color: var(--text); font-weight: 600; }
+.lesson-focus { font-size: 13px; line-height: 1.35; color: var(--text-2); }
 
 /* the daily target is a real count of cards finished today, not a currency */
 .daily-goal { display: grid; gap: 8px; margin-top: 2px; }

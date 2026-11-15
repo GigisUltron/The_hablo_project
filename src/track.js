@@ -1,64 +1,126 @@
-/* The track: a visible curriculum instead of an endless deck.
+/* The track: a tutor's sequence, not an endless deck.
  *
- * Each unit is a lesson with a stable key, a mode and a scope, unlocked by how
- * many cards the learner has met. A unit carries no display string: its title
- * is resolved from the language being learned, so a learner of Chinese never
- * reads a unit named after Spanish. Pure: pass the count in, get the map back.
+ * Twelve lessons move from first contact to a B1 bridge. Each lesson has a
+ * communicative goal, a phrase-topic scope and a vocabulary-field scope. The
+ * path unlocks on cards met, so a learner reaches the next lesson after a
+ * session rather than after six days of spaced repetition.
  */
 var SEMA_TRACK = {
   units: [
-    { id: "u1", key: "u1", mode: "phrases", fields: null, need: 0 },
-    /* only shown for a pack whose script is not Latin; see unitList(). It sits
-     * after the first greeting so it is the current lesson at zero solid, and
-     * steps aside once real progress unlocks the next unit. */
-    { id: "script", key: "script", mode: "script", fields: null, need: 0 },
-    { id: "u2", key: "u2", mode: "words", fields: ["home", "food"], need: 6 },
-    { id: "u3", key: "u3", mode: "words", fields: ["nature", "animals", "body"], need: 14 },
-    { id: "u4", key: "u4", mode: "words", fields: ["city", "time"], need: 22 },
-    /* The first six units above left emotion, action and abstract out of the
-     * path entirely: a learner could finish the track without ever being shown
-     * "amor", "correr" or "paz". These three close that gap and make the path
-     * nine lessons instead of six. */
-    { id: "u5", key: "u5", mode: "words", fields: ["emotion"], need: 30 },
-    { id: "u6", key: "u6", mode: "words", fields: ["action", "abstract"], need: 38 },
-    { id: "u7", key: "u7", mode: "terms", fields: null, need: 46 },
-    { id: "u8", key: "u8", mode: "read", fields: null, need: 54 },
-    /* a final open practice unit: no new field, just everything already met */
-    { id: "u9", key: "u9", mode: "words", fields: null, need: 62 }
+    {
+      id: "c1", key: "c1", mode: "phrases", fields: null,
+      topics: ["greetings", "introductions", "courtesy"],
+      need: 0, openers: true,
+      goal: "Greet someone, introduce yourself, and say where you are from.",
+      focus: "hello · my name is · nice to meet you"
+    },
+    /* only shown for a pack whose script is not Latin; see unitList(). */
+    { id: "script", key: "script", mode: "script", fields: null, need: 0, goal: "Learn to read the script.", focus: "letters · sounds" },
+    {
+      id: "c2", key: "c2", mode: "words", fields: ["food"],
+      topics: ["café", "restaurant", "money"],
+      need: 6,
+      goal: "Order a drink or a meal politely and ask for the bill.",
+      focus: "please · I would like · how much"
+    },
+    {
+      id: "c3", key: "c3", mode: "words", fields: ["city"],
+      topics: ["city", "directions", "station", "tickets"],
+      need: 12,
+      goal: "Ask where places are, understand directions, and buy a ticket.",
+      focus: "where is · left and right · one ticket"
+    },
+    {
+      id: "c4", key: "c4", mode: "words", fields: ["time"],
+      topics: ["airport", "hotel", "money"],
+      need: 18,
+      goal: "Check in, catch a train or flight, and handle money.",
+      focus: "I have a reservation · what time · card or cash"
+    },
+    {
+      id: "c5", key: "c5", mode: "words", fields: ["body"],
+      topics: ["doctor", "emergency", "pharmacy"],
+      need: 24,
+      goal: "Ask for help, describe a problem, and talk to a doctor or pharmacist.",
+      focus: "I need help · it hurts · is there a pharmacy"
+    },
+    {
+      id: "c6", key: "c6", mode: "words", fields: ["home"],
+      topics: ["shopping", "clothes", "market"],
+      need: 32,
+      goal: "Shop for clothes, food, and gifts; ask about price and size.",
+      focus: "how much is it · too expensive · a different size"
+    },
+    {
+      id: "c7", key: "c7", mode: "words", fields: ["action", "time"],
+      topics: ["work", "study", "home", "hobbies"],
+      need: 40,
+      goal: "Talk about your work, study, home, and free time.",
+      focus: "I work · I study · in my free time"
+    },
+    {
+      id: "c8", key: "c8", mode: "words", fields: ["time"],
+      topics: ["plans", "phone", "messages"],
+      need: 48,
+      goal: "Make plans, leave a message, and arrange a time.",
+      focus: "are you free · let's meet · call me later"
+    },
+    {
+      id: "c9", key: "c9", mode: "words", fields: ["nature", "animals"],
+      topics: ["past", "weather"],
+      need: 56,
+      goal: "Talk about what happened yesterday and describe the weather.",
+      focus: "yesterday I went · it was raining · last week"
+    },
+    {
+      id: "c10", key: "c10", mode: "words", fields: ["emotion"],
+      topics: ["opinions", "small-talk", "feelings"],
+      need: 64,
+      goal: "Give opinions, agree and disagree, and keep a conversation going.",
+      focus: "I think · I agree · in my opinion"
+    },
+    {
+      id: "c11", key: "c11", mode: "terms", fields: ["abstract"],
+      topics: ["opinions", "past", "feelings"],
+      need: 72,
+      goal: "Connect ideas with because, although, however, and therefore.",
+      focus: "because · although · however · therefore"
+    },
+    {
+      id: "c12", key: "c12", mode: "read", fields: null,
+      topics: ["past", "opinions", "feelings"],
+      need: 76,
+      goal: "Read and tell a short story; hold a longer conversation.",
+      focus: "first · then · in the end"
+    },
   ],
 
   /* One key, one title per language. A pack overrides any of these by shipping
-   * its own `titles` map, so the track never has to be edited for a language.
-   * No title names a language: "Read", never "Read in Spanish". */
+   * its own `titles` map, so the track never has to be edited for a language. */
   titles: {
-    en: { u1: "Say hello", u2: "First words", u3: "Around you", u4: "Out in the city", u5: "Feelings", u6: "Actions", u7: "Connect ideas", u8: "Read", u9: "Practice", script: "Alphabet" },
-    es: { u1: "Saludar", u2: "Primeras palabras", u3: "A tu alrededor", u4: "En la ciudad", u5: "Sentimientos", u6: "Acciones", u7: "Conectar ideas", u8: "Leer", u9: "Práctica", script: "Alfabeto" },
-    de: { u1: "Begrüßen", u2: "Erste Wörter", u3: "Um dich herum", u4: "In der Stadt", u5: "Gefühle", u6: "Handlungen", u7: "Ideen verbinden", u8: "Lesen", u9: "Üben", script: "Alphabet" },
-    fr: { u1: "Saluer", u2: "Premiers mots", u3: "Autour de toi", u4: "En ville", u5: "Sentiments", u6: "Actions", u7: "Relier les idées", u8: "Lire", u9: "Entraînement", script: "Alphabet" },
-    it: { u1: "Salutare", u2: "Prime parole", u3: "Intorno a te", u4: "In città", u5: "Emozioni", u6: "Azioni", u7: "Collegare le idee", u8: "Leggere", u9: "Esercizio", script: "Alfabeto" },
-    nl: { u1: "Groeten", u2: "Eerste woorden", u3: "Om je heen", u4: "In de stad", u5: "Gevoelens", u6: "Acties", u7: "Ideeën verbinden", u8: "Lezen", u9: "Oefenen", script: "Alfabet" },
-    pt: { u1: "Cumprimentar", u2: "Primeiras palavras", u3: "Ao teu redor", u4: "Na cidade", u5: "Sentimentos", u6: "Ações", u7: "Ligar ideias", u8: "Ler", u9: "Prática", script: "Alfabeto" },
-    tr: { u1: "Selamlaşma", u2: "İlk kelimeler", u3: "Çevrende", u4: "Şehirde", u5: "Duygular", u6: "Eylemler", u7: "Fikirleri bağla", u8: "Okuma", u9: "Alıştırma", script: "Alfabe" },
-    ru: { u1: "Приветствие", u2: "Первые слова", u3: "Вокруг тебя", u4: "В городе", u5: "Чувства", u6: "Действия", u7: "Связывать идеи", u8: "Чтение", u9: "Практика", script: "Алфавит" },
-    ar: { u1: "التحية", u2: "أول الكلمات", u3: "حولك", u4: "في المدينة", u5: "المشاعر", u6: "الأفعال", u7: "ربط الأفكار", u8: "القراءة", u9: "تدريب", script: "الأبجدية" },
-    hi: { u1: "अभिवादन", u2: "पहले शब्द", u3: "तुम्हारे आसपास", u4: "शहर में", u5: "भावनाएँ", u6: "क्रियाएँ", u7: "विचार जोड़ो", u8: "पढ़ना", u9: "अभ्यास", script: "वर्णमाला" },
-    ja: { u1: "あいさつ", u2: "最初の単語", u3: "まわり", u4: "街で", u5: "気持ち", u6: "動作", u7: "つなぐ", u8: "読む", u9: "練習", script: "文字" },
-    zh: { u1: "打招呼", u2: "第一批词", u3: "身边", u4: "城市里", u5: "情感", u6: "动作", u7: "连接想法", u8: "阅读", u9: "练习", script: "字母" }
+    en: { c1: "First contact", c2: "Café & restaurant", c3: "Getting around", c4: "Travel", c5: "Help & health", c6: "Shopping", c7: "Daily life", c8: "Plans & messages", c9: "Past & weather", c10: "Opinions", c11: "Connect ideas", c12: "Tell a story", script: "Alphabet" },
+    es: { c1: "Primer contacto", c2: "Café y restaurante", c3: "Moverse", c4: "Viajar", c5: "Ayuda y salud", c6: "Compras", c7: "Vida diaria", c8: "Planes y mensajes", c9: "Pasado y tiempo", c10: "Opiniones", c11: "Conectar ideas", c12: "Contar una historia", script: "Alfabeto" },
+    fr: { c1: "Premier contact", c2: "Café et restaurant", c3: "Se déplacer", c4: "Voyager", c5: "Aide et santé", c6: "Achats", c7: "Vie quotidienne", c8: "Projets et messages", c9: "Passé et météo", c10: "Opinions", c11: "Relier les idées", c12: "Raconter une histoire", script: "Alphabet" },
+    it: { c1: "Primo contatto", c2: "Caffè e ristorante", c3: "Muoversi", c4: "Viaggiare", c5: "Aiuto e salute", c6: "Acquisti", c7: "Vita quotidiana", c8: "Progetti e messaggi", c9: "Passato e meteo", c10: "Opinioni", c11: "Collegare le idee", c12: "Raccontare una storia", script: "Alfabeto" },
+    pt: { c1: "Primeiro contato", c2: "Café e restaurante", c3: "Locomoção", c4: "Viagens", c5: "Ajuda e saúde", c6: "Compras", c7: "Vida diária", c8: "Planos e mensagens", c9: "Passado e clima", c10: "Opiniões", c11: "Ligar ideias", c12: "Contar uma história", script: "Alfabeto" },
+    de: { c1: "Erster Kontakt", c2: "Café & Restaurant", c3: "Unterwegs", c4: "Reisen", c5: "Hilfe & Gesundheit", c6: "Einkaufen", c7: "Alltag", c8: "Pläne & Nachrichten", c9: "Vergangenheit & Wetter", c10: "Meinungen", c11: "Ideen verbinden", c12: "Eine Geschichte erzählen", script: "Alphabet" },
+    nl: { c1: "Eerste contact", c2: "Café & restaurant", c3: "Onderweg", c4: "Reizen", c5: "Hulp & gezondheid", c6: "Winkelen", c7: "Dagelijks leven", c8: "Plannen & berichten", c9: "Verleden & weer", c10: "Meningen", c11: "Ideeën verbinden", c12: "Een verhaal vertellen", script: "Alfabet" },
+    ru: { c1: "Первый контакт", c2: "Кафе и ресторан", c3: "В пути", c4: "Путешествия", c5: "Помощь и здоровье", c6: "Покупки", c7: "Повседневность", c8: "Планы и сообщения", c9: "Прошлое и погода", c10: "Мнения", c11: "Связывать идеи", c12: "Рассказать историю", script: "Алфавит" },
+    tr: { c1: "İlk temas", c2: "Kafe ve restoran", c3: "Yolda", c4: "Seyahat", c5: "Yardım ve sağlık", c6: "Alışveriş", c7: "Günlük hayat", c8: "Planlar ve mesajlar", c9: "Geçmiş ve hava", c10: "Görüşler", c11: "Fikirleri bağla", c12: "Bir hikâye anlat", script: "Alfabe" },
+    ar: { c1: "أول تواصل", c2: "المقهى والمطعم", c3: "التنقل", c4: "السفر", c5: "المساعدة والصحة", c6: "التسوق", c7: "الحياة اليومية", c8: "الخطط والرسائل", c9: "الماضي والطقس", c10: "الآراء", c11: "ربط الأفكار", c12: "احكِ قصة", script: "الأبجدية" },
+    hi: { c1: "पहला संपर्क", c2: "कैफ़े और रेस्तरां", c3: "आना-जाना", c4: "यात्रा", c5: "मदद और सेहत", c6: "खरीदारी", c7: "रोज़मर्रा", c8: "योजनाएँ और संदेश", c9: "अतीत और मौसम", c10: "विचार", c11: "विचार जोड़ो", c12: "कहानी सुनाओ", script: "वर्णमाला" },
+    ja: { c1: "はじめての会話", c2: "カフェとレストラン", c3: "移動", c4: "旅行", c5: "助けと健康", c6: "買い物", c7: "毎日の生活", c8: "予定とメッセージ", c9: "過去と天気", c10: "意見", c11: "つなぐ", c12: "物語を話す", script: "文字" },
+    zh: { c1: "初次见面", c2: "咖啡馆和餐厅", c3: "出行", c4: "旅行", c5: "求助与健康", c6: "购物", c7: "日常生活", c8: "计划与消息", c9: "过去与天气", c10: "观点", c11: "连接想法", c12: "讲故事", script: "字母" }
   }
 };
 
 (function (root) {
   var T = SEMA_TRACK;
 
-  /* The order a learner meets the units. A pack with a non-Latin script also
-   * gets the alphabet, right after the first greeting unit: it is the current
-   * lesson until six cards are solid. */
   function unitList(script) {
     return T.units.filter(function (u) { return script || u.mode !== "script"; });
   }
 
-  /* The title for one unit key: the pack's own string first, then the table for
-   * the language being learned, then a generic English title. */
   function title(key, opts) {
     var o = opts || {};
     var supplied = o.titles && o.titles[key];
@@ -68,8 +130,6 @@ var SEMA_TRACK = {
     return T.titles.en[key] || key;
   }
 
-  /* Does a set of letters need a script lesson? A declared script wins; Latin
-   * never needs one, so an alphabet part on a Latin deck is not a lesson. */
   function scriptNeeded(letters, declared) {
     if (!letters || !letters.length) return false;
     if (declared) return String(declared).toLowerCase() !== "latin";
@@ -91,7 +151,8 @@ var SEMA_TRACK = {
     units.forEach(function (u, i) { if (n >= u.need) current = i; });
     return units.map(function (u, i) {
       return {
-        id: u.id, key: u.key, title: title(u.key, o), mode: u.mode, fields: u.fields, need: u.need,
+        id: u.id, key: u.key, title: title(u.key, o), mode: u.mode, fields: u.fields,
+        topics: u.topics, goal: u.goal, focus: u.focus, openers: !!u.openers, need: u.need,
         index: i,
         unlocked: n >= u.need,
         current: i === current,

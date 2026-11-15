@@ -16,9 +16,28 @@ test("unlocks step by step with cards met", () => {
 });
 
 test("the current unit is the furthest unlocked one", () => {
-  assert.equal(T.currentUnit(0).id, "u1");
-  assert.equal(T.currentUnit(7).id, "u2");
-  assert.equal(T.currentUnit(99).id, "u9");
+  assert.equal(T.currentUnit(0).id, "c1");
+  assert.equal(T.currentUnit(7).id, "c2");
+  assert.equal(T.currentUnit(99).id, "c12");
+});
+
+test("the first five lessons are a tutor's first five conversations", () => {
+  const first = T.unitList(false).slice(0, 5);
+  assert.deepEqual(first.map((u) => u.id), ["c1", "c2", "c3", "c4", "c5"]);
+  for (const u of first) {
+    assert.ok(u.goal && u.goal.length > 20, `${u.id} has no can-do goal`);
+    assert.ok(Array.isArray(u.topics) && u.topics.length, `${u.id} has no situation topics`);
+  }
+  assert.ok(first[0].openers, "the first lesson does not open on greetings");
+  assert.equal(first[1].openers, undefined, "the café lesson still opens on greetings");
+});
+
+test("the path has an A2 block and a B1 bridge", () => {
+  const units = T.unitList(false);
+  const a2 = units.filter((u) => ["c6", "c7", "c8", "c9", "c10"].includes(u.id));
+  assert.equal(a2.length, 5);
+  assert.equal(units.find((u) => u.id === "c11").mode, "terms");
+  assert.equal(units.find((u) => u.id === "c12").mode, "read");
 });
 
 test("the path covers every field a pack can teach", () => {

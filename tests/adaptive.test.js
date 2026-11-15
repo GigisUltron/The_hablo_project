@@ -153,6 +153,17 @@ test("reading has five shelves, one per band", () => {
   assert.equal(A.shelf(undefined), 1);
 });
 
+test("a learner earns the next band by meeting cards", () => {
+  assert.equal(A.earnedLevel(0), "A1");
+  assert.equal(A.earnedLevel(35), "A1");
+  assert.equal(A.earnedLevel(36), "A2");
+  assert.equal(A.earnedLevel(72), "B1");
+  assert.equal(A.earnedLevel(120), "B2");
+  assert.equal(A.earnedLevel(180), "C1");
+  assert.equal(A.higherLevel("A2", "B1"), "B1");
+  assert.equal(A.higherLevel("C1", "A1"), "C1");
+});
+
 test("a level belongs to a language, not to the whole profile", () => {
   const profile = { level: "B1", levelByLang: { es: "B1", fr: "A1" } };
   assert.equal(A.levelFor(profile, "es"), "B1");

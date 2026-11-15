@@ -947,6 +947,8 @@
     var next = renderNextStack();
     $("lesson-name").textContent = next.title;
     $("start-sub").textContent = next.caption || tr("nothingDue", "Nothing new or due. Practise anything.");
+    $("lesson-goal").textContent = next.goal || "";
+    $("lesson-focus").textContent = next.focus || "";
     renderReviewList();
   }
 
@@ -2185,8 +2187,8 @@
 
   function defaultUnit() {
     var rows = trackRows();
-    for (var i = rows.length - 1; i >= 0; i -= 1) if (rows[i].current) return unitById(rows[i].id) || rows[i];
-    return unitById(rows[0] && rows[0].id) || (rows[0] || null);
+    for (var i = rows.length - 1; i >= 0; i -= 1) if (rows[i].current) return rows[i];
+    return rows[0] || null;
   }
 
   function renderTrack() {
@@ -2214,9 +2216,9 @@
 
     Array.prototype.forEach.call(box.querySelectorAll(".step"), function (b) {
       b.addEventListener("click", function () {
-        var unit = unitById(b.getAttribute("data-unit"));
+        var unit = unitRow(b.getAttribute("data-unit"));
         if (!unit) return;
-        if (!unitUnlocked(unit)) { toast(unlockLine(unitRow(unit.id))); return; }
+        if (!unitUnlocked(unit)) { toast(unlockLine(unit)); return; }
         startSession({ unit: unit });
       });
     });
@@ -2481,9 +2483,9 @@
    * beginner. Treating an unknown band as permission is how a B1 connector
    * reached someone who had not met "hola" yet. */
   function learnerLevel() {
-    return ADAPT && ADAPT.levelFor
-      ? ADAPT.levelFor(state.profile, ACTIVE && ACTIVE.code)
-      : "A1";
+    if (!ADAPT) return "A1";
+    var placed = ADAPT.levelFor(state.profile, ACTIVE && ACTIVE.code);
+    return ADAPT.higherLevel(placed, ADAPT.earnedLevel(seenDeckCount()));
   }
 
   function atLevel(id) {
@@ -2560,6 +2562,37 @@
    * The deal is deterministic - due items first, then new ones in the deck's own
    * order - so the Today card shows the cards that will actually be taught, not
    * a different random draw. */
+  /* Topics let the tutor choose a conversation, not a random deck slice. The
+   * starter packs predate `topic`; their ids still name the situation. */
+  var TOPIC_OF_SLUG = {
+    "hello": "greetings", "good-morning": "greetings", "good-night": "greetings",
+    "goodbye": "greetings", "see-you": "greetings", "how-are-you": "greetings",
+    "nice-to-meet": "introductions", "my-name-is": "introductions",
+    "what-is-your-name": "introductions", "where-from": "introductions",
+    "speak-english": "introductions", "dont-speak": "introductions",
+    "thank-you": "courtesy", "please": "courtesy", "excuse-me": "courtesy",
+    "yes": "courtesy", "no": "courtesy", "this-please": "courtesy",
+    "repeat": "courtesy", "speak-slower": "courtesy", "dont-understand": "courtesy",
+    "coffee": "café", "water": "café", "bill": "café", "how-much": "café",
+    "where-bathroom": "directions", "where-station": "directions", "lost": "directions",
+    "need-help": "emergency", "need-doctor": "emergency", "hotel": "hotel", "colour": "small-talk"
+  };
+
+  function phraseTopic(p) {
+    if (!p) return "";
+    if (p.topic) return p.topic;
+    var id = String(p.id || "");
+    var m = id.match(/^ph-([a-z]{2})-(.+)$/);
+    var slug = m ? m[2] : id.replace(/^ph-/, "");
+    return TOPIC_OF_SLUG[slug] || "";
+  }
+
+  function phraseInScope(p, unit) {
+    if (!unit || !unit.topics || !unit.topics.length) return true;
+    var topic = phraseTopic(p);
+    return !!topic && unit.topics.indexOf(topic) !== -1;
+  }
+
   function lessonPlan(opts) {
     var o = opts || {};
     var solid = solidCount();
@@ -2587,10 +2620,23 @@
       ? allIds.filter(function (id) { return inFields(id, fields); })
       : allIds.slice();
 
-    /* the four anchors open the session even when a strict band would hide one,
-     * but never above A2: a beginner meets no B1 greeting */
-    var openers = openersFor().filter(function (id) { return ADAPT.within(itemLevel(id), "A2"); });
-    var phrases = phraseIds.filter(atLevel);
+    /* Only the first-contact lesson opens on the four greetings; a café or
+     * past-tense lesson opens on its own phrases. */
+    var openers = (!unit || unit.openers)
+      ? openersFor().filter(function (id) { return ADAPT.within(itemLevel(id), "A2"); })
+      : [];
+    var topicPhrases = phraseIds.filter(function (id) { return phraseInScope(phraseById[id], unit); });
+    var phrases = topicPhrases.filter(atLevel);
+    /* A tutor does not cancel the café lesson because only one café phrase is
+     * graded A1. Top the topic up to a session's opening run with A2 phrases;
+     * never reach into B1 just to fill a card. */
+    if (phrases.length < 4) {
+      topicPhrases.forEach(function (id) {
+        if (phrases.length >= 4 || phrases.indexOf(id) !== -1) return;
+        if (ADAPT.within(itemLevel(id), "A2")) phrases.push(id);
+      });
+    }
+    if (!phrases.length) phrases = phraseIds.filter(atLevel);
     openers.forEach(function (id) {
       if (phraseById[id] && phrases.indexOf(id) === -1) phrases.push(id);
     });
@@ -2618,14 +2664,19 @@
     var title = p.unit ? p.unit.title : lessonTitle(p);
     var caption = p.script
       ? alphabetChunk().length + " " + tr("letters", "letters")
-      : [p.fresh.length ? p.fresh.length + " new" : "",
-         p.due.length ? p.due.length + " to review" : ""].filter(Boolean).join(", ");
+      : [p.fresh.length ? p.fresh.length + " " + tr("new", "new") : "",
+         p.due.length ? p.due.length + " " + tr("toReview", "to review") : ""].filter(Boolean).join(", ");
     if (box) {
       box.innerHTML = p.script ? "" : p.queue.slice(0, 5).map(function (id) {
         return '<span class="pic">' + itemOf(id).emoji + "</span>";
       }).join("");
     }
-    return { title: title, caption: caption };
+    return {
+      title: title,
+      caption: caption,
+      goal: p.unit ? p.unit.goal : "",
+      focus: p.unit ? p.unit.focus : ""
+    };
   }
 
   /* Named after the field its new words come from, the way a course names a unit. */

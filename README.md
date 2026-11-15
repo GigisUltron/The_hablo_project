@@ -9,8 +9,8 @@ comes back before the session ends.
 
 The flagship decks carry 42 concepts, 120 phrases, five texts and three conversations;
 starter decks carry 24 concepts, 32 phrases and three texts. Spaced repetition, a semantic
-map, a nine-unit path, a lesson builder, and audio that ships with the app instead of
-depending on your operating system.
+map, a twelve-lesson tutor path from first contact to a B1 bridge, a lesson builder, and audio
+that ships with the app instead of depending on your operating system.
 
 ![sema — the Today view](docs/preview.png)
 
@@ -94,7 +94,7 @@ summaries, toasts and reader copy are still English only.
    exactly why it works.
 
 The Today screen has one primary action: **Start lesson**, eight cards, about a minute. The
-nine-unit path, review rows and two quiet routes (read a text, have a conversation) sit below
+twelve-lesson path, review rows and two quiet routes (read a text, have a conversation) sit below
 it; words or phrases, fields, session length and level live in Settings so they cannot
 distract from starting.
 

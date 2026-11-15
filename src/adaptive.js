@@ -192,6 +192,25 @@
     return CEFR.indexOf(band) === -1 ? "A1" : band;
   }
 
+  /* A placement is a starting point, not a ceiling. A learner who keeps
+   * meeting and recalling cards earns the next band; the path and the content
+   * filter both read this, so A2 and B1 material does not stay locked forever
+   * for someone who began at A1. */
+  function earnedLevel(known) {
+    var n = Number(known) || 0;
+    if (n >= 180) return "C1";
+    if (n >= 120) return "B2";
+    if (n >= 72) return "B1";
+    if (n >= 36) return "A2";
+    return "A1";
+  }
+
+  function higherLevel(a, b) {
+    var ai = CEFR.indexOf(a);
+    var bi = CEFR.indexOf(b);
+    return CEFR[Math.max(ai === -1 ? 0 : ai, bi === -1 ? 0 : bi)] || "A1";
+  }
+
   /* The local calendar day, not UTC: "today" has to agree with the learner. */
   function dayKey(now) {
     var d = new Date(now == null ? Date.now() : now);
@@ -224,8 +243,8 @@
   var api = { LEVELS: LEVELS, level: level, plan: plan, shouldStop: shouldStop,
               CEFR: CEFR, shelf: shelf, within: within, OPENERS: OPENERS, sessionMix: sessionMix,
               confusionSeed: confusionSeed, dailyGoal: dailyGoal, nextGoal: nextGoal,
-              levelFor: levelFor, dayKey: dayKey, bumpDaily: bumpDaily,
-              placementStep: placementStep };
+              levelFor: levelFor, earnedLevel: earnedLevel, higherLevel: higherLevel,
+              dayKey: dayKey, bumpDaily: bumpDaily, placementStep: placementStep };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.SemaAdaptive = api;
 })(typeof globalThis !== "undefined" ? globalThis : this);
