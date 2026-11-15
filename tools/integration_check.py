@@ -15,8 +15,12 @@ import pathlib
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 import wave
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import model_policy  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 ADVANCED = {
@@ -95,6 +99,23 @@ def check_audio():
         print("ok  %-2s %d audio clips" % (code, len(ids)))
 
 
+def check_model_policy():
+    with tempfile.TemporaryDirectory() as temp:
+        root = pathlib.Path(temp)
+        for spec in model_policy.MODELS:
+            (root / spec["file"]).write_bytes(b"x")
+        cases = [(None, "qwen2.5-0.5b"), (1200, "qwen2.5-0.5b"), (3000, "qwen2.5-1.5b"),
+                 (5500, "qwen2.5-3b"), (8000, "qwen3-4b")]
+        for free, expected in cases:
+            spec, path = model_policy.choose(free, root)
+            if not spec or spec["id"] != expected:
+                fail("model policy chose %s for %s MB, expected %s" %
+                     (spec and spec["id"], free, expected))
+            if path is None or not path.is_file():
+                fail("model policy returned no file for %s MB" % free)
+    print("ok  model policy: 0.5B / 1.5B / 3B / 4B by free RAM")
+
+
 def check_server():
     """Start the real static server on a free local port and prove it stays up."""
     sock = socket.socket()
@@ -152,6 +173,7 @@ def main():
     args = parser.parse_args()
     check_content()
     check_audio()
+    check_model_policy()
     check_server()
     if not args.no_model:
         check_model(args.model)

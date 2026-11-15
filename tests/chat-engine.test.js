@@ -16,7 +16,12 @@ test("the prompt names the active pack and asks for a short English gloss", () =
   assert.match(es, /es-ES/);
   assert.match(es, /one or two short sentences/);
   assert.match(es, /English gloss/);
-  assert.match(es, /ask one simple question back/);
+  assert.match(es, /ask exactly one simple question back/);
+  assert.match(es, /not a lecturer/);
+  assert.match(es, /exactly one simple question/);
+  assert.match(es, /No markdown/);
+  assert.match(es, /Stay in character/);
+  assert.match(es, /correct form naturally/);
 
   const fr = CE.buildSystemPrompt({ name: "French", locale: "fr-FR" }, "B1");
   assert.match(fr, /French/);
@@ -115,7 +120,7 @@ test("the Chinese prompt asks for pinyin lines; Spanish and French do not", () =
   assert.match(zh, /parentheses on its own line/);
   /* the existing rules stay in force */
   assert.match(zh, /one or two short sentences/);
-  assert.match(zh, /ask one simple question back/);
+  assert.match(zh, /ask exactly one simple question back/);
   assert.match(zh, /English gloss/);
 
   const es = CE.buildSystemPrompt({ name: "Spanish", locale: "es-ES" }, "A2");

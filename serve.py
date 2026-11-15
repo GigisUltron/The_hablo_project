@@ -27,6 +27,8 @@ import webbrowser
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 ROOT_PATH = pathlib.Path(ROOT)
+sys.path.insert(0, str(ROOT_PATH / "tools"))
+import model_policy as policy  # noqa: E402
 
 
 def _ai_python():
@@ -52,11 +54,7 @@ def _ai_python():
 
 def _ai_model():
     models = ROOT_PATH / ".tools" / "models"
-    preferred = models / "qwen2.5-0.5b-instruct-q4_k_m.gguf"
-    if preferred.is_file():
-        return preferred
-    found = sorted(models.glob("*.gguf")) if models.is_dir() else []
-    return found[0] if found else None
+    return policy.choose(available_mb(), models)
 
 
 def available_mb():
@@ -97,12 +95,14 @@ def available_mb():
     return None
 
 
-def ai_limits():
+def ai_limits(spec=None):
     free = available_mb()
     if free is not None and free < 1200:
         print("  local model: skipped — only %d MB free; using scripted practice" % free)
         return None
-    ctx = 1024 if free is not None and free < 2500 else 2048
+    ctx = (spec or {}).get("ctx", 2048)
+    if free is not None and free < 2500:
+        ctx = 1024
     threads = max(1, min(4, (os.cpu_count() or 2) // 2))
     if free is not None:
         print("  local model: RAM guard %d MB free, context %d, threads %d" % (free, ctx, threads))
@@ -126,11 +126,11 @@ def _watch_memory(process, floor_mb=350, interval=10):
 def start_ai(port=8080):
     """Start the optional local model in the background. Returns the process."""
     python = _ai_python()
-    model = _ai_model()
+    spec, model = _ai_model()
     if not python or not model:
         print("  local model: not installed (run: python3 tools/install_ai.py)")
         return None
-    limits = ai_limits()
+    limits = ai_limits(spec)
     if not limits:
         return None
     log = ROOT_PATH / ".tools" / "local-model.log"
@@ -138,7 +138,7 @@ def start_ai(port=8080):
     command = [
         python, "-m", "llama_cpp.server",
         "--model", str(model),
-        "--model_alias", "qwen2.5-0.5b-instruct",
+        "--model_alias", spec["alias"],
         "--n_ctx", str(limits["ctx"]),
         "--n_threads", str(limits["threads"]),
         "--host", "127.0.0.1",
@@ -153,7 +153,7 @@ def start_ai(port=8080):
         return None
     atexit.register(lambda: (process.poll() is None and process.terminate(), handle.close()))
     threading.Thread(target=_watch_memory, args=(process,), daemon=True).start()
-    print("  local model: %s on http://127.0.0.1:%d" % (model.name, port))
+    print("  local model: %s (%s) on http://127.0.0.1:%d" % (model.name, spec["id"], port))
     print("  local model log: %s" % log.relative_to(ROOT_PATH))
     return process
 

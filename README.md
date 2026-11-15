@@ -17,8 +17,9 @@ python3 server.py
 ```
 
 On first run this creates an isolated `.tools/ai-venv`, installs
-`llama-cpp-python[server]`, downloads the small local model (~490 MB), then
-starts the app and model together and opens the browser. Later runs reuse the
+`llama-cpp-python[server]`, downloads the best local model the machine can run
+(0.5B, 1.5B, 3B, or 4B depending on free RAM), then starts the app and model
+together and opens the browser. Later runs reuse the
 model and start immediately. The model is optional: if setup cannot finish,
 the app still starts with the authored/scripted practice.
 
@@ -114,7 +115,7 @@ The same endpoint is used by the word-set **Suggest words** button and the plann
 python3 server.py
 ```
 
-It runs [tools/install_ai.py](tools/install_ai.py), which creates an isolated `.tools/ai-venv`, installs `llama-cpp-python[server]` from [tools/requirements-ai.txt](tools/requirements-ai.txt), and downloads a small Qwen 2.5 0.5B Q4 model (~490 MB). It then starts the app and model together. The app probes `8080`, `8081` and `11434`, so it finds the model without changing Settings. It checks free RAM before starting, reduces the context when memory is tight, and stops the model if free memory falls below 350 MB. If no model is running, conversation and the assists fall back to the authored pack rather than failing.
+It runs [tools/install_ai.py](tools/install_ai.py), which creates an isolated `.tools/ai-venv`, installs `llama-cpp-python[server]` from [tools/requirements-ai.txt](tools/requirements-ai.txt), and downloads the best Qwen tier the machine can run: 0.5B, 1.5B, 3B, or Qwen3 4B (roughly 0.5–2.5 GB). It then starts the app and model together. The app probes `8080`, `8081` and `11434`, so it finds the model without changing Settings. It checks free RAM before starting, reduces the context when memory is tight, and stops the model if free memory falls below 350 MB. If no model is running, conversation and the assists fall back to the authored pack rather than failing.
 
 The individual pieces remain available for a custom setup: `python3 tools/install_ai.py` installs/downloads only, and `python3 serve.py --ai` starts an already-installed app + model.
 

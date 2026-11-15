@@ -17,7 +17,7 @@ ai:
 
 integration:
 	@if [ -x .tools/venv/bin/python ]; then \
-		.tools/venv/bin/python tools/integration_check.py --model .tools/models/qwen2.5-0.5b-instruct-q4_k_m.gguf; \
+		.tools/venv/bin/python tools/integration_check.py --model .tools/models/qwen2.5-1.5b-instruct-q4_k_m.gguf; \
 	else \
 		python3 tools/integration_check.py; \
 	fi

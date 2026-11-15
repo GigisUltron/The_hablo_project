@@ -62,8 +62,8 @@ python3 tools/make_audio.py --lang ja --check
 
 The supported path is one command from the repository root. It creates an
 isolated Python environment, installs the `llama-cpp-python[server]`
-wheel/source package, downloads a small GGUF, then starts the app and the
-OpenAI-compatible server alongside it:
+wheel/source package, downloads the best GGUF the free RAM can run, then starts
+the app and the OpenAI-compatible server alongside it:
 
 ```sh
 python3 server.py
@@ -80,8 +80,18 @@ which is useful if you run the app separately. `serve.py --ai` starts the model
 on port 8081 and the app on the first free port from 8080, so the two do not
 fight over the same socket.
 
-The default model is Qwen 2.5 0.5B Instruct Q4 (~490 MB). To use a larger model
-you already have:
+Model tiers are chosen from free RAM, not guessed from the device name:
+
+| tier | GGUF | minimum free RAM |
+|---|---|---|
+| Qwen 2.5 0.5B Q4 | ~0.5 GB | 1.2 GB |
+| Qwen 2.5 1.5B Q4 | ~1.1 GB | 2.8 GB |
+| Qwen 2.5 3B Q4 | ~2.1 GB | 5.2 GB |
+| Qwen3 4B Q4 | ~2.5 GB | 7.0 GB |
+
+The installer downloads the largest tier that fits; `serve.py --ai` launches
+the largest **already downloaded** tier that fits. On a 3 GB-free machine that
+means the 1.5B model, not the old default 0.5B. To pin a model:
 
 ```sh
 python3 tools/install_ai.py --model .tools/models/qwen2.5-1.5b-instruct-q4_k_m.gguf --start

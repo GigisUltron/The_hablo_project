@@ -21,13 +21,11 @@ import subprocess
 import sys
 import urllib.request
 
+import model_policy as policy
+
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 TOOLS = ROOT / "tools"
 MODELS = ROOT / ".tools" / "models"
-DEFAULT_MODEL = MODELS / "qwen2.5-0.5b-instruct-q4_k_m.gguf"
-DEFAULT_URL = ("https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/"
-               "resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf")
-ALIAS = "qwen2.5-0.5b-instruct"
 CPU_INDEX = "https://abetlen.github.io/llama-cpp-python/whl/cpu"
 
 
@@ -161,7 +159,7 @@ def main():
     parser.add_argument("--start", action="store_true", help="start the OpenAI-compatible server after setup")
     parser.add_argument("--port", type=int, default=8080, help="server port (default 8080)")
     parser.add_argument("--model", type=pathlib.Path, help="already-downloaded GGUF")
-    parser.add_argument("--model-url", default=DEFAULT_URL, help="GGUF to download")
+    parser.add_argument("--model-url", default=None, help="GGUF to download instead of the automatic tier")
     parser.add_argument("--python", help="Python that already has llama-cpp-python installed")
     parser.add_argument("--no-model", action="store_true", help="install the library but do not download a model")
     args = parser.parse_args()
@@ -170,11 +168,21 @@ def main():
         raise SystemExit("ai: Python 3.9 or newer is required")
 
     python = choose_python(args.python)
-    model = pathlib.Path(args.model) if args.model else DEFAULT_MODEL
-    if not model.is_absolute():
-        model = (ROOT / model).resolve()
+    free = available_mb()
+    spec = None
+    if args.model:
+        model = pathlib.Path(args.model)
+        if not model.is_absolute():
+            model = (ROOT / model).resolve()
+        alias = model.stem
+    else:
+        spec = policy.download_spec(free)
+        model = MODELS / spec["file"]
+        alias = spec["alias"]
+        if free is not None:
+            say("RAM %d MB free → model tier %s (%s)" % (free, spec["id"], spec["alias"]))
     if not args.no_model and not model.is_file():
-        model = download(args.model_url, model)
+        model = download(args.model_url or (spec or {}).get("url", ""), model)
     if not model.is_file():
         raise SystemExit("ai: no model at %s; pass --model or drop --no-model" % model)
 
@@ -189,18 +197,19 @@ def main():
             short(python), short(model), args.port))
         return 0
 
-    free = available_mb()
     if free is not None and free < 1200:
         say("not starting: only %d MB free. Close something or use a machine with more RAM." % free)
         return 1
-    ctx = 1024 if free is not None and free < 2500 else 2048
+    ctx = (spec or {}).get("ctx", 2048)
+    if free is not None and free < 2500:
+        ctx = 1024
     threads = max(1, min(4, (os.cpu_count() or 2) // 2))
     if free is not None:
         say("RAM guard: %d MB free, context %d, threads %d" % (free, ctx, threads))
     command = [
         python, "-m", "llama_cpp.server",
         "--model", str(model),
-        "--model_alias", ALIAS,
+        "--model_alias", alias,
         "--n_ctx", str(ctx),
         "--n_threads", str(threads),
         "--host", "127.0.0.1",

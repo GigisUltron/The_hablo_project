@@ -4,8 +4,9 @@
     python3 server.py
 
 First run creates an isolated Python environment, installs
-llama-cpp-python[server], downloads the small GGUF model, then starts the app
-and model together. Later runs only start the app and the existing model.
+llama-cpp-python[server], downloads the largest GGUF model the free RAM can
+run (0.5B, 1.5B, 3B or 4B), then starts the app and model together. Later runs
+only start the app and the existing model.
 
 Useful escapes:
     python3 server.py --offline    # app only, no model/setup
