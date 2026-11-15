@@ -4934,6 +4934,8 @@
   });
   $("home-conv").addEventListener("click", startConversation);
   $("home-read").addEventListener("click", startReader);
+  $("home-vocab").addEventListener("click", startVocab);
+  $("vocab-back").addEventListener("click", function () { vocab = null; show("today"); renderToday(); });
   $("review-all").addEventListener("click", reviewMistakes);
   $("reset-btn").addEventListener("click", function () {
     askConfirm(

@@ -838,6 +838,11 @@ test("vocabulary memory anchors and XP level are wired", () => {
   assert.match(html, /id="stat-level"/, "no level on Today");
 });
 
+test("the vocabulary button is actually bound and the mode can leave", () => {
+  assert.match(app, /\$\("home-vocab"\)\.addEventListener\("click", startVocab\)/, "clicking Expand vocabulary does nothing");
+  assert.match(app, /\$\("vocab-back"\)\.addEventListener/, "the vocabulary screen is a dead end");
+});
+
 test("vocabulary expansion is a real adaptive mode", () => {
   assert.match(html, /id="view-vocab"/, "no vocabulary view");
   assert.match(html, /id="home-vocab"/, "no vocabulary entry point");
