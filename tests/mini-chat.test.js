@@ -30,6 +30,12 @@ test("mini chat retrieves a relevant authored line", () => {
   assert.match(r, /llamo|Ana|Hola|pizza|dónde/);
 });
 
+test("mini follow-up questions are relevance-gated", () => {
+  const fs = require("node:fs");
+  const source = fs.readFileSync(require("node:path").join(__dirname, "..", "src", "mini-chat.js"), "utf8");
+  assert.match(source, /score\(follow\[0\], userTokens, contextTokens\) >= 2/);
+});
+
 test("mini chat always returns target-language text", () => {
   const m = M.build(pack);
   for (const text of ["", "xyzzy", "pizza", "¿dónde está el tren?"]) {

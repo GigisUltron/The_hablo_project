@@ -151,9 +151,14 @@
         var questions = candidates.filter(function (c) { return c.question && c.text !== (o.last || ""); });
         choice = questions.length ? pick(questions).text : (candidates.length ? pick(candidates).text : "");
       }
-      if (choice && !/[?？؟]\s*$/.test(choice) && Math.random() < 0.35) {
-        var follow = candidates.filter(function (c) { return c.question && c.text !== choice; });
-        if (follow.length) choice += " " + pick(follow).text;
+      if (choice && !/[?？؟]\s*$/.test(choice) && Math.random() < 0.4) {
+        var follow = candidates.filter(function (c) { return c.question && c.text !== choice; })
+          .sort(function (a, b) {
+            return score(b, userTokens, contextTokens) - score(a, userTokens, contextTokens);
+          });
+        if (follow.length && score(follow[0], userTokens, contextTokens) >= 2) {
+          choice += " " + follow[0].text;
+        }
       }
       last = choice;
       return choice;
