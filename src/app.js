@@ -6812,6 +6812,29 @@
     refreshChatEngine();
   });
   $("chat-check").addEventListener("click", refreshChatEngine);
+  $("chat-test").addEventListener("click", function () {
+    var btn = this;
+    var note = $("chat-test-note");
+    if (btn.disabled) return;
+    btn.disabled = true;
+    if (note) { note.textContent = tr("testingReply", "Testing the model…"); note.className = "builder-note"; }
+    localModelAsk(
+      "Reply with one short, natural sentence in " + uiName(ACTIVE.code) + " at level " + learnerLevel() +
+        ", and ask one simple question. No English, no markdown.",
+      "Say hello."
+    ).then(function (reply) {
+      var text = String(reply || "").trim().slice(0, 240);
+      if (note) {
+        note.textContent = text || tr("noModelReply", "No model answered. Start one with python3 server.py, then test again.");
+        note.className = "builder-note " + (text ? "model-ok" : "model-bad");
+      }
+    }).catch(function () {
+      if (note) {
+        note.textContent = tr("noModelReply", "No model answered. Start one with python3 server.py, then test again.");
+        note.className = "builder-note model-bad";
+      }
+    }).then(function () { btn.disabled = false; });
+  });
   $("chat-wrap").addEventListener("click", function () {
     if (!chat || !chat.messages.some(function (m) { return m.role === "user"; })) {
       toast(tr("coachFirst", "Say something first, then ask the coach for a check-in."));

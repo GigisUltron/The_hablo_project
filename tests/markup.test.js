@@ -1656,3 +1656,11 @@ test("the session summary can carry its phrases into a conversation", () => {
   assert.match(app, /startConversation\(\)/);
 });
 
+test("Settings can test a real model reply without leaving the page", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(html, /id="chat-test"/);
+  assert.match(app, /localModelAsk\(/);
+  assert.match(app, /testingReply/);
+  assert.match(app, /noModelReply/);
+});
+

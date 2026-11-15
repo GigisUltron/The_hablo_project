@@ -122,6 +122,8 @@ The check-in also shows the learner side from the transcript: turns, words, ques
 
 A local model is optional but it is now the only conversation-engine path when present: Settings has no engine chooser. Press **Find local model**; the app probes `http://localhost:8080`, `http://localhost:8081` and `http://localhost:11434`, stores the endpoint and model, and uses the first model that answers. Both llama.cpp's `llama-server` / `llama-cpp-python` and Ollama work. Without one, no conversation leaves the device; the authored fallback runs.
 
+Settings → Local model also has **Test reply**: it sends one short prompt and shows the actual model reply, or the plain “no model answered” line. This is a real end-to-end check from the same page where the endpoint is configured.
+
 The same endpoint is used by the word-set **Suggest words** button and the planned-lesson **Suggest with local model** button. `python3 server.py` is the whole setup:
 
 ```sh

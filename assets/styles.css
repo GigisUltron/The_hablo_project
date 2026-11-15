@@ -1889,6 +1889,8 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   flex: 1;
   min-width: 0;
 }
+#chat-test-note.model-ok { color: var(--good); }
+#chat-test-note.model-bad { color: var(--bad); }
 
 /* Microphone live state: the same 44 px button, lit while recognition runs. */
 #chat-listen.is-live {
