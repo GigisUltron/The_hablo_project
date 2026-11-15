@@ -219,6 +219,7 @@
   var ADAPT = window.SemaAdaptive;
   var CORRECT = window.SemaCorrect;
   var CE = window.SemaChatEngine;
+  var MINI = window.SemaMiniChat;
   var STORE_KEY = "sema.v1";
 
   /* The live pack. Everything below reads it through these bindings; switching
@@ -231,6 +232,7 @@
   var P = null;
   var CONV = null;
   var bundled = null;
+  var miniChat = null;
 
   var conceptById = {};
   var allIds = [];
@@ -312,6 +314,7 @@
     LANGS.bind(pack);
 
     rebuildIndexes();
+    miniChat = MINI ? MINI.build(pack) : null;
     voice = null;
     if (hasTTS) pickVoice();
     updateAudioChip();
@@ -1819,7 +1822,13 @@
       addAssistant(d.turns[0].es, true, "scripted", true);
       return;
     }
-    if (!CE) return;
+    if (!CE) {
+      if (miniChat) {
+        var miniOpen = miniChat.opening();
+        if (miniOpen) addAssistant(miniOpen, true, "mini", true);
+      }
+      return;
+    }
     var opening = CE.scriptedOpening(ACTIVE.code);
     if (!opening) return;
     chat.scripted = chat.scripted || CE.scriptedStart(ACTIVE.code);
@@ -1920,6 +1929,17 @@
         return said.indexOf(S.normalize(word)) !== -1;
       });
       if (!fits) {
+        chat.scripted.misses = (chat.scripted.misses || 0) + 1;
+        if (chat.scripted.misses >= 2 && miniChat) {
+          var miniMiss = miniChat.reply(userText, { last: chat.lastMini || "" });
+          if (miniMiss) {
+            chat.scripted.misses = 0;
+            chat.lastMini = miniMiss;
+            addAssistant(miniMiss, true, "mini");
+            setChatFeedback(tr("notQuite", "Not quite"), "");
+            return;
+          }
+        }
         addAssistant(chatReaction("miss") + " " + turn.es, true, "scripted");
         setChatFeedback(tr("notQuite", "Not quite"), "");
         return;
@@ -1927,12 +1947,29 @@
       chat.scripted.turn += 1;
       var next = d.turns[chat.scripted.turn];
       if (!next) {
+        if (miniChat) {
+          var freeReply = miniChat.reply(userText, { last: chat.lastMini || "" });
+          if (freeReply) {
+            chat.lastMini = freeReply;
+            addAssistant(freeReply, true, "mini");
+            setChatFeedback(tr("lessonDone", "Lesson done"), "");
+            return;
+          }
+        }
         setChatFeedback(tr("lessonDone", "Lesson done"), "");
         return;
       }
       var lead = Math.random() < 0.5 ? chatReaction("good") + " " : "";
       addAssistant((lead + next.es).trim(), true, "scripted");
       return;
+    }
+    if (!d && miniChat) {
+      var miniReply = miniChat.reply(userText, { last: chat.lastMini || "" });
+      if (miniReply) {
+        chat.lastMini = miniReply;
+        addAssistant(miniReply, true, "mini");
+        return;
+      }
     }
     if (!CE || !chat) return;
     var session = chat.scripted || CE.scriptedStart(ACTIVE.code);

@@ -214,6 +214,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/memory.js",
     "src/chat.js",
     "src/chat-engine.js",
+    "src/mini-chat.js",
     "src/app.js"
   ]);
 });
@@ -793,6 +794,13 @@ test("typed translation is a real routed exercise", () => {
   assert.match(app, /function renderTypeTranslation/, "no typed translation renderer");
   assert.match(app, /type === "type-translation"/, "typed translation is not routed");
   assert.match(app, /i % 7 === 5\) return "type-translation"/, "typed translation is unreachable");
+});
+
+test("the offline conversation has a local mini predictor", () => {
+  assert.match(html, /src\/mini-chat\.js/, "mini chat is not loaded");
+  assert.match(app, /window\.SemaMiniChat/, "app does not read the mini predictor");
+  assert.match(app, /MINI\.build\(pack\)/, "mini model is never built from the pack");
+  assert.match(app, /miniChat\.reply/, "mini replies are never used");
 });
 
 test("Plan a lesson requires an explicit language", () => {
