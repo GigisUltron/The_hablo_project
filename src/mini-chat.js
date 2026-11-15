@@ -71,6 +71,9 @@
         add(t.reply, "reply");
         if (i + 1 < turns.length && t.es && turns[i + 1].es) {
           edges.push({ from: words(t.es), to: turns[i + 1].es });
+          (t.expects || []).forEach(function (expected) {
+            edges.push({ from: words(expected), to: turns[i + 1].es });
+          });
         }
       });
     });
@@ -150,19 +153,21 @@
           choice = followed.edge.to;
         }
       }
-      if (!choice && best.length) {
-        var pool = best.slice(0, Math.min(6, best.length)).filter(fresh);
-        if (greeting) {
-          var hello = pool.filter(function (c) { return /^(hi|hello|hey|hola|bonjour|ciao|hallo|olá|привет|merhaba|مرحبا|नमस्ते|こんにちは|你好)/i.test(c.text); });
-          if (hello.length) pool = hello;
+      if (!choice) {
+        if (best.length) {
+          var pool = best.slice(0, Math.min(6, best.length)).filter(fresh);
+          if (greeting) {
+            var hello = pool.filter(function (c) { return /^(hi|hello|hey|hola|bonjour|ciao|hallo|olá|привет|merhaba|مرحبا|नमस्ते|こんにちは|你好)/i.test(c.text); });
+            if (hello.length) pool = hello;
+          }
+          if (thanks) {
+            var warm = pool.filter(function (c) { return !c.question; });
+            if (warm.length) pool = warm;
+          }
+          choice = (pool.length ? pick(pool) : best[0]).text;
+        } else if (userTokens.length) {
+          choice = generate(userTokens);
         }
-        if (thanks) {
-          var warm = pool.filter(function (c) { return !c.question; });
-          if (warm.length) pool = warm;
-        }
-        choice = (pool.length ? pick(pool) : best[0]).text;
-      } else if (userTokens.length) {
-        choice = generate(userTokens);
       }
       if (!choice) {
         var questions = candidates.filter(function (c) { return c.question && c.text !== (o.last || ""); });

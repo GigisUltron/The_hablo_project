@@ -50,6 +50,14 @@ test("mini chat always returns target-language text", () => {
   }
 });
 
+test("mini chat follows expected learner replies", () => {
+  const m = M.build({ conv: { dialogues: [{ turns: [
+    { es: "Was möchten Sie?", expects: ["kaffee"] },
+    { es: "Gerne, ein Kaffee." }
+  ] }] } });
+  assert.equal(m.reply("Kaffee, bitte"), "Gerne, ein Kaffee.");
+});
+
 test("mini chat follows an authored dialogue turn", () => {
   const m = M.build({ conv: { dialogues: [{ turns: [{ es: "Hola" }, { es: "¿Cómo estás?" }] }] } });
   assert.equal(m.reply("Hola"), "¿Cómo estás?");
