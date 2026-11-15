@@ -553,6 +553,18 @@ test("Progress has an AI coach read built from real counts", () => {
   assert.match(app, /weakest: weakest \? catLabel/);
 });
 
+test("Practice exposes a one-tap AI roleplay with a 44px target", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  const css = fs.readFileSync(path.join(__dirname, "..", "assets", "styles.css"), "utf8");
+  assert.match(html, /id="home-roleplay"/);
+  assert.match(html, /data-i18n="roleplaySub"/);
+  assert.match(app, /\$\("home-roleplay"\)/);
+  assert.match(app, /startRoleplay\(scene/);
+  assert.match(css, /#home-roleplay \.row-pic svg/);
+  assert.match(css, /voice-toggle[\s\S]*min-height: 44px/);
+  assert.match(css, /produce-row \.btn \{ min-height: 44px/);
+});
+
 test("a planned scene becomes a roleplay conversation", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(html, /id="wish-roleplay"/);

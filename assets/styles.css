@@ -1353,7 +1353,7 @@ button.row:active .row-pic { transform: scale(0.92); }
 .group-action { justify-self: start; margin: 0 16px; }
 
 /* the quiet rows' line icons */
-#home-conv .row-pic svg, #home-read .row-pic svg, #home-vocab .row-pic svg, #home-wordset .row-pic svg {
+#home-conv .row-pic svg, #home-roleplay .row-pic svg, #home-read .row-pic svg, #home-vocab .row-pic svg, #home-wordset .row-pic svg {
   width: 22px;
   height: 22px;
   fill: none;
@@ -1585,8 +1585,8 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   padding: 0 0 6px;
 }
 .voice-toggle {
-  min-height: 32px;
-  padding: 4px 10px;
+  min-height: 44px;
+  padding: 8px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
   background: transparent;
@@ -1871,7 +1871,7 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 
 /* Progress's own path: which lessons the placement opened. */
 .produce-row { display: flex; justify-content: flex-end; }
-.produce-row .btn { min-height: 36px; }
+.produce-row .btn { min-height: 44px; }
 .coach-read {
   display: grid;
   gap: 4px;
@@ -2613,7 +2613,7 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   vertical-align: 1px;
 }
 .personal-prompt { margin: 0; }
-.personal-prompt .foot-link { font-size: 13px; font-weight: 600; }
+.personal-prompt .foot-link { min-height: 44px; display: inline-flex; align-items: center; font-size: 13px; font-weight: 600; }
 .personal-form { gap: 10px; }
 .personal-form .chat-field { display: grid; gap: 4px; }
 .personal-form .type-input { width: 100%; box-sizing: border-box; }

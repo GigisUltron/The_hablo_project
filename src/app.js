@@ -6448,6 +6448,11 @@
     if (sel && sel.value) addLanguageFlow(sel.value);
   });
   $("home-conv").addEventListener("click", startConversation);
+  $("home-roleplay").addEventListener("click", function () {
+    var p = PERSONA && state.profile ? PERSONA.ensure(state.profile) : {};
+    var scene = [p.why, p.interests].filter(Boolean).join(" · ") || "a café with a friend";
+    startRoleplay(scene, ACTIVE && ACTIVE.code);
+  });
   $("home-read").addEventListener("click", startReader);
   $("home-vocab").addEventListener("click", startVocab);
   $("home-wordset").addEventListener("click", openWordset);
