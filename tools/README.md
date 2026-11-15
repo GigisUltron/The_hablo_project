@@ -89,10 +89,17 @@ wheel, pip builds `llama-cpp-python` and therefore needs a C++ toolchain and
 cmake. The installer tries the prebuilt CPU wheel index first and says plainly
 if the build is the remaining step.
 
+`serve.py --ai` watches free RAM automatically: it refuses to start the model
+below about 1.2 GB free, uses a 1024-token context below 2.5 GB, and stops the
+model if free memory falls under 350 MB while it runs, so the scripted practice
+takes over instead of the OS killing the tab. The installer applies the same
+startup guard.
+
 In the app, open **Settings → Find local model**. It probes
 `http://localhost:8080`, `http://localhost:8081` and
-`http://localhost:11434`, stores the endpoint and model, and switches the
-conversation engine to it. The same endpoint powers
+`http://localhost:11434`, stores the endpoint and model, and uses the first one
+that answers. The conversation view no longer has an engine chooser: the local
+model is the default and the authored fallback runs when none is available. The same endpoint powers
 **Suggest words** on the word-set screen and **Suggest with local model** on a
 planned lesson. Without a running model, those buttons use the pack's authored
 topic planner and never invent a word.

@@ -21,6 +21,8 @@ import pathlib
 import socket
 import subprocess
 import sys
+import threading
+import time
 import webbrowser
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -57,6 +59,70 @@ def _ai_model():
     return found[0] if found else None
 
 
+def available_mb():
+    """Best-effort free physical memory, in MB. None means "do not guard"."""
+    try:
+        with open("/proc/meminfo", "r", encoding="ascii") as handle:
+            for line in handle:
+                if line.startswith("MemAvailable:"):
+                    return int(line.split()[1]) // 1024
+    except OSError:
+        pass
+    try:
+        page = os.sysconf("SC_PAGE_SIZE")
+        available = os.sysconf("SC_AVPHYS_PAGES")
+        if page > 0 and available > 0:
+            return int(page * available) // (1024 * 1024)
+    except (ValueError, OSError, AttributeError):
+        pass
+    if sys.platform == "win32":
+        try:
+            import ctypes
+
+            class MemoryStatus(ctypes.Structure):
+                _fields_ = [
+                    ("length", ctypes.c_ulong), ("memory_load", ctypes.c_ulong),
+                    ("total_phys", ctypes.c_ulonglong), ("avail_phys", ctypes.c_ulonglong),
+                    ("total_page_file", ctypes.c_ulonglong), ("avail_page_file", ctypes.c_ulonglong),
+                    ("total_virtual", ctypes.c_ulonglong), ("avail_virtual", ctypes.c_ulonglong),
+                    ("avail_extended_virtual", ctypes.c_ulonglong),
+                ]
+
+            status = MemoryStatus()
+            status.length = ctypes.sizeof(MemoryStatus)
+            if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+                return int(status.avail_phys // (1024 * 1024))
+        except (OSError, AttributeError):
+            pass
+    return None
+
+
+def ai_limits():
+    free = available_mb()
+    if free is not None and free < 1200:
+        print("  local model: skipped — only %d MB free; using scripted practice" % free)
+        return None
+    ctx = 1024 if free is not None and free < 2500 else 2048
+    threads = max(1, min(4, (os.cpu_count() or 2) // 2))
+    if free is not None:
+        print("  local model: RAM guard %d MB free, context %d, threads %d" % (free, ctx, threads))
+    return {"ctx": ctx, "threads": threads}
+
+
+def _watch_memory(process, floor_mb=350, interval=10):
+    """Stop the model rather than let the OS kill the tab or the machine."""
+    while process.poll() is None:
+        free = available_mb()
+        if free is not None and free < floor_mb:
+            print("  local model: stopped — only %d MB free; scripted practice takes over" % free)
+            try:
+                process.terminate()
+            except OSError:
+                pass
+            return
+        time.sleep(interval)
+
+
 def start_ai(port=8080):
     """Start the optional local model in the background. Returns the process."""
     python = _ai_python()
@@ -64,14 +130,17 @@ def start_ai(port=8080):
     if not python or not model:
         print("  local model: not installed (run: python3 tools/install_ai.py)")
         return None
+    limits = ai_limits()
+    if not limits:
+        return None
     log = ROOT_PATH / ".tools" / "local-model.log"
     log.parent.mkdir(parents=True, exist_ok=True)
     command = [
         python, "-m", "llama_cpp.server",
         "--model", str(model),
         "--model_alias", "qwen2.5-0.5b-instruct",
-        "--n_ctx", "2048",
-        "--n_threads", str(max(1, (os.cpu_count() or 2) // 2)),
+        "--n_ctx", str(limits["ctx"]),
+        "--n_threads", str(limits["threads"]),
         "--host", "127.0.0.1",
         "--port", str(port),
     ]
@@ -83,6 +152,7 @@ def start_ai(port=8080):
         print("  local model: could not start (%s)" % exc)
         return None
     atexit.register(lambda: (process.poll() is None and process.terminate(), handle.close()))
+    threading.Thread(target=_watch_memory, args=(process,), daemon=True).start()
     print("  local model: %s on http://127.0.0.1:%d" % (model.name, port))
     print("  local model log: %s" % log.relative_to(ROOT_PATH))
     return process
@@ -140,7 +210,7 @@ def main():
     url = "http://localhost:%d/" % port
     print("", flush=True)
     print("  sema — meaning-first language learning")
-    print("  serving %s" % ROOT, flush=True)
+    print("  serving local app", flush=True)
     print("")
     print("  →  %s" % url, flush=True)
     print("  →  %s#map  ·  %s#stats  ·  %s#practice" % (url, url, url))

@@ -67,18 +67,17 @@ Lessons use spaced repetition. What you miss comes back before the session ends 
 
 **Expand vocabulary** is a separate, deliberately minimal mode:
 
-- one word at a time
-- meaning hidden until you ask for it
-- **Again** and **Got it** feed the same SRS as lessons
-- wrong words return in the session
-- every second correct answer adds a harder word
-- hearing the word, the example sentence and a progress bar are on the same card
-- the pool starts near your placed band, so a C1 learner is not opened with `casa`
-- every third card is a synonym check where the pack authors a synonym
+- one synonym question at a time, never a recall-meaning card in front of it
+- the meaning stays hidden until after you answer; a **show translation** control is optional
+- every correct answer feeds the same SRS as lessons; wrong words return in the session
+- after a run of correct answers the task gets harder: more options, then closer same-field distractors
+- the synonym pool respects your placed ceiling; the recall fallback starts near your band
+- the whole set is authored synonym pairs; a small starter pack repeats its pairs to fill the session
 - a missed-word review is one button away at the end
 - statistics persist per language; a session also pays XP and coins
-- **Got it** feeds the SRS, but it does **not** unlock the next path lesson — only a lesson does that
-- **personal anchors** let you attach a cue such as “my cousin’s wedding”; the cue comes back with the word
+- answering feeds the SRS, but it does **not** unlock the next path lesson — only a lesson does that
+- skipping a typing card removes it from the queue; it earns no XP, coin, streak or path progress
+- **personal anchors** remain available on the recall fallback for packs without synonym pairs
 
 ### Reading
 
@@ -86,11 +85,11 @@ Each full course has eight reading texts across A1–B2. Starter courses have fi
 
 ### Conversation
 
-**Have a conversation** is usable completely offline. The default **Offline practice** engine uses the app’s own predictor and the active pack’s authored language. It follows authored dialogue turns where they fit, uses recent context, classifies greetings/thanks/yes-no/name/question intents, avoids repeating recent replies and refuses to echo or return runaway text.
+**Have a conversation** always works without a model. The local model is the default when one is running; if none answers, the app falls back to its own predictor and the active pack’s authored dialogue. The fallback follows authored turns where they fit, uses recent context, classifies greetings/thanks/yes-no/name/question intents, avoids repeating recent replies and refuses to echo or return runaway text.
 
 A **transfer mission** appears above the conversation. It asks you to use two or three weak/due phrases in the conversation. A phrase counts only when you actually write it; completing the mission gives a small XP award.
 
-A local model is optional. Open **Settings → Conversation engine → Local model**, then press **Find local model**; the app probes `http://localhost:8080` and `http://localhost:11434`, stores the endpoint and model, and switches the conversation engine over. Both llama.cpp's `llama-server` and Ollama work. Without one, no network request is made for conversation.
+A local model is optional but it is now the only conversation-engine path when present: Settings has no engine chooser. Press **Find local model**; the app probes `http://localhost:8080`, `http://localhost:8081` and `http://localhost:11434`, stores the endpoint and model, and uses the first model that answers. Both llama.cpp's `llama-server` / `llama-cpp-python` and Ollama work. Without one, no conversation leaves the device; the authored fallback runs.
 
 The same endpoint is used by the word-set **Suggest words** button and the planned-lesson **Suggest with local model** button. The simplest setup is one command:
 
@@ -105,7 +104,7 @@ python3 tools/install_ai.py
 python3 serve.py --ai
 ```
 
-The installer creates an isolated `.tools/ai-venv`, installs `llama-cpp-python[server]` from [tools/requirements-ai.txt](tools/requirements-ai.txt), and downloads a small Qwen 2.5 0.5B Q4 model (~490 MB). `serve.py --ai` then starts the app and the model together; the app probes `8080`, `8081` and `11434`, so it finds the model without changing Settings. If no model is running, those assists fall back to the authored pack rather than failing.
+The installer creates an isolated `.tools/ai-venv`, installs `llama-cpp-python[server]` from [tools/requirements-ai.txt](tools/requirements-ai.txt), and downloads a small Qwen 2.5 0.5B Q4 model (~490 MB). `serve.py --ai` then starts the app and the model together; the app probes `8080`, `8081` and `11434`, so it finds the model without changing Settings. It checks free RAM before starting, reduces the context when memory is tight, and stops the model if free memory falls below 350 MB. If no model is running, conversation and the assists fall back to the authored pack rather than failing.
 
 ### Planned lessons
 

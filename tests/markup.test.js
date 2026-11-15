@@ -398,6 +398,43 @@ test("the daily goal is visible and a level-up is earned, not invented", () => {
   assert.match(app, /tr\("levelUp"/);
 });
 
+test("the synonym mode is the vocab session and gets harder by options", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /function synonymVocabIds/);
+  assert.match(app, /while \(ids\.length < 12\)/, "synonym sets do not fill");
+  assert.doesNotMatch(app, /vocab\.i % 3 === 2/, "synonym tasks are still gated every third card");
+  assert.match(app, /var optionCount = vocab\.correct >= 8 \? 6 : vocab\.correct >= 4 \? 5 : 4/);
+  assert.match(app, /vocab-syn-meaning/);
+});
+
+test("skipping typing removes the task instead of grading it", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  const skip = app.slice(app.indexOf("function skipCard"), app.indexOf("function answer("));
+  assert.match(skip, /session\.quiz\.splice\(session\.qi, 1\)/);
+  assert.doesNotMatch(skip, /firstCorrect/);
+  const writing = app.slice(app.indexOf("function skipWriting"), app.indexOf("function checkWriting"));
+  assert.match(writing, /writing\.queue\.splice\(writing\.i, 1\)/);
+  assert.doesNotMatch(writing, /firstCorrect/);
+});
+
+test("the local model is discovered on 8080, 8081 and 11434", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /http:\/\/localhost:8081/);
+  assert.match(app, /discoverLocal\(\)\.then/);
+});
+
+test("the Python server guards free RAM before and during a model run", () => {
+  const server = fs.readFileSync(path.join(__dirname, "..", "serve.py"), "utf8");
+  assert.match(server, /def available_mb/);
+  assert.match(server, /def _watch_memory/);
+  assert.match(server, /free < 1200/);
+  assert.match(server, /--n_ctx/);
+  const installer = fs.readFileSync(path.join(__dirname, "..", "tools", "install_ai.py"), "utf8");
+  assert.match(installer, /llama_cpp\.server/);
+  assert.match(installer, /available_mb/);
+  assert.match(installer, /RAM guard/);
+});
+
 test("vocabulary expansion tests synonyms and does not unlock the path", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(app, /SYNONYMS\.forItem/);
@@ -1025,11 +1062,11 @@ test("conversation follows the last message and offline replies are live", () =>
   assert.match(app, /var opening = miniChat\.opening\(\)/, "offline opening is still scripted");
 });
 
-test("offline mini chat is the default conversation engine", () => {
-  assert.match(html, /id="chat-engine"/, "no engine choice");
-  assert.match(app, /function chatEngine\(/, "no engine selector");
-  assert.match(app, /chatEngine\(\) === "offline" \|\|/, "offline does not bypass the model");
-  assert.match(app, /s\.settings\.chatEngine = "offline"/, "offline is not the default");
+test("the local model is the default and scripted practice is the fallback", () => {
+  assert.equal(/id="chat-engine"/.test(html), false, "the engine chooser is still in Settings");
+  assert.match(app, /function chatEngine\(\) \{\n    return "local";/);
+  assert.match(app, /s\.settings\.chatEngine = "local"/);
+  assert.match(app, /chatMeta\.status !== "ready"/, "the model is not tried first");
 });
 
 test("vocabulary memory anchors and XP level are wired", () => {

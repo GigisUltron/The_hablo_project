@@ -32,7 +32,7 @@ var SEMA_DATA = {
   },
 
   concepts: [
-    { id: "nl-house", emoji: "🏠", word: "huis", article: "het", cat: "home", sentence: "Mijn huis staat dicht bij de zee.", synonyms: ["woning"] },
+    { id: "nl-house", emoji: "🏠", word: "huis", article: "het", cat: "home", sentence: "Mijn huis staat dicht bij de zee.", synonyms: ["woning", "thuis"] },
     { id: "nl-door", emoji: "🚪", word: "deur", article: "de", cat: "home", sentence: "De deur is open." },
     { id: "nl-water", emoji: "💧", word: "water", article: "het", cat: "food", sentence: "Ik drink elke dag water." },
     { id: "nl-bread", emoji: "🍞", word: "brood", article: "het", cat: "food", sentence: "Het brood is vers." },
@@ -49,7 +49,7 @@ var SEMA_DATA = {
     { id: "nl-eye", emoji: "👁️", word: "oog", article: "het", cat: "body", sentence: "Ik doe één oog dicht." },
     { id: "nl-heart", emoji: "❤️", word: "hart", article: "het", cat: "body", sentence: "Het hart klopt snel." },
     { id: "nl-city", emoji: "🏙️", word: "stad", article: "de", cat: "city", sentence: "De stad is groot." },
-    { id: "nl-car", emoji: "🚗", word: "auto", article: "de", cat: "city", sentence: "De auto is rood.", synonyms: ["wagen"] },
+    { id: "nl-car", emoji: "🚗", word: "auto", article: "de", cat: "city", sentence: "De auto is rood.", synonyms: ["wagen", "personenauto"] },
     { id: "nl-train", emoji: "🚆", word: "trein", article: "de", cat: "city", sentence: "De trein komt te laat." },
     { id: "nl-street", emoji: "🛣️", word: "straat", article: "de", cat: "city", sentence: "Ik woon in deze straat." },
     { id: "nl-night", emoji: "🌃", word: "nacht", article: "de", cat: "time", sentence: "De nacht is rustig." },

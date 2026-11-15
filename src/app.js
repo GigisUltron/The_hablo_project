@@ -465,7 +465,9 @@
           : (uiChoicesHere[0] || "en");
       }
     }
-    if (!s.settings.chatEngine) s.settings.chatEngine = "offline";
+    /* The local model is the intended conversation engine. If none answers,
+     * the scripted practice takes over; there is no engine chooser. */
+    s.settings.chatEngine = "local";
     if (typeof s.settings.chatEndpoint !== "string" || !s.settings.chatEndpoint.trim()) {
       s.settings.chatEndpoint = (CE && CE.DEFAULT_ENDPOINT) || "http://localhost:11434";
     }
@@ -1687,8 +1689,10 @@
 
   function skipWriting() {
     if (!writing) return;
-    writing.i += 1;
-    if (writing.i >= writing.queue.length) finishWriting();
+    /* A skipped task is not a wrong answer and not a completed card: remove it
+     * from the queue, so the summary and the denominator ignore it. */
+    writing.queue.splice(writing.i, 1);
+    if (!writing.queue.length) finishWriting();
     else renderWritingCard();
   }
 
@@ -1767,6 +1771,12 @@
   }
 
   function finishWriting() {
+    if (!writing || !writing.queue.length) {
+      writing = null;
+      show("today");
+      toast(tr("skippedAll", "No cards answered; nothing was counted."));
+      return;
+    }
     var total = writing.queue.length;
     var good = writing.firstCorrect;
     state.history = state.history || [];
@@ -1836,7 +1846,7 @@
   }
 
   function chatEngine() {
-    return (state && state.settings && state.settings.chatEngine) || "offline";
+    return "local";
   }
 
   function cleanEndpoint(value) {
@@ -2029,8 +2039,6 @@
   function renderChatSettings() {
     var ep = $("chat-endpoint");
     if (ep) ep.value = chatEndpoint();
-    var engine = $("chat-engine");
-    if (engine) engine.value = chatEngine();
     var model = $("chat-model");
     if (model) model.value = (state.settings && state.settings.chatModel) || "";
     setChatStatus();
@@ -2052,9 +2060,11 @@
     var token = ++chatCheck;
     chatMeta = { status: "checking", engine: null, model: null, vision: false };
     setChatStatus();
-    var endpoint = chatEndpoint();
 
-    CE.discover(endpoint, undefined, 2500).then(function (found) {
+    /* Probe all local candidates, not just the configured endpoint: when the
+     * app starts the model beside itself it lands on 8081, while a standalone
+     * installer uses 8080 and Ollama uses 11434. */
+    discoverLocal().then(function (found) {
       if (token !== chatCheck) return;
       if (!found || !found.engine) {
         chatMeta = { status: "missing", engine: null, model: null, vision: false };
@@ -2062,9 +2072,13 @@
         seedScriptedIfEmpty();
         return;
       }
+      var endpoint = found.baseUrl;
+      state.settings.chatEndpoint = endpoint;
 
       var chosen = String((state.settings && state.settings.chatModel) || "").trim();
       if (!chosen) chosen = (found.models[0] && found.models[0].name) || "";
+      state.settings.chatModel = chosen;
+      save();
       if (!chosen) {
         chatMeta = { status: "missing", engine: null, model: null, vision: false };
         setChatStatus();
@@ -3895,12 +3909,30 @@
     return S.shuffle(pool, Math.random);
   }
 
+  function synonymVocabIds() {
+    return allIds.filter(function (id) {
+      return atLevel(id) && SYNONYMS && SYNONYMS.forItem(itemOf(id)).length;
+    });
+  }
+
   function startVocab() {
-    var ids = vocabPool().slice(0, 12);
-    if (!ids.length) {
-      ids = S.shuffle(allIds.filter(function (id) {
-        return atLevel(id) && itemOf(id).kind !== "term";
-      }), Math.random).slice(0, 12);
+    var ids = [];
+    var syn = synonymVocabIds();
+    if (syn.length) {
+      /* The synonym mode is the whole session now: no recall-meaning cards in
+       * front of it. Small decks repeat the authored pairs to fill the set. */
+      while (ids.length < 12) {
+        S.shuffle(syn, Math.random).forEach(function (id) {
+          if (ids.length < 12) ids.push(id);
+        });
+      }
+    } else {
+      ids = vocabPool().slice(0, 12);
+      if (!ids.length) {
+        ids = S.shuffle(allIds.filter(function (id) {
+          return atLevel(id) && itemOf(id).kind !== "term";
+        }), Math.random).slice(0, 12);
+      }
     }
     vocab = { queue: ids, i: 0, correct: 0, again: 0, retry: {}, done: false, revealed: false, anchorDraft: "" };
     show("vocab");
@@ -3911,7 +3943,8 @@
     var base = ADAPT.CEFR.indexOf(itemLevel(id));
     var used = vocab.queue.slice();
     var harder = allIds.filter(function (x) {
-      return used.indexOf(x) === -1 && atLevel(x) && itemOf(x).kind !== "term" &&
+      return used.indexOf(x) === -1 && atLevel(x) &&
+        SYNONYMS.forItem(itemOf(x)).length &&
         ADAPT.CEFR.indexOf(itemLevel(x)) > base;
     });
     if (!harder.length) return null;
@@ -3992,11 +4025,21 @@
   }
 
   function renderVocabSynonym(it, syn, meaning) {
-    var correct = syn[0];
-    var pool = allIds.map(function (id) { return itemOf(id).text; }).filter(function (word) {
-      return word && word !== it.text && word !== correct;
+    var correct = syn[vocab.correct % syn.length];
+    var synonymSet = {};
+    syn.forEach(function (word) { synonymSet[word] = true; });
+    /* After a run of correct answers, add more options and pull distractors
+     * from the same field first: a harder discrimination, not a longer card. */
+    var optionCount = vocab.correct >= 8 ? 6 : vocab.correct >= 4 ? 5 : 4;
+    var cat = conceptById[it.id] && conceptById[it.id].cat;
+    var near = allIds.filter(function (id) {
+      var c = conceptById[id];
+      return c && c.cat === cat && c.word !== it.text && c.word !== correct;
+    }).map(function (id) { return itemOf(id).text; });
+    var pool = near.concat(allIds.map(function (id) { return itemOf(id).text; })).filter(function (word) {
+      return word && word !== it.text && !synonymSet[word];
     });
-    var options = SYNONYMS.options(correct, pool, 4, Math.random);
+    var options = SYNONYMS.options(correct, pool, optionCount, Math.random);
     $("vocab-feedback").textContent = "";
     $("vocab-stage").innerHTML =
       '<p class="prompt">' + esc(tr("vocabSame", "Which word means the same?")) + "</p>" +
@@ -4015,7 +4058,15 @@
         });
         if (!ok) btn.classList.add("pick-wrong");
         $("vocab-feedback").innerHTML = esc(ok ? tr("correct", "Correct") : tr("notQuite", "Not quite")) +
-          " · " + esc(meaning);
+          " · " + esc(correct) +
+          (meaning
+            ? ' <button class="gloss-btn" id="vocab-syn-meaning" type="button">' +
+              esc(tr("glossShow", "show translation")) + "</button>"
+            : "");
+        var meaningBtn = $("vocab-syn-meaning");
+        if (meaningBtn) meaningBtn.addEventListener("click", function () {
+          meaningBtn.outerHTML = '<span class="vocab-syn-def">' + esc(meaning) + "</span>";
+        });
         $("vocab-stage").insertAdjacentHTML("beforeend",
           '<div class="vocab-actions"><button class="btn btn-primary" id="vocab-syn-continue" type="button">' +
           esc(tr("continue", "Continue")) + "</button></div>");
@@ -4045,7 +4096,7 @@
     $("vocab-stats").textContent = vocab.correct + " ✓ · " + vocab.again + " ↺";
     $("vocab-feedback").textContent = "";
     var syn = SYNONYMS ? SYNONYMS.forItem(it) : [];
-    if (syn.length && vocab.i > 0 && vocab.i % 3 === 2) {
+    if (syn.length) {
       renderVocabSynonym(it, syn, meaning);
       return;
     }
@@ -5292,12 +5343,17 @@
   function skipCard() {
     if (!session) return;
     var id = session.quiz[session.qi];
+    if (!id) return;
     if (session.answered[id]) {
       delete session.answered[id];
       session.unique = Math.max(0, (session.unique || 0) - 1);
     }
-    session.qi += 1;
-    renderQuiz();
+    /* Ignore the task completely. Removing it also keeps it out of the
+     * progress denominator and the summary; it is not a correct answer. */
+    session.quiz.splice(session.qi, 1);
+    if (session.types && session.types.length > session.qi) session.types.splice(session.qi, 1);
+    if (session.qi >= session.quiz.length) finishSession();
+    else renderQuiz();
   }
 
   function answer(ok, chosenId) {
@@ -5422,6 +5478,14 @@
   }
 
   function finishSession() {
+    /* A session of only skipped tasks is not a session: no XP, coins, streak,
+     * path progress or history entry. */
+    if (!session.unique) {
+      session = null;
+      show("today");
+      toast(tr("skippedAll", "No cards answered; nothing was counted."));
+      return;
+    }
     state.history = state.history || [];
     state.history.push(session.qi);
     if (state.history.length > 50) state.history = state.history.slice(-50);
@@ -5792,11 +5856,6 @@
   $("chat-endpoint").addEventListener("change", function () {
     state.settings.chatEndpoint = cleanEndpoint(this.value);
     this.value = state.settings.chatEndpoint;
-    save();
-    refreshChatEngine();
-  });
-  $("chat-engine").addEventListener("change", function () {
-    state.settings.chatEngine = this.value === "local" ? "local" : "offline";
     save();
     refreshChatEngine();
   });

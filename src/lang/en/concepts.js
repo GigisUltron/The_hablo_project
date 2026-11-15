@@ -32,7 +32,7 @@ var SEMA_DATA = {
   },
 
   concepts: [
-    { id: "en-house", emoji: "🏠", word: "house", article: "the", cat: "home", sentence: "The house is near the sea.", synonyms: ["home"] },
+    { id: "en-house", emoji: "🏠", word: "house", article: "the", cat: "home", sentence: "The house is near the sea.", synonyms: ["home", "residence"] },
     { id: "en-door", emoji: "🚪", word: "door", article: "the", cat: "home", sentence: "The door is open." },
     { id: "en-window", emoji: "🪟", word: "window", article: "the", cat: "home", sentence: "I open the window in the morning." },
     { id: "en-bed", emoji: "🛏️", word: "bed", article: "the", cat: "home", sentence: "I sleep in my bed." },
@@ -57,9 +57,9 @@ var SEMA_DATA = {
     { id: "en-heart", emoji: "❤️", word: "heart", article: "the", cat: "body", sentence: "The heart beats fast." },
     { id: "en-city", emoji: "🏙️", word: "city", article: "the", cat: "city", sentence: "The city is big." },
     { id: "en-street", emoji: "🛣️", word: "street", article: "the", cat: "city", sentence: "I live on this street." },
-    { id: "en-car", emoji: "🚗", word: "car", article: "the", cat: "city", sentence: "The car is red.", synonyms: ["automobile"] },
+    { id: "en-car", emoji: "🚗", word: "car", article: "the", cat: "city", sentence: "The car is red.", synonyms: ["automobile", "auto"] },
     { id: "en-train", emoji: "🚆", word: "train", article: "the", cat: "city", sentence: "The train is late." },
-    { id: "en-money", emoji: "💰", word: "money", article: "the", cat: "city", sentence: "I do not have any money.", synonyms: ["cash"] },
+    { id: "en-money", emoji: "💰", word: "money", article: "the", cat: "city", sentence: "I do not have any money.", synonyms: ["cash", "currency"] },
     { id: "en-day", emoji: "📅", word: "day", article: "the", cat: "time", sentence: "The day is long." },
     { id: "en-night", emoji: "🌃", word: "night", article: "the", cat: "time", sentence: "The night is quiet." },
     { id: "en-love", emoji: "💗", word: "love", article: "the", cat: "emotion", sentence: "Love cannot be explained." },

@@ -35,8 +35,17 @@ def say(message):
     print("ai: " + message, flush=True)
 
 
+def short(value):
+    """A command-line path that does not echo the machine's home directory."""
+    path = pathlib.Path(str(value))
+    try:
+        return str(path.resolve().relative_to(ROOT))
+    except (ValueError, OSError):
+        return path.name if path.is_absolute() else str(value)
+
+
 def run(command, **kwargs):
-    say("$ " + " ".join(str(x) for x in command))
+    say("$ " + " ".join(short(x) for x in command))
     return subprocess.run(command, **kwargs)
 
 
@@ -100,6 +109,25 @@ def choose_python(explicit):
     return str(python)
 
 
+def available_mb():
+    """Best-effort free physical memory, in MB."""
+    try:
+        with open("/proc/meminfo", "r", encoding="ascii") as handle:
+            for line in handle:
+                if line.startswith("MemAvailable:"):
+                    return int(line.split()[1]) // 1024
+    except OSError:
+        pass
+    try:
+        page = os.sysconf("SC_PAGE_SIZE")
+        available = os.sysconf("SC_AVPHYS_PAGES")
+        if page > 0 and available > 0:
+            return int(page * available) // (1024 * 1024)
+    except (ValueError, OSError, AttributeError):
+        pass
+    return None
+
+
 def download(url, destination):
     if destination.is_file() and destination.stat().st_size > 1024 * 1024:
         say("model already present: %s" % destination.relative_to(ROOT))
@@ -157,15 +185,23 @@ def main():
     say("ready: %s" % label)
     say("open the app, Settings, Find local model, or let it probe port %d" % args.port)
     if not args.start:
-        say("start with: %s -m llama_cpp.server --model %s --port %d" % (python, model, args.port))
+        say("start with: %s -m llama_cpp.server --model %s --port %d" % (
+            short(python), short(model), args.port))
         return 0
 
-    threads = max(1, (os.cpu_count() or 2) // 2)
+    free = available_mb()
+    if free is not None and free < 1200:
+        say("not starting: only %d MB free. Close something or use a machine with more RAM." % free)
+        return 1
+    ctx = 1024 if free is not None and free < 2500 else 2048
+    threads = max(1, min(4, (os.cpu_count() or 2) // 2))
+    if free is not None:
+        say("RAM guard: %d MB free, context %d, threads %d" % (free, ctx, threads))
     command = [
         python, "-m", "llama_cpp.server",
         "--model", str(model),
         "--model_alias", ALIAS,
-        "--n_ctx", "2048",
+        "--n_ctx", str(ctx),
         "--n_threads", str(threads),
         "--host", "127.0.0.1",
         "--port", str(args.port),

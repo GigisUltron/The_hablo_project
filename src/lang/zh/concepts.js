@@ -31,7 +31,7 @@ var SEMA_DATA = {
   },
 
   concepts: [
-    { id: "zh-house", emoji: "🏠", word: "房子", article: "", cat: "home", sentence: "我的房子离海很近。", sub: "fáng zi", synonyms: ["家"] },
+    { id: "zh-house", emoji: "🏠", word: "房子", article: "", cat: "home", sentence: "我的房子离海很近。", sub: "fáng zi", synonyms: ["家", "住宅"] },
     { id: "zh-door", emoji: "🚪", word: "门", article: "", cat: "home", sentence: "门开着。", sub: "mén" },
     { id: "zh-water", emoji: "💧", word: "水", article: "", cat: "food", sentence: "我每天喝水。", sub: "shuǐ" },
     { id: "zh-bread", emoji: "🍞", word: "面包", article: "", cat: "food", sentence: "面包很新鲜。", sub: "miàn bāo" },
@@ -48,7 +48,7 @@ var SEMA_DATA = {
     { id: "zh-eye", emoji: "👁️", word: "眼睛", article: "", cat: "body", sentence: "我闭上一只眼睛。", sub: "yǎn jing" },
     { id: "zh-heart", emoji: "❤️", word: "心", article: "", cat: "body", sentence: "心在快速跳动。", sub: "xīn" },
     { id: "zh-city", emoji: "🏙️", word: "城市", article: "", cat: "city", sentence: "城市很大。", sub: "chéng shì" },
-    { id: "zh-car", emoji: "🚗", word: "汽车", article: "", cat: "city", sentence: "汽车是红色的。", sub: "qì chē", synonyms: ["车"] },
+    { id: "zh-car", emoji: "🚗", word: "汽车", article: "", cat: "city", sentence: "汽车是红色的。", sub: "qì chē", synonyms: ["车", "轿车"] },
     { id: "zh-train", emoji: "🚆", word: "火车", article: "", cat: "city", sentence: "火车晚点了。", sub: "huǒ chē" },
     { id: "zh-street", emoji: "🛣️", word: "街道", article: "", cat: "city", sentence: "我住在这条街上。", sub: "jiē dào" },
     { id: "zh-night", emoji: "🌃", word: "夜晚", article: "", cat: "time", sentence: "夜晚很安静。", sub: "yè wǎn" },

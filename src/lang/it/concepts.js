@@ -32,7 +32,7 @@ var SEMA_DATA = {
   },
 
   concepts: [
-    { id: "it-house", emoji: "🏠", word: "casa", article: "la", cat: "home", sentence: "La mia casa è vicino al mare.", synonyms: ["abitazione"] },
+    { id: "it-house", emoji: "🏠", word: "casa", article: "la", cat: "home", sentence: "La mia casa è vicino al mare.", synonyms: ["abitazione", "dimora"] },
     { id: "it-door", emoji: "🚪", word: "porta", article: "la", cat: "home", sentence: "La porta è aperta." },
     { id: "it-water", emoji: "💧", word: "acqua", article: "l'", cat: "food", sentence: "Bevo acqua tutti i giorni." },
     { id: "it-bread", emoji: "🍞", word: "pane", article: "il", cat: "food", sentence: "Il pane è fresco." },
@@ -49,7 +49,7 @@ var SEMA_DATA = {
     { id: "it-eye", emoji: "👁️", word: "occhio", article: "l'", cat: "body", sentence: "Chiudo un occhio." },
     { id: "it-heart", emoji: "❤️", word: "cuore", article: "il", cat: "body", sentence: "Il cuore batte forte." },
     { id: "it-city", emoji: "🏙️", word: "città", article: "la", cat: "city", sentence: "La città è grande." },
-    { id: "it-car", emoji: "🚗", word: "macchina", article: "la", cat: "city", sentence: "La macchina è rossa.", synonyms: ["auto"] },
+    { id: "it-car", emoji: "🚗", word: "macchina", article: "la", cat: "city", sentence: "La macchina è rossa.", synonyms: ["auto", "automobile"] },
     { id: "it-train", emoji: "🚆", word: "treno", article: "il", cat: "city", sentence: "Il treno arriva in ritardo." },
     { id: "it-street", emoji: "🛣️", word: "strada", article: "la", cat: "city", sentence: "Abito in questa strada." },
     { id: "it-night", emoji: "🌃", word: "notte", article: "la", cat: "time", sentence: "La notte è tranquilla." },

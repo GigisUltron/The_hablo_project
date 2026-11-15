@@ -2450,6 +2450,7 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .vocab-actions .btn { flex: 1 1 0; }
 .vocab-stats { text-align: center; color: var(--text-2); font-size: 13px; }
 .vocab-feedback { min-height: 20px; text-align: center; font-size: 14px; color: var(--text-2); }
+.vocab-syn-def { color: var(--text-2); font-weight: 600; }
 .vocab-summary { display: grid; justify-items: center; gap: 12px; }
 .vocab-bar {
   height: 4px;
