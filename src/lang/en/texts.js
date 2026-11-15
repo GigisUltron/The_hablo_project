@@ -27,6 +27,18 @@ var SEMA_TEXTS = {
       ]
     },
     {
+      id: "tx-en-soup",
+      title: "The Thursday kitchen",
+      level: 2,
+      band: "A2",
+      body: "Every Thursday evening, a small kitchen near the station opens its doors to anyone who is hungry. Volunteers arrive at five o'clock to chop vegetables and make soup. The menu changes every week, but there is always bread, fruit and a hot drink. Some guests come alone, while others bring their children. Nobody asks why they are there. People sit at long tables and talk, and the volunteers eat with them when their work is finished. The kitchen is not a restaurant: it is a simple room with bright walls and a few plants. Last winter, the volunteers served more than eighty meals in one evening. They say the hardest part is not the cooking, but remembering everyone's name.",
+      questions: [
+        {"q": "When do the volunteers start cooking?", "options": ["at five o'clock", "at seven o'clock", "at noon"], "answer": 0, "why": ["", "the text says five o'clock, not seven", "there is no mention of noon"]},
+        {"q": "What is on the menu every week?", "options": ["bread, fruit and a hot drink", "only soup", "cake and coffee"], "answer": 0, "why": ["", "the menu changes and always includes bread and fruit", "cake is not mentioned"]},
+        {"q": "What do the volunteers say is the hardest part?", "options": ["the cooking", "remembering names", "washing the tables"], "answer": 1, "why": ["they say cooking is not the hardest part", "", "washing the tables is not mentioned"]},
+      ]
+    },
+    {
       id: "tx-en-bakery",
       title: "The bakery that closed",
       level: 3,
@@ -36,6 +48,18 @@ var SEMA_TEXTS = {
         {"q": "Why did the bakery close?", "options": ["the owner was retiring", "the bread was bad", "the rent was too low"], "answer": 0, "why": ["", "the bread was good", "the text mentions high rent, not low rent"]},
         {"q": "What do the neighbours do now?", "options": ["they go to the supermarket", "they bake their own bread", "they have opened a shop"], "answer": 0, "why": ["", "this is not stated", "they only talk about it"]},
         {"q": "What does the young woman's visit suggest?", "options": ["she may want to take over the shop", "she is the new baker", "she wants to buy the photos"], "answer": 0, "why": ["", "nobody knows if she will return", "she took photos of the window"]},
+      ]
+    },
+    {
+      id: "tx-en-ferry",
+      title: "The winter ferry",
+      level: 3,
+      band: "B1",
+      body: "The ferry to the island runs three times a day in summer, but only once in winter. When the wind is strong, it does not run at all, and the shop on the island runs out of fresh milk. The people who live there are used to it: they keep extra food and check the weather forecast every morning. Last January, the ferry was cancelled for four days. A fisherman took two passengers across in his small boat, but most people stayed at home and finished jobs they had postponed for months. The school stayed open, because the teacher lives on the island. When the ferry finally returned, the queue at the shop was longer than the queue for the boat. Nobody complained. They were too busy buying bread.",
+      questions: [
+        {"q": "How often does the ferry run in winter?", "options": ["three times a day", "once a day", "once a week"], "answer": 1, "why": ["that is the summer timetable", "", "the text says once a day, not once a week"]},
+        {"q": "Why did the fisherman take passengers?", "options": ["the ferry had been cancelled", "the shop had no milk", "the school was closed"], "answer": 0, "why": ["", "the shop had no milk, but that is not why he took them", "the school stayed open"]},
+        {"q": "How did most people react to the cancelled ferry?", "options": ["they complained to the company", "they stayed home and finished jobs", "they moved to the mainland"], "answer": 1, "why": ["the text says nobody complained", "", "the text does not say they moved"]},
       ]
     },
     {

@@ -38,6 +38,30 @@ var SEMA_TEXTS = {
         {"q": "Genç kadının ziyareti neyi düşündürüyor?", "options": ["belki dükkânı devralmak istiyor", "yeni fırıncı o", "fotoğrafları satın almak istiyor"], "answer": 0, "why": ["", "geri dönüp dönmeyeceği bilinmiyor", "vitrinin fotoğraflarını çekti"]},
       ]
     },
+    {
+      id: "tx-tr-yagmur",
+      title: "Yağmurlu sabah",
+      level: 2,
+      band: "A2",
+      body: "Sabah uyandığımda yağmur yağıyordu. Şemsiyemi bulamadım, bu yüzden ince bir ceket giyip sokağa çıktım. Durakta üç kişi bekliyordu ve hepsi ıslanmıştı. Otobüs on dakika geç geldi. İçeride sıcak bir koku vardı: taze ekmek gibi. Şoför bize gülümsedi ve «Bugün geç kalmak sorun değil» dedi. İşe vardığımda ayakkabılarım tamamen ıslaktı ama moralim yerindeydi. Öğleden sonra yağmur durdu. Eve dönerken aynı fırından ekmek aldım ve ertesi gün için yeni bir şemsiye aldım.",
+      questions: [
+        {"q": "Anlatıcı neden ıslandı?", "options": ["şemsiyesini bulamadığı için", "otobüsü kaçırdığı için", "yağmur durduğu için"], "answer": 0, "why": ["", "otobüse bindi, sadece geç geldi", "yağmur durunca insan ıslanmaz"]},
+        {"q": "Otobüste ne kokusu vardı?", "options": ["taze ekmek", "kahve", "ıslak toprak"], "answer": 0, "why": ["", "kahveden söz edilmiyor", "metin ekmek kokusunu söylüyor"]},
+        {"q": "Eve dönerken ne yaptı?", "options": ["ekmek ve şemsiye aldı", "işe geri döndü", "arkadaşına uğradı"], "answer": 0, "why": ["", "işten eve dönüyordu", "arkadaştan söz edilmiyor"]},
+      ]
+    },
+    {
+      id: "tx-tr-vapur",
+      title: "Sabah vapuru",
+      level: 3,
+      band: "B1",
+      body: "Her sabah aynı vapura biniyorum. Deniz sakin olduğunda insanlar güverteye çıkıyor, martılara simit atıyor. Geçen hafta yanımdaki adama kitabımı sordum; meğer aynı yazarı seviyormuşuz. Konuşmaya başladık ve yol bitmek bilmedi. Bana çocukken babasıyla balığa çıktığını, sonra yıllarca şehirden uzakta çalıştığını anlattı. İndiğimizde birbirimize telefon numarası vermedik, çünkü ikimiz de aynı iskelede her sabah buluşacağımızı biliyorduk. Ertesi gün gerçekten oradaydı. Artık kitap ödünç alıyoruz ve bazen birbirimize yeni yazarlar öneriyoruz. Vapur yolculuğu kısa, ama sabahın en güzel yeri.",
+      questions: [
+        {"q": "Anlatıcı her sabah neye biniyor?", "options": ["vapura", "trene", "otobüse"], "answer": 0, "why": ["", "trenden söz edilmiyor", "otobüsten söz edilmiyor"]},
+        {"q": "Adam neyi anlattı?", "options": ["çocukken balığa çıktığını", "üniversitede öğretmen olduğunu", "yeni bir kitap yazdığını"], "answer": 0, "why": ["", "öğretmenlikten söz edilmiyor", "kitap yazdığı söylenmiyor"]},
+        {"q": "Neden telefon numarası vermediler?", "options": ["her sabah aynı iskelede buluşacaklarını bildikleri için", "telefonları bozuk olduğu için", "numaraları unuttukları için"], "answer": 0, "why": ["", "telefonlarının bozuk olduğu yazmıyor", "unuttukları söylenmiyor"]},
+      ]
+    },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TEXTS;

@@ -27,6 +27,18 @@ var SEMA_TEXTS = {
       ]
     },
     {
+      id: "tx-pt-feira-livros",
+      title: "A feira de livros usados",
+      level: 2,
+      band: "A2",
+      body: "Domingo de manhã, a praça perto do rio enche-se de mesas com livros usados. A feira abre às nove e fecha ao meio-dia. A maioria dos livros custa um ou dois euros, e as crianças podem escolher um de graça. Eu procurava um livro de cozinha para oferecer à minha irmã. Encontrei um antigo, com receitas de sopa e de peixe, por três euros. A senhora da banca disse que era da sua avó e que já não o usava. Ficámos a conversar sobre comida e sobre o bairro. Voltei para casa com um livro e uma receita nova.",
+      questions: [
+        {"q": "O que se vende na feira?", "options": ["livros usados", "comida para o almoço", "mesas e cadeiras"], "answer": 0, "why": ["", "o livro de cozinha tem receitas, não comida pronta", "as mesas servem para expor os livros"]},
+        {"q": "Quanto custou o livro que o narrador comprou?", "options": ["três euros", "um euro", "nada"], "answer": 0, "why": ["", "um ou dois euros é o preço da maioria, não deste livro", "só as crianças podem escolher um livro de graça"]},
+        {"q": "Com quem falou o narrador?", "options": ["com a senhora da banca", "com a irmã", "com as crianças"], "answer": 0, "why": ["", "a irmã recebe o livro, mas não está na feira", "o texto fala das crianças, mas não de uma conversa com elas"]},
+      ]
+    },
+    {
       id: "tx-pt-padaria",
       title: "A padaria que fechou",
       level: 3,
@@ -36,6 +48,18 @@ var SEMA_TEXTS = {
         {"q": "Porque é que a padaria fechou?", "options": ["a dona queria reformar-se", "o pão era mau", "a renda era baixa"], "answer": 0, "why": ["", "o pão era bom", "o texto fala de renda alta, não baixa"]},
         {"q": "O que fazem os habitantes agora?", "options": ["vão ao supermercado", "fazem o pão em casa", "abriram uma mercearia"], "answer": 0, "why": ["", "o texto não o diz", "apenas falam disso"]},
         {"q": "O que sugere a visita da mulher jovem?", "options": ["talvez queira ficar com o espaço", "é a nova padeira", "quer comprar as fotografias"], "answer": 0, "why": ["", "ninguém sabe se volta", "tirou fotografias à vitrina"]},
+      ]
+    },
+    {
+      id: "tx-pt-festa-aldeia",
+      title: "A festa da aldeia",
+      level: 3,
+      band: "B1",
+      body: "Todos os anos, no primeiro fim de semana de agosto, a aldeia dos meus avós enche-se para a festa. As ruas estreitas ficam com bancas de doces, e o largo da igreja torna-se um palco. Os mais velhos preparam a comida durante dias: caldo verde, sardinhas e pão caseiro. Os jovens montam as luzes e ensaiam a música. Na noite principal, há um desfile com trajes tradicionais e, no fim, todos dançam até tarde. Eu cresci na cidade, mas volto sempre naquela semana. Ajudo a servir à mesa e ouço histórias que não conhecia. Quando a festa termina, a aldeia parece outra vez vazia, mas as pessoas já falam do próximo ano.",
+      questions: [
+        {"q": "Quando acontece a festa?", "options": ["no primeiro fim de semana de agosto", "na Páscoa", "todos os meses"], "answer": 0, "why": ["", "o texto não fala da Páscoa", "a festa é uma vez por ano"]},
+        {"q": "O que fazem os jovens?", "options": ["montam as luzes e ensaiam a música", "preparam a comida durante dias", "vendem doces nas ruas"], "answer": 0, "why": ["", "isso é o que fazem os mais velhos", "as bancas de doces existem, mas o texto não diz que os jovens as vendem"]},
+        {"q": "Porque é que o narrador volta sempre à aldeia?", "options": ["para ajudar e ouvir histórias", "porque vive lá", "para vender pão caseiro"], "answer": 0, "why": ["", "ele cresceu na cidade", "o pão é feito pelos mais velhos"]},
       ]
     },
   ]

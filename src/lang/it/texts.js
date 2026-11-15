@@ -27,6 +27,18 @@ var SEMA_TEXTS = {
       ]
     },
     {
+      id: "tx-it-caffe",
+      title: "Il caffè sospeso",
+      level: 2,
+      band: "A2",
+      body: "A Napoli esiste una tradizione semplice e generosa: il caffè sospeso. Al bancone, una persona ordina due caffè ma ne beve solo uno. Paga tutti e due e lascia il secondo per uno sconosciuto. Più tardi, qualcuno entra e chiede: «C'è un caffè sospeso?». Il barista risponde di sì e prepara il caffè senza chiedere nulla. Nessuno sa chi ha offerto il caffè né chi lo riceve. La tradizione è nata negli anni quaranta, quando il caffè costava caro e molte persone non avevano soldi. Oggi continua in diverse città italiane. È un piccolo gesto, ma rende il quartiere più caloroso.",
+      questions: [
+        {"q": "Che cosa lascia la persona al bar?", "options": ["un caffè per uno sconosciuto", "un biglietto con il suo nome", "un dolce per il barista"], "answer": 0, "why": ["", "il testo dice che nessuno sa chi offre", "non si parla di dolci"]},
+        {"q": "Perché è nata questa tradizione?", "options": ["per attirare i turisti", "perché molti non potevano pagarsi un caffè", "per festeggiare il lunedì"], "answer": 1, "why": ["i turisti non sono menzionati", "", "non si parla di una festa"]},
+        {"q": "Che cosa non si sa?", "options": ["chi offre e chi riceve il caffè", "quanti caffè si vendono ogni giorno", "come si prepara il caffè"], "answer": 0, "why": ["", "il testo non parla delle vendite giornaliere", "non spiega la ricetta"]},
+      ]
+    },
+    {
       id: "tx-it-forno",
       title: "Il forno chiuso",
       level: 3,
@@ -36,6 +48,18 @@ var SEMA_TEXTS = {
         {"q": "Perché il forno ha chiuso?", "options": ["la proprietaria andava in pensione", "il pane era cattivo", "l'affitto era troppo basso"], "answer": 0, "why": ["", "il pane era buono", "il testo parla del costo del locale, non di un affitto basso"]},
         {"q": "Che cosa fanno ora gli abitanti?", "options": ["vanno al supermercato", "fanno il pane in casa", "hanno aperto un negozio"], "answer": 0, "why": ["", "non è detto", "ne parlano soltanto"]},
         {"q": "Che cosa suggerisce la visita della giovane donna?", "options": ["forse vuole riprendere il locale", "è la nuova fornaia", "vuole comprare le foto"], "answer": 0, "why": ["", "nessuno sa se tornerà", "ha fatto foto della vetrina"]},
+      ]
+    },
+    {
+      id: "tx-it-olive",
+      title: "La raccolta delle olive",
+      level: 3,
+      band: "B1",
+      body: "Ogni autunno, la mia famiglia torna in campagna per la raccolta delle olive. Partiamo presto, quando l'aria è ancora fresca, e lavoriamo fino a mezzogiorno. Gli alberi non sono alti, ma servono pazienza e buone braccia. Un cesto pieno pesa parecchio, quindi ci fermiamo spesso a bere acqua e a mangiare pane e formaggio. Quest'anno il raccolto è stato inferiore al solito, perché l'estate è stata troppo secca. Nonostante questo, mio nonno non si lamenta: dice che un anno così capita e che la terra ha bisogno di riposare. Alla fine portiamo le olive al frantoio. Il profumo dell'olio nuovo è la parte che mi piace di più.",
+      questions: [
+        {"q": "Quando parte la famiglia per la raccolta?", "options": ["la sera", "presto, quando l'aria è fresca", "dopo mezzogiorno"], "answer": 1, "why": ["partono presto, non la sera", "", "si fermano a mezzogiorno, non partono allora"]},
+        {"q": "Perché il raccolto è minore quest'anno?", "options": ["l'estate è stata troppo secca", "gli alberi erano troppo alti", "la famiglia è arrivata tardi"], "answer": 0, "why": ["", "gli alberi non sono alti", "non si parla di ritardi"]},
+        {"q": "Che cosa dice il nonno?", "options": ["che bisogna vendere il campo", "che un anno così può capitare", "che l'olio è troppo caro"], "answer": 1, "why": ["non parla di vendere il campo", "", "non parla del prezzo dell'olio"]},
       ]
     },
     {

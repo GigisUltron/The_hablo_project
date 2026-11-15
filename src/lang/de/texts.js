@@ -27,6 +27,18 @@ var SEMA_TEXTS = {
       ]
     },
     {
+      id: "tx-de-fahrradwerkstatt",
+      title: "Die Fahrradwerkstatt",
+      level: 2,
+      band: "A2",
+      body: "Seit einem Monat ist die Werkstatt in der alten Garage am Bahnhof geöffnet. Jeden Donnerstag kommen Leute mit kaputten Fahrrädern. Freiwillige zeigen ihnen, wie sie die Kette wechseln oder das Licht reparieren. Man braucht keinen Termin und bezahlt nur die Ersatzteile. Ich kam mit einem platten Reifen. Eine Frau zeigte mir, wie ich den Schlauch finde und flicken kann. Nach einer Stunde fuhr mein Rad wieder. Zum Schluss fragte sie: «Bringst du nächste Woche einen Kuchen mit?» Seitdem helfe ich manchmal mit.",
+      questions: [
+        {"q": "Was kann man in der Werkstatt machen?", "options": ["Fahrräder reparieren", "Fahrräder kaufen", "Kuchen backen"], "answer": 0, "why": ["", "dort werden Räder repariert, nicht verkauft", "der Kuchen ist nur eine freundliche Bitte"]},
+        {"q": "Was kostet die Hilfe?", "options": ["nur die Ersatzteile", "zehn Euro pro Stunde", "einen Kuchen pro Woche"], "answer": 0, "why": ["", "der Text nennt keinen Stundenpreis", "der Kuchen ist freiwillig und kein Preis"]},
+        {"q": "Warum hilft der Erzähler jetzt manchmal mit?", "options": ["weil er etwas gelernt hat", "weil er Geld verdienen möchte", "weil sein Fahrrad noch kaputt ist"], "answer": 0, "why": ["", "von Geld ist nicht die Rede", "sein Fahrrad fuhr nach einer Stunde wieder"]},
+      ]
+    },
+    {
       id: "tx-de-baeckerei",
       title: "Die Bäckerei, die schloss",
       level: 3,
@@ -36,6 +48,18 @@ var SEMA_TEXTS = {
         {"q": "Warum schloss die Bäckerei?", "options": ["die Besitzerin ging in Rente", "das Brot war schlecht", "die Miete war zu niedrig"], "answer": 0, "why": ["", "das Brot war gut", "der Text nennt eine hohe Miete"]},
         {"q": "Was machen die Nachbarn jetzt?", "options": ["sie gehen zum Supermarkt", "sie backen selbst Brot", "sie haben einen Laden eröffnet"], "answer": 0, "why": ["", "das steht nicht im Text", "sie reden nur darüber"]},
         {"q": "Was deutet der Besuch der jungen Frau an?", "options": ["vielleicht will sie den Laden übernehmen", "sie ist die neue Bäckerin", "sie will die Fotos kaufen"], "answer": 0, "why": ["", "niemand weiß, ob sie zurückkommt", "sie fotografierte das Schaufenster"]},
+      ]
+    },
+    {
+      id: "tx-de-buecherschrank",
+      title: "Der Bücherschrank",
+      level: 3,
+      band: "B1",
+      body: "Am Rand unseres Platzes steht seit zwei Jahren ein Bücherschrank. Jeder darf Bücher hineinstellen und mitnehmen, ohne etwas zu bezahlen. Am Anfang war er eine Idee von drei Nachbarn; heute kümmern sich mehr als zwanzig Menschen darum. Einmal pro Woche räumt jemand die Regale auf und entfernt alte Zeitschriften. Manchmal findet man Reiseführer, manchmal Romane, und im Winter liegen dort auch Handschuhe. Wer ein Buch behalten will, kann es einfach mitnehmen. Nur eines ist verboten: den Schrank als Mülleimer zu benutzen. Ein Schild im Inneren erklärt die Regel. Für mich ist der Schrank ein guter Ort, um neue Autoren zu entdecken.",
+      questions: [
+        {"q": "Wie funktioniert der Bücherschrank?", "options": ["man nimmt Bücher mit oder stellt welche hinein", "man leiht Bücher gegen eine Gebühr", "man muss sich vorher anmelden"], "answer": 0, "why": ["", "der Text sagt, dass man nichts bezahlt", "eine Anmeldung wird nicht verlangt"]},
+        {"q": "Wie viele Menschen kümmern sich heute um den Schrank?", "options": ["mehr als zwanzig", "genau drei", "niemand"], "answer": 0, "why": ["", "drei Nachbarn hatten nur die Idee", "der Text sagt, dass sich viele darum kümmern"]},
+        {"q": "Was ist im Bücherschrank verboten?", "options": ["Müll hineinwerfen", "Bücher mitnehmen", "Reiseführer hineinstellen"], "answer": 0, "why": ["", "Bücher mitnehmen ist ausdrücklich erlaubt", "Reiseführer werden als Beispiel genannt"]},
       ]
     },
   ]

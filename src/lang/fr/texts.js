@@ -27,6 +27,18 @@ var SEMA_TEXTS = {
       ]
     },
     {
+      id: "tx-fr-brocante",
+      title: "La brocante du dimanche",
+      level: 2,
+      band: "A2",
+      body: "Chaque premier dimanche du mois, la place du village accueille une brocante. Dès sept heures, les exposants installent leurs tables et sortent de vieux objets : des assiettes, des lampes, des livres et parfois des meubles. Ma voisine y va toujours à la recherche de tasses anciennes. Moi, je préfère regarder les disques et les cartes postales. On peut marchander un peu, mais il faut rester poli. À midi, les cafés sont pleins et les enfants mangent des frites. Vers quinze heures, les exposants commencent à ranger. On repart souvent avec un petit objet inutile, mais on a passé une bonne matinée.",
+      questions: [
+        {"q": "Quand a lieu la brocante ?", "options": ["le premier samedi du mois", "chaque dimanche", "le premier dimanche du mois"], "answer": 2, "why": ["c'est le premier dimanche, pas le samedi", "ce n'est pas chaque dimanche, seulement le premier du mois", ""]},
+        {"q": "Que cherche la voisine ?", "options": ["des tasses anciennes", "des disques", "des meubles"], "answer": 0, "why": ["", "le narrateur regarde les disques", "le texte mentionne des meubles, mais elle cherche des tasses"]},
+        {"q": "Que font les enfants à midi ?", "options": ["ils rangent les stands", "ils mangent des frites", "ils marchandent"], "answer": 1, "why": ["les exposants rangent vers quinze heures", "", "ce sont les clients qui marchandent"]},
+      ]
+    },
+    {
       id: "tx-fr-boulangerie",
       title: "La boulangerie fermée",
       level: 3,
@@ -36,6 +48,18 @@ var SEMA_TEXTS = {
         {"q": "Pourquoi la boulangerie a-t-elle fermé ?", "options": ["la patronne partait à la retraite", "le pain était mauvais", "le loyer était trop bas"], "answer": 0, "why": ["", "le pain était bon, au contraire", "le texte parle du prix du local, pas d'un loyer bas"]},
         {"q": "Que font les habitants maintenant ?", "options": ["ils vont au supermarché", "ils font leur pain eux-mêmes", "ils ont ouvert une épicerie"], "answer": 0, "why": ["", "le texte ne le dit pas", "ils en parlent seulement"]},
         {"q": "Que peut-on déduire de la visite de la jeune femme ?", "options": ["elle cherche peut-être à reprendre le local", "elle est la nouvelle boulangère", "elle veut acheter des photos"], "answer": 0, "why": ["", "personne ne sait si elle reviendra", "elle prend des photos de la vitrine"]},
+      ]
+    },
+    {
+      id: "tx-fr-cinema",
+      title: "Le cinéma sauvé",
+      level: 3,
+      band: "B1",
+      body: "Le cinéma du quartier devait fermer l'année dernière. Le propriétaire, fatigué, n'arrivait plus à payer les factures et voulait vendre le bâtiment. Les habitants ont alors créé une association pour le sauver. Ils ont organisé une soirée de soutien, vendu des gâteaux et demandé une aide à la mairie. Grâce à cet argent, ils ont pu réparer la salle et changer les fauteuils. Aujourd'hui, le cinéma propose un film différent chaque semaine, souvent en version originale. Les séances du mercredi attirent surtout les familles, tandis que celles du vendredi rassemblent les étudiants. Le propriétaire, lui, dit qu'il ne regrette rien : il a retrouvé le plaisir de voir les gens entrer dans sa salle.",
+      questions: [
+        {"q": "Pourquoi le cinéma allait-il fermer ?", "options": ["le propriétaire voulait vendre", "la salle était trop petite", "les films étaient trop chers"], "answer": 0, "why": ["", "le texte ne parle pas de la taille", "le prix des places n'est pas mentionné"]},
+        {"q": "Comment les habitants ont-ils aidé ?", "options": ["ils ont acheté le bâtiment", "ils ont organisé une soirée de soutien", "ils ont écrit au propriétaire"], "answer": 1, "why": ["l'association ne l'achète pas dans le texte", "", "le texte ne mentionne pas de lettre"]},
+        {"q": "Qui vient surtout le vendredi ?", "options": ["les familles", "les étudiants", "les touristes"], "answer": 1, "why": ["ce sont les familles le mercredi", "", "les touristes ne sont pas mentionnés"]},
       ]
     },
     {

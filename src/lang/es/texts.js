@@ -27,6 +27,18 @@ var SEMA_TEXTS = {
       ]
     },
     {
+      id: "tx-es-receta",
+      title: "La receta de la abuela",
+      level: 2,
+      band: "A2",
+      body: "Los domingos, mi abuela cocina tortilla de patatas para toda la familia. Primero pela las patatas y las corta en trozos finos. Después las fríe despacio en aceite de oliva, con un poco de sal. Mientras se hacen, bate seis huevos en un bol grande. Cuando las patatas están blandas, las mezcla con el huevo y lo deja reposar cinco minutos. Luego pone todo en una sartén y espera. A mí me gusta la tortilla un poco jugosa, pero mi madre prefiere que esté bien cuajada. Al final, mi abuela la sirve con pan y tomate. Nadie habla mucho durante la comida: todos comemos.",
+      questions: [
+        {"q": "¿Qué cocina la abuela los domingos?", "options": ["tortilla de patatas", "paella", "sopa de tomate"], "answer": 0, "why": ["", "la paella no aparece en el texto", "la sopa tampoco aparece en el texto"]},
+        {"q": "¿Cuántos huevos bate?", "options": ["cuatro", "seis", "diez"], "answer": 1, "why": ["el texto dice seis, no cuatro", "", "tampoco dice diez"]},
+        {"q": "¿Cómo prefiere la tortilla el narrador?", "options": ["bien cuajada", "un poco jugosa", "fría"], "answer": 1, "why": ["eso lo prefiere su madre", "", "el texto no dice que la quiera fría"]},
+      ]
+    },
+    {
       id: "tx-lluvia",
       title: "La lluvia",
       level: 3,
@@ -36,6 +48,18 @@ var SEMA_TEXTS = {
         {"q": "¿Por qué se queda en casa?", "options": ["porque hace frío", "porque llueve", "porque trabaja"], "answer": 1, "why": ["dice que no hace frío", "", "trabaja, pero se queda por la lluvia"]},
         {"q": "¿Qué hace mientras escucha la lluvia?", "options": ["prepara un café", "duerme", "llama a un amigo"], "answer": 0, "why": ["", "no duerme", "llama a la familia por la tarde, no mientras"]},
         {"q": "¿Qué hará quizá mañana?", "options": ["sol", "frío", "viento"], "answer": 0, "why": ["", "dice que quizá haga sol", "no menciona viento"]},
+      ]
+    },
+    {
+      id: "tx-es-huerto",
+      title: "El huerto del barrio",
+      level: 3,
+      band: "B1",
+      body: "En el solar vacío de mi calle, un grupo de vecinos ha creado un huerto comunitario. Al principio, el ayuntamiento no quería ceder el terreno, porque decía que era para construir viviendas. Después de varias reuniones, aceptó prestarlo durante cinco años. Hoy hay tomates, calabacines y hierbas aromáticas, y cada familia cuida una pequeña parcela. Los martes por la tarde, quien puede se queda a regar y a charlar. Aunque el huerto no produce comida para todo el barrio, sí ha cambiado algo más importante: gente que vivía en el mismo edificio y no se saludaba ahora comparte herramientas y consejos. Si el proyecto sigue adelante, el año que viene abrirán también un taller para niños.",
+      questions: [
+        {"q": "¿Qué quería hacer el ayuntamiento con el solar?", "options": ["construir viviendas", "abrir un parque", "venderlo a una empresa"], "answer": 0, "why": ["", "el texto no menciona un parque", "habla de viviendas, no de venderlo a una empresa"]},
+        {"q": "¿Qué ha cambiado, sobre todo, con el huerto?", "options": ["produce comida para todo el barrio", "ha unido a los vecinos", "ha reducido el ruido"], "answer": 1, "why": ["el texto dice que no produce para todo el barrio", "", "no se habla de ruido"]},
+        {"q": "¿Qué pasará el año que viene si el proyecto sigue?", "options": ["un taller para niños", "un mercado nuevo", "más viviendas"], "answer": 0, "why": ["", "no se menciona un mercado", "las viviendas eran el plan anterior del ayuntamiento"]},
       ]
     },
     {
