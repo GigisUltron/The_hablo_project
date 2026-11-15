@@ -17,6 +17,7 @@ var SEMA_CURRICULUM = (function () {
     "yes": "courtesy", "no": "courtesy", "this-please": "courtesy",
     "repeat": "courtesy", "speak-slower": "courtesy", "dont-understand": "courtesy",
     "coffee": "café", "water": "café", "bill": "café", "how-much": "café",
+    "reservation": "hotel", "train-time": "station", "pharmacy": "pharmacy", "hurts-here": "emergency",
     "where-bathroom": "directions", "where-station": "directions", "lost": "directions",
     "need-help": "emergency", "need-doctor": "emergency", "hotel": "hotel", "colour": "small-talk"
   };
