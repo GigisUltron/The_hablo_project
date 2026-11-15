@@ -838,6 +838,13 @@ test("conversation transfer missions require real use of lesson phrases", () => 
   assert.match(app, /checkMission\(text\)/, "mission never checks learner turns");
 });
 
+test("the conversation log has its own bounded scroll box", () => {
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(css, /\.conv-card \.chat \{[^}]*min-height: 0/, "chat can grow the page");
+  assert.match(css, /\.conv-card \.chat \{[^}]*overflow-y: auto/, "chat is not scrollable");
+  assert.match(css, /\.conv-card \{[^}]*height:/, "conversation card has no fixed viewport");
+});
+
 test("conversation follows the last message and offline replies are live", () => {
   const addUser = app.slice(app.indexOf("function addUser"), app.indexOf("function setChatFeedback"));
   const addAssistant = app.slice(app.indexOf("function addAssistant"), app.indexOf("function addUser"));

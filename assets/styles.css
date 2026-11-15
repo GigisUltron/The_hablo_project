@@ -2385,3 +2385,25 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   outline-offset: 2px;
 }
 #chat-engine { max-width: 420px; }
+
+/* The conversation card owns a fixed viewport height so the message log,
+   not the whole page, scrolls. Without this the card grows forever and
+   scrollTop has no scrollable box to move. */
+.conv-card {
+  height: min(680px, calc(100dvh - 120px));
+  min-height: 0;
+  max-height: calc(100dvh - 96px);
+}
+.conv-card .chat {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+@media (max-width: 760px) {
+  .conv-card {
+    height: calc(100dvh - 84px - env(safe-area-inset-bottom));
+    max-height: none;
+  }
+}
