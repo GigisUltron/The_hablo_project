@@ -542,6 +542,15 @@ test("Progress has a seven-day activity strip from real daily counts", () => {
   assert.match(app, /is-zero/);
 });
 
+test("writing suggestions are labelled and small models refuse grammar claims", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /lastLocalModel = model/);
+  assert.match(app, /0\[\._\]5b/);
+  assert.match(app, /sentenceSmallModel/);
+  assert.match(app, /sentenceSuggestion/);
+  assert.match(app, /COACH\.valid\(suggestion\)/);
+});
+
 test("the session compose box can check a sentence with the local coach", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(app, /id="compose-check"/);

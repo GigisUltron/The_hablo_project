@@ -49,9 +49,9 @@ test("the writing coach rewrites in the target language and notes the change", (
   const text = CE.buildWritingPrompt({ name: "Spanish" }, "A2", "English", "Yo va al café.");
   assert.match(text, /Spanish/);
   assert.match(text, /Yo va al café/);
-  assert.match(text, /rewrite the sentence naturally/);
-  assert.match(text, /English only/);
-  assert.match(text, /under 60 words/);
+  assert.match(text, /Return only the corrected sentence/);
+  assert.match(text, /no explanation/i);
+  assert.match(text, /no quotes/);
 });
 
 test("the progress coach receives real counts, not invented progress", () => {

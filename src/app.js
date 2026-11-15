@@ -853,6 +853,7 @@
   var audioCache = {};
   var speakTimer = null;
   var pendingSpeech = null;
+  var lastLocalModel = "";
 
   function hasBundled() {
     return !!(bundled && Object.keys(bundled).length);
@@ -2135,6 +2136,7 @@
       if (!found) throw new Error("no local model");
       var wanted = (state.settings && state.settings.chatModel) || "";
       var model = (found.models.filter(function (m) { return m.name === wanted; })[0] || found.models[0]).name;
+      lastLocalModel = model;
       return CE.sendChat({
         baseUrl: found.baseUrl,
         engine: found.engine,
@@ -6078,11 +6080,16 @@
         CE.buildWritingPrompt(ACTIVE, learnerLevel(), uiName(uiLang()), text),
         "Check the sentence now."
       ).then(function (reply) {
-        var text = String(reply || "").trim().slice(0, 360);
+        var suggestion = String(reply || "").replace(/^["'“”«»]+|["'“”«»]+$/g, "").trim().slice(0, 300);
         if (note && note.isConnected) {
-          note.textContent = (COACH && !COACH.valid(text))
-            ? tr("sentenceCoachFallback", "No model answered; keep the sentence if it uses today's words.")
-            : (text || tr("sentenceCoachFallback", "No model answered; keep the sentence if it uses today's words."));
+          if (/(^|[^0-9])0[._]5b/i.test(lastLocalModel)) {
+            note.textContent = tr("sentenceSmallModel", "The local model is too small to check grammar. Keep the sentence if it uses today's words.");
+          } else if (!suggestion || (COACH && !COACH.valid(suggestion))) {
+            note.textContent = tr("sentenceCoachFallback", "No model answered; keep the sentence if it uses today's words.");
+          } else {
+            note.textContent = tr("sentenceSuggestion", "Suggestion:") + " " + suggestion +
+              " · " + tr("sentenceSuggestionHint", "Check this wording before you keep it.");
+          }
         }
       }).catch(function () {
         if (note && note.isConnected) {

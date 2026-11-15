@@ -186,13 +186,11 @@
    * rewrites in the target language and leaves one short note in the UI. */
   function buildWritingPrompt(pack, level, uiLanguage, sentence) {
     var name = String((pack && pack.name) || "the target language");
-    var reply = String(uiLanguage || "English");
     var text = String(sentence || "").trim().slice(0, 300);
-    return "You are a kind " + name + " writing coach. The learner is at level " + String(level || "A1") +
-      ". They wrote: " + text + ". " +
-      "Reply in " + reply + " only. First, rewrite the sentence naturally in " + name +
-      ". Then add one short note about what changed. If it is already correct, say so and repeat it. " +
-      "Keep the whole reply under 60 words. No grammar lecture, no emoji.";
+    return "You are a careful " + name + " writing coach. The learner is at level " + String(level || "A1") +
+      ". They wrote: " + text + ". Return only the corrected sentence in " + name +
+      ". Preserve their meaning. If it is already correct, return it unchanged. " +
+      "No explanation, no quotes, no labels, no English and no markdown.";
   }
 
   /* Progress is read from real counts, never from a model's guess. */
