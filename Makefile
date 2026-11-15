@@ -1,5 +1,5 @@
 # Convenience wrapper. Both targets use only tools you already have.
-.PHONY: serve test check setup-ai ai server
+.PHONY: serve test check setup-ai ai server integration
 
 serve:
 	python3 serve.py
@@ -14,6 +14,13 @@ setup-ai:
 
 ai:
 	python3 server.py
+
+integration:
+	@if [ -x .tools/venv/bin/python ]; then \
+		.tools/venv/bin/python tools/integration_check.py --model .tools/models/qwen2.5-0.5b-instruct-q4_k_m.gguf; \
+	else \
+		python3 tools/integration_check.py; \
+	fi
 
 test:
 	node --test tests/*.test.js

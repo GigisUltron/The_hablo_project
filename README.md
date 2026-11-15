@@ -196,6 +196,7 @@ python3 tools/make_audio.py --lang fr --check
 make check                         # syntax gate + full test suite
 node --test tests/                 # tests only
 python3 tools/make_audio.py --check # audio manifest/files
+make integration                   # advanced data + audio + real model when installed
 ```
 
 ## Repository layout

@@ -112,7 +112,15 @@ The older source-built llama.cpp path is still available for a machine that
 already has it: `tools/local_model.sh` starts `.tools/llama.cpp/build/bin/llama-server`
 with a GGUF from `.tools/models/`. It is an alternative, not the default.
 
-## The neural path## The neural path (a machine with internet)
+## Integration check
+
+`make integration` verifies the advanced content in the five core packs, every
+advanced audio manifest and WAV, and — when `llama-cpp-python` and a GGUF are
+present — loads the model and asks for a real reply. Without a model it reports
+the skip and still checks content/audio. It is intentionally outside
+`make check`: the model is optional.
+
+## The neural path (a machine with internet)
 
 Piper is not a dependency of the repo. It is only needed when you want to
 *regenerate* the clips with a neural voice. On a machine where you can install
