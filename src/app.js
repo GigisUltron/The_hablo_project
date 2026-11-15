@@ -567,6 +567,7 @@
     save();
     applyStrings();
     renderUiLangPickers();
+    if (typeof renderWishPresets === "function") renderWishPresets();
   }
 
   function switchLang(code) {
@@ -2846,12 +2847,53 @@
     ["russia", "ru"], ["russian", "ru"], ["moscow", "ru"],
     ["turkey", "tr"], ["turkish", "tr"], ["istanbul", "tr"],
     ["russia", "ru"], ["russian", "ru"], ["moscow", "ru"], ["novgorod", "ru"],
+    ["lyon", "fr"], ["bristol", "en"], ["bologna", "it"], ["seville", "es"],
     ["japan", "ja"], ["japanese", "ja"], ["tokyo", "ja"],
     ["china", "zh"], ["chinese", "zh"], ["beijing", "zh"],
     ["india", "hi"], ["hindi", "hi"], ["delhi", "hi"],
     ["arabic", "ar"], ["morocco", "ar"], ["egypt", "ar"],
     ["england", "en"], ["english", "en"], ["london", "en"]
   ];
+
+  var WISH_PRESETS = {
+    food: "dinner in Rome, I want pizza",
+    family: "my Russian cousin's wedding in Novgorod",
+    hotel: "hotel check-in tomorrow",
+    health: "I need a pharmacy and a doctor",
+    travel: "train to the airport"
+  };
+
+  function renderWishPresets() {
+    var box = $("wish-presets");
+    if (!box) return;
+    box.innerHTML = Object.keys(WISH_PRESETS).map(function (key) {
+      return '<button class="wish-chip" type="button" data-wish-preset="' + key + '">' +
+        esc(tr("wishPreset_" + key, key)) + "</button>";
+    }).join("");
+    Array.prototype.forEach.call(box.querySelectorAll("[data-wish-preset]"), function (b) {
+      b.addEventListener("click", function () {
+        buildWishLesson(WISH_PRESETS[b.getAttribute("data-wish-preset")]);
+      });
+    });
+  }
+
+  function buildWishLesson(text) {
+    var input = $("wish-input");
+    if (!text) {
+      $("wish-note").textContent = tr("wishEmpty", "Tell me where you are going and what you want to do.");
+      return;
+    }
+    var wish = wishLesson(text);
+    if (!wish.ids.length) {
+      $("wish-note").textContent = tr("wishEmpty", "Tell me where you are going and what you want to do.");
+      return;
+    }
+    var saved = saveCustomLesson(wish, text);
+    if (input) input.value = "";
+    $("wish-note").textContent = "";
+    toast(wish.note, 3200);
+    startSession({ ids: wish.ids, size: wish.ids.length, title: wish.title, customId: saved.id });
+  }
 
   function wishLesson(text) {
     var raw = String(text || "").toLowerCase();
@@ -2871,6 +2913,10 @@
     if (/airport|flight|plane/.test(raw)) topics.push("airport");
     if (/doctor|pharmacy|hurt|pain|sick/.test(raw)) topics.push("emergency", "pharmacy", "doctor");
     if (/shop|market|buy|clothes/.test(raw)) topics.push("shopping", "market", "clothes");
+    if (/work|office|meeting|colleague|job|business/.test(raw)) topics.push("work");
+    if (/school|study|class|university|lesson/.test(raw)) topics.push("study");
+    if (/coffee|tea|cafe|café/.test(raw)) topics.push("café");
+    if (/lost|direction|city|centre|center|where is/.test(raw)) topics.push("city", "directions");
     if (/cousin|aunt|uncle|family|wedding|marry|brother|sister|grandmother|grandfather/.test(raw)) {
       topics.push("family");
     }
@@ -4344,21 +4390,7 @@
   $("wish-form").addEventListener("submit", function (ev) {
     ev.preventDefault();
     var input = $("wish-input");
-    var text = input ? input.value.trim() : "";
-    if (!text) {
-      $("wish-note").textContent = tr("wishEmpty", "Tell me where you are going and what you want to do.");
-      return;
-    }
-    var wish = wishLesson(text);
-    if (!wish.ids.length) {
-      $("wish-note").textContent = tr("wishEmpty", "Tell me where you are going and what you want to do.");
-      return;
-    }
-    var saved = saveCustomLesson(wish, text);
-    if (input) input.value = "";
-    $("wish-note").textContent = "";
-    toast(wish.note, 3200);
-    startSession({ ids: wish.ids, size: wish.ids.length, title: wish.title, customId: saved.id });
+    buildWishLesson(input ? input.value.trim() : "");
   });
   $("build-start").addEventListener("click", function () { startSession({ custom: true }); });
   $("review-missed").addEventListener("click", reviewMistakes);
@@ -4401,6 +4433,7 @@
     resetChatClear();
     show("today");
   });
+  renderWishPresets();
   $("chat-clear").addEventListener("click", chatClearClick);
   $("confirm-cancel").addEventListener("click", closeConfirm);
   $("confirm-ok").addEventListener("click", function () {

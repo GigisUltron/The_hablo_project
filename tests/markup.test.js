@@ -795,6 +795,14 @@ test("typed translation is a real routed exercise", () => {
   assert.match(app, /i % 7 === 5\) return "type-translation"/, "typed translation is unreachable");
 });
 
+test("Plan a lesson offers situation presets and more topics", () => {
+  assert.match(app, /var WISH_PRESETS =/, "no prompt presets");
+  assert.match(html, /id="wish-presets"/, "presets have no container");
+  assert.match(app, /wishPreset_"/, "preset labels are not localized");
+  assert.match(app, /topics\.push\("work"\)/, "work prompts are not understood");
+  assert.match(app, /topics\.push\("study"\)/, "study prompts are not understood");
+});
+
 test("Today can build a lesson from a described situation", () => {
   assert.match(html, /id="wish-form"/, "no request form on Today");
   assert.match(app, /function wishLesson/, "no situation planner");
