@@ -180,6 +180,7 @@ var SEMA_GLOSSES = {
   "t-it-inoltre": "moreover",
   "t-it-quindi": "therefore",
   "t-it-mentre": "while",
+  "t-perche": "because",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {

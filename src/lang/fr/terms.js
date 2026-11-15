@@ -55,6 +55,8 @@ var SEMA_TERMS = {
       frame: "____ ce soit vrai, que faisons-nous ?", contrast: null },
     { id: "t-fr-pour-peu", text: "pour peu que", gloss: "provided that", schema: "fork",
       frame: "Viens ____ tu préviennes.", contrast: null },
+    { id: "t-parce-que", text: "parce que", gloss: "because", schema: "chain",
+      frame: "Je ne viens pas ____ il pleut.", contrast: null },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TERMS;

@@ -41,6 +41,8 @@ var SEMA_TERMS = {
       frame: "Non ho dormito; ____ sono stanco.", contrast: null },
     { id: "t-it-mentre", text: "mentre", gloss: "while", schema: "parallel",
       frame: "Studio ____ ascolto musica.", contrast: null },
+    { id: "t-perche", text: "perché", gloss: "because", schema: "chain",
+      frame: "Non vengo ____ piove.", contrast: null },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TERMS;

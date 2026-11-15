@@ -205,6 +205,7 @@ var SEMA_GLOSSES = {
   "t-es-por-mas-que": "however much",
   "t-es-en-la-medida": "insofar as",
   "t-es-aun-cuando": "even when",
+  "t-porque": "because",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {

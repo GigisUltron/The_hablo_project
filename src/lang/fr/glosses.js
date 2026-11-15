@@ -205,6 +205,7 @@ var SEMA_GLOSSES = {
   "t-fr-dans-la-mesure": "insofar as",
   "t-fr-a-supposer": "supposing that",
   "t-fr-pour-peu": "provided that",
+  "t-parce-que": "because",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {

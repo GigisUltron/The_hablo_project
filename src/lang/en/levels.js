@@ -205,6 +205,7 @@ var SEMA_LEVELS = {
   "b-en-have-they": "A1",
   "ph-en-colour": "A1",
   "ph-en-where-from": "A1",
+  "t-because": "B1",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
 if (typeof window !== "undefined") {

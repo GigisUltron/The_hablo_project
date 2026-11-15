@@ -205,6 +205,7 @@ var SEMA_LEVELS = {
   "t-fr-dans-la-mesure": "C1",
   "t-fr-a-supposer": "C1",
   "t-fr-pour-peu": "C1",
+  "t-parce-que": "B1",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
 if (typeof window !== "undefined") {

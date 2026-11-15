@@ -55,6 +55,8 @@ var SEMA_TERMS = {
       frame: "Ayudo ____ puedo.", contrast: null },
     { id: "t-es-aun-cuando", text: "aun cuando", gloss: "even when", schema: "fork",
       frame: "Salgo ____ llueve.", contrast: null },
+    { id: "t-porque", text: "porque", gloss: "because", schema: "chain",
+      frame: "No voy ____ llueve.", contrast: null },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TERMS;

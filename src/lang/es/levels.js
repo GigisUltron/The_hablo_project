@@ -205,6 +205,7 @@ var SEMA_LEVELS = {
   "t-es-por-mas-que": "C1",
   "t-es-en-la-medida": "C1",
   "t-es-aun-cuando": "C1",
+  "t-porque": "B1",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
 if (typeof window !== "undefined") {

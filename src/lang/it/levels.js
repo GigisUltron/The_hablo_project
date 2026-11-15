@@ -180,6 +180,7 @@ var SEMA_LEVELS = {
   "t-it-inoltre": "B1",
   "t-it-quindi": "A2",
   "t-it-mentre": "B1",
+  "t-perche": "B1",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
 if (typeof window !== "undefined") {

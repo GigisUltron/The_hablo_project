@@ -57,6 +57,8 @@ var SEMA_TERMS = {
       frame: "He is generous; ____, he gives a lot.", contrast: null },
     { id: "t-en-by-the-way", text: "by the way", gloss: "incidentally", schema: "plus",
       frame: "____, I saw your brother.", contrast: null },
+    { id: "t-because", text: "because", gloss: "because", schema: "chain",
+      frame: "I'm not going ____ it's raining.", contrast: null },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TERMS;
