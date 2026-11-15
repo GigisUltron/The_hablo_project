@@ -27,6 +27,7 @@
   var AITOOLS = window.SemaAiTools;
   var SYNONYMS = window.SemaSynonyms;
   var PERSONA = window.SemaPersona;
+  var BACKUP = window.SemaBackup;
 
   function audioEnabled() {
     return (state && state.settings && state.settings.audio) !== "off";
@@ -1123,6 +1124,50 @@
     renderToday();
     renderStats();
     toast(uiName(code) + " · " + tr("done", "removed"), 1800);
+  }
+
+  function downloadBackup() {
+    if (!BACKUP) return;
+    try {
+      var payload = BACKUP.exportState(state);
+      var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement("a");
+      link.href = url;
+      link.download = BACKUP.filename();
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 0);
+      toast(tr("backupDone", "Backup downloaded."));
+    } catch (err) {
+      toast(tr("importBad", "That file is not a valid hablo backup."));
+    }
+  }
+
+  function importBackupFile(file) {
+    if (!file || !BACKUP) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var parsed = BACKUP.parse(reader.result);
+      if (!parsed.ok) {
+        toast(tr("importBad", "That file is not a valid hablo backup."));
+        return;
+      }
+      askConfirm(tr("importData", "Import backup"), tr("importConfirm", "Replace all local progress with this backup? This cannot be undone."),
+        tr("importData", "Import backup"), function () {
+          try {
+            localStorage.setItem(STORE_KEY, JSON.stringify(parsed.state));
+            location.reload();
+          } catch (err) {
+            toast(tr("importBad", "That file is not a valid hablo backup."));
+          }
+        });
+    };
+    reader.onerror = function () {
+      toast(tr("importBad", "That file is not a valid hablo backup."));
+    };
+    reader.readAsText(file);
   }
 
   function renderPersonalSettings() {
@@ -6468,6 +6513,16 @@
   renderVoiceControl();
   renderChatSettings();
   $("settings-back").addEventListener("click", function () { show("today"); });
+  $("export-backup").addEventListener("click", downloadBackup);
+  $("import-backup-btn").addEventListener("click", function () {
+    var input = $("import-backup");
+    if (input) input.click();
+  });
+  $("import-backup").addEventListener("change", function () {
+    var file = this.files && this.files[0];
+    importBackupFile(file);
+    this.value = "";
+  });
   $("reader-back").addEventListener("click", function () {
     askConfirm(tr("leaveLesson", "Leave lesson?"), tr("leaveLessonConfirm", "Your progress in this lesson will be lost."), tr("leave", "Leave"), function () {
       reader = null;

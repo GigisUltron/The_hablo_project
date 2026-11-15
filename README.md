@@ -169,6 +169,9 @@ There is no pay-to-win, no loot, no energy and no learning locked behind the cur
 
 ## What is local
 
+Settings → **Your data** downloads a JSON backup of the complete local state and can import one after confirmation. Nothing is uploaded; importing replaces local progress only after the same confirmation dialog used for destructive actions. The format is versioned and validated before it touches storage.
+
+
 - Progress, XP, coins, levels, streaks, statistics, vocabulary anchors, custom lessons, word sets and chat history use `localStorage`.
 - The chosen accent and the unlocked looks are stored with the same state.
 - The storage key is intentionally `sema.v1` for compatibility with older saves.

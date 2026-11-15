@@ -435,6 +435,15 @@
           <button class="audio-chip" id="audio-chip" type="button">🔊 checking audio…</button>
           <button class="foot-link" type="button" data-goto="stats" data-i18n="tabProgress">progress</button>
         </div>
+        <div class="data-section">
+          <p class="panel-title" data-i18n="yourData">Your data</p>
+          <p class="builder-note" data-i18n="dataHint">A JSON copy of your local progress. Nothing is uploaded.</p>
+          <div class="builder-actions">
+            <button class="btn btn-ghost btn-sm" id="export-backup" type="button" data-i18n="exportData">Download backup</button>
+            <button class="btn btn-ghost btn-sm" id="import-backup-btn" type="button" data-i18n="importData">Import backup</button>
+            <input id="import-backup" type="file" accept="application/json,.json" hidden />
+          </div>
+        </div>
         <div class="danger-zone">
           <p class="panel-title" data-i18n="reset">Reset progress</p>
           <p class="builder-note" data-i18n="resetHint">This permanently clears progress in every language on this device.</p>
@@ -678,6 +687,7 @@
 <script src="src/chat.js"></script>
 <script src="src/chat-engine.js"></script>
 <script src="src/persona.js"></script>
+<script src="src/backup.js"></script>
 <script src="src/mini-chat.js"></script>
 <script src="src/app.js"></script>
 </body>

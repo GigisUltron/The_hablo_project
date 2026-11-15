@@ -220,6 +220,7 @@ test("scripts load in dependency order (registry, pack, audio manifest, srs, app
     "src/chat.js",
     "src/chat-engine.js",
     "src/persona.js",
+    "src/backup.js",
     "src/mini-chat.js",
     "src/app.js"
   ]);
@@ -469,6 +470,17 @@ test("the session summary asks the coach for a brief real review", () => {
   assert.match(app, /CE\.buildSessionCoachPrompt/);
   assert.match(app, /coachDebriefFallback/);
   assert.match(app, /renderSessionCoach\(kept, missed, total\)/);
+});
+
+test("Settings can export and validate a local backup", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(html, /id="export-backup"/);
+  assert.match(html, /id="import-backup"/);
+  assert.match(html, /src="src\/backup.js"/);
+  assert.match(app, /function downloadBackup/);
+  assert.match(app, /function importBackupFile/);
+  assert.match(app, /BACKUP\.parse/);
+  assert.match(app, /localStorage\.setItem\(STORE_KEY/);
 });
 
 test("Progress has a seven-day activity strip from real daily counts", () => {
