@@ -8,7 +8,9 @@ anywhere in the data. Then the quiz hides one half and asks you for the other. W
 comes back before the session ends.
 
 The flagship decks carry 42 concepts, 120 phrases, five texts and three conversations;
-starter decks carry 24 concepts, 32 phrases and three texts. Spaced repetition, a semantic
+starter decks carry 24 concepts, 32 phrases and three texts. Starter decks show the first five
+conversations and reading; the full A2/B1 arc is currently complete in Spanish, French,
+English and Italian. Spaced repetition, a semantic
 map, a twelve-lesson tutor path from first contact to a B1 bridge, a lesson builder, and audio
 that ships with the app instead of depending on your operating system.
 
