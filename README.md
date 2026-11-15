@@ -1,150 +1,155 @@
 # hablo
 
-A language-learning app with thirteen packs — full courses in Spanish, French, English and
-Italian, and starter courses in nine more — with translations on by default.
+**Learn a language by using it, not by memorising a catalogue of translations.**
 
-Each concept arrives as a pair — the picture, the word, the sound — with no English gloss
-anywhere in the data. Then the quiz hides one half and asks you for the other. What you miss
-comes back before the session ends.
+hablo is a dependency-free, local-first language app with **13 language packs**. Spanish, French, Italian and English are the full courses; German, Dutch, Portuguese, Russian, Turkish, Arabic, Hindi, Japanese and Chinese are starter courses that use the same learning engine.
 
-The flagship decks carry 42 concepts, 120 phrases, five texts and three conversations;
-starter decks carry 24 concepts, 32 phrases and three texts. Starter decks show the first five
-conversations and reading; the full A2/B1 arc is currently complete in Spanish, French,
-English and Italian. Spaced repetition, a semantic
-map, a twelve-lesson tutor path from first contact to a B1 bridge, a lesson builder, and audio
-that ships with the app instead of depending on your operating system.
+There are no accounts, no analytics, no server and no model required. Progress lives in your browser.
 
-![hablo — the Today view](docs/preview.png)
+![hablo — the Today screen](docs/hablo-preview.png)
 
-## Run it
+## Start it
 
-Nothing to install. No build step, no dependencies, and no network calls unless you open the
-chat.
+Use Python 3 (standard library only):
 
 ```sh
 python3 serve.py
 ```
 
-That picks the first free port from 8080, prints the URL, opens your browser, and disables
-caching so edits show up on reload.
+The server picks a free port from 8080, prints the URL, opens your browser and disables caching.
 
 ```sh
 python3 serve.py --port 9000     # pin a port
-python3 serve.py --no-open       # don't launch a browser
-make serve                       # same thing
+python3 serve.py --no-open       # do not open a browser
+make serve                       # same as python3 serve.py
 ```
 
-Open the printed `http://localhost:…` URL rather than the file directly: browsers gate
-microphone access behind a secure context and `file://` doesn't qualify.
+Open the printed `http://localhost:…` address rather than `index.html` directly. Microphone features need a secure context, and `file://` does not provide one.
 
-Deep links: `#practice` (start a lesson), `#quiz`, `#chat`, `#read`, `#stats`.
+The app has no build step and no package installation.
 
+## First run
 
-## Chat with a local model
+1. Choose the **language you want to learn**.
+2. Choose the **interface language**. It stays independent of the learning language.
+3. Press **I'm new** to start at the beginning, or **Test me** to take the entry exam.
+4. The entry exam adapts while you answer and can open A1–B1. B2 and C1 are earned by studying.
 
-The conversation view can talk to a model on your own machine. Nothing is bundled and nothing
-is required: the app is fully usable without a model, and the conversation view falls back to a
-short scripted partner and says so.
+Your first language is added automatically. To add another later, open **Settings → Your languages → Add language**, choose a language, and complete that language's entry exam. Each language keeps its own level, cards, XP, statistics, custom lessons and conversation history.
 
-The one-command setup with Ollama:
+Removing a language is deliberate: press the **×** on its card, then confirm. Its local progress for that language is deleted and cannot be undone. The last remaining language cannot be removed.
 
-```sh
-ollama run llama3.2
-```
+## The learning loop
 
-That starts the server and downloads the model the first time. Leave it running, then open
-**Settings → Chat with a local model**. The endpoint defaults to `http://localhost:11434`;
-press **Check model**. To use llama.cpp server, LM Studio or another OpenAI-compatible server,
-enter its base URL there instead, for example `http://localhost:1234/v1`.
+The primary action on **Today** is **Start lesson**.
 
-- **No model found:** the view says `no local model found — run ollama serve`, and every
-  fallback reply is labelled `scripted`. It does not pretend to be a model.
-- **Speak and listen:** replies are read with the browser's speech synthesis in the active
-  pack's locale. The microphone button appears only where the browser has speech recognition.
-- **Images:** an attached image is stored with the turn. It is sent only when the selected model
-  declares vision support; otherwise the turn is marked text-only and the image stays in the
-  conversation.
-- **Memory:** a chat line is kept for review when it contains a word from the deck. There is no
-  grammar check, so a nonsense line that happens to contain a known word can still become a
-  cloze card; only the lines you want to review should be kept.
-- **Privacy:** requests go only to the endpoint you set. With the default, that is your own
-  machine. There is no account, no key and no tracking.
+A lesson mixes:
 
-Serve the app over `http://` as described above rather than opening the file directly, so the
-browser can reach the local endpoint and the microphone.
+- new cards that teach the word, meaning, sound and usage
+- recall of words from earlier lessons
+- production, listening, matching, sentence building and message completion
+- a short end-of-session review for what you missed
 
+Lessons use spaced repetition. What you miss comes back before the session ends and again when it is due.
 
-## What is translated
+### Exercise types
 
-The **content** is translated but hidden by default: new cards and answer states offer a
-"show translation" control, and Settings can turn the aid off. Quiz prompts stay in the
-target language so the answer is not given away; every fourth reviewed card is a translation
-exercise instead of a picture match, using the interface language. The **interface** is translated into all thirteen deck languages
-(`src/ui-strings.js` plus `src/ui-langs.js`, chosen with `profile.uiLang`); some session
-summaries, toasts and reader copy are still English only.
+- **Choose the meaning** and **choose the target**
+- **Type the translation**
+- **Listen and type**
+- **Listen and choose**
+- **Build a sentence**
+- **Complete a message**
+- **Match three pairs** — all three must be completed; selected, correct and wrong states are visible
+- **Say it** where the browser supports speech recognition
 
-## How it teaches
+### Vocabulary expansion
 
-1. **Meet the pair.** Picture, word, article, sentence and sound together — with the English
-   meaning visible on the card. That is where the association forms.
-2. **Get quizzed.** One half is hidden: word from picture, picture from word, or say it aloud.
-3. **Miss and repeat.** A wrong answer is pushed to the back of the same quiz, and scheduled
-   ten minutes out rather than tomorrow.
-4. **Write one line.** At the end of a session you can keep a sentence of your own, in
-   Spanish. It is stored, and a day later it comes back as a card with one word blanked out —
-   your own words, your own gap. Nothing else in the app is made of your writing, and that is
-   exactly why it works.
+**Expand vocabulary** is a separate, deliberately minimal mode:
 
-The Today screen has one primary action: **Start lesson**, eight cards, about a minute. The
-twelve-lesson path, review rows and two quiet routes (read a text, have a conversation) sit below
-it; words or phrases, fields, session length and level live in Settings so they cannot
-distract from starting.
+- one word at a time
+- meaning hidden until you ask for it
+- **Again** and **Got it** feed the same SRS as lessons
+- wrong words return in the session
+- every second correct answer adds a harder word
+- statistics persist per language
+- **personal anchors** let you attach a cue such as “my cousin’s wedding”; the cue comes back with the word
 
-What the screen shows is only what earns a return visit: cards due, the streak, how many
-words you know, and how many are solid.
+### Reading
+
+Each full course has eight reading texts across A1–B2. Starter courses have five. Every text has three multiple-choice questions and an explanation for each wrong option.
+
+### Conversation
+
+**Have a conversation** is usable completely offline. The default **Offline practice** engine uses the app’s own predictor and the active pack’s authored language. It follows authored dialogue turns where they fit, uses recent context, classifies greetings/thanks/yes-no/name/question intents, avoids repeating recent replies and refuses to echo or return runaway text.
+
+A **transfer mission** appears above the conversation. It asks you to use two or three weak/due phrases in the conversation. A phrase counts only when you actually write it; completing the mission gives a small XP award.
+
+A local model is optional. Open **Settings → Conversation engine → Local model**, set an endpoint such as `http://localhost:11434`, and check the model. Without one, no network request is made for conversation.
+
+### Planned lessons
+
+**Plan a lesson** builds a lesson from a natural-language request such as:
+
+- “dinner out, I want pizza”
+- “a cousin’s wedding”
+- “hotel check-in”
+- “pharmacy and doctor”
+- “train to the airport”
+
+Choose the lesson language explicitly. The planner detects the situation, selects the strongest matching phrases, adds due revision, and saves the lesson’s language and focus. Saved lessons can be reopened or deleted from Today.
+
+The planner does not invent a town dialect. If a dialect is not in the pack, it uses the standard language and says so.
+
+## Language library
+
+Settings lists every language you are learning with its flag, name and level. Selecting a card switches language. **Add language** starts a new entry exam. **×** removes a language after confirmation.
+
+The interface-language selector is separate and does not change when you switch learning languages.
+
+## What is local
+
+- Progress, XP, levels, streaks, statistics, vocabulary anchors, custom lessons and chat history use `localStorage`.
+- The storage key is intentionally `sema.v1` for compatibility with older saves.
+- Audio ships with the app as pre-rendered WAV files; browser speech synthesis is a fallback.
+- No account, no analytics, no tracking.
+- Offline conversation never contacts a server.
+- A configured local model receives only the conversation and prompt needed for chat/translation.
 
 ## Verify it
 
 ```sh
-make check          # syntax gate + full suite
-node --test tests/  # full suite, stdlib only
+make check                         # syntax gate + full test suite
+node --test tests/                 # tests only
+python3 tools/make_audio.py --check # audio manifest/files
 ```
 
-## Layout
+## Repository layout
 
+```text
+index.html                 shell and views
+assets/styles.css          visual system
+assets/audio/              pre-rendered WAVs and manifests
+src/app.js                 application flow, lesson loop, views, SRS integration
+src/lang/<code>/           per-language concepts, phrases, texts, dialogues, levels, glosses
+src/ui-strings.js          base interface strings
+src/ui-langs.js            extra interface locale tables
+src/ui-extra.js            newer interface strings
+src/srs.js                 scheduling and answer matching
+src/memory.js              personal sentences and cloze cards
+src/chat-engine.js         optional local-model adapter
+src/mini-chat.js           dependency-free offline conversation predictor
+src/exercises.js           extra exercise helpers
+src/track.js               curriculum track
+src/curriculum.js          topic and unit resolution
+tools/make_audio.py        audio generator and checker
+tests/                     node:test suites
+serve.py                   local static server
+docs/                      preview image and project notes
 ```
-index.html            shell, four views
-serve.py              local preview server (standard library)
-Makefile              make serve / make test / make check
-assets/styles.css     the whole visual system — no external fonts, icons or images
-assets/audio/         pre-rendered WAVs + manifest.js
-src/data.js           42 concepts + semantic relations
-src/phrases.js        phrases, with a scene emoji instead of a translation
-src/srs.js            scheduling + matching (pure, testable)
-src/memory.js         persistent learner memory: sentences, cloze, weak items (pure)
-src/chat-engine.js    model adapter, prompt and request shape (no DOM)
-src/chat.js           the scripted conversation partner used when no model answers
-src/app.js            views, lesson flow, quiz, speech, map, stats, chat UI
-tools/make_audio.py   regenerates the audio from the dataset (build time only)
-tests/                node:test suites
-docs/PARALLEL.md      how to run this with three agents at once
-DEMO.md               design notes, decisions and honest limits
-```
-
-## Design notes
-
-- **Glosses exist and are shown on request.** Every item carries one, the card offers it,
-  and Settings can turn it off — a test fails if an item ships without a gloss.
-- **Audio is pre-rendered.** Browser speech synthesis needs a voice installed by the OS, and
-  many machines have none, which is silence with no error. The WAVs remove that dependency;
-  synthesis is only a fallback.
-- **The voice is eSpeak by default** — clear, consistent, synthetic. The generator also takes
-  `--engine piper`, so one command on a machine with `pip` and a Spanish Piper voice replaces
-  all 102 clips with neural ones. See [tools/README.md](tools/README.md).
-- **Interface state stays in the browser.** `localStorage`, no accounts, no analytics.
-
-The reasoning, the tradeoffs and what this does *not* do are in [DEMO.md](DEMO.md).
 
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+More design notes and honest limits are in [DEMO.md](DEMO.md).
