@@ -12,7 +12,10 @@ manifests and WAV files. With one it loads the GGUF and asks for a real reply.
 import argparse
 import json
 import pathlib
+import socket
+import subprocess
 import sys
+import time
 import wave
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -84,6 +87,30 @@ def check_audio():
         print("ok  %-2s %d audio clips" % (code, len(ids)))
 
 
+def check_server():
+    """Start the real static server on a free local port and prove it stays up."""
+    sock = socket.socket()
+    sock.bind(("127.0.0.1", 0))
+    port = sock.getsockname()[1]
+    sock.close()
+    process = subprocess.Popen(
+        [sys.executable, "-u", str(ROOT / "serve.py"), "--no-open", "--port", str(port)],
+        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+    )
+    try:
+        time.sleep(1.2)
+        if process.poll() is not None:
+            output = process.stdout.read() if process.stdout else ""
+            fail("static server exited early: " + output.strip()[-300:])
+        print("ok  static server started on port %d" % port)
+    finally:
+        process.terminate()
+        try:
+            process.wait(timeout=4)
+        except subprocess.TimeoutExpired:
+            process.kill()
+
+
 def check_model(model):
     try:
         from llama_cpp import Llama
@@ -117,6 +144,7 @@ def main():
     args = parser.parse_args()
     check_content()
     check_audio()
+    check_server()
     if not args.no_model:
         check_model(args.model)
     print("integration check passed")
