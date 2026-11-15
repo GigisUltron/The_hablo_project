@@ -45,6 +45,9 @@ var SEMA_PHRASES = {
     { id: "ph-tr-hurts-here", emoji: "🤕", text: "Burası ağrıyor.", sub: "Doktora ağrıyan yeri gösterirken.", cat: "phrase" },
     { id: "ph-tr-pizza", emoji: "🍕", text: "Bir pizza istiyorum.", sub: "Restoranda.", cat: "phrase", topic: "restaurant" },
     { id: "ph-tr-vegetarian", emoji: "🥦", text: "Ben vejetaryenim.", sub: "Restoranda.", cat: "phrase", topic: "restaurant" },
+    { id: "ph-tr-sister-visiting", emoji: "👧", text: "Kız kardeşim hafta sonu bize geliyor.", sub: "Bir aile planından söz ederken.", cat: "phrase", topic: "family" },
+    { id: "ph-tr-hotel-nights", emoji: "🛏️", text: "Otelde iki gece kalacağız.", sub: "Seyahat planından söz ederken.", cat: "phrase", topic: "hotel" },
+    { id: "ph-tr-holiday-plans", emoji: "🏖️", text: "Gelecek hafta tatile çıkmayı düşünüyoruz.", sub: "Yakın bir planı anlatırken.", cat: "phrase", topic: "plans" },
   ]
 };
 

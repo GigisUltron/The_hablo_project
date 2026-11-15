@@ -45,6 +45,9 @@ var SEMA_PHRASES = {
     { id: "ph-nl-hurts-here", emoji: "🤕", text: "Het doet hier pijn.", sub: "Bij de dokter aanwijzen waar het pijn doet.", cat: "phrase" },
     { id: "ph-nl-pizza", emoji: "🍕", text: "Ik wil graag een pizza.", sub: "In een restaurant.", cat: "phrase", topic: "restaurant" },
     { id: "ph-nl-vegetarian", emoji: "🥦", text: "Ik ben vegetariër.", sub: "In een restaurant.", cat: "phrase", topic: "restaurant" },
+    { id: "ph-nl-sunday-parents", emoji: "🍽️", text: "Zondag eten we bij mijn ouders.", sub: "Vertellen over het weekend.", cat: "phrase", topic: "family" },
+    { id: "ph-nl-late-checkout", emoji: "🔑", text: "Kunnen we later uitchecken?", sub: "Bij de receptie vragen.", cat: "phrase", topic: "hotel" },
+    { id: "ph-nl-meet-tomorrow", emoji: "📅", text: "We spreken morgen om negen uur af.", sub: "Een afspraak maken.", cat: "phrase", topic: "plans" },
   ]
 };
 

@@ -218,6 +218,9 @@ var SEMA_GLOSSES = {
   "ph-fr-family-congrats": "Congratulations!",
   "ph-fr-family-how": "How is your family?",
   "ph-fr-family-came": "I came for the wedding.",
+  "ph-fr-small-talk-day": "What have you been up to today?",
+  "ph-fr-work-schedule": "I have a meeting that finishes late.",
+  "ph-fr-doctor-dizzy": "I feel dizzy.",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {

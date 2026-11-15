@@ -45,6 +45,8 @@ var SEMA_PHRASES = {
     { id: "ph-hi-hurts-here", emoji: "🤕", text: "यहाँ दर्द होता है।", sub: "Yahan dard hota hai.", cat: "phrase" },
     { id: "ph-hi-pizza", emoji: "🍕", text: "मुझे पिज़्ज़ा चाहिए।", sub: "Restoran mein.", cat: "phrase", topic: "restaurant" },
     { id: "ph-hi-vegetarian", emoji: "🥦", text: "मैं शाकाहारी हूँ।", sub: "Restoran mein.", cat: "phrase", topic: "restaurant" },
+    { id: "ph-hi-next-train", emoji: "⏰", text: "अगली ट्रेन कितने बजे आएगी?", sub: "Agli train kitne baje aayegi?", cat: "phrase", topic: "station" },
+    { id: "ph-hi-holiday-next-week", emoji: "🏖️", text: "हम अगले हफ़्ते छुट्टी पर जा रहे हैं।", sub: "Hum agle hafte chhutti par ja rahe hain.", cat: "phrase", topic: "plans" },
   ]
 };
 

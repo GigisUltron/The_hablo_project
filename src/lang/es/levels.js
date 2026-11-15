@@ -218,6 +218,9 @@ var SEMA_LEVELS = {
   "ph-es-family-congrats": "A1",
   "ph-es-family-how": "A1",
   "ph-es-family-came": "A2",
+  "ph-es-small-talk-day": "A2",
+  "ph-es-work-schedule": "B1",
+  "ph-es-doctor-dizzy": "A2",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
 if (typeof window !== "undefined") {

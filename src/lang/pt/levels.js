@@ -91,6 +91,9 @@ var SEMA_LEVELS = {
   "ph-pt-hurts-here": "A1",
   "ph-pt-pizza": "A1",
   "ph-pt-vegetarian": "A2",
+  "ph-pt-headache": "A2",
+  "ph-pt-home-office": "A2",
+  "ph-pt-dinner-friday": "B1",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

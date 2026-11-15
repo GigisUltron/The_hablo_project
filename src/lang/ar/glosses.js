@@ -98,6 +98,8 @@ var SEMA_GLOSSES = {
   "ph-ar-hurts-here": "it hurts here",
   "ph-ar-pizza": "I'd like a pizza.",
   "ph-ar-vegetarian": "I'm vegetarian.",
+  "ph-ar-two-sisters": "I have two sisters and one brother.",
+  "ph-ar-back-hurts": "my back has been hurting for two days",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

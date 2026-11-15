@@ -45,6 +45,8 @@ var SEMA_PHRASES = {
     { id: "ph-ja-hurts-here", emoji: "🤕", text: "ここが痛いです。", sub: "Koko ga itai desu.", cat: "phrase" },
     { id: "ph-ja-pizza", emoji: "🍕", text: "ピザが欲しいです。", sub: "Resutoran de.", cat: "phrase", topic: "restaurant" },
     { id: "ph-ja-vegetarian", emoji: "🥦", text: "私はベジタリアンです。", sub: "Resutoran de.", cat: "phrase", topic: "restaurant" },
+    { id: "ph-ja-four-in-family", emoji: "👨‍👩‍👧‍👦", text: "家族は四人です。", sub: "Kazoku wa yonin desu.", cat: "phrase", topic: "family" },
+    { id: "ph-ja-visit-parents", emoji: "🗓️", text: "来月は両親に会いに帰るつもりです。", sub: "Raigetsu wa ryoushin ni ai ni kaeru tsumori desu.", cat: "phrase", topic: "plans" },
   ]
 };
 

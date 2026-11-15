@@ -95,6 +95,8 @@ var SEMA_GLOSSES = {
   "b-ja-kau": "to buy (polite)",
   "ph-ja-pizza": "I'd like a pizza.",
   "ph-ja-vegetarian": "I'm vegetarian.",
+  "ph-ja-four-in-family": "there are four people in my family",
+  "ph-ja-visit-parents": "next month I intend to go back to see my parents",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

@@ -45,6 +45,9 @@ var SEMA_PHRASES = {
     { id: "ph-de-hurts-here", emoji: "🤕", text: "Es tut hier weh.", sub: "Beim Arzt zeigen, wo es wehtut.", cat: "phrase" },
     { id: "ph-de-pizza", emoji: "🍕", text: "Ich möchte eine Pizza.", sub: "Im Restaurant.", cat: "phrase", topic: "restaurant" },
     { id: "ph-de-vegetarian", emoji: "🥦", text: "Ich bin Vegetarier.", sub: "Im Restaurant.", cat: "phrase", topic: "restaurant" },
+    { id: "ph-de-headache", emoji: "🤒", text: "Ich habe seit gestern Kopfschmerzen.", sub: "Beim Arzt sagen, was wehtut.", cat: "phrase", topic: "doctor" },
+    { id: "ph-de-home-office", emoji: "💼", text: "Ich arbeite diese Woche von zu Hause.", sub: "Dem Team sagen, wo man arbeitet.", cat: "phrase", topic: "work" },
+    { id: "ph-de-weekend-parents", emoji: "🏡", text: "Am Wochenende besuche ich meine Eltern.", sub: "Erzählen, was man am Wochenende macht.", cat: "phrase", topic: "family" },
   ]
 };
 

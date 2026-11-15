@@ -95,6 +95,8 @@ var SEMA_GLOSSES = {
   "b-zh-mai": "to buy",
   "ph-zh-pizza": "I'd like a pizza.",
   "ph-zh-vegetarian": "I'm vegetarian.",
+  "ph-zh-cold-fever": "I've caught a cold and have a slight fever",
+  "ph-zh-book-room": "I'd like to book a room for tomorrow night",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

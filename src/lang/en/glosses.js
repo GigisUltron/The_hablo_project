@@ -229,6 +229,9 @@ var SEMA_GLOSSES = {
   "ph-en-family-congrats": "congratulations to someone.",
   "ph-en-family-how": "asking about someone's family.",
   "ph-en-family-came": "I attended the wedding.",
+  "ph-en-tickets-window": "asking for a seat next to the window",
+  "ph-en-pharmacy-headache": "asking for medicine for head pain",
+  "ph-en-study-revising": "I am studying for tests",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {

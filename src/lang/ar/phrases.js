@@ -45,6 +45,8 @@ var SEMA_PHRASES = {
     { id: "ph-ar-hurts-here", emoji: "🤕", text: "يؤلمني هنا.", sub: "Yu'limuni huna.", cat: "phrase" },
     { id: "ph-ar-pizza", emoji: "🍕", text: "أريد بيتزا.", sub: "Fi al-mat'am.", cat: "phrase", topic: "restaurant" },
     { id: "ph-ar-vegetarian", emoji: "🥦", text: "أنا نباتي.", sub: "Fi al-mat'am.", cat: "phrase", topic: "restaurant" },
+    { id: "ph-ar-two-sisters", emoji: "👨‍👩‍👧‍👦", text: "عندي أختان وأخ واحد.", sub: "Indi ukhtan wa akh wahid.", cat: "phrase", topic: "family" },
+    { id: "ph-ar-back-hurts", emoji: "🩺", text: "أشعر بألم في ظهري منذ يومين.", sub: "Ash'uru bi-alam fi zahri mundhu yawmayn.", cat: "phrase", topic: "doctor" },
   ]
 };
 

@@ -55,6 +55,9 @@ var SEMA_PHRASES = {
     { id: "ph-ru-wedding-when", emoji: "📅", text: "Когда свадьба?", sub: "Kogda svad'ba?", cat: "phrase", topic: "family" },
     { id: "ph-ru-cousin-lives", emoji: "🏙️", text: "Мой двоюродный брат живёт в Новгороде.", sub: "Moy dvoyurodnyy brat zhivyot v Novgorode.", cat: "phrase", topic: "family" },
     { id: "ph-ru-happy-for-you", emoji: "😊", text: "Я рад за тебя.", sub: "Ya rad za tebya.", cat: "phrase", topic: "family" },
+    { id: "ph-ru-visit-grandmother", emoji: "👵", text: "В субботу мы едем к бабушке.", sub: "V subbotu my yedem k babushke.", cat: "phrase", topic: "family" },
+    { id: "ph-ru-flight-delayed", emoji: "🛫", text: "Наш рейс задержали на два часа.", sub: "Nash reys zaderzhali na dva chasa.", cat: "phrase", topic: "airport" },
+    { id: "ph-ru-book-doctor", emoji: "🩺", text: "Мне нужно записаться к врачу на завтра.", sub: "Mne nuzhno zapisat'sya k vrachu na zavtra.", cat: "phrase", topic: "doctor" },
   ]
 };
 

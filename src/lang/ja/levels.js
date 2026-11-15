@@ -88,6 +88,8 @@ var SEMA_LEVELS = {
   "b-ja-kau": "A1",
   "ph-ja-pizza": "A1",
   "ph-ja-vegetarian": "A2",
+  "ph-ja-four-in-family": "A2",
+  "ph-ja-visit-parents": "B1",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

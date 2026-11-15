@@ -98,6 +98,9 @@ var SEMA_GLOSSES = {
   "ph-de-hurts-here": "it hurts here",
   "ph-de-pizza": "I'd like a pizza.",
   "ph-de-vegetarian": "I'm vegetarian.",
+  "ph-de-headache": "I've had a headache since yesterday",
+  "ph-de-home-office": "I'm working from home this week",
+  "ph-de-weekend-parents": "I'm visiting my parents at the weekend",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

@@ -138,6 +138,9 @@ var SEMA_PHRASES = {
     { id: "ph-it-family-congrats", emoji: "🎊", text: "Congratulazioni!", sub: "Facendo gli auguri.", cat: "phrase", topic: "family" },
     { id: "ph-it-family-how", emoji: "🫂", text: "Come sta la tua famiglia?", sub: "Chiedendo della famiglia.", cat: "phrase", topic: "family" },
     { id: "ph-it-family-came", emoji: "🥂", text: "Sono venuto per il matrimonio.", sub: "Spiegando perché sei venuto.", cat: "phrase", topic: "family" },
+    { id: "ph-it-small-talk-day", emoji: "🗨️", text: "Che cosa hai fatto oggi?", sub: "Per continuare la conversazione.", cat: "phrase", topic: "small-talk" },
+    { id: "ph-it-work-schedule", emoji: "🧑‍💼", text: "Mi hanno cambiato l'orario.", sub: "Raccontando un cambio in ufficio.", cat: "phrase", topic: "work" },
+    { id: "ph-it-doctor-dizzy", emoji: "🩺", text: "Mi gira la testa.", sub: "Spiegando un sintomo.", cat: "phrase", topic: "doctor" },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_PHRASES;

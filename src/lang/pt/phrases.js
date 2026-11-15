@@ -45,6 +45,9 @@ var SEMA_PHRASES = {
     { id: "ph-pt-hurts-here", emoji: "🤕", text: "Dói-me aqui.", sub: "Mostrar ao médico onde dói.", cat: "phrase" },
     { id: "ph-pt-pizza", emoji: "🍕", text: "Queria uma pizza.", sub: "No restaurante.", cat: "phrase", topic: "restaurant" },
     { id: "ph-pt-vegetarian", emoji: "🥦", text: "Sou vegetariano.", sub: "No restaurante.", cat: "phrase", topic: "restaurant" },
+    { id: "ph-pt-headache", emoji: "🤒", text: "Dói-me a cabeça desde ontem.", sub: "Explicar ao médico o que dói.", cat: "phrase", topic: "doctor" },
+    { id: "ph-pt-home-office", emoji: "💼", text: "Esta semana trabalho em casa.", sub: "Dizer à equipa que trabalho em casa.", cat: "phrase", topic: "work" },
+    { id: "ph-pt-dinner-friday", emoji: "🍷", text: "Vamos jantar juntos na sexta?", sub: "Convidar alguém para jantar.", cat: "phrase", topic: "plans" },
   ]
 };
 

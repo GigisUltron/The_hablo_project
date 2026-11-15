@@ -108,6 +108,9 @@ var SEMA_GLOSSES = {
   "ph-ru-wedding-when": "When is the wedding?",
   "ph-ru-cousin-lives": "My cousin lives in Novgorod.",
   "ph-ru-happy-for-you": "I'm happy for you.",
+  "ph-ru-visit-grandmother": "On Saturday we're going to my grandmother's.",
+  "ph-ru-flight-delayed": "Our flight was delayed by two hours.",
+  "ph-ru-book-doctor": "I need to make an appointment with the doctor for tomorrow.",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
