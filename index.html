@@ -71,6 +71,7 @@
           <p class="lesson-sub" id="start-sub"></p>
           <p class="lesson-goal" id="lesson-goal"></p>
           <button class="btn btn-primary btn-block" id="start-btn" type="button"><span id="start-label" data-i18n="start">Start lesson</span></button>
+          <button class="btn btn-ghost btn-sm btn-block" id="review-start" type="button" data-i18n="review">Review my mistakes</button>
           <div class="daily-goal" id="daily-goal">
             <div class="daily-goal-top">
               <span data-i18n="tabToday">Today</span>
@@ -112,7 +113,7 @@
           <button class="btn btn-ghost btn-sm group-action" id="review-all" type="button" data-i18n="review">Review my mistakes</button>
         </section>
 
-        <section class="group" aria-labelledby="words-title">
+        <section class="group" aria-labelledby="words-title" hidden>
           <h2 class="group-title" id="words-title" data-chrome="yourWords">Your words</h2>
           <div class="list known">
             <p class="known-line"><b id="stat-learned">0</b> / <span id="stat-total">0</span> <span data-i18n="wordsKnown">words known</span></p>
