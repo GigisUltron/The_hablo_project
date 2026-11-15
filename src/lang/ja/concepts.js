@@ -56,6 +56,11 @@ var SEMA_DATA = {
     { id: "ja-day", emoji: "📅", word: "日", article: "", cat: "time", sentence: "日は長いです。" },
     { id: "ja-love", emoji: "💗", word: "愛", article: "", cat: "emotion", sentence: "愛は説明できません。" },
     { id: "ja-eat", emoji: "🍽️", word: "食べる", article: "", cat: "action", sentence: "パンを食べたいです。" },
+    { id: "ja-decision", emoji: "⚖️", word: "決断", article: "", cat: "abstract", sentence: "難しい決断をしました。", synonyms: ["判断"] },
+    { id: "ja-purpose", emoji: "🎯", word: "目的", article: "", cat: "abstract", sentence: "私の目的は日本語を学ぶことです。", synonyms: ["目標"] },
+    { id: "ja-challenge", emoji: "🧗", word: "挑戦", article: "", cat: "abstract", sentence: "挑戦は大きいですが、可能です。", synonyms: ["試み"] },
+    { id: "ja-achievement", emoji: "🏆", word: "達成", article: "", cat: "abstract", sentence: "あなたの達成を祝います。", synonyms: ["成果"] },
+    { id: "ja-risk", emoji: "⚠️", word: "リスク", article: "", cat: "abstract", sentence: "小さなリスクがあります。", synonyms: ["危険"] },
   ],
 
   edges: [
@@ -84,6 +89,11 @@ var SEMA_DATA = {
     { a: "ja-sun", b: "ja-sea", type: "related" },
     { a: "ja-car", b: "ja-train", type: "related" },
     { a: "ja-city", b: "ja-house", type: "related" },
+    { a: "ja-decision", b: "ja-risk", type: "related" },
+    { a: "ja-purpose", b: "ja-achievement", type: "related" },
+    { a: "ja-challenge", b: "ja-decision", type: "related" },
+    { a: "ja-achievement", b: "ja-risk", type: "related" },
+    { a: "ja-risk", b: "ja-purpose", type: "related" },
   ]
 };
 

@@ -56,6 +56,11 @@ var SEMA_DATA = {
     { id: "pt-day", emoji: "📅", word: "dia", article: "o", cat: "time", sentence: "O dia é longo." },
     { id: "pt-love", emoji: "💗", word: "amor", article: "o", cat: "emotion", sentence: "O amor não se explica." },
     { id: "pt-eat", emoji: "🍽️", word: "comer", article: "", cat: "action", sentence: "Eu quero comer pão." },
+    { id: "pt-decision", emoji: "⚖️", word: "decisão", article: "a", cat: "abstract", sentence: "Tomei uma decisão difícil.", synonyms: ["escolha"] },
+    { id: "pt-purpose", emoji: "🎯", word: "propósito", article: "o", cat: "abstract", sentence: "Meu propósito é aprender português.", synonyms: ["objetivo"] },
+    { id: "pt-challenge", emoji: "🧗", word: "desafio", article: "o", cat: "abstract", sentence: "O desafio é grande, mas possível.", synonyms: ["reto"] },
+    { id: "pt-achievement", emoji: "🏆", word: "conquista", article: "a", cat: "abstract", sentence: "Celebramos a tua conquista.", synonyms: ["vitória"] },
+    { id: "pt-risk", emoji: "⚠️", word: "risco", article: "o", cat: "abstract", sentence: "Há um risco pequeno.", synonyms: ["perigo"] },
   ],
 
   edges: [
@@ -84,6 +89,11 @@ var SEMA_DATA = {
     { a: "pt-sun", b: "pt-sea", type: "related" },
     { a: "pt-car", b: "pt-train", type: "related" },
     { a: "pt-city", b: "pt-house", type: "related" },
+    { a: "pt-decision", b: "pt-risk", type: "related" },
+    { a: "pt-purpose", b: "pt-achievement", type: "related" },
+    { a: "pt-challenge", b: "pt-decision", type: "related" },
+    { a: "pt-achievement", b: "pt-risk", type: "related" },
+    { a: "pt-risk", b: "pt-purpose", type: "related" },
   ]
 };
 

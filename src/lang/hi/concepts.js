@@ -56,6 +56,11 @@ var SEMA_DATA = {
     { id: "hi-day", emoji: "📅", word: "दिन", article: "", cat: "time", sentence: "दिन लंबा है।" },
     { id: "hi-love", emoji: "💗", word: "प्यार", article: "", cat: "emotion", sentence: "प्यार समझाया नहीं जा सकता।" },
     { id: "hi-eat", emoji: "🍽️", word: "खाना", article: "", cat: "action", sentence: "मैं खाना खाना चाहता हूँ।" },
+    { id: "hi-decision", emoji: "⚖️", word: "निर्णय", article: "", cat: "abstract", sentence: "मैंने कठिन निर्णय लिया।", synonyms: ["फैसला"] },
+    { id: "hi-purpose", emoji: "🎯", word: "उद्देश्य", article: "", cat: "abstract", sentence: "मेरा उद्देश्य हिंदी सीखना है।", synonyms: ["लक्ष्य"] },
+    { id: "hi-challenge", emoji: "🧗", word: "चुनौती", article: "", cat: "abstract", sentence: "चुनौती बड़ी है, लेकिन संभव है।", synonyms: ["परीक्षा"] },
+    { id: "hi-achievement", emoji: "🏆", word: "उपलब्धि", article: "", cat: "abstract", sentence: "हम तुम्हारी उपलब्धि का जश्न मनाते हैं।", synonyms: ["सफलता"] },
+    { id: "hi-risk", emoji: "⚠️", word: "जोखिम", article: "", cat: "abstract", sentence: "थोड़ा जोखिम है।", synonyms: ["खतरा"] },
   ],
 
   edges: [
@@ -84,6 +89,11 @@ var SEMA_DATA = {
     { a: "hi-sun", b: "hi-sea", type: "related" },
     { a: "hi-car", b: "hi-train", type: "related" },
     { a: "hi-city", b: "hi-house", type: "related" },
+    { a: "hi-decision", b: "hi-risk", type: "related" },
+    { a: "hi-purpose", b: "hi-achievement", type: "related" },
+    { a: "hi-challenge", b: "hi-decision", type: "related" },
+    { a: "hi-achievement", b: "hi-risk", type: "related" },
+    { a: "hi-risk", b: "hi-purpose", type: "related" },
   ]
 };
 

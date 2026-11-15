@@ -97,6 +97,11 @@ var SEMA_GLOSSES = {
   "ph-ja-vegetarian": "I'm vegetarian.",
   "ph-ja-four-in-family": "there are four people in my family",
   "ph-ja-visit-parents": "next month I intend to go back to see my parents",
+  "ja-decision": "decision",
+  "ja-purpose": "purpose",
+  "ja-challenge": "challenge",
+  "ja-achievement": "achievement",
+  "ja-risk": "risk",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

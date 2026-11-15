@@ -56,6 +56,11 @@ var SEMA_DATA = {
     { id: "ar-day", emoji: "📅", word: "يوم", article: "", cat: "time", sentence: "اليوم طويل." },
     { id: "ar-love", emoji: "💗", word: "حب", article: "", cat: "emotion", sentence: "الحب لا يُشرح." },
     { id: "ar-eat", emoji: "🍽️", word: "يأكل", article: "", cat: "action", sentence: "أريد أن آكل." },
+    { id: "ar-decision", emoji: "⚖️", word: "قرار", article: "", cat: "abstract", sentence: "اتخذت قرارًا صعبًا.", synonyms: ["اختيار"] },
+    { id: "ar-purpose", emoji: "🎯", word: "هدف", article: "", cat: "abstract", sentence: "هدفي هو تعلم العربية.", synonyms: ["غاية"] },
+    { id: "ar-challenge", emoji: "🧗", word: "تحدٍ", article: "", cat: "abstract", sentence: "التحدي كبير لكنه ممكن.", synonyms: ["اختبار"] },
+    { id: "ar-achievement", emoji: "🏆", word: "إنجاز", article: "", cat: "abstract", sentence: "نحتفل بإنجازك.", synonyms: ["نجاح"] },
+    { id: "ar-risk", emoji: "⚠️", word: "خطر", article: "", cat: "abstract", sentence: "هناك خطر صغير.", synonyms: ["مخاطرة"] },
   ],
 
   edges: [
@@ -84,6 +89,11 @@ var SEMA_DATA = {
     { a: "ar-sun", b: "ar-sea", type: "related" },
     { a: "ar-car", b: "ar-train", type: "related" },
     { a: "ar-city", b: "ar-house", type: "related" },
+    { a: "ar-decision", b: "ar-risk", type: "related" },
+    { a: "ar-purpose", b: "ar-achievement", type: "related" },
+    { a: "ar-challenge", b: "ar-decision", type: "related" },
+    { a: "ar-achievement", b: "ar-risk", type: "related" },
+    { a: "ar-risk", b: "ar-purpose", type: "related" },
   ]
 };
 

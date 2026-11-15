@@ -94,6 +94,11 @@ var SEMA_LEVELS = {
   "ph-tr-sister-visiting": "A2",
   "ph-tr-hotel-nights": "A2",
   "ph-tr-holiday-plans": "B1",
+  "tr-decision": "B1",
+  "tr-purpose": "B1",
+  "tr-challenge": "B2",
+  "tr-achievement": "B2",
+  "tr-risk": "B1",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

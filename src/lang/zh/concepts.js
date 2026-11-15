@@ -55,6 +55,11 @@ var SEMA_DATA = {
     { id: "zh-day", emoji: "📅", word: "白天", article: "", cat: "time", sentence: "白天很长。", sub: "bái tiān" },
     { id: "zh-love", emoji: "💗", word: "爱", article: "", cat: "emotion", sentence: "爱无法解释。", sub: "ài" },
     { id: "zh-eat", emoji: "🍽️", word: "吃", article: "", cat: "action", sentence: "我想吃面包。", sub: "chī" },
+    { id: "zh-decision", emoji: "⚖️", word: "决定", article: "", cat: "abstract", sentence: "我做出了一个艰难的决定。", sub: "jué dìng", synonyms: ["选择"] },
+    { id: "zh-purpose", emoji: "🎯", word: "目的", article: "", cat: "abstract", sentence: "我的目的是学习中文。", sub: "mù dì", synonyms: ["目标"] },
+    { id: "zh-challenge", emoji: "🧗", word: "挑战", article: "", cat: "abstract", sentence: "挑战很大，但有可能。", sub: "tiǎo zhàn", synonyms: ["难题"] },
+    { id: "zh-achievement", emoji: "🏆", word: "成就", article: "", cat: "abstract", sentence: "我们庆祝你的成就。", sub: "chéng jiù", synonyms: ["成果"] },
+    { id: "zh-risk", emoji: "⚠️", word: "风险", article: "", cat: "abstract", sentence: "有一个小风险。", sub: "fēng xiǎn", synonyms: ["危险"] },
   ],
 
   edges: [
@@ -83,6 +88,11 @@ var SEMA_DATA = {
     { a: "zh-sun", b: "zh-sea", type: "related" },
     { a: "zh-car", b: "zh-train", type: "related" },
     { a: "zh-city", b: "zh-house", type: "related" },
+    { a: "zh-decision", b: "zh-risk", type: "related" },
+    { a: "zh-purpose", b: "zh-achievement", type: "related" },
+    { a: "zh-challenge", b: "zh-decision", type: "related" },
+    { a: "zh-achievement", b: "zh-risk", type: "related" },
+    { a: "zh-risk", b: "zh-purpose", type: "related" },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_DATA;

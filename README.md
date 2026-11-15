@@ -88,7 +88,7 @@ Lessons use spaced repetition. What you miss comes back before the session ends 
 
 ### Advanced vocabulary
 
-The five core packs (Spanish, French, English, Italian and Russian) also carry a small B1/B2 abstract layer — decision, purpose, challenge, achievement and risk — with sentences, English glosses, synonym tasks and newly generated local audio. It appears once the learner’s band reaches it, so a C1 placement is no longer opened on A1 words alone. The path is unchanged; these words extend lessons and synonym practice.
+Every pack now carries five B1/B2 abstract words — decision, purpose, challenge, achievement and risk — with sentences, English glosses, synonym tasks and local audio. They appear once the learner’s band reaches them, so a C1 placement is no longer opened on A1 words alone. The path is unchanged; these words extend lessons and synonym practice across all thirteen languages.
 
 ### Reading
 

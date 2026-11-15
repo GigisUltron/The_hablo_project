@@ -56,6 +56,11 @@ var SEMA_DATA = {
     { id: "de-day", emoji: "📅", word: "Tag", article: "der", cat: "time", sentence: "Der Tag ist lang." },
     { id: "de-love", emoji: "💗", word: "Liebe", article: "die", cat: "emotion", sentence: "Liebe lässt sich nicht erklären." },
     { id: "de-eat", emoji: "🍽️", word: "essen", article: "", cat: "action", sentence: "Ich möchte Brot essen." },
+    { id: "de-decision", emoji: "⚖️", word: "Entscheidung", article: "die", cat: "abstract", sentence: "Ich habe eine schwierige Entscheidung getroffen.", synonyms: ["Wahl"] },
+    { id: "de-purpose", emoji: "🎯", word: "Ziel", article: "das", cat: "abstract", sentence: "Mein Ziel ist, Deutsch zu lernen.", synonyms: ["Zweck"] },
+    { id: "de-challenge", emoji: "🧗", word: "Herausforderung", article: "die", cat: "abstract", sentence: "Die Herausforderung ist groß, aber machbar.", synonyms: ["Aufgabe"] },
+    { id: "de-achievement", emoji: "🏆", word: "Erfolg", article: "der", cat: "abstract", sentence: "Wir feiern deinen Erfolg.", synonyms: ["Sieg"] },
+    { id: "de-risk", emoji: "⚠️", word: "Risiko", article: "das", cat: "abstract", sentence: "Es gibt ein kleines Risiko.", synonyms: ["Gefahr"] },
   ],
 
   edges: [
@@ -84,6 +89,11 @@ var SEMA_DATA = {
     { a: "de-sun", b: "de-sea", type: "related" },
     { a: "de-car", b: "de-train", type: "related" },
     { a: "de-city", b: "de-house", type: "related" },
+    { a: "de-decision", b: "de-risk", type: "related" },
+    { a: "de-purpose", b: "de-achievement", type: "related" },
+    { a: "de-challenge", b: "de-decision", type: "related" },
+    { a: "de-achievement", b: "de-risk", type: "related" },
+    { a: "de-risk", b: "de-purpose", type: "related" },
   ]
 };
 

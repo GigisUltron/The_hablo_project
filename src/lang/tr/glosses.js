@@ -101,6 +101,11 @@ var SEMA_GLOSSES = {
   "ph-tr-sister-visiting": "My sister is coming to visit us this weekend.",
   "ph-tr-hotel-nights": "We'll stay at the hotel for two nights.",
   "ph-tr-holiday-plans": "We're thinking of going on holiday next week.",
+  "tr-decision": "decision",
+  "tr-purpose": "purpose",
+  "tr-challenge": "challenge",
+  "tr-achievement": "achievement",
+  "tr-risk": "risk",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

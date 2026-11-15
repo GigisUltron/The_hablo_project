@@ -100,6 +100,11 @@ var SEMA_GLOSSES = {
   "ph-hi-vegetarian": "I'm vegetarian.",
   "ph-hi-next-train": "what time is the next train?",
   "ph-hi-holiday-next-week": "we're going on holiday next week",
+  "hi-decision": "decision",
+  "hi-purpose": "purpose",
+  "hi-challenge": "challenge",
+  "hi-achievement": "achievement",
+  "hi-risk": "risk",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

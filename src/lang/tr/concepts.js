@@ -56,6 +56,11 @@ var SEMA_DATA = {
     { id: "tr-day", emoji: "📅", word: "gün", article: "", cat: "time", sentence: "Gün uzun." },
     { id: "tr-love", emoji: "💗", word: "aşk", article: "", cat: "emotion", sentence: "Aşk açıklanamaz." },
     { id: "tr-eat", emoji: "🍽️", word: "yemek", article: "", cat: "action", sentence: "Bir şey yemek istiyorum." },
+    { id: "tr-decision", emoji: "⚖️", word: "karar", article: "", cat: "abstract", sentence: "Zor bir karar verdim.", synonyms: ["seçim"] },
+    { id: "tr-purpose", emoji: "🎯", word: "amaç", article: "", cat: "abstract", sentence: "Amacım Türkçe öğrenmek.", synonyms: ["hedef"] },
+    { id: "tr-challenge", emoji: "🧗", word: "zorluk", article: "", cat: "abstract", sentence: "Zorluk büyük ama mümkün.", synonyms: ["güçlük"] },
+    { id: "tr-achievement", emoji: "🏆", word: "başarı", article: "", cat: "abstract", sentence: "Başarını kutluyoruz.", synonyms: ["muvaffakiyet"] },
+    { id: "tr-risk", emoji: "⚠️", word: "risk", article: "", cat: "abstract", sentence: "Küçük bir risk var.", synonyms: ["tehlike"] },
   ],
 
   edges: [
@@ -84,6 +89,11 @@ var SEMA_DATA = {
     { a: "tr-sun", b: "tr-sea", type: "related" },
     { a: "tr-car", b: "tr-train", type: "related" },
     { a: "tr-city", b: "tr-house", type: "related" },
+    { a: "tr-decision", b: "tr-risk", type: "related" },
+    { a: "tr-purpose", b: "tr-achievement", type: "related" },
+    { a: "tr-challenge", b: "tr-decision", type: "related" },
+    { a: "tr-achievement", b: "tr-risk", type: "related" },
+    { a: "tr-risk", b: "tr-purpose", type: "related" },
   ]
 };
 

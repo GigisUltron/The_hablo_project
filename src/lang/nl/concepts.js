@@ -56,6 +56,11 @@ var SEMA_DATA = {
     { id: "nl-day", emoji: "📅", word: "dag", article: "de", cat: "time", sentence: "De dag is lang." },
     { id: "nl-love", emoji: "💗", word: "liefde", article: "de", cat: "emotion", sentence: "Liefde valt niet uit te leggen." },
     { id: "nl-eat", emoji: "🍽️", word: "eten", article: "", cat: "action", sentence: "Ik wil brood eten." },
+    { id: "nl-decision", emoji: "⚖️", word: "beslissing", article: "de", cat: "abstract", sentence: "Ik heb een moeilijke beslissing genomen.", synonyms: ["keuze"] },
+    { id: "nl-purpose", emoji: "🎯", word: "doel", article: "het", cat: "abstract", sentence: "Mijn doel is Nederlands leren.", synonyms: ["bedoeling"] },
+    { id: "nl-challenge", emoji: "🧗", word: "uitdaging", article: "de", cat: "abstract", sentence: "De uitdaging is groot, maar mogelijk.", synonyms: ["opdracht"] },
+    { id: "nl-achievement", emoji: "🏆", word: "prestatie", article: "de", cat: "abstract", sentence: "We vieren jouw prestatie.", synonyms: ["resultaat"] },
+    { id: "nl-risk", emoji: "⚠️", word: "risico", article: "het", cat: "abstract", sentence: "Er is een klein risico.", synonyms: ["gevaar"] },
   ],
 
   edges: [
@@ -84,6 +89,11 @@ var SEMA_DATA = {
     { a: "nl-sun", b: "nl-sea", type: "related" },
     { a: "nl-car", b: "nl-train", type: "related" },
     { a: "nl-city", b: "nl-house", type: "related" },
+    { a: "nl-decision", b: "nl-risk", type: "related" },
+    { a: "nl-purpose", b: "nl-achievement", type: "related" },
+    { a: "nl-challenge", b: "nl-decision", type: "related" },
+    { a: "nl-achievement", b: "nl-risk", type: "related" },
+    { a: "nl-risk", b: "nl-purpose", type: "related" },
   ]
 };
 

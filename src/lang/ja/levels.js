@@ -90,6 +90,11 @@ var SEMA_LEVELS = {
   "ph-ja-vegetarian": "A2",
   "ph-ja-four-in-family": "A2",
   "ph-ja-visit-parents": "B1",
+  "ja-decision": "B1",
+  "ja-purpose": "B1",
+  "ja-challenge": "B2",
+  "ja-achievement": "B2",
+  "ja-risk": "B1",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

@@ -25,6 +25,14 @@ ADVANCED = {
     "en": ["en-decision", "en-purpose", "en-challenge", "en-achievement", "en-risk"],
     "it": ["it-decisione", "it-scopo", "it-sfida", "it-risultato", "it-rischio"],
     "ru": ["ru-reshenie", "ru-tsel", "ru-vyzov", "ru-dostizhenie", "ru-risk"],
+    "pt": ["pt-decision", "pt-purpose", "pt-challenge", "pt-achievement", "pt-risk"],
+    "de": ["de-decision", "de-purpose", "de-challenge", "de-achievement", "de-risk"],
+    "nl": ["nl-decision", "nl-purpose", "nl-challenge", "nl-achievement", "nl-risk"],
+    "tr": ["tr-decision", "tr-purpose", "tr-challenge", "tr-achievement", "tr-risk"],
+    "ar": ["ar-decision", "ar-purpose", "ar-challenge", "ar-achievement", "ar-risk"],
+    "hi": ["hi-decision", "hi-purpose", "hi-challenge", "hi-achievement", "hi-risk"],
+    "ja": ["ja-decision", "ja-purpose", "ja-challenge", "ja-achievement", "ja-risk"],
+    "zh": ["zh-decision", "zh-purpose", "zh-challenge", "zh-achievement", "zh-risk"],
 }
 BANDS = {"B1", "B2", "C1"}
 

@@ -101,6 +101,11 @@ var SEMA_GLOSSES = {
   "ph-nl-sunday-parents": "on Sunday we're eating at my parents'",
   "ph-nl-late-checkout": "can we check out later?",
   "ph-nl-meet-tomorrow": "we're meeting tomorrow at nine",
+  "nl-decision": "decision",
+  "nl-purpose": "purpose",
+  "nl-challenge": "challenge",
+  "nl-achievement": "achievement",
+  "nl-risk": "risk",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

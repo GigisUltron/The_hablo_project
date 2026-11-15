@@ -93,6 +93,11 @@ var SEMA_LEVELS = {
   "ph-hi-vegetarian": "A2",
   "ph-hi-next-train": "A2",
   "ph-hi-holiday-next-week": "B1",
+  "hi-decision": "B1",
+  "hi-purpose": "B1",
+  "hi-challenge": "B2",
+  "hi-achievement": "B2",
+  "hi-risk": "B1",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

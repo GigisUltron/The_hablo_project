@@ -114,8 +114,8 @@ with a GGUF from `.tools/models/`. It is an alternative, not the default.
 
 ## Integration check
 
-`make integration` verifies the advanced content in the five core packs, every
-advanced audio manifest and WAV, starts the real static server on a free port,
+`make integration` verifies the advanced content in every pack, every advanced
+audio manifest and WAV, starts the real static server on a free port,
 and — when `llama-cpp-python` and a GGUF are present — loads the model and asks
 for a real reply. Without a model it reports the skip and still checks
 content/audio/server. It is intentionally outside `make check`: the model is

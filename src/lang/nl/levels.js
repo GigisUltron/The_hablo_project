@@ -94,6 +94,11 @@ var SEMA_LEVELS = {
   "ph-nl-sunday-parents": "A2",
   "ph-nl-late-checkout": "B1",
   "ph-nl-meet-tomorrow": "A2",
+  "nl-decision": "B1",
+  "nl-purpose": "B1",
+  "nl-challenge": "B2",
+  "nl-achievement": "B2",
+  "nl-risk": "B1",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

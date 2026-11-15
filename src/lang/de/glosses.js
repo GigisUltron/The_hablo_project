@@ -101,6 +101,11 @@ var SEMA_GLOSSES = {
   "ph-de-headache": "I've had a headache since yesterday",
   "ph-de-home-office": "I'm working from home this week",
   "ph-de-weekend-parents": "I'm visiting my parents at the weekend",
+  "de-decision": "decision",
+  "de-purpose": "purpose",
+  "de-challenge": "challenge",
+  "de-achievement": "achievement",
+  "de-risk": "risk",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
