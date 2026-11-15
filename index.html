@@ -107,6 +107,10 @@
             <span class="row-pic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 016.5 3H20v16H6.5A2.5 2.5 0 004 21.5z"/><path d="M4 18.5A2.5 2.5 0 016.5 16H20"/></svg></span>
             <span class="row-body"><span class="row-main" data-i18n="read">Read a text</span><span class="row-meta" aria-hidden="true">›</span></span>
           </button>
+          <button class="row" id="home-vocab" type="button">
+            <span class="row-pic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h6"/></svg></span>
+            <span class="row-body"><span class="row-main" data-i18n="expandVocab">Expand vocabulary</span><span class="row-meta" aria-hidden="true">›</span></span>
+          </button>
         </div>
 
         <section class="group" aria-labelledby="review-title" hidden>
@@ -226,6 +230,20 @@
     </section>
 
     <!-- ========================================================== SETTINGS -->
+    <section class="view" id="view-vocab" aria-label="Vocabulary">
+      <div class="map-head">
+        <div>
+          <h2 data-i18n="expandVocab">Expand vocabulary</h2>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="vocab-back" data-i18n="done">Done</button>
+      </div>
+      <div class="vocab-panel">
+        <p class="vocab-count" id="vocab-count"></p>
+        <div id="vocab-stage" class="vocab-stage"></div>
+        <p class="vocab-stats" id="vocab-stats"></p>
+      </div>
+    </section>
+
     <section class="view" id="view-settings" aria-label="Settings">
       <div class="map-head">
         <div>
@@ -345,6 +363,7 @@
               <div class="mini"><b id="stat-sessions">0</b><span data-i18n="sessions">sessions</span></div>
               <div class="mini"><b id="stat-good">0</b><span data-i18n="recalled">recalled</span></div>
               <div class="mini"><b id="stat-again">0</b><span data-i18n="lapses">lapses</span></div>
+              <div class="mini"><b id="stat-vocab">0</b><span data-i18n="expandVocab">Expand vocabulary</span></div>
             </div>
           </div>
         </div>

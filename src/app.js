@@ -394,6 +394,7 @@
     s.reviews = s.reviews || { good: 0, again: 0 };
     s.sessions = s.sessions || 0;
     if (typeof s.xp !== "number") s.xp = 0;
+    s.vocabStats = s.vocabStats || { sessions: 0, correct: 0, again: 0 };
     if (!s.memory || !Array.isArray(s.memory.sentences)) s.memory = MEM.empty();
 
     if (s.profile) {
@@ -878,7 +879,7 @@
 
   /* ---------------------------------------------------------------- views */
 
-  var VIEWS = ["today", "session", "reader", "alphabet", "conv", "setup", "settings", "stats"];
+  var VIEWS = ["today", "session", "reader", "alphabet", "vocab", "conv", "setup", "settings", "stats"];
   var currentView = "today";
 
   /* Setup is a gate, not a suggestion: tabs, deep links and buttons cannot
@@ -2710,6 +2711,7 @@
   /* -------------------------------------------------------------- session */
 
   var session = null;
+  var vocab = null;
 
   function selectedFields() {
     var f = state.settings && state.settings.fields;
@@ -3176,6 +3178,118 @@
     if (!wish) return;
     if (ACTIVE.code !== wish.lang && LANGS && LANGS.has(wish.lang)) switchLang(wish.lang);
     startSession({ ids: wish.ids, size: wish.ids.length, customId: wish.id });
+  }
+
+  /* Vocabulary expansion is deliberately not a lesson: one word, recall,
+   * reveal, decide. It feeds the same SRS store as lessons. */
+  function vocabPool() {
+    var now = Date.now();
+    var due = [];
+    var fresh = [];
+    allIds.forEach(function (id) {
+      if (!atLevel(id)) return;
+      var kind = itemOf(id).kind;
+      if (kind === "term") return;
+      var card = state.cards[id];
+      if (!card) fresh.push(id);
+      else if (!card.due || card.due <= now) due.push(id);
+    });
+    return due.concat(fresh);
+  }
+
+  function startVocab() {
+    var ids = S.shuffle(vocabPool(), Math.random).slice(0, 12);
+    if (!ids.length) {
+      ids = S.shuffle(allIds.filter(function (id) {
+        return atLevel(id) && itemOf(id).kind !== "term";
+      }), Math.random).slice(0, 12);
+    }
+    vocab = { queue: ids, i: 0, correct: 0, again: 0, retry: {}, done: false, revealed: false };
+    show("vocab");
+    renderVocab();
+  }
+
+  function vocabHarder(id) {
+    var base = ADAPT.CEFR.indexOf(itemLevel(id));
+    var used = vocab.queue.slice();
+    var harder = allIds.filter(function (x) {
+      return used.indexOf(x) === -1 && atLevel(x) && itemOf(x).kind !== "term" &&
+        ADAPT.CEFR.indexOf(itemLevel(x)) > base;
+    });
+    if (!harder.length) return null;
+    return S.shuffle(harder, Math.random)[0];
+  }
+
+  function answerVocab(ok) {
+    if (!vocab || vocab.done) return;
+    var id = vocab.queue[vocab.i];
+    if (!id) { finishVocab(); return; }
+    S.review(state, id, ok ? 2 : 0, Date.now());
+    if (ok) {
+      vocab.correct += 1;
+      var harder = vocab.correct % 2 === 0 ? vocabHarder(id) : null;
+      if (harder && vocab.queue.length < 18) vocab.queue.push(harder);
+    } else {
+      vocab.again += 1;
+      if (!vocab.retry[id] && vocab.queue.length < 18) {
+        vocab.retry[id] = true;
+        vocab.queue.push(id);
+      }
+    }
+    save();
+    vocab.i += 1;
+    vocab.revealed = false;
+    if (vocab.i >= vocab.queue.length) finishVocab();
+    else renderVocab();
+  }
+
+  function finishVocab() {
+    if (!vocab) return;
+    vocab.done = true;
+    var gained = Math.max(2, vocab.correct * 2);
+    state.xp = (state.xp || 0) + gained;
+    state.vocabStats = state.vocabStats || { sessions: 0, correct: 0, again: 0 };
+    state.vocabStats.sessions += 1;
+    state.vocabStats.correct += vocab.correct;
+    state.vocabStats.again += vocab.again;
+    save();
+    var stage = $("vocab-stage");
+    stage.innerHTML =
+      '<div class="vocab-summary">' +
+        '<p class="vocab-word">' + vocab.correct + " / " + (vocab.correct + vocab.again) + "</p>" +
+        '<p class="vocab-meaning">' + esc(tr("vocabDone", "Vocabulary session done")) + " · +" + gained + " XP</p>" +
+        '<button class="btn btn-primary" id="vocab-more">' + esc(tr("oneMore", "One more")) + "</button>" +
+      "</div>";
+    $("vocab-more").addEventListener("click", startVocab);
+    $("vocab-count").textContent = "";
+    $("vocab-stats").textContent = "";
+  }
+
+  function renderVocab() {
+    if (!vocab) return;
+    if (vocab.done) return;
+    var id = vocab.queue[vocab.i];
+    if (!id) { finishVocab(); return; }
+    var it = itemOf(id);
+    var meaning = translationFor(id) || glossFor(id) || "";
+    var reveal = vocab.revealed;
+    $("vocab-count").textContent = (vocab.i + 1) + "/" + vocab.queue.length;
+    $("vocab-stats").textContent = vocab.correct + " ✓ · " + vocab.again + " ↺";
+    $("vocab-stage").innerHTML =
+      '<p class="prompt">' + esc(tr("vocabHint", "Recall the meaning before revealing")) + "</p>" +
+      '<p class="vocab-word">' + esc(it.text) + "</p>" +
+      '<button class="vocab-reveal" id="vocab-reveal" type="button">' + esc(reveal ? tr("glossHide", "hide translation") : tr("glossShow", "show translation")) + "</button>" +
+      '<p class="vocab-meaning"' + (reveal ? "" : " hidden") + ">" + esc(meaning) + "</p>" +
+      '<div class="vocab-actions">' +
+        '<button class="btn btn-ghost" id="vocab-again" type="button">' + esc(tr("again", "Again")) + "</button>" +
+        '<button class="btn btn-primary" id="vocab-got" type="button">' + esc(tr("gotit", "Got it")) + "</button>" +
+      "</div>";
+    $("vocab-reveal").addEventListener("click", function () {
+      vocab.revealed = !vocab.revealed;
+      renderVocab();
+    });
+    $("vocab-again").addEventListener("click", function () { answerVocab(false); });
+    $("vocab-got").addEventListener("click", function () { answerVocab(true); });
   }
 
   function startSession(opts) {
@@ -4664,6 +4778,9 @@
 
 
     $("stat-sessions").textContent = state.sessions;
+    var vs = state.vocabStats || { sessions: 0, correct: 0 };
+    var vstat = $("stat-vocab");
+    if (vstat) vstat.textContent = vs.sessions + " · " + vs.correct;
     $("stat-good").textContent = state.reviews.good;
     $("stat-again").textContent = state.reviews.again;
   }

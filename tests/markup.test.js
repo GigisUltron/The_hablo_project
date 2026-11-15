@@ -808,6 +808,16 @@ test("specialized exercise types are shuffled per session", () => {
   assert.match(app, /phrases = S\.shuffle\(phrases, Math\.random\)/, "phrase task types are fixed");
 });
 
+test("vocabulary expansion is a real adaptive mode", () => {
+  assert.match(html, /id="view-vocab"/, "no vocabulary view");
+  assert.match(html, /id="home-vocab"/, "no vocabulary entry point");
+  assert.match(app, /function startVocab/, "no vocab session");
+  assert.match(app, /vocabHarder/, "vocab difficulty never grows");
+  assert.match(app, /vocab\.retry\[id\]/, "wrong words are not revised");
+  assert.match(app, /state\.vocabStats/, "vocab stats are not stored");
+  assert.match(app, /class="vocab-meaning"/, "meaning is not rendered");
+});
+
 test("matching completes only after all pairs and XP is on Today", () => {
   assert.match(app, /Object\.keys\(matched\)\.length === pairs\.length/, "matching ends after one pair");
   assert.match(app, /classList\.add\("is-selected"\)/, "matching has no selected state");
