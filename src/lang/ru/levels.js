@@ -85,6 +85,10 @@ var SEMA_LEVELS = {
   "b-ru-govoryat": "A1",
   "ph-ru-colour": "A1",
   "ph-ru-where-from": "A1",
+  "ph-ru-reservation": "A2",
+  "ph-ru-train-time": "A2",
+  "ph-ru-pharmacy": "A1",
+  "ph-ru-hurts-here": "A1",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

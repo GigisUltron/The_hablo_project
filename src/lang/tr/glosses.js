@@ -92,6 +92,10 @@ var SEMA_GLOSSES = {
   "b-tr-istiyorlar": "they want",
   "ph-tr-colour": "what is your favourite colour?",
   "ph-tr-where-from": "where are you from?",
+  "ph-tr-reservation": "I have a reservation",
+  "ph-tr-train-time": "what time does the train leave?",
+  "ph-tr-pharmacy": "where is the pharmacy?",
+  "ph-tr-hurts-here": "it hurts here",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
