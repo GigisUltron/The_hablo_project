@@ -62,6 +62,57 @@ var SEMA_TEXTS = {
         {"q": "Was ist im Bücherschrank verboten?", "options": ["Müll hineinwerfen", "Bücher mitnehmen", "Reiseführer hineinstellen"], "answer": 0, "why": ["", "Bücher mitnehmen ist ausdrücklich erlaubt", "Reiseführer werden als Beispiel genannt"]},
       ]
     },
+    {
+      "id": "tx-de-bahnhof",
+      "title": "Am Bahnhof",
+      "level": 3,
+      "band": "B1",
+      "body": "Ich stehe früh am Bahnhof und warte auf den Zug nach Hamburg. Der Bahnsteig ist noch ruhig. Eine Frau fragt mich, ob der Zug Verspätung hat. Ich schaue auf die Anzeige: zehn Minuten. Wir sprechen über das Wetter und darüber, warum sie ihre Schwester besucht. Als der Zug endlich kommt, steigen wir ein und setzen uns gegenüber. Sie liest ein Buch; ich schaue aus dem Fenster. Die Landschaft wird grüner, und die Felder leuchten in der Morgensonne. Manchmal beginnt eine Reise mit einer kleinen Frage.",
+      "questions": [
+        {
+          "q": "Wohin fährt der Zug?",
+          "options": [
+            "nach Hamburg",
+            "nach Berlin",
+            "nach München"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "Berlin wird nicht genannt",
+            "München wird nicht genannt"
+          ]
+        },
+        {
+          "q": "Wie viel Verspätung hat der Zug?",
+          "options": [
+            "zehn Minuten",
+            "eine Stunde",
+            "keine"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "die Anzeige zeigt zehn Minuten",
+            "der Zug kommt später als geplant"
+          ]
+        },
+        {
+          "q": "Was macht die Frau im Zug?",
+          "options": [
+            "sie liest ein Buch",
+            "sie schläft",
+            "sie telefoniert"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "das steht nicht im Text",
+            "das steht nicht im Text"
+          ]
+        }
+      ]
+    },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TEXTS;

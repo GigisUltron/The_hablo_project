@@ -62,6 +62,57 @@ var SEMA_TEXTS = {
         {"q": "Neden telefon numarası vermediler?", "options": ["her sabah aynı iskelede buluşacaklarını bildikleri için", "telefonları bozuk olduğu için", "numaraları unuttukları için"], "answer": 0, "why": ["", "telefonlarının bozuk olduğu yazmıyor", "unuttukları söylenmiyor"]},
       ]
     },
+    {
+      "id": "tx-tr-komsuluk",
+      "title": "Komşuluk",
+      "level": 3,
+      "band": "B1",
+      "body": "Bizim sokakta herkes birbirini çok iyi tanır. Geçen kış, yaşlı komşumuz hastalandı. Mahalleli her gün ona yemek götürdü ve alışverişini yaptı. Ben de onun köpeğini gezdirdim. Komşumuz iyileşince hepimizi eve davet etti. Sofrada çay içtik, eski fotoğraflara baktık ve çok güldük. Şimdi her cumartesi birkaç komşu birlikte kahvaltı yapıyor. Büyük şehirde insanların yalnız olduğunu söylerler; bizim sokakta bu doğru değil.",
+      "questions": [
+        {
+          "q": "Kışın komşuya ne oldu?",
+          "options": [
+            "hastalandı",
+            "taşındı",
+            "iş buldu"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "metinde taşınmaktan söz edilmiyor",
+            "metinde iş bulmaktan söz edilmiyor"
+          ]
+        },
+        {
+          "q": "Anlatıcı ne yaptı?",
+          "options": [
+            "köpeği gezdirdi",
+            "yemek pişirdi",
+            "temizlik yaptı"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "yemeği mahalleli götürdü",
+            "temizlikten söz edilmiyor"
+          ]
+        },
+        {
+          "q": "Şimdi cumarteleri ne yapıyorlar?",
+          "options": [
+            "kahvaltı yapıyorlar",
+            "sinemaya gidiyorlar",
+            "alışveriş yapıyorlar"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "sinemadan söz edilmiyor",
+            "alışveriş kışın yapıldı"
+          ]
+        }
+      ]
+    },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TEXTS;

@@ -62,6 +62,57 @@ var SEMA_TEXTS = {
         {"q": "Waarom komt de verteller elke week?", "options": ["om te helpen met water geven", "omdat hij een eigen vak heeft", "om nieuwe zaden te kopen"], "answer": 0, "why": ["", "hij heeft juist geen eigen vak", "zaden worden gedeeld, niet verkocht"]},
       ]
     },
+    {
+      "id": "tx-nl-buurt",
+      "title": "De markt op zaterdag",
+      "level": 3,
+      "band": "B1",
+      "body": "Op zaterdag ga ik vroeg naar de markt. De bakker verkoopt vers brood en de groenteman roept zijn prijzen. Ik koop appels, kaas en bloemen voor mijn moeder. Bij de viskraam staat een lange rij, dus ik wacht even. Een oude man vertelt mij dat de markt al vijftig jaar bestaat. Vroeger kwam hij hier met zijn vader; nu komt hij met zijn kleinzoon. Ik luister en vergeet de tijd. Als ik thuiskom, ruikt de keuken naar koffie. Mijn moeder lacht om de bloemen en zegt dat ik te veel heb gekocht.",
+      "questions": [
+        {
+          "q": "Wat koopt de ik?",
+          "options": [
+            "appels, kaas en bloemen",
+            "brood en vis",
+            "koffie en taart"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "brood en vis worden genoemd, maar niet gekocht",
+            "koffie ruikt in de keuken, maar wordt niet gekocht"
+          ]
+        },
+        {
+          "q": "Hoe lang bestaat de markt?",
+          "options": [
+            "vijftig jaar",
+            "tien jaar",
+            "honderd jaar"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "dat zegt de oude man niet",
+            "dat zegt de oude man niet"
+          ]
+        },
+        {
+          "q": "Met wie komt de oude man nu naar de markt?",
+          "options": [
+            "met zijn kleinzoon",
+            "met zijn vader",
+            "met zijn broer"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "vroeger kwam hij met zijn vader",
+            "een broer wordt niet genoemd"
+          ]
+        }
+      ]
+    },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TEXTS;

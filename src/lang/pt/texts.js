@@ -62,6 +62,57 @@ var SEMA_TEXTS = {
         {"q": "Porque é que o narrador volta sempre à aldeia?", "options": ["para ajudar e ouvir histórias", "porque vive lá", "para vender pão caseiro"], "answer": 0, "why": ["", "ele cresceu na cidade", "o pão é feito pelos mais velhos"]},
       ]
     },
+    {
+      "id": "tx-pt-horta",
+      "title": "A horta do bairro",
+      "level": 3,
+      "band": "B1",
+      "body": "Na rua onde vivo, um terreno vazio estava cheio de ervas. Há dois anos, os vizinhos decidiram criar uma horta. Cada família recebeu um pequeno canteiro. Ao sábado, encontramo-nos para regar e trocar conselhos. A minha vizinha cultiva tomates; eu cuido das ervas aromáticas. No verão, partilhamos a colheita e fazemos uma sopa para todos. O projeto não resolve todos os problemas da rua, mas aproximou pessoas que antes só diziam «bom dia». Aprendi que uma mudança pequena pode começar num espaço vazio.",
+      "questions": [
+        {
+          "q": "O que os vizinhos criaram?",
+          "options": [
+            "uma horta",
+            "um parque",
+            "uma loja"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "o texto fala de uma horta, não de um parque",
+            "há uma loja na rua, mas não foi criada pelos vizinhos"
+          ]
+        },
+        {
+          "q": "Quando se encontram para regar?",
+          "options": [
+            "ao sábado",
+            "ao domingo",
+            "todos os dias"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "o texto diz ao sábado",
+            "encontram-se uma vez por semana"
+          ]
+        },
+        {
+          "q": "O que o narrador aprendeu?",
+          "options": [
+            "que uma mudança pequena pode começar num espaço vazio",
+            "que a horta é cara",
+            "que os vizinhos não falam"
+          ],
+          "answer": 0,
+          "why": [
+            "",
+            "o texto não fala de custos",
+            "o projeto aproximou as pessoas"
+          ]
+        }
+      ]
+    },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_TEXTS;
