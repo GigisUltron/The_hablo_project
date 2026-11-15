@@ -1339,7 +1339,7 @@
     $("goal-target").textContent = String(goal);
     $("goal-fill").style.width = Math.min(100, Math.round((doneToday / Math.max(goal, 1)) * 100)) + "%";
     $("goal-line").classList.toggle("is-done", doneToday >= goal);
-    $("goal-line").setAttribute("aria-label", tr("today", "Today") + " " + doneToday + "/" + goal);
+    $("goal-line").setAttribute("aria-label", tr("goal", "goal") + " " + doneToday + "/" + goal);
     $("lesson-name").textContent = next.title;
     $("start-sub").textContent = next.caption || tr("nothingDue", "Nothing new or due. Practise anything.");
     $("lesson-goal").textContent = next.goal || "";
@@ -1433,7 +1433,7 @@
   function renderReaderText() {
     var t = reader.text;
     $("reader-count").textContent = tr("level", "level") + " " + t.level;
-    $("reader-bar").style.width = "8%";
+    $("reader-bar").style.width = t.ai ? "100%" : "8%";
     $("reader-feedback").textContent = "";
     $("reader-feedback").className = "feedback";
     $("reader-stage").innerHTML =
@@ -2006,6 +2006,8 @@
     if (face) face.setAttribute("data-state", line[0]);
     var settingsEl = $("chat-settings-status");
     if (settingsEl) settingsEl.textContent = line[1];
+    var settingsSummary = $("chat-summary-status");
+    if (settingsSummary) settingsSummary.textContent = line[1];
     if (currentView === "conv" && chat) renderChat();
   }
 
@@ -2782,7 +2784,7 @@
         baseUrl: chatEndpoint(),
         engine: chatMeta.engine,
         model: chatMeta.model,
-        system: CE.buildCoachPrompt(ACTIVE, PERSONA ? PERSONA.prompt(state.profile) : ""),
+        system: CE.buildCoachPrompt(ACTIVE, PERSONA ? PERSONA.prompt(state.profile) : "", uiName(uiLang())),
         history: [{ role: "user", text: transcript }],
         timeoutMs: 30000
       }).then(function (res) {

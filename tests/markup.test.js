@@ -473,6 +473,13 @@ test("the conversation has a coach check-in that can become a lesson", () => {
   assert.match(app, /coachThinking/);
 });
 
+test("the technical model settings stay collapsed by default", () => {
+  assert.match(html, /<details class="wish-card model-card" id="model-details">/);
+  assert.match(html, /id="chat-summary-status"/);
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(app, /settingsSummary\.textContent = line\[1\]/);
+});
+
 test("the learner can personalize the coach and the Today reason", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(html, /id="personal-details"/);

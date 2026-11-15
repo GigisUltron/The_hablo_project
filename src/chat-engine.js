@@ -163,11 +163,12 @@
    * conversation system prompt, and it must name the pack that is live now. */
   /* The wrap-up is a one-off coaching turn, not part of the conversation. It
    * asks for English notes so they stay readable under any interface. */
-  function buildCoachPrompt(pack, personal) {
+  function buildCoachPrompt(pack, personal, uiLanguage) {
     var name = String((pack && pack.name) || "the target language");
+    var replyLanguage = String(uiLanguage || "English");
     var rules = [
       "You are a concise, encouraging language coach reviewing a short conversation in " + name + ".",
-      "Reply in English only, in at most two short sentences.",
+      "Reply in " + replyLanguage + " only, in at most two short sentences.",
       "Say one specific thing the learner did well and one concrete next step.",
       "Do not list every correction, do not role-play, and do not ask a question."
     ];

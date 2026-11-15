@@ -1752,6 +1752,22 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .bubble-hear:hover,
 .bubble-hear.is-playing { background: var(--accent-soft); }
 
+.model-card .wish-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.model-summary {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+}
 .chat-settings {
   display: grid;
   gap: 12px;
