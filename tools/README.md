@@ -66,19 +66,22 @@ wheel/source package, downloads the best GGUF the free RAM can run, then starts
 the app and the OpenAI-compatible server alongside it:
 
 ```sh
-python3 server.py
+python3 serve.py
 # or
-make ai
+make serve
 ```
 
-`server.py` is the automatic wrapper. The individual steps remain available:
-`python3 tools/install_ai.py` installs/downloads only, and
-`python3 serve.py --ai` starts an already-installed app + model.
+`serve.py` is the automatic path: it installs the model on first run, then
+starts the model and the app together. `python3 serve.py --offline` serves the
+app without any setup. The individual steps remain available:
+`python3 tools/install_ai.py` installs/downloads only, and `python3 serve.py`
+starts an already-installed app + model.
 
 `python3 tools/install_ai.py --start` starts only the model server (port 8080),
-which is useful if you run the app separately. `serve.py --ai` starts the model
-on port 8081 and the app on the first free port from 8080, so the two do not
-fight over the same socket.
+which is useful if you run the app separately. `serve.py` starts the model on
+port 8081 and the app on the first free port from 8080, so the two do not fight
+over the same socket. `python3 server.py` is the older wrapper around the same
+installer and server.
 
 Model tiers are chosen from free RAM, not guessed from the device name:
 
@@ -89,7 +92,7 @@ Model tiers are chosen from free RAM, not guessed from the device name:
 | Qwen 2.5 3B Q4 | ~2.1 GB | 5.2 GB |
 | Qwen3 4B Q4 | ~2.5 GB | 7.0 GB |
 
-The installer downloads the largest tier that fits; `serve.py --ai` launches
+The installer downloads the largest tier that fits; `serve.py` launches
 the largest **already downloaded** tier that fits. On a 3 GB-free machine that
 means the 1.5B model, not the old default 0.5B. To pin a model:
 
@@ -103,7 +106,7 @@ wheel, pip builds `llama-cpp-python` and therefore needs a C++ toolchain and
 cmake. The installer tries the prebuilt CPU wheel index first and says plainly
 if the build is the remaining step.
 
-`serve.py --ai` watches free RAM automatically: it refuses to start the model
+`serve.py` watches free RAM automatically: it refuses to start the model
 below about 1.2 GB free, uses a 1024-token context below 2.5 GB, and stops the
 model if free memory falls under 350 MB while it runs, so the scripted practice
 takes over instead of the OS killing the tab. The installer applies the same

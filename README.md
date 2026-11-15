@@ -11,26 +11,28 @@ There are no accounts, no analytics and no remote service. Progress lives in you
 Use Python 3:
 
 ```sh
-python3 server.py
+python3 serve.py
 ```
 
-On first run this creates an isolated `.tools/ai-venv`, installs
-`llama-cpp-python[server]`, downloads the best local model the machine can run
-(0.5B, 1.5B, 3B, or 4B depending on free RAM), then starts the app and model
-together and opens the browser. Later runs reuse the
-model and start immediately. The model is optional: if setup cannot finish,
-the app still starts with the authored/scripted practice.
+This is the whole setup. On first run it creates an isolated `.tools/ai-venv`,
+installs `llama-cpp-python[server]`, downloads the best local model the machine
+can run (0.5B, 1.5B, 3B, or 4B depending on free RAM), starts that model beside
+the app, serves the folder, and opens the browser. Later runs reuse the model
+and start immediately. The first run needs network access for pip and the
+download; if setup cannot finish, the app still starts with the authored
+practice and the conversation falls back to it.
 
 ```sh
-python3 server.py --offline      # app only, no model setup
-python3 server.py --port 9000    # pin a port
-python3 server.py --no-open      # do not open a browser
-make ai                          # same as python3 server.py
+python3 serve.py --offline      # app only: no install, no model
+python3 serve.py --port 9000    # pin the app port
+python3 serve.py --no-open      # do not open a browser
+make serve                      # same as python3 serve.py
 ```
 
-The app itself is still standard-library only and has no build step. For the
-app without the automatic model, use `python3 serve.py` (or `make serve`). The
-model is optional and runs only on the local machine.
+The app itself is still standard-library only and has no build step. The model
+is optional and runs only on the local machine. `python3 server.py` and
+`make ai` remain as the older wrapper: they run the installer first and then
+the same server.
 
 Open the printed `http://localhost:…` address rather than `index.html` directly. Microphone features need a secure context, and `file://` does not provide one.
 
@@ -128,15 +130,15 @@ A local model is optional but it is now the only conversation-engine path when p
 
 Settings → Local model also has **Test reply**: it sends one short prompt and shows the actual model reply, or the plain “no model answered” line. This is a real end-to-end check from the same page where the endpoint is configured.
 
-The same endpoint is used by the word-set **Suggest words** button and the planned-lesson **Suggest with local model** button. `python3 server.py` is the whole setup:
+The same endpoint is used by the word-set **Suggest words** button and the planned-lesson **Suggest with local model** button. `python3 serve.py` is the whole setup:
 
 ```sh
-python3 server.py
+python3 serve.py
 ```
 
 It runs [tools/install_ai.py](tools/install_ai.py), which creates an isolated `.tools/ai-venv`, installs `llama-cpp-python[server]` from [tools/requirements-ai.txt](tools/requirements-ai.txt), and downloads the best Qwen tier the machine can run: 0.5B, 1.5B, 3B, or Qwen3 4B (roughly 0.5–2.5 GB). It then starts the app and model together. The app probes `8080`, `8081` and `11434`, so it finds the model without changing Settings. It checks free RAM before starting, reduces the context when memory is tight, and stops the model if free memory falls below 350 MB. If no model is running, conversation and the assists fall back to the authored pack rather than failing.
 
-The individual pieces remain available for a custom setup: `python3 tools/install_ai.py` installs/downloads only, and `python3 serve.py --ai` starts an already-installed app + model.
+The individual pieces remain available for a custom setup: `python3 tools/install_ai.py` installs/downloads only, and `python3 serve.py` starts an installed app + model without repeating a successful setup.
 
 ### Planned lessons
 
@@ -258,8 +260,8 @@ sw.js                      offline shell and cache policy
 tools/make_audio.py        audio generator and checker
 tools/model_policy.py      RAM-aware 0.5B/1.5B/3B/4B selection
 tests/                     node:test suites
-serve.py                   local static server
-server.py                  one-command app + optional model
+serve.py                   app server; installs and starts the local model
+server.py                  older wrapper: install, then serve.py
 docs/                      preview image and project notes
 ```
 

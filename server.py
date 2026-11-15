@@ -58,8 +58,12 @@ def main():
         command += ["--host", args.host]
     if args.no_open:
         command += ["--no-open"]
-    if ai_ready:
+    # serve.py now installs and starts the model itself. This wrapper has
+    # already tried; pass --offline so a failed setup is not attempted twice.
+    if ai_ready and not args.offline:
         command += ["--ai", "--ai-port", str(args.ai_port)]
+    else:
+        command += ["--offline"]
     return subprocess.call(command)
 
 

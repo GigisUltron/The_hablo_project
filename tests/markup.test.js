@@ -1749,3 +1749,14 @@ test("the Progress action sits in the header, not in a floating row of its own",
   assert.match(head, /id="produce-practice"/, "the producing action is not part of the header");
   assert.doesNotMatch(html, /class="produce-row"/, "the orphan produce row is still in the markup");
 });
+
+test("serve.py is the one command that installs and starts the local model", () => {
+  const serve = fs.readFileSync(path.join(__dirname, "..", "serve.py"), "utf8");
+  assert.match(serve, /def ensure_ai\(/);
+  assert.match(serve, /install_ai\.py/);
+  assert.match(serve, /--offline/);
+  assert.match(serve, /wait_for_model/);
+  assert.match(serve, /ensure_ai\(args\.ai_port\)/);
+  const server = fs.readFileSync(path.join(__dirname, "..", "server.py"), "utf8");
+  assert.match(server, /"--offline"/, "the wrapper can retry a failed install");
+});
