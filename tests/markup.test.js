@@ -426,19 +426,20 @@ test("the path unlocks on every deck card, not only on concepts", () => {
   assert.match(app, /seenDeckCount\(\) >= 46/, "connectors do not unlock with their path node");
 });
 
-test("translations are rendered and can be switched off", () => {
-  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
-  assert.match(app, /function glossHTML/, "no gloss renderer");
-  assert.match(app, /glossHTML\(id\)/, "the gloss is never called from the card");
+test("translations are visible on new cards and can be switched off", () => {
+  assert.match(app, /function glossFor/, "no gloss lookup");
+  assert.match(app, /function glossLine/, "no visible gloss renderer");
+  assert.match(app, /glossLine\(it\.id\)/, "the gloss is never called from a card");
   assert.match(app, /gloss-toggle/, "no settings toggle");
-  assert.match(app, /wireGloss\(\)/, "the control is never wired");
+  assert.match(app, /function renderTranslate/, "no translation exercise");
+  assert.match(app, /return "translate"/, "the mix never asks for the meaning");
+  assert.match(app, /function glossDistractors/, "translation options have no distractor pool");
+  assert.equal(app.includes("glossHTML"), false, "the old hidden reveal control survived");
 });
 
-test("gloss text is not double-escaped into the attribute", () => {
-  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
-  const block = app.slice(app.indexOf("function glossHTML"), app.indexOf("function explainHTML"));
-  assert.equal(/data-gloss="'\s*\+\s*esc\(/.test(block), false,
-    "esc() turns apostrophes into &#39;, which renders literally when read back");
+test("the visible gloss is escaped, not injected", () => {
+  const block = app.slice(app.indexOf("function glossLine"), app.indexOf("function explainHTML"));
+  assert.match(block, /esc\(g\)/, "the English gloss is not escaped");
 });
 
 test("a beginner's first session opens on phrases, with nothing above A2", () => {
@@ -538,10 +539,9 @@ test("a beginner's first session opens on phrases, with nothing above A2", () =>
     "Spanish must open hola, how are you, colour, where from");
 });
 
-test("the gloss control does not escape text it sets via textContent", () => {
-  const block = app.slice(app.indexOf("data-gloss"), app.indexOf("function itemOf"));
-  assert.equal(/textContent\s*=\s*[^;]*esc\(/.test(block), false,
-    "esc() before textContent prints the entity, not the apostrophe");
+test("the old hidden reveal control is gone", () => {
+  assert.equal(app.includes("data-gloss"), false, "a hidden reveal control survived");
+  assert.equal(app.includes("gloss-btn"), false, "the reveal button survived");
 });
 
 test("pinyin sits under the character only when the syllables line up", () => {

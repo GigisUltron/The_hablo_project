@@ -1,10 +1,11 @@
 # sema — meaning-first language learning
 
-A working front-end demo of a language app that **never shows a translation**.
+A working front-end demo of a language app that teaches the target first, then checks it.
 
-A concept is introduced as a pair — picture, word, sound — with no English gloss anywhere in
-the data. Then the quiz hides one half and asks you for the other: picture → word, word →
-picture, or say it aloud. What you miss comes back before the session ends.
+A concept is introduced as a pair — picture, word, sound — with the **English meaning visible
+on the new card**. The drill data itself carries no English gloss inline; a separate
+`glosses.js` map supplies it. Then the quiz hides one half and asks you for the other: picture
+→ word, word → picture, or say it aloud. What you miss comes back before the session ends.
 
 42 Spanish concepts and 60 phrases, 43 semantic relations, spaced repetition, a lesson
 builder that chooses what you study, spoken production, a map of the semantic web — and audio
@@ -68,7 +69,7 @@ worst first. Both choices persist in `localStorage`.
 | Semantic map | `buildMap` | 42 nodes, relations drawn as curves, learned nodes lit |
 | Audio diagnostics | `audioStatus` | Reports voice availability instead of playing nothing |
 | Lesson builder | `renderBuilder` | Field toggles, words/phrases switch, session size |
-| Phrase deck | `src/phrases.js` | 60 whole utterances, scene-anchored, no gloss |
+| Phrase deck | `src/phrases.js` | Whole utterances, scene-anchored; English gloss in `glosses.js` |
 | Mistake review | `reviewMistakes` | Quiz built from your lapses, worst first |
 | Progress | `renderStats` | Coverage per field, sessions, recalls, lapses |
 

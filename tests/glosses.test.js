@@ -41,10 +41,10 @@ test("no gloss is identical to its source text", () => {
   }
 });
 
-test("the gloss file is not loaded by the drill data path", () => {
-  // The drill must never read glosses implicitly; only the reveal button does.
+test("the gloss file is read through one helper", () => {
+  // Translations are visible now, but the drill data must still not carry them
+  // inline. The app reads the separate gloss map in one place.
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   const uses = (app.match(/SEMA_GLOSSES/g) || []).length;
-  // The interface may show no translation at all; it must never read more than a reveal control would.
-  assert.ok(uses <= 2, "SEMA_GLOSSES should appear at most in a reveal control");
+  assert.ok(uses <= 2, "SEMA_GLOSSES should stay behind the gloss helper");
 });

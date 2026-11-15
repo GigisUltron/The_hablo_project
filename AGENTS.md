@@ -76,9 +76,10 @@ Rules of thumb:
 ## 5. Translations are allowed, and visible
 
 The old rule was "never show a translation". That produced `🕊️` for *paz* and taught
-nothing. Translations are now a first-class, default-on feature: every card shows the English
-meaning, and the learner can switch them off in settings. Never let a picture be the only
-clue to a meaning.
+nothing. Translations are a first-class, default-on feature: a new card and an answer state
+show the English meaning, and the learner can switch translations off in Settings. A quiz
+prompt withholds the gloss so it does not give the answer away; every fourth reviewed card is
+a translation exercise instead. Never let a picture be the only clue to a meaning.
 
 ## 6. Verification is the suite, not screenshots
 

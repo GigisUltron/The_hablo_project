@@ -1,9 +1,9 @@
 /* sema — concept dataset.
  *
- * Design rule: a concept is never stored as a translation. Each entry pairs a
- * *non-verbal* anchor (an image) with the target-language sound, plus a
- * target-language sentence for context. There is deliberately no English gloss
- * field: the app has no way to show one.
+ * Design rule: the drill data never carries an English gloss inline. Each entry
+ * pairs a *non-verbal* anchor (an image) with the target-language sound, plus a
+ * target-language sentence for context. English glosses live in glosses.js and
+ * are shown on new cards and answer states; see AGENTS.md §5.
  *
  * Relations form the semantic web that the Map view draws. They are what make
  * "learn the neighbours together" possible instead of learning a list.

@@ -1,13 +1,16 @@
 # sema
 
-A language-learning app that teaches Spanish and French, with translations on by default.
+A language-learning app with thirteen packs — full courses in Spanish, French, English and
+Italian, and starter courses in nine more — with translations on by default.
 
 Each concept arrives as a pair — the picture, the word, the sound — with no English gloss
 anywhere in the data. Then the quiz hides one half and asks you for the other. What you miss
 comes back before the session ends.
 
-Spanish, 42 concepts and 60 phrases, spaced repetition, a semantic map, a lesson builder, and
-audio that ships with the app instead of depending on your operating system.
+The flagship decks carry 42 concepts, 120 phrases, five texts and three conversations;
+starter decks carry 24 concepts, 32 phrases and three texts. Spaced repetition, a semantic
+map, a nine-unit path, a lesson builder, and audio that ships with the app instead of
+depending on your operating system.
 
 ![sema — the Today view](docs/preview.png)
 
@@ -71,15 +74,17 @@ browser can reach the local endpoint and the microphone.
 
 ## What is translated
 
-The **content** is translated: every card shows its English gloss by default, and the setting
-turns that off. The **interface** is partially translated — navigation, setup, settings and the
-four highest-frequency card strings exist in English and Spanish (`src/ui-strings.js`, chosen
-with `profile.uiLang`), while session summaries, toasts and reader copy are still English only.
+The **content** is translated: new cards and answer states show the English meaning by
+default, and Settings can turn it off. Quiz prompts stay in the target language so the answer
+is not given away; every fourth reviewed card is a translation exercise instead of a
+picture match. The **interface** is translated into all thirteen deck languages
+(`src/ui-strings.js` plus `src/ui-langs.js`, chosen with `profile.uiLang`); some session
+summaries, toasts and reader copy are still English only.
 
 ## How it teaches
 
-1. **Meet the pair.** Picture, word, article, sentence and sound together — that is where the
-   association forms. The English meaning is one tap away, and on by default.
+1. **Meet the pair.** Picture, word, article, sentence and sound together — with the English
+   meaning visible on the card. That is where the association forms.
 2. **Get quizzed.** One half is hidden: word from picture, picture from word, or say it aloud.
 3. **Miss and repeat.** A wrong answer is pushed to the back of the same quiz, and scheduled
    ten minutes out rather than tomorrow.
@@ -88,9 +93,10 @@ with `profile.uiLang`), while session summaries, toasts and reader copy are stil
    your own words, your own gap. Nothing else in the app is made of your writing, and that is
    exactly why it works.
 
-The Today screen is deliberately one button: **Start lesson**, eight cards, about a minute.
-Everything else — words or phrases, which fields, session length, mistake review — hides
-behind *Tune the lesson* so it cannot distract from starting.
+The Today screen has one primary action: **Start lesson**, eight cards, about a minute. The
+nine-unit path, review rows and two quiet routes (read a text, have a conversation) sit below
+it; words or phrases, fields, session length and level live in Settings so they cannot
+distract from starting.
 
 What the screen shows is only what earns a return visit: cards due, the streak, how many
 words you know, and how many are solid.

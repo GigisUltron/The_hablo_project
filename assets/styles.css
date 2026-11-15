@@ -1408,6 +1408,15 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 }
 .feedback .gloss-line { color: var(--text); font-weight: 500; }
 
+/* the English meaning on a new card is content, not a hidden control */
+.gloss-text {
+  margin-top: 2px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text);
+}
+
 /* ------------------------------------------------------------------- chat
    The conversation view. Append-only: no existing rule is edited. Tokens
    only, and radii reuse the scale the rest of the file already uses. */

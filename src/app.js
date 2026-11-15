@@ -2196,15 +2196,23 @@
 
   /* A lesson can teach a word or a whole phrase; both present the same shape
    * to the drill, so there is one renderer to maintain instead of two. */
-  /* The English meaning on the teach card. The quiz prompt withholds it; the
-   * answer state prints it in `feedback`, after the learner has committed. */
-  function glossHTML(id) {
-    if ((state.settings && state.settings.translations) === "off") return "";
+  /* Translations are a first-class aid, not a hidden reveal: new cards and
+   * answer states show the English meaning by default. The quiz prompt
+   * withholds it so the learner recalls the target, not the translation. */
+  function translationsOn() {
+    return !state.settings || state.settings.translations !== "off";
+  }
+
+  function glossFor(id) {
+    if (!translationsOn()) return "";
     var g = (window.SEMA_GLOSSES || {})[id];
+    return g ? String(g) : "";
+  }
+
+  function glossLine(id, cls) {
+    var g = glossFor(id);
     if (!g) return "";
-    return '<button class="gloss-btn" type="button" data-gloss="' +
-      String(g).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;") + '">' +
-      tr("glossShow", "show translation") + "</button>";
+    return '<p class="gloss-text' + (cls ? " " + cls : "") + '">' + esc(g) + "</p>";
   }
 
   /* Why the card means what it means: the frame for a connector, the person for
@@ -2232,17 +2240,6 @@
         var on = btn.getAttribute("data-on") === "1";
         btn.setAttribute("data-on", on ? "0" : "1");
         btn.textContent = on ? tr("explain", "why?") : btn.getAttribute("data-why");
-      });
-    });
-  }
-
-  function wireGloss() {
-    Array.prototype.forEach.call(document.querySelectorAll(".gloss-btn"), function (btn) {
-      btn.addEventListener("click", function () {
-        var on = btn.getAttribute("data-on") === "1";
-        btn.setAttribute("data-on", on ? "0" : "1");
-        /* textContent is already literal: escaping here printed &amp;#39; on screen */
-        btn.textContent = on ? tr("glossShow", "show translation") : btn.getAttribute("data-gloss");
       });
     });
   }
@@ -2817,6 +2814,7 @@
         (it.kind === "phrase" ? " · phrase" : "") + "</p>" +
       figureHTML(it, "Hear it") +
       wordsHTML(it) +
+      glossLine(it.id) +
       contextHTML(it);
 
     sayItem(it);
@@ -2887,6 +2885,9 @@
       gap: !!gapFor(link)
     }) : null;
     if (extra) return extra;
+    /* every fourth reviewed card asks for the meaning, so the lesson cannot
+     * turn into picture-matching once the first few items are known */
+    if (glossFor(link) && i % 4 === 3) return "translate";
     var prod = (session.plan && session.plan.production) || 0;
     if (prod >= 2 && i % 2 === 1) return "write";
     if (prod >= 1 && i % 3 === 2) return "write";   // production without a microphone
@@ -2933,6 +2934,7 @@
     else if (type === "build") renderBuild(id);
     else if (type === "listen") renderListen(id);
     else if (type === "gap") renderGap(id);
+    else if (type === "translate") renderTranslate(id);
     else renderPickPicture(id);
   }
 
@@ -2944,6 +2946,50 @@
     return '<button class="option-word' + long + '" data-id="' + esc(id) + '">' +
       '<span class="key" aria-hidden="true">' + (i + 1) + "</span>" +
       '<span class="opt-text">' + articleHTML(it.article) + textHTML(it) + "</span></button>";
+  }
+
+  /* A translation exercise is the other direction: the target is the prompt,
+   * the four English glosses are the choices. It teaches meaning without an
+   * emoji and without giving the target away. */
+  function glossOptionHTML(id, i) {
+    var g = glossFor(id) || itemOf(id).text;
+    var long = g.length > 24 ? " long" : "";
+    return '<button class="option-word' + long + '" data-id="' + esc(id) + '">' +
+      '<span class="key" aria-hidden="true">' + (i + 1) + "</span>" +
+      '<span class="opt-text">' + esc(g) + "</span></button>";
+  }
+
+  function glossDistractors(id, count) {
+    var target = glossFor(id).toLowerCase();
+    var seen = {};
+    seen[target] = true;
+    var pool = [];
+    deckIds().forEach(function (other) {
+      if (other === id) return;
+      var g = glossFor(other);
+      var key = g.toLowerCase();
+      if (!g || seen[key]) return;
+      seen[key] = true;
+      pool.push(other);
+    });
+    return S.shuffle(pool, Math.random).slice(0, count);
+  }
+
+  function renderTranslate(id) {
+    var it = itemOf(id);
+    var set = S.shuffle([id].concat(glossDistractors(id, 3)), Math.random);
+
+    $("stage").innerHTML =
+      '<p class="prompt">' + tr("whichOne", "Which one is this?") + "</p>" +
+      '<div class="say-line">' +
+        '<button class="speak-btn round" id="hear-btn" aria-label="Hear it" title="Hear it">' + ICON.speaker + "</button>" +
+        wordsHTML(it) +
+      "</div>" +
+      '<div class="word-options">' + set.map(glossOptionHTML).join("") + "</div>";
+
+    sayItem(it);
+    $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
+    chooseThenCheck(".option-word", id);
   }
 
   function markChoices(cls, targetId) {
@@ -2960,6 +3006,7 @@
       '<p class="prompt">New</p>' +
       figureHTML(it, "Hear it") +
       wordsHTML(it) +
+      glossLine(it.id) +
       contextHTML(it);
     sayItem(it);
     $("hear-btn").addEventListener("click", function () { sayItem(it, this); });
@@ -2970,9 +3017,8 @@
       tile.setAttribute("aria-label", "Play the audio");
       tile.addEventListener("click", function () { sayItem(it); });
     }
-    $("actions").innerHTML = glossHTML(id) +
+    $("actions").innerHTML = explainHTML(it) +
       '<button class="btn btn-primary" id="gotit">' + tr("gotit", "Got it") + '</button>';
-    wireGloss();
     wireExplain();
     $("gotit").addEventListener("click", function () {
       session.firstCorrect += 1;   // it was taught and acknowledged, not guessed
@@ -3500,9 +3546,7 @@
     var note = it ? confusionNote(it.id) : "";
     /* The English meaning lands with the verdict, not only behind a control.
      * It is deliberately absent before the answer, where it would give it away. */
-    var gloss = it && it.kind !== "basic" && (!state.settings || state.settings.translations !== "off")
-      ? (window.SEMA_GLOSSES || {})[it.id]
-      : "";
+    var gloss = it && it.kind !== "basic" ? glossFor(it.id) : "";
     f.innerHTML = esc(msg) +
       (gloss ? '<span class="why gloss-line">' + esc(gloss) + "</span>" : "") +
       (why ? '<span class="why">' + esc(why) + "</span>" : "") +

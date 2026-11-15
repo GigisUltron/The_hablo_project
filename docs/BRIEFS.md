@@ -65,8 +65,9 @@ relations, and usefulness ordering so the first lessons teach the highest-freque
 - concepts: `{id, emoji, word, article, cat, sentence}`; ids and emoji unique; every edge
   points at a real concept; no orphan concepts; sentence ends in punctuation
 - phrases: `{id, emoji, text, sub, cat}`; `ph-` prefix; ids and emoji unique in the file
-- **no English gloss field of any kind** — the app's premise is that a translation does not
-  exist in the data
+- **English glosses live in `glosses.js`, never inline in the drill data** — new cards and
+  answer states show them by default; the quiz prompt withholds them so it does not give the
+  answer away
 - `sub` is Spanish, eight words or fewer
 
 **Done when:** dataset tests pass and every new id has audio (run the audio lane after this
