@@ -206,6 +206,11 @@ var SEMA_GLOSSES = {
   "t-es-en-la-medida": "insofar as",
   "t-es-aun-cuando": "even when",
   "t-porque": "because",
+  "ph-es-past-home": "I stayed at home yesterday.",
+  "ph-es-past-market": "I went to the market yesterday.",
+  "ph-es-weather-rain": "It's raining today.",
+  "ph-es-weather-nice": "The weather is nice today.",
+  "ph-es-weather-was": "What was the weather like?",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {

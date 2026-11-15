@@ -181,6 +181,11 @@ var SEMA_GLOSSES = {
   "t-it-quindi": "therefore",
   "t-it-mentre": "while",
   "t-perche": "because",
+  "ph-it-past-home": "I stayed at home yesterday.",
+  "ph-it-past-market": "I went to the market yesterday.",
+  "ph-it-weather-rain": "It's raining today.",
+  "ph-it-weather-nice": "The weather is nice today.",
+  "ph-it-weather-was": "What was the weather like?",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {

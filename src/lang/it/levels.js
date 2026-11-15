@@ -181,6 +181,11 @@ var SEMA_LEVELS = {
   "t-it-quindi": "A2",
   "t-it-mentre": "B1",
   "t-perche": "B1",
+  "ph-it-past-home": "A2",
+  "ph-it-past-market": "A2",
+  "ph-it-weather-rain": "A2",
+  "ph-it-weather-nice": "A2",
+  "ph-it-weather-was": "A2",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
 if (typeof window !== "undefined") {

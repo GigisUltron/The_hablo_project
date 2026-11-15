@@ -206,6 +206,11 @@ var SEMA_GLOSSES = {
   "t-fr-a-supposer": "supposing that",
   "t-fr-pour-peu": "provided that",
   "t-parce-que": "because",
+  "ph-fr-past-home": "I stayed at home yesterday.",
+  "ph-fr-past-market": "I went to the market yesterday.",
+  "ph-fr-weather-rain": "It's raining today.",
+  "ph-fr-weather-nice": "The weather is nice today.",
+  "ph-fr-weather-was": "What was the weather like?",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {
