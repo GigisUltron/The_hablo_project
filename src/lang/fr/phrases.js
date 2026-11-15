@@ -141,6 +141,9 @@ var SEMA_PHRASES = {
     { id: "ph-fr-small-talk-day", emoji: "🗨️", text: "Qu'est-ce que tu as fait aujourd'hui ?", sub: "Pour relancer la conversation.", cat: "phrase", topic: "small-talk" },
     { id: "ph-fr-work-schedule", emoji: "🧑‍💼", text: "J'ai une réunion qui finit tard.", sub: "En expliquant un contretemps.", cat: "phrase", topic: "work" },
     { id: "ph-fr-doctor-dizzy", emoji: "🩺", text: "J'ai des vertiges.", sub: "En expliquant un symptôme.", cat: "phrase", topic: "doctor" },
+    { id: "ph-fr-plans-cancel", emoji: "📆", text: "Je dois annuler ce que j'avais prévu samedi.", sub: "Quand un plan tombe à l'eau.", cat: "phrase", topic: "plans" },
+    { id: "ph-fr-plans-conditional", emoji: "🔜", text: "Si tout va bien, on partira la semaine prochaine.", sub: "Un projet encore incertain.", cat: "phrase", topic: "plans" },
+    { id: "ph-fr-plans-depend", emoji: "🧩", text: "Ça dépendra de mon travail, je te dirai ça vendredi.", sub: "Quand la réponse dépend d'autre chose.", cat: "phrase", topic: "plans" },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_PHRASES;

@@ -221,6 +221,9 @@ var SEMA_GLOSSES = {
   "ph-es-small-talk-day": "What have you been up to today?",
   "ph-es-work-schedule": "They've changed my hours.",
   "ph-es-doctor-dizzy": "I feel dizzy.",
+  "ph-es-work-tenure": "I've been at the same company for five years.",
+  "ph-es-work-team": "I'm in charge of a team of six.",
+  "ph-es-work-remote": "As long as I give notice in advance, I can work from home.",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {

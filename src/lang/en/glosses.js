@@ -232,6 +232,9 @@ var SEMA_GLOSSES = {
   "ph-en-tickets-window": "asking for a seat next to the window",
   "ph-en-pharmacy-headache": "asking for medicine for head pain",
   "ph-en-study-revising": "I am studying for tests",
+  "ph-en-past-just-sat": "I had just sat down when the phone rang.",
+  "ph-en-past-driving": "We had driven for hours before we found the turning.",
+  "ph-en-past-pouring": "It had rained heavily all morning, so we stayed indoors.",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {

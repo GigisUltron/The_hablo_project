@@ -221,6 +221,9 @@ var SEMA_LEVELS = {
   "ph-es-small-talk-day": "A2",
   "ph-es-work-schedule": "B1",
   "ph-es-doctor-dizzy": "A2",
+  "ph-es-work-tenure": "B1",
+  "ph-es-work-team": "B1",
+  "ph-es-work-remote": "B2",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
 if (typeof window !== "undefined") {

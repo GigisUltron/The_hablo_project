@@ -141,6 +141,9 @@ var SEMA_PHRASES = {
     { id: "ph-it-small-talk-day", emoji: "🗨️", text: "Che cosa hai fatto oggi?", sub: "Per continuare la conversazione.", cat: "phrase", topic: "small-talk" },
     { id: "ph-it-work-schedule", emoji: "🧑‍💼", text: "Mi hanno cambiato l'orario.", sub: "Raccontando un cambio in ufficio.", cat: "phrase", topic: "work" },
     { id: "ph-it-doctor-dizzy", emoji: "🩺", text: "Mi gira la testa.", sub: "Spiegando un sintomo.", cat: "phrase", topic: "doctor" },
+    { id: "ph-it-opinion-partly", emoji: "💬", text: "Sono d'accordo solo in parte.", sub: "Accordo parziale.", cat: "phrase", topic: "opinions" },
+    { id: "ph-it-opinion-convinced", emoji: "🗣️", text: "Non ne sono convinto, ma capisco le tue ragioni.", sub: "Dubbio espresso con tatto.", cat: "phrase", topic: "opinions" },
+    { id: "ph-it-opinion-concerned", emoji: "🧠", text: "Per quanto mi riguarda, la situazione è migliorata.", sub: "Esprimendo un parere personale.", cat: "phrase", topic: "opinions" },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_PHRASES;

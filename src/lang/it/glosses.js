@@ -196,6 +196,9 @@ var SEMA_GLOSSES = {
   "ph-it-small-talk-day": "What have you been up to today?",
   "ph-it-work-schedule": "They've changed my hours.",
   "ph-it-doctor-dizzy": "I feel dizzy.",
+  "ph-it-opinion-partly": "I only partly agree.",
+  "ph-it-opinion-convinced": "I'm not convinced, but I understand your reasons.",
+  "ph-it-opinion-concerned": "As far as I'm concerned, the situation has improved.",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {

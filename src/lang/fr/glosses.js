@@ -221,6 +221,9 @@ var SEMA_GLOSSES = {
   "ph-fr-small-talk-day": "What have you been up to today?",
   "ph-fr-work-schedule": "I have a meeting that finishes late.",
   "ph-fr-doctor-dizzy": "I feel dizzy.",
+  "ph-fr-plans-cancel": "I have to cancel what I'd planned for Saturday.",
+  "ph-fr-plans-conditional": "If all goes well, we'll leave next week.",
+  "ph-fr-plans-depend": "It will depend on work; I'll tell you on Friday.",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {

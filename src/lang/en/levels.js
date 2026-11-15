@@ -230,6 +230,9 @@ var SEMA_LEVELS = {
   "ph-en-tickets-window": "A2",
   "ph-en-pharmacy-headache": "A2",
   "ph-en-study-revising": "B1",
+  "ph-en-past-just-sat": "B1",
+  "ph-en-past-driving": "B2",
+  "ph-en-past-pouring": "B2",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
 if (typeof window !== "undefined") {

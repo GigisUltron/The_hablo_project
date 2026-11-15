@@ -153,6 +153,9 @@ var SEMA_PHRASES = {
     { id: "ph-en-tickets-window", emoji: "🚄", text: "Can I get a window seat?", sub: "At the ticket desk or on a plane.", cat: "phrase", topic: "tickets" },
     { id: "ph-en-pharmacy-headache", emoji: "🤒", text: "Do you have anything for a headache?", sub: "Buying medicine at a pharmacy.", cat: "phrase", topic: "pharmacy" },
     { id: "ph-en-study-revising", emoji: "📓", text: "I'm revising for my exams.", sub: "Talking about exam preparation.", cat: "phrase", topic: "study" },
+    { id: "ph-en-past-just-sat", emoji: "📷", text: "I'd only just sat down when the phone rang.", sub: "A story interrupted as soon as it began.", cat: "phrase", topic: "past" },
+    { id: "ph-en-past-driving", emoji: "🎞️", text: "We'd been driving for hours before we found the turn-off.", sub: "A long stretch of time before a result.", cat: "phrase", topic: "past" },
+    { id: "ph-en-past-pouring", emoji: "⛈️", text: "It had been pouring all morning, so we stayed in.", sub: "Weather as the background to a choice.", cat: "phrase", topic: "weather" },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_PHRASES;

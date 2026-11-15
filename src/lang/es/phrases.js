@@ -141,6 +141,9 @@ var SEMA_PHRASES = {
     { id: "ph-es-small-talk-day", emoji: "🗨️", text: "¿Qué has hecho hoy?", sub: "Para seguir la conversación.", cat: "phrase", topic: "small-talk" },
     { id: "ph-es-work-schedule", emoji: "🧑‍💼", text: "Me han cambiado el horario.", sub: "Contando un cambio en el trabajo.", cat: "phrase", topic: "work" },
     { id: "ph-es-doctor-dizzy", emoji: "🩺", text: "Me siento mareado.", sub: "Explicando un síntoma.", cat: "phrase", topic: "doctor" },
+    { id: "ph-es-work-tenure", emoji: "🧑‍🏭", text: "Llevo cinco años en la misma empresa.", sub: "Hablando de tu experiencia.", cat: "phrase", topic: "work" },
+    { id: "ph-es-work-team", emoji: "🗂️", text: "Estoy a cargo de un equipo de seis personas.", sub: "Explicando cuál es tu responsabilidad.", cat: "phrase", topic: "work" },
+    { id: "ph-es-work-remote", emoji: "📈", text: "Siempre que avise con antelación, puedo trabajar desde casa.", sub: "Condición para el teletrabajo.", cat: "phrase", topic: "work" },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_PHRASES;
