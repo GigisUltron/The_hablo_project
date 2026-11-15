@@ -3049,7 +3049,7 @@
   function askConfirm(title, body, okLabel, onOk) {
     var modal = $("confirm-modal");
     if (!modal) { if (window.confirm(body)) onOk(); return; }
-    confirmState = { onOk: onOk, last: document.activeElement };
+    confirmState = { onOk: onOk, last: document.activeElement, openedAt: Date.now() };
     $("confirm-title").textContent = title;
     $("confirm-body").textContent = body;
     $("confirm-ok").textContent = okLabel;
@@ -4506,6 +4506,7 @@
   });
   document.addEventListener("keydown", function (ev) {
     if (ev.key !== "Escape" || !confirmState) return;
+    if (Date.now() - (confirmState.openedAt || 0) < 100) return;
     closeConfirm();
   });
   $("chat-form").addEventListener("submit", function (ev) {
@@ -4529,8 +4530,18 @@
   if (SR) $("chat-listen").hidden = false;
   renderChatSettings();
   $("settings-back").addEventListener("click", function () { show("today"); });
-  $("reader-back").addEventListener("click", function () { reader = null; show("today"); });
-  $("alphabet-back").addEventListener("click", function () { alphabet = null; show("today"); });
+  $("reader-back").addEventListener("click", function () {
+    askConfirm(tr("leaveLesson", "Leave lesson?"), tr("leaveLessonConfirm", "Your progress in this lesson will be lost."), tr("leave", "Leave"), function () {
+      reader = null;
+      show("today");
+    });
+  });
+  $("alphabet-back").addEventListener("click", function () {
+    askConfirm(tr("leaveLesson", "Leave lesson?"), tr("leaveLessonConfirm", "Your progress in this lesson will be lost."), tr("leave", "Leave"), function () {
+      alphabet = null;
+      show("today");
+    });
+  });
 
   Array.prototype.forEach.call(document.querySelectorAll("[data-length]"), function (b) {
     b.addEventListener("click", function () {
@@ -4559,20 +4570,34 @@
     });
   });
 
-  $("quit-btn").addEventListener("click", function () {
-    session = null;
-    // backing out of the placement returns to the question, not to a lesson
+  function leaveSession() {
     var lvl = state.profile && state.profile.levelByLang && state.profile.levelByLang[ACTIVE.code];
-    if ((lvl || (state.profile && state.profile.level)) === "?") {
-      placement = null;
-      show("setup");
-      return;
-    }
-    show("today");
-  });
+    askConfirm(
+      tr("leaveLesson", "Leave lesson?"),
+      tr("leaveLessonConfirm", "Your progress in this lesson will be lost."),
+      tr("leave", "Leave"),
+      function () {
+        session = null;
+        // backing out of the placement returns to the question, not to a lesson
+        if ((lvl || (state.profile && state.profile.level)) === "?") {
+          placement = null;
+          show("setup");
+          return;
+        }
+        show("today");
+      }
+    );
+  }
+
+  $("quit-btn").addEventListener("click", leaveSession);
+  $("back-btn").addEventListener("click", leaveSession);
   document.addEventListener("keydown", function (ev) {
     if (currentView !== "session" || !session) return;
-    if (ev.key === "Escape") { session = null; show("today"); return; }
+    if (ev.key === "Escape") {
+      if (confirmState) return;
+      leaveSession();
+      return;
+    }
     if (ev.key === "Enter") {
       /* a focused button already gets its own click from Enter */
       var t = ev.target;

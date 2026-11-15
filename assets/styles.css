@@ -2137,3 +2137,19 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   font-weight: 600;
 }
 .wish-lang:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Progress keeps one path; the analytics live behind one disclosure. */
+.progress-more {
+  margin-top: 18px;
+  border-top: 2px solid var(--fill);
+}
+.progress-more summary {
+  padding: 14px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+  list-style-position: inside;
+}
+.progress-more-body { display: grid; gap: 12px; padding-bottom: 8px; }
+#back-btn { font-size: 24px; line-height: 1; }

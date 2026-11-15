@@ -917,6 +917,19 @@ test("every settings option is read, applied now, and remembered", () => {
   assert.equal(/data-mode=/.test(html), false, "a deck-mode chooser came back");
 });
 
+test("lessons have an explicit back action and confirmation", () => {
+  assert.match(html, /id="back-btn"/, "no back button in the lesson header");
+  assert.match(app, /function leaveSession/, "no leave-session confirmation");
+  assert.match(app, /leaveLessonConfirm/, "no leave copy");
+});
+
+test("Progress hides secondary analytics behind one disclosure", () => {
+  assert.match(html, /class="progress-more"/, "no details disclosure");
+  assert.match(html, /<summary[^>]*data-i18n="moreStats"/, "details have no label");
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(css, /\.progress-more-body \{/, "disclosure body is unstyled");
+});
+
 test("reset lives in a separated danger zone and Progress is a link", () => {
   assert.match(html, /class="danger-zone"/, "no separated destructive area");
   assert.match(app, /askConfirm\(/, "reset is not using the sema dialog");

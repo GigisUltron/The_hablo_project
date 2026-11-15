@@ -68,7 +68,6 @@
             </div>
             <span id="lesson-meta">about 1 min</span>
           </div>
-          <div class="lesson-pics" id="next-stack" aria-hidden="true"></div>
           <p class="lesson-sub" id="start-sub"></p>
           <p class="lesson-goal" id="lesson-goal"></p>
           <button class="btn btn-primary btn-block" id="start-btn" type="button"><span id="start-label" data-i18n="start">Start lesson</span></button>
@@ -109,7 +108,7 @@
           </button>
         </div>
 
-        <section class="group" aria-labelledby="review-title">
+        <section class="group" aria-labelledby="review-title" hidden>
           <h2 class="group-title" id="review-title" data-chrome="upForReview">Up for review</h2>
           <div class="list" id="review-list"></div>
           <button class="btn btn-ghost btn-sm group-action" id="review-all" type="button" data-i18n="review">Review my mistakes</button>
@@ -132,6 +131,7 @@
       <h2 id="session-title" class="sr-only" hidden>Learning session</h2>
 
       <div class="session-head">
+        <button class="icon-btn" id="back-btn" aria-label="Back" title="Back">←</button>
         <button class="icon-btn" id="quit-btn" aria-label="End session" title="End session"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
         <div class="bar" role="progressbar" aria-label="Session progress"><i id="bar-fill"></i></div>
         <span class="counter" id="counter">0/0</span>
@@ -312,31 +312,37 @@
       </div>
 
       <div class="progress-path" id="progress-path"></div>
-      <div class="roadmap" id="progress-roadmap"></div>
 
-      <div class="panel panel-pad">
-        <p class="panel-title" data-i18n="confusedPairs">Most confused pairs</p>
-        <div class="confusions" id="confusions"></div>
-      </div>
+      <details class="progress-more">
+        <summary data-i18n="moreStats">More details</summary>
+        <div class="progress-more-body">
+          <div class="roadmap" id="progress-roadmap"></div>
 
-      <div class="panel panel-pad history">
-        <p class="panel-title" data-i18n="whatRemembers">What the app remembers</p>
-        <div class="mini-stats">
-          <div class="mini"><b id="mem-sentences">0</b><span data-i18n="sentences">sentences</span></div>
-          <div class="mini"><b id="mem-acc">—</b><span data-i18n="accuracy">accuracy</span></div>
-          <div class="mini"><b id="mem-days">0</b><span data-i18n="daysWritten">days written</span></div>
+          <div class="panel panel-pad">
+            <p class="panel-title" data-i18n="confusedPairs">Most confused pairs</p>
+            <div class="confusions" id="confusions"></div>
+          </div>
+
+          <div class="panel panel-pad history">
+            <p class="panel-title" data-i18n="whatRemembers">What the app remembers</p>
+            <div class="mini-stats">
+              <div class="mini"><b id="mem-sentences">0</b><span data-i18n="sentences">sentences</span></div>
+              <div class="mini"><b id="mem-acc">—</b><span data-i18n="accuracy">accuracy</span></div>
+              <div class="mini"><b id="mem-days">0</b><span data-i18n="daysWritten">days written</span></div>
+            </div>
+            <div class="mem-list" id="mem-list"></div>
+          </div>
+
+          <div class="panel panel-pad history">
+            <p class="panel-title" data-i18n="sessionHistory">Session history</p>
+            <div class="mini-stats">
+              <div class="mini"><b id="stat-sessions">0</b><span data-i18n="sessions">sessions</span></div>
+              <div class="mini"><b id="stat-good">0</b><span data-i18n="recalled">recalled</span></div>
+              <div class="mini"><b id="stat-again">0</b><span data-i18n="lapses">lapses</span></div>
+            </div>
+          </div>
         </div>
-        <div class="mem-list" id="mem-list"></div>
-      </div>
-
-      <div class="panel panel-pad history">
-        <p class="panel-title" data-i18n="sessionHistory">Session history</p>
-        <div class="mini-stats">
-          <div class="mini"><b id="stat-sessions">0</b><span data-i18n="sessions">sessions</span></div>
-          <div class="mini"><b id="stat-good">0</b><span data-i18n="recalled">recalled</span></div>
-          <div class="mini"><b id="stat-again">0</b><span data-i18n="lapses">lapses</span></div>
-        </div>
-      </div>
+      </details>
     </section>
 
   </main>
