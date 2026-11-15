@@ -39,6 +39,10 @@ var SEMA_PHRASES = {
     { id: "ph-ja-hotel", emoji: "🛎️", text: "ホテルはどこですか。", sub: "Hoteru wa doko desu ka.", cat: "phrase" },
     { id: "ph-ja-colour", emoji: "🎨", text: "好きな色は何ですか。", sub: "Suki na iro wa nan desu ka.", cat: "phrase" },
     { id: "ph-ja-where-from", emoji: "🏳️", text: "ご出身はどちらですか。", sub: "Goshusshin wa dochira desu ka.", cat: "phrase" },
+    { id: "ph-ja-reservation", emoji: "🏨", text: "予約があります。", sub: "Yoyaku ga arimasu.", cat: "phrase" },
+    { id: "ph-ja-train-time", emoji: "🚆", text: "電車は何時に出ますか。", sub: "Densha wa nanji ni demasu ka.", cat: "phrase" },
+    { id: "ph-ja-pharmacy", emoji: "💊", text: "薬局はどこですか。", sub: "Yakkyoku wa doko desu ka.", cat: "phrase" },
+    { id: "ph-ja-hurts-here", emoji: "🤕", text: "ここが痛いです。", sub: "Koko ga itai desu.", cat: "phrase" },
   ]
 };
 

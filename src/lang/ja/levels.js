@@ -77,6 +77,10 @@ var SEMA_LEVELS = {
   "b-ja-dewa-nai": "A1",
   "ph-ja-colour": "A1",
   "ph-ja-where-from": "A1",
+  "ph-ja-reservation": "A2",
+  "ph-ja-train-time": "A2",
+  "ph-ja-pharmacy": "A1",
+  "ph-ja-hurts-here": "A1",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;

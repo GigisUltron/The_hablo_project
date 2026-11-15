@@ -39,6 +39,10 @@ var SEMA_PHRASES = {
     { id: "ph-hi-hotel", emoji: "🛎️", text: "होटल कहाँ है?", sub: "Hotel kahan hai?", cat: "phrase" },
     { id: "ph-hi-colour", emoji: "🎨", text: "आपका पसंदीदा रंग कौन सा है?", sub: "Aapka pasandida rang kaun sa hai?", cat: "phrase" },
     { id: "ph-hi-where-from", emoji: "🏳️", text: "आप कहाँ से हैं?", sub: "Aap kahan se hain?", cat: "phrase" },
+    { id: "ph-hi-reservation", emoji: "🏨", text: "मेरे पास आरक्षण है।", sub: "Mere paas aarakshan hai.", cat: "phrase" },
+    { id: "ph-hi-train-time", emoji: "🚆", text: "ट्रेन कितने बजे निकलती है?", sub: "Train kitne baje nikalti hai?", cat: "phrase" },
+    { id: "ph-hi-pharmacy", emoji: "💊", text: "फार्मेसी कहाँ है?", sub: "Pharmacy kahan hai?", cat: "phrase" },
+    { id: "ph-hi-hurts-here", emoji: "🤕", text: "यहाँ दर्द होता है।", sub: "Yahan dard hota hai.", cat: "phrase" },
   ]
 };
 

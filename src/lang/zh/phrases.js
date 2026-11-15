@@ -38,6 +38,10 @@ var SEMA_PHRASES = {
     { id: "ph-zh-hotel", emoji: "🛎️", text: "酒店在哪里？", sub: "jiǔ diàn zài nǎ lǐ", cat: "phrase" },
     { id: "ph-zh-colour", emoji: "🎨", text: "你最喜欢什么颜色？", sub: "nǐ zuì xǐ huan shén me yán sè", cat: "phrase" },
     { id: "ph-zh-where-from", emoji: "🏳️", text: "你是哪里人？", sub: "nǐ shì nǎ lǐ rén", cat: "phrase" },
+    { id: "ph-zh-reservation", emoji: "🏨", text: "我有预订。", sub: "wǒ yǒu yù dìng", cat: "phrase" },
+    { id: "ph-zh-train-time", emoji: "🚆", text: "火车几点出发？", sub: "huǒ chē jǐ diǎn chū fā", cat: "phrase" },
+    { id: "ph-zh-pharmacy", emoji: "💊", text: "药店在哪里？", sub: "yào diàn zài nǎ lǐ", cat: "phrase" },
+    { id: "ph-zh-hurts-here", emoji: "🤕", text: "这里疼。", sub: "zhè lǐ téng", cat: "phrase" },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_PHRASES;

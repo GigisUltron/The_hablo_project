@@ -39,6 +39,10 @@ var SEMA_PHRASES = {
     { id: "ph-ar-hotel", emoji: "🛎️", text: "أين الفندق؟", sub: "Ayna al-funduq?", cat: "phrase" },
     { id: "ph-ar-colour", emoji: "🎨", text: "ما لونك المفضل؟", sub: "Ma lawnuka al-mufaddal?", cat: "phrase" },
     { id: "ph-ar-where-from", emoji: "🏳️", text: "من أين أنت؟", sub: "Min ayna anta?", cat: "phrase" },
+    { id: "ph-ar-reservation", emoji: "🏨", text: "لدي حجز.", sub: "Ladayya hajz.", cat: "phrase" },
+    { id: "ph-ar-train-time", emoji: "🚆", text: "متى يغادر القطار؟", sub: "Mata yughadir al-qitar?", cat: "phrase" },
+    { id: "ph-ar-pharmacy", emoji: "💊", text: "أين الصيدلية؟", sub: "Ayna al-saydaliyya?", cat: "phrase" },
+    { id: "ph-ar-hurts-here", emoji: "🤕", text: "يؤلمني هنا.", sub: "Yu'limuni huna.", cat: "phrase" },
   ]
 };
 

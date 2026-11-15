@@ -84,6 +84,10 @@ var SEMA_GLOSSES = {
   "b-zh-bushi": "to not be",
   "ph-zh-colour": "what is your favourite colour?",
   "ph-zh-where-from": "where are you from?",
+  "ph-zh-reservation": "I have a reservation",
+  "ph-zh-train-time": "what time does the train leave?",
+  "ph-zh-pharmacy": "where is the pharmacy?",
+  "ph-zh-hurts-here": "it hurts here",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
