@@ -1570,6 +1570,42 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .chat-clear:hover { color: var(--text); }
 .chat-clear.is-armed { color: var(--accent); }
 
+.coach-panel {
+  margin: 12px 16px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+}
+.coach-panel[hidden] { display: none; }
+.coach-kicker {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.coach-title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.25;
+}
+.coach-copy { margin: 0; color: var(--text-2); font-size: 14px; line-height: 1.4; }
+.coach-note { margin: 0; color: var(--text); font-size: 14px; line-height: 1.4; }
+.coach-chips { display: grid; gap: 6px; }
+.coach-chip {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--card);
+}
+.coach-chip b { font-size: 15px; }
+.coach-chip span { color: var(--text-2); font-size: 13px; }
+.coach-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .chat-who {
   flex: 1;
   min-width: 0;

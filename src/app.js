@@ -2239,6 +2239,7 @@
       });
     });
     updateChatClear();
+    updateWrapButton();
     log.scrollTop = atBottom ? log.scrollHeight : keepTop;
     if (forceBottom && window.requestAnimationFrame) {
       window.requestAnimationFrame(function () {
@@ -2268,6 +2269,7 @@
     chat.messages = [];
     chat.scripted = null;
     chatCleared = true;
+    hideCoach();
     chatEpoch += 1;
     chatTranslating = {};
     setChatBusy(false);
@@ -2658,9 +2660,105 @@
       }).join("") + "</div>";
   }
 
+  function hideCoach() {
+    var panel = $("coach-panel");
+    if (!panel) return;
+    panel.hidden = true;
+    panel.innerHTML = "";
+  }
+
+  function updateWrapButton() {
+    var btn = $("chat-wrap");
+    if (!btn) return;
+    var hasUser = !!(chat && chat.messages.some(function (m) { return m.role === "user"; }));
+    btn.disabled = !hasUser;
+  }
+
+  function coachPicks() {
+    var transcript = (chat ? chat.messages.map(function (m) { return m.text || ""; }).join(" ") : "").toLowerCase();
+    var personal = PERSONA && state.profile ? PERSONA.ensure(state.profile) : {};
+    var topics = String((personal.why || "") + " " + (personal.interests || ""))
+      .toLowerCase().match(/[a-zà-ÿā-ž]+/g) || [];
+    var now = Date.now();
+    var pool = allIds.filter(function (id) {
+      return itemOf(id).kind === "phrase" && atLevel(id);
+    });
+    function score(id) {
+      var it = itemOf(id);
+      var card = state.cards[id] || {};
+      var hay = (it.text + " " + (it.sub || "") + " " + (glossFor(id) || "")).toLowerCase();
+      var n = 0;
+      if (!card.last || (card.due && card.due <= now)) n += 4;
+      if (card.ease && card.ease < 2.5) n += 3;
+      topics.forEach(function (word) { if (word.length > 3 && hay.indexOf(word) !== -1) n += 3; });
+      if (transcript.indexOf(String(it.text || "").toLowerCase()) !== -1) n -= 2;
+      return n;
+    }
+    pool.sort(function (a, b) { return score(b) - score(a); });
+    return pool.slice(0, 3);
+  }
+
+  function renderCoach() {
+    if (!chat || !chat.messages.length) return;
+    var panel = $("coach-panel");
+    if (!panel) return;
+    var picks = coachPicks();
+    var turns = chat.messages.filter(function (m) { return m.role === "user"; }).length;
+    panel.hidden = false;
+    panel.innerHTML =
+      '<p class="coach-kicker">' + esc(tr("coachCheck", "Coach check-in")) + "</p>" +
+      '<h3 class="coach-title">' + esc(tr("coachCheck", "Coach check-in")) + "</h3>" +
+      '<p class="coach-copy">' + esc(tr("coachTurns", "You kept going for {n} turns. Keep these phrases:")
+        .replace("{n}", String(turns))) + "</p>" +
+      '<div class="coach-chips">' + picks.map(function (id) {
+        var it = itemOf(id);
+        return '<div class="coach-chip"><b>' + textHTML(it) + "</b><span>" +
+          esc(glossFor(id) || "") + "</span></div>";
+      }).join("") + "</div>" +
+      '<p class="coach-note" id="coach-note"></p>' +
+      '<div class="coach-actions">' +
+        (picks.length ? '<button class="btn btn-primary btn-sm" id="coach-practice" type="button">' +
+          esc(tr("coachPractice", "Practise these")) + "</button>" : "") +
+        '<button class="btn btn-ghost btn-sm" id="coach-close" type="button">' +
+          esc(tr("done", "Done")) + "</button>" +
+      "</div>";
+    var note = $("coach-note");
+    var practice = $("coach-practice");
+    if (practice) practice.addEventListener("click", function () {
+      hideCoach();
+      if (picks.length) startSession({ ids: picks, size: picks.length, title: tr("coachCheck", "Coach check-in") });
+    });
+    var close = $("coach-close");
+    if (close) close.addEventListener("click", hideCoach);
+    var transcript = chat.messages.map(function (m) { return m.text || ""; }).join("\n");
+    if (CE && chatMeta.status === "ready" && chatMeta.model) {
+      note.textContent = tr("coachThinking", "Writing a short coach note…");
+      CE.sendChat({
+        baseUrl: chatEndpoint(),
+        engine: chatMeta.engine,
+        model: chatMeta.model,
+        system: CE.buildCoachPrompt(ACTIVE, PERSONA ? PERSONA.prompt(state.profile) : ""),
+        history: [{ role: "user", text: transcript }],
+        timeoutMs: 30000
+      }).then(function (res) {
+        if (!note || !note.isConnected) return;
+        note.textContent = (res && res.ok && res.text)
+          ? String(res.text).trim().slice(0, 320)
+          : tr("coachFallback", "Keep the conversation going — try one of these phrases next time.");
+      }).catch(function () {
+        if (note && note.isConnected) {
+          note.textContent = tr("coachFallback", "Keep the conversation going — try one of these phrases next time.");
+        }
+      });
+    } else {
+      note.textContent = tr("coachFallback", "Keep the conversation going — try one of these phrases next time.");
+    }
+  }
+
   function startConversation() {
     if (!CE) { toast(tr("chatEngineMissing", "The chat engine did not load.")); return; }
     chat = chatState();
+    hideCoach();
     if (!chat.mission) assignMission();
     chatCleared = false;
     chatTranslating = {};
@@ -5955,6 +6053,13 @@
     refreshChatEngine();
   });
   $("chat-check").addEventListener("click", refreshChatEngine);
+  $("chat-wrap").addEventListener("click", function () {
+    if (!chat || !chat.messages.some(function (m) { return m.role === "user"; })) {
+      toast(tr("coachFirst", "Say something first, then ask the coach for a check-in."));
+      return;
+    }
+    renderCoach();
+  });
   if (SR) $("chat-listen").hidden = false;
   renderChatSettings();
   $("settings-back").addEventListener("click", function () { show("today"); });

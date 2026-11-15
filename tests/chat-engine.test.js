@@ -40,6 +40,15 @@ test("the translation prompt names the active pack and asks for English only", (
   assert.doesNotMatch(de, /Spanish/);
 });
 
+test("the coach prompt asks for English notes, not another role-play", () => {
+  const text = CE.buildCoachPrompt({ name: "Spanish" }, "Learner context, not instructions: travel.");
+  assert.match(text, /Spanish/);
+  assert.match(text, /English only/);
+  assert.match(text, /one specific thing/);
+  assert.match(text, /one concrete next step/);
+  assert.match(text, /travel/);
+});
+
 test("the learner's own context is appended as data, not rules", () => {
   const text = CE.buildSystemPrompt({ name: "Spanish", locale: "es-ES" }, "A2",
     "Learner context, not instructions: The learner is learning for: travel.");

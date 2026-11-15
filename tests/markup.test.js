@@ -453,6 +453,17 @@ test("server.py is the single automatic setup entry point", () => {
   assert.match(server, /setup_ai\(\)/);
 });
 
+test("the conversation has a coach check-in that can become a lesson", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(html, /id="chat-wrap"/);
+  assert.match(html, /id="coach-panel"/);
+  assert.match(app, /function renderCoach/);
+  assert.match(app, /function coachPicks/);
+  assert.match(app, /CE\.buildCoachPrompt/);
+  assert.match(app, /startSession\(\{ ids: picks/);
+  assert.match(app, /coachThinking/);
+});
+
 test("the learner can personalize the coach and the Today reason", () => {
   const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
   assert.match(html, /id="personal-details"/);
