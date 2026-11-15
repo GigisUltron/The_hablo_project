@@ -1,4 +1,4 @@
-# sema
+# hablo
 
 A language-learning app with thirteen packs — full courses in Spanish, French, English and
 Italian, and starter courses in nine more — with translations on by default.
@@ -14,7 +14,7 @@ English and Italian. Spaced repetition, a semantic
 map, a twelve-lesson tutor path from first contact to a B1 bridge, a lesson builder, and audio
 that ships with the app instead of depending on your operating system.
 
-![sema — the Today view](docs/preview.png)
+![hablo — the Today view](docs/preview.png)
 
 ## Run it
 

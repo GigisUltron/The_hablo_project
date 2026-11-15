@@ -255,12 +255,13 @@ test("no concept carries a translation field", () => {
   }
 });
 
-test("the brand mark is a path of three steps, the top one solid", () => {
+test("the brand is hablo with an inline conversation mark", () => {
   assert.match(html, /<svg class="brand-mark"/, "no inline mark");
   assert.equal(/brand-badge/.test(html), false, "the letter badge is gone");
   assert.equal(/<img\b/.test(html), false, "the mark must not be an image");
-  assert.equal((html.match(/class="mark-step"/g) || []).length, 2, "two open steps");
-  assert.match(html, /class="mark-solid"/, "the filled step is missing");
+  assert.match(html, /class="mark-bubble"/, "the speech bubble is missing");
+  assert.match(html, /class="mark-dot"/, "the reply dot is missing");
+  assert.match(html, />hablo<\/span>/, "the app name is not hablo");
   const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
   assert.match(css, /\.brand-mark\s*\{/, "no .brand-mark rule");
   assert.match(css, /\.brand-mark[^}]*stroke:\s*currentColor/s, "the mark does not follow the text");

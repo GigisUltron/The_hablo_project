@@ -4445,7 +4445,6 @@
   $("start-btn").addEventListener("click", function () {
     startSession({ unit: defaultUnit() });
   });
-  $("review-start").addEventListener("click", reviewMistakes);
   $("wish-form").addEventListener("submit", function (ev) {
     ev.preventDefault();
     var input = $("wish-input");

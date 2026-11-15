@@ -1,4 +1,4 @@
-# sema — meaning-first language learning
+# hablo — meaning-first language learning
 
 A working front-end demo of a language app that teaches the target first, then checks it.
 
@@ -12,7 +12,7 @@ builder that chooses what you study, spoken production, a twelve-lesson tutor pa
 contact to a B1 bridge —
 and audio that ships with the app instead of depending on your operating system.
 
-![sema — the Today view](docs/preview.png)
+![hablo — the Today view](docs/preview.png)
 
 ## Run it
 
