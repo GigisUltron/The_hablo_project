@@ -245,6 +245,19 @@ test("english teaches idioms, not a translation of itself", () => {
   assert.ok(phrases.some((p) => levels[p.id] === "C1"), "english has no C1 phrase");
 });
 
+test("no pack teaches the same phrase text twice", () => {
+  const L = require("../src/lang/index.js");
+  for (const meta of L.list()) {
+    const phrases = L.load(meta.code).phrases.phrases || [];
+    const seen = new Map();
+    for (const p of phrases) {
+      const key = String(p.text || "").trim().toLowerCase();
+      assert.ok(!seen.has(key), `${meta.code}: duplicate phrase "${p.text}" (${p.id} and ${seen.get(key)})`);
+      seen.set(key, p.id);
+    }
+  }
+});
+
 test("every pack names four opening phrases that exist", () => {
   const seen = new Map();
   for (const code of codes) {

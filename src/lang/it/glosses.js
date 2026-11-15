@@ -182,7 +182,7 @@ var SEMA_GLOSSES = {
   "t-it-mentre": "while",
   "t-perche": "because",
   "ph-it-past-home": "I stayed at home yesterday.",
-  "ph-it-past-market": "I went to the market yesterday.",
+  "ph-it-past-market": "I bought fruit yesterday.",
   "ph-it-weather-rain": "It's raining today.",
   "ph-it-weather-nice": "The weather is nice today.",
   "ph-it-weather-was": "What was the weather like?",

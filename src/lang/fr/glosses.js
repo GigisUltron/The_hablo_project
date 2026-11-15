@@ -207,7 +207,7 @@ var SEMA_GLOSSES = {
   "t-fr-pour-peu": "provided that",
   "t-parce-que": "because",
   "ph-fr-past-home": "I stayed at home yesterday.",
-  "ph-fr-past-market": "I went to the market yesterday.",
+  "ph-fr-past-market": "I bought fruit yesterday.",
   "ph-fr-weather-rain": "It's raining today.",
   "ph-fr-weather-nice": "The weather is nice today.",
   "ph-fr-weather-was": "What was the weather like?",

@@ -127,7 +127,7 @@ var SEMA_PHRASES = {
     { id: "ph-it-museum-near", emoji: "🏛️", text: "C'è un museo qui vicino?", sub: "Chiedendo indicazioni.", cat: "phrase", topic: "city" },
     { id: "ph-it-cash", emoji: "💵", text: "Accettate contanti?", sub: "Alla cassa.", cat: "phrase", topic: "money" },
     { id: "ph-it-past-home", emoji: "🏡", text: "Ieri sono rimasto a casa.", sub: "Ieri, a casa.", cat: "phrase", topic: "past" },
-    { id: "ph-it-past-market", emoji: "🏪", text: "Ieri sono andato al mercato.", sub: "Ieri, a fare la spesa.", cat: "phrase", topic: "past" },
+    { id: "ph-it-past-market", emoji: "🏪", text: "Ieri ho comprato la frutta.", sub: "Ieri, comprando frutta.", cat: "phrase", topic: "past" },
     { id: "ph-it-weather-rain", emoji: "☔", text: "Oggi piove.", sub: "Parlando del tempo.", cat: "phrase", topic: "weather" },
     { id: "ph-it-weather-nice", emoji: "🌞", text: "Oggi fa bello.", sub: "Parlando del tempo.", cat: "phrase", topic: "weather" },
     { id: "ph-it-weather-was", emoji: "🌥️", text: "Che tempo faceva?", sub: "Chiedere del tempo passato.", cat: "phrase", topic: "weather" },
