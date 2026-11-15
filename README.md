@@ -1,272 +1,33 @@
-# hablo
+# Hablo
+Track: Language + AI
+Team: Lev Dudin, Aleksandr Loginov, Ian Akopian
 
-**Learn a language by using it, not by memorising a catalogue of translations.**
+## The problem
 
-hablo is a dependency-free, local-first language app with **13 language packs**. Spanish, French, English and Italian are the flagship courses, with full phrase decks; German, Dutch, Portuguese, Russian, Turkish, Arabic, Hindi, Japanese and Chinese are starter courses that use the same learning engine.
+People who need a language for real situations (a dinner out, a pharmacy, a cousin's wedding) are usually taught from long translated word lists, and forget most of it. Many learners also can't or won't use apps that need an account, a server or a paid AI model. Hablo teaches through short daily lessons built around situations, works fully offline, and keeps all progress on the learner's own device.
 
-There are no accounts, no analytics and no remote service. Progress lives in your browser. A local model server is optional; the app installs as an offline-capable PWA on localhost or HTTPS.
+## What we built
+Hablo is a language app in the browser with 13 languages. No account, and
+everything stays on your computer. You get short lessons (1–2 minutes) with
+new words and reviews of old ones, in many types of tasks. You can also write
+a situation, like "dinner out, I want pizza", and get a lesson for it. There
+is also a chat partner and short texts to read.
 
-## Start it
 
-Use Python 3:
+## How it works
+4 big courses (about 140 phrases each),
+9 small ones (about 40–50 phrases), and 24 dialogues for the chat. Every item
+has a level from A1 to C1. 1,706 sound files.
 
-```sh
-python3 serve.py
-```
+Model: by default the chat uses a small AI on your computer (Qwen2.5-0.5B).
+Without it, the app uses a simple chat partner we wrote ourselves: it finds
+the best sentence from the course and follows our dialogues. Lessons show
+each word again just before you forget it.
 
-This is the whole setup. On first run it creates an isolated `.tools/ai-venv`,
-installs `llama-cpp-python[server]`, downloads the best local model the machine
-can run (0.5B, 1.5B, 3B, or 4B depending on free RAM), starts that model beside
-the app, serves the folder, and opens the browser. Later runs reuse the model
-and start immediately. The first run needs network access for pip and the
-download; if setup cannot finish, the app still starts with the authored
-practice and the conversation falls back to it.
+## Results
 
-```sh
-python3 serve.py --offline      # app only: no install, no model
-python3 serve.py --port 9000    # pin the app port
-python3 serve.py --no-open      # do not open a browser
-make serve                      # same as python3 serve.py
-```
 
-The app itself is still standard-library only and has no build step. The model
-is optional and runs only on the local machine. `python3 server.py` and
-`make ai` remain as the older wrapper: they run the installer first and then
-the same server.
+## What we'd do next
 
-Open the printed `http://localhost:…` address rather than `index.html` directly. Microphone features need a secure context, and `file://` does not provide one.
-
-## First run
-
-1. Choose the **language you want to learn**.
-2. Choose the **interface language**. It stays independent of the learning language.
-3. Optionally choose **Travel / Work / Family / Culture**. It fills the local why, is never required, and can be changed later.
-4. Press **I'm new** to start at the beginning, or **Test me** to take the entry exam.
-5. The entry exam adapts while you answer: three correct answers in a row move it up a band, a miss steps it back, and a perfect run can open C1. The current band is shown in the counter.
-
-Your first language is added automatically. To add another later, open **Settings → Your languages → Add language**, choose a language, and complete that language's entry exam. Each language keeps its own level, cards, reviews and conversation history; XP, coins and the saved custom-lesson list are shared across the profile, and each saved lesson records its language.
-
-Removing a language is deliberate: press the **×** on its card, then confirm. Its local progress for that language is deleted and cannot be undone. The last remaining language cannot be removed.
-
-## The learning loop
-
-The primary action on **Today** is **Start lesson**.
-
-A lesson mixes:
-
-- new cards that teach the word, meaning, sound and usage
-- recall of words from earlier lessons
-- production, listening, matching, sentence building and message completion
-- a short end-of-session review for what you missed
-
-With **Settings → Translations** switched off, a lesson still runs the same loop: every new card is taught rather than asked cold, review cards use meaning-free tasks — build a sentence, complete a message, listen and type, or listen and pick — instead of a translation prompt, and grammar cards whose only prompt would be a translation are held back. Vocabulary expansion hides its reveal control, so the card becomes self-assessment.
-
-Lessons use spaced repetition. What you miss comes back before the session ends and again when it is due. A missed card offers **Ask coach**, a rules-first explanation built from the correct form, its meaning and your answer; it never asks a model to invent grammar. The end screen's coach note is built from the actual kept and missed cards, not model prose. The optional **one sentence with today's words** box still has **Check sentence**, which asks the local model for a wording suggestion; its output is labelled as a suggestion, guarded, and the 0.5B tier refuses grammar claims rather than pretending. **One more** starts a short pass on real weak or missed items rather than a generic new lesson. **Talk it through** carries the same kept/missed phrases into a conversation mission.
-
-### Installable and offline
-
-On `localhost` or HTTPS the app registers a small service worker, advertises a web manifest and can be installed to the home screen. The worker fetches the real shell and every loaded script into a cache, then uses network-first with a cache/offline fallback; it never touches the local-model origin. Audio is cached as it is played. On `file://` or in a browser without service workers nothing changes: the app still runs from disk.
-
-The manifest, icons and worker are ordinary files in the repository — no build step and no dependency.
-
-### Scripts
-
-Non-Latin packs open on a script lesson. Each letter is a recall card: the shape is shown alone first, **Show the sound** reveals its name, an English sound hint and an example word with audio, and only then does **Next letter** save it. A short **All letters** grid is available from any card and at the finish, so the whole alphabet can be scanned and heard quickly. **Quiz** tests five letter/name pairs and marks correct letters as known. The script's own note (direction, joined forms, inherent vowels) is available in the card.
-
-### Exercise types
-
-- **Choose the meaning** and **choose the target**
-- **Type the translation**
-- **Listen and type**
-- **Listen and choose**
-- **Build a sentence**
-- **Complete a message**
-- **Match three pairs** — all three must be completed; selected, correct and wrong states are visible
-- **Say it** where the browser supports speech recognition; a model audio button, one low attempt that reveals the target and the words the recogniser missed, and a retry before grading
-- **Roleplay** — one tap from Practice opens an AI scene using the local why/interests, or a friendly café default
-
-### Vocabulary expansion
-
-**Expand vocabulary** is a separate, deliberately minimal mode:
-
-- one synonym question at a time, never a recall-meaning card in front of it
-- the meaning stays hidden until after you answer; a **show translation** control is optional
-- every correct answer feeds the same SRS as lessons; wrong words return in the session
-- a correct synonym advances by itself; **Continue** appears only after a miss
-- after a run of correct answers the task gets harder: more options, then closer same-field distractors
-- the synonym pool respects your placed ceiling; the recall fallback starts near your band
-- the whole set is authored synonym pairs; a small starter pack repeats its pairs to fill the session
-- a missed-word review is one button away at the end
-- vocabulary statistics persist in local state; a session also pays XP and coins
-- answering feeds the SRS, but it does **not** unlock the next path lesson — only a lesson does that
-- skipping a typing card removes it from the queue; it earns no XP, coin, streak or path progress
-- **personal anchors** remain available on the recall fallback for packs without synonym pairs
-
-### Advanced vocabulary
-
-Every pack now carries five B1/B2 abstract words — decision, purpose, challenge, achievement and risk — with sentences, English glosses, synonym tasks and local audio. They appear once the learner’s band reaches them, so a C1 placement is no longer opened on A1 words alone. The path is unchanged; these words extend lessons and synonym practice across all thirteen languages.
-
-### Reading
-
-Each full course has eight reading texts, graded A1–C1. Starter courses have seven, graded A1–B2, including B1 and B2 texts that use the advanced layer. Every text has three multiple-choice questions and an explanation for each wrong option. Every word the course has authored is tappable: it is spoken, its meaning appears when translations are on, and the words touched are offered at the finish as a one-card-per-word practice session. Questions use the same **select, then Check** interaction as lessons, so a stray tap is not graded. The text screen also has **Listen to text**, which reads the title and body through the same installed voice used by conversation, and **Write me a text**, which asks the local model for a short new text at the learner's level using the personal context. Generated texts get a short cloze comprehension check built from their own sentences; if no model answers, the packed text stays.
-
-### Conversation
-
-**Have a conversation** always works without a model. The local model is the default when one is running; if none answers, the app falls back to its own predictor and the active pack’s authored dialogue. The fallback follows authored turns where they fit, uses recent context, classifies greetings/thanks/yes-no/name/question intents, avoids repeating recent replies and refuses to echo or return runaway text. Even when the model is live, the first turn is an authored target-language opener, so the learner has something concrete to answer instead of an empty box.
-
-When a local model is connected, its reply streams into the conversation as it arrives and the send control becomes **Stop** while the reply is in flight; stopping keeps the text already shown. Leaving the conversation, clearing it, or opening another conversation aborts the same stream, and a stopped reply never falls back to the scripted partner. Prompts are grounded in the active pack: the app picks up to three authored phrases that overlap the learner's last message and passes them to the model as course phrases it may reuse, with an instruction not to invent vocabulary outside the course.
-
-Assistant replies are spoken automatically through the browser’s installed speech voices when audio is on. A local target-language voice is preferred; if the device exposes only another installed voice, that is used as a fallback so the reply is not silent. If the voice list arrives late, the reply is queued until a voice appears. **Settings → Speak replies** turns the automatic voice off without muting card audio.
-
-The first-run screen offers an optional **Travel / Work / Family / Culture** why chip; it never gates the lesson and can be changed later. **Settings → Personalize** stores two short local notes: why you are learning and what you like. They are shown on Today, used by the local coach for examples and scenarios, and never sent to a remote service by the app. They are not a quiz and not required.
-
-**Hands-free** is an opt-in voice loop on the conversation screen. Turn it on, speak, and the recognised message is sent; after the assistant replies and finishes speaking, the microphone opens again. It turns off when you leave the screen, when you clear the chat, or when microphone permission is refused. Browser speech recognition still requires a secure context and a supported browser; the typed conversation always remains available.
-
-A **transfer mission** appears above the conversation. It asks you to use two or three weak/due phrases in the conversation. A phrase counts only when you actually write it; completing the mission gives a small XP award. Coach check-ins select real authored phrases and use a rules-first note; the model may open a roleplay or write a practice text, but it is not allowed to replace data-derived coaching with generic self-talk. The mission's phrases are also passed to the conversation model with an instruction to create natural openings for them, not to list or quiz them. The session summary's **Talk it through** carries the lesson's kept/missed phrases into that mission.
-
-The check-in also shows the learner side from the transcript: turns, words, questions and how many selected target phrases were actually used. These are counts, not model praise.
-
-A local model is optional but it is now the only conversation-engine path when present: Settings has no engine chooser. Press **Find local model**; the app probes `http://localhost:8080`, `http://localhost:8081` and `http://localhost:11434`, stores the endpoint and model, and uses the first model that answers. Both llama.cpp's `llama-server` / `llama-cpp-python` and Ollama work. On this path the reply streams into the conversation, **Stop** aborts the request, and the prompt carries up to three authored phrases from the live pack that the model may reuse but must not replace with invented vocabulary. Without one, no conversation leaves the device; the authored fallback runs.
-
-Settings → Local model also has **Test reply**: it sends one short prompt and shows the actual model reply, or the plain “no model answered” line. This is a real end-to-end check from the same page where the endpoint is configured.
-
-The same endpoint is used by the word-set **Suggest words** button and the planned-lesson **Suggest with local model** button. `python3 serve.py` is the whole setup:
-
-```sh
-python3 serve.py
-```
-
-It runs [tools/install_ai.py](tools/install_ai.py), which creates an isolated `.tools/ai-venv`, installs `llama-cpp-python[server]` from [tools/requirements-ai.txt](tools/requirements-ai.txt), and downloads the best Qwen tier the machine can run: 0.5B, 1.5B, 3B, or Qwen3 4B (roughly 0.5–2.5 GB). It then starts the app and model together. The app probes `8080`, `8081` and `11434`, so it finds the model without changing Settings. It checks free RAM before starting, reduces the context when memory is tight, and stops the model if free memory falls below 350 MB. If no model is running, conversation and the assists fall back to the authored pack rather than failing.
-
-The individual pieces remain available for a custom setup: `python3 tools/install_ai.py` installs/downloads only, and `python3 serve.py` starts an installed app + model without repeating a successful setup.
-
-### Planned lessons
-
-**Plan a lesson** builds a lesson from a natural-language request such as:
-
-- “dinner out, I want pizza”
-- “a cousin’s wedding”
-- “hotel check-in”
-- “pharmacy and doctor”
-- “train to the airport”
-
-Choose the lesson language explicitly. The planner detects the situation, selects the strongest matching phrases, adds due revision, and saves the lesson’s language and focus. Saved lessons can be reopened or deleted from Today.
-
-The planner does not invent a town dialect. If a dialect is not in the pack, it uses the standard language and says so. With a local model connected, **Suggest with local model** extracts extra keywords and situations from your request; if no model answers, the rule-based planner still builds the lesson.
-
-**Roleplay** starts a conversation from the same request. The local model opens in character in the target language, using the local why/interests, and the app seeds a mission from the matching pack phrases. If no model answers, the authored conversation opens instead and the app says so. The active scene is shown above the conversation.
-
-### Words you need
-
-**Learn specific words** is the narrow version of a planned lesson. Paste a list — one word per line, or separated by commas — and the app matches it against the active pack's concepts, phrases, terms and grammar. It shows:
-
-- the words it will teach, with their meaning
-- the words the pack does not have yet, honestly labelled
-- up to four due reviews, so the session still maintains what is already learned
-
-The set is saved in **My lessons** and can be reopened or deleted. It does not invent vocabulary: a word the pack has not authored is reported, not guessed. This is the feature for a menu, a work meeting, a hospital visit or any list that a generic course does not cover.
-
-You do not have to bring the list yourself. Name an area — “cooking”, “the gym”, “a job interview” — and press **Suggest words**. With a local model connected, hablo asks it for target words and then matches only authored items; without one, it uses the pack’s topic planner and says so.
-
-## Language library
-
-Settings lists every language you are learning with its flag, name and level. Selecting a card switches language. **Add language** starts a new entry exam. **×** removes a language after confirmation.
-
-The interface-language selector is separate and does not change when you switch learning languages.
-
-## Progress
-
-**Progress** shows the real counts behind the course: level, words met, words solid (interval at least six days), words the learner has produced correctly, recall accuracy with its sample size, cards due, the path, topic rings, confused pairs, kept sentences and session totals. Production is counted only on generated answers, not on multiple-choice recognition, and it does not alter the SRS interval. **Practice producing** starts a short session of cards that were recognized but never produced, or whose last correct production is at least 14 days old, using build/write/translate/message tasks instead of multiple choice. A seven-day strip shows the actual cards finished each day from local data; empty days are shown without guilt copy. The **Coach read** is rules-first and written from those counts, not model prose or invented XP. It states the real met/solid/due/produced numbers and a next step; the model is used for generative practice, not for inventing progress.
-
-
-Coins are **earned**, never bought. A finished lesson pays for first-try answers and a clean sheet; expanding vocabulary pays for each correct word; reaching the daily goal pays once. They buy **looks only** — three accent themes in **Settings → Look**:
-
-| look | cost |
-|---|---|
-| Ember | free |
-| Plum | 60 coins |
-| Moss | 120 coins |
-
-There is no pay-to-win, no loot, no energy and no learning locked behind the currency. The point is a small, honest pull to come back and finish a card. Today also shows a thin daily-goal bar, and crossing a 100-XP level adds a short, earned level line to the session summary.
-
-## What is local
-
-Settings → **Your data** downloads a JSON backup of the complete local state and can import one after confirmation. Nothing is uploaded; importing replaces local progress only after the same confirmation dialog used for destructive actions. The format is versioned and validated before it touches storage.
-
-
-- Progress, XP, coins, levels, streaks, statistics, vocabulary anchors, custom lessons, word sets and chat history use `localStorage`.
-- The chosen accent and the unlocked looks are stored with the same state.
-- The storage key is intentionally `sema.v1` for compatibility with older saves.
-- Audio ships with the app as pre-rendered WAV files, generated with Piper neural voices; browser speech synthesis is the fallback.
-- No account, no analytics, no tracking.
-- Conversation with no model never leaves the device; a configured model runs locally.
-- A configured local model receives only the conversation and prompt for the feature you invoke.
-- On localhost/HTTPS the service worker caches the app shell and scripts for offline startup; audio is cached as it is played. It never caches the model origin.
-
-## Audio
-
-Every item ships as a pre-rendered WAV clip, so playback does not depend on a voice installed in the operating system. The clips are generated from the pack data with Piper neural voices, one voice per language, then trimmed, edge-faded, peak-normalised and resampled to the app's 16 kHz mono contract. Spanish keeps its historical flat `assets/audio/` folder; every other pack lives in `assets/audio/<code>/`.
-
-The model files are **not** in the repository. To regenerate a pack on a machine with Piper installed:
-
-```sh
-python3 tools/make_audio.py --lang fr --engine piper --voice /path/to/fr_FR-siwis-medium.onnx
-python3 tools/make_audio.py --lang fr --check
-```
-
-`--check` verifies manifest coverage, that every clip exists, and that it is mono 16-bit PCM at 16 kHz. The app never loads Piper or a model at runtime; it only plays the WAV files, and falls back to the browser's speech synthesis if a clip is missing.
-
-## Verify it
-
-```sh
-make check                         # syntax gate + full test suite
-node --test tests/                 # tests only
-make audio-check                   # every pack: manifest coverage and WAV contract
-make integration                   # server + content/audio + real 1.5B model when installed
-```
-
-`make audio-check` runs the checker once per pack code, from `es` to `zh`, and fails if any pack fails. The bare `python3 tools/make_audio.py --check` covers only the default Spanish pack; pass `--lang <code>` to check one other pack.
-
-## Repository layout
-
-```text
-index.html                 shell and views
-assets/styles.css          visual system
-assets/audio/              pre-rendered WAVs and manifests
-src/app.js                 application flow, lesson loop, views, SRS integration
-src/lang/<code>/           per-language concepts, phrases, texts, dialogues, levels, glosses
-src/ui-strings.js          base interface strings
-src/ui-langs.js            extra interface locale tables
-src/ui-extra.js            newer interface strings
-src/srs.js                 scheduling and answer matching
-src/memory.js              personal sentences and cloze cards
-src/wordset.js             word-list matching for a focused lesson
-src/synonyms.js            authored synonym questions in vocabulary expansion
-src/ai-tools.js            local-model output parsing
-src/coach.js               guardrails for optional model coaching
-src/conversation.js        learner-side conversation counts
-src/pronunciation.js       missed-word speech feedback
-src/persona.js             local why/interests context
-src/backup.js              versioned JSON backup
-src/economy.js             earned coins and the cosmetic look costs
-src/chat-engine.js         optional local-model adapter
-src/mini-chat.js           dependency-free offline conversation predictor
-src/exercises.js           extra exercise helpers
-src/track.js               curriculum track
-src/curriculum.js          topic and unit resolution
-src/pwa.js                 service-worker registration
-manifest.webmanifest       installable app metadata
-sw.js                      offline shell and cache policy
-tools/make_audio.py        audio generator and checker
-tools/model_policy.py      RAM-aware 0.5B/1.5B/3B/4B selection
-tests/                     node:test suites
-serve.py                   app server; installs and starts the local model
-server.py                  older wrapper: install, then serve.py
-docs/                      preview image and project notes
-```
-
-## License
-
-MIT — see [LICENSE](LICENSE).
-
-More design notes and honest limits are in [DEMO.md](DEMO.md). The gamification proposal, with its approval checklist, is in [docs/GAMIFICATION.md](docs/GAMIFICATION.md). The demo-video shot list, script and recording checklist are in [docs/DEMO-VIDEO.md](docs/DEMO-VIDEO.md).
+## Sources
+DeepSeek (via DeepSeek Harness), Claude (via Claude Code), and Gemeni (via Gemeni CLI).
