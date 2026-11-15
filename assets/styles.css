@@ -1444,6 +1444,29 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 #view-setup .solo { max-width: 480px; margin: 0 auto; padding-top: 24px; display: grid; gap: 16px; }
 #view-setup .prompt { font-size: 15px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; }
 .setup-q { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; }
+.setup-why { display: grid; gap: 6px; }
+.setup-label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.why-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.why-chip {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.why-chip:hover { border-color: var(--accent); color: var(--accent); }
+.why-chip.is-on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; }
 .cta-row { display: grid; gap: 10px; margin-top: 8px; }
 .cta-row .btn { width: 100%; min-height: 52px; }
 .setup-lang, .settings-lang { display: grid; gap: 6px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; color: var(--text-2); }

@@ -763,6 +763,16 @@ test("every translatable attribute key in the markup exists in every locale", ()
   }
 });
 
+test("first run can capture a why without adding a gate", () => {
+  const app = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(html, /id="setup-why"/);
+  assert.match(html, /data-why="travel"/);
+  assert.match(app, /var setupWhy = ""/);
+  assert.match(app, /function renderSetupWhy/);
+  assert.match(app, /tr\("why" \+ setupWhy\.charAt/);
+  assert.match(app, /setupWhy = ""/);
+});
+
 test("first run chooses the language before asking the level", () => {
   const start = html.indexOf('id="view-setup"');
   const end = html.indexOf("</section>", start);

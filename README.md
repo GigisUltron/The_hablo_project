@@ -102,7 +102,7 @@ Each full course has eight reading texts across A1–B2. Starter courses have fi
 
 Assistant replies are spoken automatically through the browser’s installed speech voices when audio is on. A local target-language voice is preferred; if the device exposes only another installed voice, that is used as a fallback so the reply is not silent. If the voice list arrives late, the reply is queued until a voice appears. **Settings → Speak replies** turns the automatic voice off without muting card audio.
 
-**Settings → Personalize** stores two short local notes: why you are learning and what you like. They are shown on Today, used by the local coach for examples and scenarios, and never sent to a remote service by the app. They are not a quiz and not required.
+The first-run screen offers an optional **Travel / Work / Family / Culture** why chip; it never gates the lesson and can be changed later. **Settings → Personalize** stores two short local notes: why you are learning and what you like. They are shown on Today, used by the local coach for examples and scenarios, and never sent to a remote service by the app. They are not a quiz and not required.
 
 **Hands-free** is an opt-in voice loop on the conversation screen. Turn it on, speak, and the recognised message is sent; after the assistant replies and finishes speaking, the microphone opens again. It turns off when you leave the screen, when you clear the chat, or when microphone permission is refused. Browser speech recognition still requires a secure context and a supported browser; the typed conversation always remains available.
 

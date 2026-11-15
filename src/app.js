@@ -724,6 +724,14 @@
     return true;
   }
 
+  var setupWhy = "";
+
+  function renderSetupWhy() {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-why]"), function (btn) {
+      btn.classList.toggle("is-on", btn.getAttribute("data-why") === setupWhy);
+    });
+  }
+
   function beginProfile(level) {
     var code = (ACTIVE && ACTIVE.code) || "es";
     var byLang = (state.profile && state.profile.byLang) || {};
@@ -734,10 +742,14 @@
     var languages = (state.profile && state.profile.languages) || [];
     if (languages.indexOf(code) === -1) languages.push(code);
     var personal = PERSONA ? PERSONA.ensure(state.profile || {}) : (state.profile || {});
+    var why = setupWhy
+      ? tr("why" + setupWhy.charAt(0).toUpperCase() + setupWhy.slice(1), setupWhy)
+      : (personal.why || "");
     state.profile = {
       level: level, levelByLang: levels, lang: code, byLang: byLang, uiLang: ui,
-      languages: languages, why: personal.why || "", interests: personal.interests || ""
+      languages: languages, why: why, interests: personal.interests || ""
     };
+    setupWhy = "";
     save();
   }
 
@@ -6430,6 +6442,13 @@
   $("settings-btn").addEventListener("click", function () { show("settings"); });
   $("conv-btn").addEventListener("click", startConversation);
   $("settings-start").addEventListener("click", function () { startSession(); });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-why]"), function (btn) {
+    btn.addEventListener("click", function () {
+      setupWhy = btn.getAttribute("data-why") || "";
+      renderSetupWhy();
+    });
+  });
+
   $("setup-new").addEventListener("click", function () {
     beginProfile("A1");
     show("today");
@@ -6542,6 +6561,7 @@
     renderCoach();
   });
   if (SR) $("chat-listen").hidden = false;
+  renderSetupWhy();
   renderVoiceControl();
   renderChatSettings();
   $("settings-back").addEventListener("click", function () { show("today"); });
