@@ -142,6 +142,8 @@ var SEMA_UI_EXTRA = (function () {
     "today": ["Today", "Hoy", "Aujourd'hui", "Oggi", "Hoje", "Heute", "Vandaag", "Сегодня", "Bugün", "اليوم", "आज", "今日", "今天"],
     "cards": ["cards", "tarjetas", "cartes", "carte", "cartões", "Karten", "kaarten", "карточки", "kart", "بطاقات", "कार्ड", "カード", "卡片"],
     "due": ["due", "pendientes", "à faire", "in scadenza", "pendentes", "fällig", "te doen", "к повторению", "bekleyen", "مستحقة", "बाकी", "期限", "待复习"],
+    "chatEngine": ["Conversation engine", "Motor de conversación", "Moteur de conversation", "Motore di conversazione", "Motor de conversa", "Gesprächsmodus", "Gespreksmodus", "Режим беседы", "Konuşma motoru", "محرك المحادثة", "बातचीत इंजन", "会話エンジン", "对话引擎"],
+    "offlineChat": ["Offline practice", "Práctica sin conexión", "Pratique hors ligne", "Pratica offline", "Prática offline", "Offline üben", "Offline oefenen", "Офлайн-практика", "Çevrimdışı alıştırma", "تدريب دون اتصال", "ऑफ़लाइन अभ्यास", "オフライン練習", "离线练习"],
     "chatWithModel": ["Chat with a local model", "Chat con un modelo local", "Discussion avec un modèle local", "Chat con un modello locale", "Conversa com um modelo local", "Chat mit lokalem Modell", "Chat met lokaal model", "Чат с локальной моделью", "Yerel modelle sohbet", "محادثة مع نموذج محلي", "स्थानीय मॉडल से चैट", "ローカルモデルと会話", "与本地模型对话"],
     "endpoint": ["Endpoint", "Endpoint", "Point d'accès", "Endpoint", "Endpoint", "Endpunkt", "Eindpunt", "Эндпоинт", "Uç nokta", "نقطة النهاية", "एंडपॉइंट", "エンドポイント", "端点"],
     "model": ["Model", "Modelo", "Modèle", "Modello", "Modelo", "Modell", "Model", "Модель", "Model", "نموذج", "मॉडल", "モデル", "模型"],

@@ -438,6 +438,7 @@
           : (uiChoicesHere[0] || "en");
       }
     }
+    if (!s.settings.chatEngine) s.settings.chatEngine = "offline";
     if (typeof s.settings.chatEndpoint !== "string" || !s.settings.chatEndpoint.trim()) {
       s.settings.chatEndpoint = (CE && CE.DEFAULT_ENDPOINT) || "http://localhost:11434";
     }
@@ -1605,6 +1606,10 @@
     return String(v || "http://localhost:11434").trim() || "http://localhost:11434";
   }
 
+  function chatEngine() {
+    return (state && state.settings && state.settings.chatEngine) || "offline";
+  }
+
   function cleanEndpoint(value) {
     if (CE && CE.normaliseBaseUrl) return CE.normaliseBaseUrl(value);
     var v = String(value || "").trim();
@@ -1614,6 +1619,7 @@
   }
 
   function chatStatusLine() {
+    if (chatEngine() === "offline") return ["ready", tr("offlineChat", "Offline practice")];
     if (chatMeta.status === "ready" && chatMeta.model) {
       var what = CE && CE.isLocalEndpoint(chatEndpoint()) ? "local model" : "model";
       return ["ready", tr("localModel", "local model") + " · " + chatMeta.model];
@@ -1646,12 +1652,20 @@
   function renderChatSettings() {
     var ep = $("chat-endpoint");
     if (ep) ep.value = chatEndpoint();
+    var engine = $("chat-engine");
+    if (engine) engine.value = chatEngine();
     var model = $("chat-model");
     if (model) model.value = (state.settings && state.settings.chatModel) || "";
     setChatStatus();
   }
 
   function refreshChatEngine() {
+    if (chatEngine() === "offline") {
+      chatMeta = { status: "ready", engine: "mini", model: null, vision: false };
+      setChatStatus();
+      seedScriptedIfEmpty();
+      return;
+    }
     if (!CE) {
       chatMeta = { status: "missing", engine: null, model: null, vision: false };
       setChatStatus();
@@ -2060,7 +2074,7 @@
     rememberChatLine(text);
     if (input) input.value = "";
 
-    if (chatMeta.status !== "ready" || !CE) {
+    if (chatEngine() === "offline" || chatMeta.status !== "ready" || !CE) {
       fallbackReply(text, "");
       return;
     }
@@ -4892,6 +4906,11 @@
   $("chat-endpoint").addEventListener("change", function () {
     state.settings.chatEndpoint = cleanEndpoint(this.value);
     this.value = state.settings.chatEndpoint;
+    save();
+    refreshChatEngine();
+  });
+  $("chat-engine").addEventListener("change", function () {
+    state.settings.chatEngine = this.value === "local" ? "local" : "offline";
     save();
     refreshChatEngine();
   });

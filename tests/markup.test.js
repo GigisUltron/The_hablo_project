@@ -813,6 +813,13 @@ test("planned lessons mix due revision into the situation", () => {
   assert.match(app, /revision\.slice\(0, 2\)\.forEach\(add\)/, "revision is never included");
 });
 
+test("offline mini chat is the default conversation engine", () => {
+  assert.match(html, /id="chat-engine"/, "no engine choice");
+  assert.match(app, /function chatEngine\(/, "no engine selector");
+  assert.match(app, /chatEngine\(\) === "offline" \|\|/, "offline does not bypass the model");
+  assert.match(app, /s\.settings\.chatEngine = "offline"/, "offline is not the default");
+});
+
 test("vocabulary memory anchors and XP level are wired", () => {
   assert.match(app, /state\.anchors/, "personal anchors are not stored");
   assert.match(app, /vocab-anchor/, "no anchor control");
