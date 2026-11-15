@@ -853,6 +853,11 @@ test("vocabulary expansion is a real adaptive mode", () => {
   assert.match(app, /class="vocab-meaning"/, "meaning is not rendered");
 });
 
+test("matching never offers duplicate meanings", () => {
+  assert.match(app, /var seenMeanings = \{\}/, "matching can show ambiguous duplicates");
+  assert.match(app, /if \(ids\.length < 3\) \{ renderTranslateToTarget\(id\); return; \}/, "matching degrades badly");
+});
+
 test("matching completes only after all pairs and XP is on Today", () => {
   assert.match(app, /Object\.keys\(matched\)\.length === pairs\.length/, "matching ends after one pair");
   assert.match(app, /classList\.add\("is-selected"\)/, "matching has no selected state");

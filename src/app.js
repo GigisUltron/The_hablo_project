@@ -4319,10 +4319,18 @@
     var it = itemOf(id);
     var meaning = translationFor(id) || glossFor(id);
     if (!meaning) { renderTranslateToTarget(id); return; }
-    var other = distractorsFor(id, 3).filter(function (x) {
-      return x !== id && (translationFor(x) || glossFor(x));
+    var seenMeanings = {};
+    seenMeanings[String(meaning).toLowerCase()] = true;
+    var other = distractorsFor(id, 6).filter(function (x) {
+      var m = translationFor(x) || glossFor(x);
+      if (x === id || !m) return false;
+      var key = String(m).toLowerCase();
+      if (seenMeanings[key]) return false;
+      seenMeanings[key] = true;
+      return true;
     }).slice(0, 2);
     var ids = [id].concat(other);
+    if (ids.length < 3) { renderTranslateToTarget(id); return; }
     var pairs = ids.map(function (x) {
       return { id: x, text: itemOf(x).text, meaning: translationFor(x) || glossFor(x) };
     });
