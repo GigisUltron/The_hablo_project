@@ -98,6 +98,11 @@ var SEMA_GLOSSES = {
   "ph-ru-hurts-here": "it hurts here",
   "ph-ru-pizza": "I'd like a pizza.",
   "ph-ru-vegetarian": "I'm vegetarian.",
+  "ph-ru-cousin": "This is my cousin.",
+  "ph-ru-wedding": "The wedding is on Saturday.",
+  "ph-ru-congratulations": "Congratulations!",
+  "ph-ru-family": "How is your family?",
+  "ph-ru-arrived-wedding": "I came for the wedding.",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

@@ -691,6 +691,14 @@ test("a chosen interface language is not silently reset by the deck", () => {
   assert.match(app, /renderStats\(\);\n  }/, "placement does not repaint Progress");
 });
 
+test("specialized lessons are saved and can be reopened", () => {
+  assert.match(app, /function saveCustomLesson/, "no saved lesson store");
+  assert.match(app, /function renderCustomLessons/, "no saved lesson list");
+  assert.match(app, /data-custom/, "saved lessons have no controls");
+  assert.match(app, /customId/, "custom lesson review is not tracked");
+  assert.match(app, /wedding|family/, "planner ignores family/wedding requests");
+});
+
 test("typed translation is a real routed exercise", () => {
   assert.match(app, /function renderTypeTranslation/, "no typed translation renderer");
   assert.match(app, /type === "type-translation"/, "typed translation is not routed");

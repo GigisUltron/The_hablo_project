@@ -921,6 +921,7 @@
   function renderToday() {
     renderBuilder();
     renderTrack();
+    renderCustomLessons();
 
     var due = S.dueList(state, Date.now()).filter(function (id) {
       return state.cards[id] && state.cards[id].last !== null;
@@ -2785,6 +2786,7 @@
     ["netherlands", "nl"], ["dutch", "nl"], ["amsterdam", "nl"],
     ["russia", "ru"], ["russian", "ru"], ["moscow", "ru"],
     ["turkey", "tr"], ["turkish", "tr"], ["istanbul", "tr"],
+    ["russia", "ru"], ["russian", "ru"], ["moscow", "ru"], ["novgorod", "ru"],
     ["japan", "ja"], ["japanese", "ja"], ["tokyo", "ja"],
     ["china", "zh"], ["chinese", "zh"], ["beijing", "zh"],
     ["india", "hi"], ["hindi", "hi"], ["delhi", "hi"],
@@ -2810,6 +2812,9 @@
     if (/airport|flight|plane/.test(raw)) topics.push("airport");
     if (/doctor|pharmacy|hurt|pain|sick/.test(raw)) topics.push("emergency", "pharmacy", "doctor");
     if (/shop|market|buy|clothes/.test(raw)) topics.push("shopping", "market", "clothes");
+    if (/cousin|aunt|uncle|family|wedding|marry|brother|sister|grandmother|grandfather/.test(raw)) {
+      topics.push("family");
+    }
 
     var words = raw.match(/[a-zà-ÿā-ž]+/g) || [];
     var contentWords = words.filter(function (w) { return w.length > 3; });
@@ -2845,6 +2850,49 @@
         tr("wishReady", "Your lesson is ready.") + " " +
         tr("wishDialect", "Using the standard language; this pack has no town-dialect data yet.")
     };
+  }
+
+  function saveCustomLesson(wish, text) {
+    state.customLessons = state.customLessons || [];
+    var lesson = {
+      id: "wish-" + Date.now(),
+      title: String(text || "").slice(0, 70),
+      lang: ACTIVE.code,
+      ids: wish.ids.slice(),
+      at: Date.now(),
+      last: 0,
+      next: 0
+    };
+    state.customLessons.unshift(lesson);
+    state.customLessons = state.customLessons.slice(0, 8);
+    save();
+    return lesson;
+  }
+
+  function renderCustomLessons() {
+    var box = $("custom-lessons");
+    var group = $("custom-group");
+    if (!box || !group) return;
+    var list = state.customLessons || [];
+    group.hidden = !list.length;
+    box.innerHTML = list.map(function (w) {
+      var due = w.next && w.next <= Date.now();
+      return '<button class="row" type="button" data-custom="' + esc(w.id) + '">' +
+        '<span class="row-body"><span class="row-main">' + esc(w.title) + "</span>" +
+        '<span class="row-meta">' + esc(uiName(w.lang)) + (due ? " · " + esc(tr("today", "today")) : "") + "</span></span></button>";
+    }).join("");
+    Array.prototype.forEach.call(box.querySelectorAll("[data-custom]"), function (b) {
+      b.addEventListener("click", function () { startCustomLesson(b.getAttribute("data-custom")); });
+    });
+  }
+
+  function startCustomLesson(id) {
+    var list = state.customLessons || [];
+    var wish = null;
+    list.forEach(function (w) { if (w.id === id) wish = w; });
+    if (!wish) return;
+    if (ACTIVE.code !== wish.lang && LANGS && LANGS.has(wish.lang)) switchLang(wish.lang);
+    startSession({ ids: wish.ids, size: wish.ids.length, customId: wish.id });
   }
 
   function startSession(opts) {
@@ -2886,6 +2934,7 @@
      * being asked, and the answer is shown the moment it is missed. */
     session = newSession("mixed", [], queue);
     session.plan = p.plan;
+    session.customId = o.customId || "";
 
     /* your own sentence, if one is old enough to be worth re-reading */
     var older = MEM.nextToReview(state.memory, now, MEM.DAY_MS / 2);
@@ -3890,6 +3939,13 @@
 
     state.sessions += 1;
     state.lastSession = Date.now();
+    if (session.customId) {
+      (state.customLessons || []).forEach(function (w) {
+        if (w.id !== session.customId) return;
+        w.last = Date.now();
+        w.next = Date.now() + 3 * 24 * 60 * 60 * 1000;
+      });
+    }
     save();
 
     var now = Date.now();
@@ -4143,8 +4199,9 @@
       $("wish-note").textContent = tr("wishEmpty", "Tell me where you are going and what you want to do.");
       return;
     }
+    var saved = saveCustomLesson(wish, text);
     toast(wish.note, 3200);
-    startSession({ ids: wish.ids, size: wish.ids.length, title: wish.title });
+    startSession({ ids: wish.ids, size: wish.ids.length, title: wish.title, customId: saved.id });
   });
   $("build-start").addEventListener("click", function () { startSession({ custom: true }); });
   $("review-missed").addEventListener("click", reviewMistakes);

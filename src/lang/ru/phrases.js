@@ -45,6 +45,11 @@ var SEMA_PHRASES = {
     { id: "ph-ru-hurts-here", emoji: "🤕", text: "У меня здесь болит.", sub: "U menya zdes bolit.", cat: "phrase" },
     { id: "ph-ru-pizza", emoji: "🍕", text: "Я хочу пиццу.", sub: "V restorane.", cat: "phrase", topic: "restaurant" },
     { id: "ph-ru-vegetarian", emoji: "🥦", text: "Я вегетарианец.", sub: "V restorane.", cat: "phrase", topic: "restaurant" },
+    { id: "ph-ru-cousin", emoji: "👨‍👩‍👧", text: "Это мой двоюродный брат.", sub: "Eto moy dvoyurodnyy brat.", cat: "phrase", topic: "family" },
+    { id: "ph-ru-wedding", emoji: "💍", text: "Свадьба в субботу.", sub: "Svad'ba v subbotu.", cat: "phrase", topic: "family" },
+    { id: "ph-ru-congratulations", emoji: "🎉", text: "Поздравляю!", sub: "Pozdravlyayu!", cat: "phrase", topic: "family" },
+    { id: "ph-ru-family", emoji: "🏡", text: "Как твоя семья?", sub: "Kak tvoya sem'ya?", cat: "phrase", topic: "family" },
+    { id: "ph-ru-arrived-wedding", emoji: "✈️", text: "Я приехал на свадьбу.", sub: "Ya priyekhal na svad'bu.", cat: "phrase", topic: "family" },
   ]
 };
 

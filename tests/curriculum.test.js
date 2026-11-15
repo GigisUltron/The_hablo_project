@@ -24,8 +24,12 @@ test("full courses have real phrases for every tutor lesson", () => {
 test("starter courses show the first five and hide lessons they cannot teach", () => {
   for (const code of ["ar", "de", "hi", "ja", "nl", "pt", "ru", "tr", "zh"]) {
     const available = C.available(T.unitList(false), phrases(code)).map((u) => u.id);
-    assert.deepEqual(available, FIRST_FIVE.concat(["c12"]),
-      `${code} exposes lessons without real material: ${available.join(", ")}`);
+    const base = FIRST_FIVE.concat(["c12"]);
+    for (const id of base) assert.ok(available.includes(id), `${code} is missing ${id}`);
+    for (const id of available.filter((x) => !base.includes(x))) {
+      const unit = T.unitList(false).find((u) => u.id === id);
+      assert.ok(C.count(unit, phrases(code)) >= 2, `${code}/${id} is exposed without material`);
+    }
     for (const unit of T.unitList(false).filter((u) => FIRST_FIVE.includes(u.id))) {
       const n = C.count(unit, phrases(code));
       const min = unit.id === "c4" || unit.id === "c5" ? 2 : 1;
