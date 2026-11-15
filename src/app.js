@@ -379,7 +379,8 @@
     state.placement = null;
     state.memory = fresh.memory;
     state.alphabet = {};
-    state.daily = { date: dayKey(Date.now()), cards: 0 };
+    /* Daily progress is device-wide, not per deck: switching language must
+     * not erase the cards already finished today. */
   }
 
   function bucketOf(s) {
@@ -853,7 +854,7 @@
 
     /* one kind of lesson: every session draws from the whole deck */
     var due = S.dueList(state, Date.now()).filter(function (id) {
-      return state.cards[id].last !== null;
+      return state.cards[id] && state.cards[id].last !== null;
     }).length;
 
     var note = $("builder-note");
@@ -3675,7 +3676,7 @@
     box.innerHTML = Object.keys(D.categories).map(function (cat) {
       var words = D.concepts.filter(function (c) { return c.cat === cat; });
       if (!words.length) return "";
-      var known = words.filter(function (c) { return state.cards[c.id].reps > 0; }).length;
+      var known = words.filter(function (c) { return state.cards[c.id] && state.cards[c.id].reps > 0; }).length;
       return '<section class="group">' +
         '<h3 class="group-title">' + esc(D.categories[cat].label) + " · " + known + " of " + words.length + "</h3>" +
         '<div class="list">' + words.map(function (c) {
@@ -3736,7 +3737,7 @@
     var cats = Object.keys(D.categories);
     var rows = cats.map(function (cat) {
       var ids = D.concepts.filter(function (c) { return c.cat === cat; }).map(function (c) { return c.id; });
-      var learned = ids.filter(function (id) { return state.cards[id].reps > 0; }).length;
+      var learned = ids.filter(function (id) { return state.cards[id] && state.cards[id].reps > 0; }).length;
       var pct = ids.length ? Math.round((learned / ids.length) * 100) : 0;
       return { cat: cat, learned: learned, total: ids.length, pct: pct };
     }).filter(function (r) { return r.total > 0; });

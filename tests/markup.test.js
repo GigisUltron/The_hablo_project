@@ -395,6 +395,11 @@ test("the audio chip tests the active pack, not a Spanish word", () => {
   assert.match(app, /function audioTestItem/, "no active-pack sample picker");
 });
 
+test("switching decks keeps the cards finished today", () => {
+  const reset = app.slice(app.indexOf("function resetLive"), app.indexOf("function bucketOf"));
+  assert.equal(/state\.daily/.test(reset), false, "a deck switch wipes the daily count");
+});
+
 test("first run can change interface language before choosing a level", () => {
   assert.match(app, /state\.profile\.byLang = state\.profile\.byLang \|\| \{\}/,
     "switchLang assumes byLang exists before onboarding finishes");
