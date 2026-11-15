@@ -1877,6 +1877,13 @@
 
   function seedScriptedIfEmpty() {
     if (!chat || chat.messages.length || !ACTIVE || chatCleared) return;
+    if (chatEngine() === "offline") {
+      if (miniChat) {
+        var opening = miniChat.opening();
+        if (opening) addAssistant(opening, true, "mini", true);
+      }
+      return;
+    }
     /* The authored dialogue is the offline course's real conversation, not
      * an invented "No local model found." The model, when present, still wins. */
     var dialogues = (CONV && CONV.dialogues) || [];
@@ -1918,7 +1925,7 @@
     });
     trimChat();
     save();
-    renderChat();
+    renderChat(true);
     if (hasTTS && !quiet) speak(clean);
   }
 
@@ -1933,7 +1940,7 @@
     chat.messages.push(msg);
     trimChat();
     save();
-    renderChat();
+    renderChat(true);
   }
 
   function setChatFeedback(text, kind) {
@@ -1996,6 +2003,16 @@
 
   function fallbackReply(userText, note) {
     if (!chat || !ACTIVE) return;
+    /* Offline practice is a live predictor conversation, not a fixed script. */
+    if (chatEngine() === "offline") {
+      var miniNow = miniAnswer(userText);
+      if (miniNow) {
+        addAssistant(miniNow, true, "mini");
+        return;
+      }
+      setChatFeedback(tr("notChecked", "The offline partner has nothing to add."), "");
+      return;
+    }
     var d = null;
     if (chat.scripted && chat.scripted.dialogue && CONV && CONV.dialogues) {
       CONV.dialogues.forEach(function (item) {

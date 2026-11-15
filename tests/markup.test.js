@@ -838,6 +838,15 @@ test("conversation transfer missions require real use of lesson phrases", () => 
   assert.match(app, /checkMission\(text\)/, "mission never checks learner turns");
 });
 
+test("conversation follows the last message and offline replies are live", () => {
+  const addUser = app.slice(app.indexOf("function addUser"), app.indexOf("function setChatFeedback"));
+  const addAssistant = app.slice(app.indexOf("function addAssistant"), app.indexOf("function addUser"));
+  assert.match(addUser, /renderChat\(true\)/, "new user messages do not scroll");
+  assert.match(addAssistant, /renderChat\(true\)/, "new replies do not scroll");
+  assert.match(app, /if \(chatEngine\(\) === "offline"\) \{\n      var miniNow/, "offline still uses the fixed script");
+  assert.match(app, /var opening = miniChat\.opening\(\)/, "offline opening is still scripted");
+});
+
 test("offline mini chat is the default conversation engine", () => {
   assert.match(html, /id="chat-engine"/, "no engine choice");
   assert.match(app, /function chatEngine\(/, "no engine selector");
