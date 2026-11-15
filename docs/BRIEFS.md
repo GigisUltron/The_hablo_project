@@ -1,4 +1,4 @@
-> **Status (2026-11-15).** The app now has 13 language packs, nine views and a
+> **Status (2026-11-15).** The app now has 13 language packs, ten views and a
 > generated per-pack audio pipeline. The briefs below are still useful as
 > contracts and constraints, but the file lists and counts are historical.
 > `index.html`, `tests/markup.test.js` and [README.md](README.md) are the current

@@ -5,24 +5,31 @@ answer changes what the next session contains.
 
 ## Current packs
 
-| code | name | concepts | phrases | terms | texts | conversations | audio |
-|---|---|---|---|---|---|---|---|
-| `es` | Spanish | 42 | 138 | 28 | 8 | 3 | 224 |
-| `fr` | French | 42 | 138 | 28 | 8 | 3 | 224 |
-| `en` | English | 40 | 149 | 28 | 8 | 3 | 233 |
-| `it` | Italian | 24 | 138 | 21 | 8 | 3 | 199 |
-| `de` | German | 24 | 41 | 8 | 5 | 2 | 89 |
-| `nl` | Dutch | 24 | 41 | 8 | 5 | 2 | 89 |
-| `pt` | Portuguese | 24 | 41 | 8 | 5 | 2 | 89 |
-| `ru` | Russian | 24 | 51 | 8 | 5 | 1 | 99 |
-| `tr` | Turkish | 24 | 41 | 8 | 5 | 1 | 89 |
-| `ar` | Arabic | 24 | 40 | 8 | 5 | 1 | 88 |
-| `hi` | Hindi | 24 | 40 | 8 | 5 | 1 | 88 |
-| `ja` | Japanese | 24 | 40 | 8 | 5 | 1 | 85 |
-| `zh` | Chinese | 24 | 40 | 8 | 5 | 1 | 85 |
+| code | name | concepts | phrases | terms | basics | texts | levels | conversations | audio |
+|---|---|---|---|---|---|---|---|---|---|
+| `es` | Spanish | 47 | 138 | 28 | 16 | 8 | A1–C1 | 3 | 229 |
+| `fr` | French | 47 | 138 | 28 | 16 | 8 | A1–C1 | 3 | 229 |
+| `en` | English | 45 | 149 | 28 | 16 | 8 | A1–C1 | 3 | 238 |
+| `it` | Italian | 29 | 138 | 21 | 16 | 8 | A1–C1 | 3 | 204 |
+| `de` | German | 29 | 41 | 8 | 16 | 7 | A1–B2 | 2 | 94 |
+| `nl` | Dutch | 29 | 41 | 8 | 16 | 7 | A1–B2 | 2 | 94 |
+| `pt` | Portuguese | 29 | 41 | 8 | 16 | 7 | A1–B2 | 2 | 94 |
+| `ru` | Russian | 29 | 51 | 8 | 16 | 7 | A1–B2 | 1 | 104 |
+| `tr` | Turkish | 29 | 41 | 8 | 16 | 7 | A1–B2 | 1 | 94 |
+| `ar` | Arabic | 29 | 40 | 8 | 16 | 7 | A1–B2 | 1 | 93 |
+| `hi` | Hindi | 29 | 40 | 8 | 16 | 7 | A1–B2 | 1 | 93 |
+| `ja` | Japanese | 29 | 40 | 8 | 13 | 7 | A1–B2 | 1 | 90 |
+| `zh` | Chinese | 29 | 40 | 8 | 13 | 7 | A1–B2 | 1 | 90 |
 
-Every pack now ships reading texts and at least one authored conversation. The
-loader still treats a missing part as an empty deck, so a pack can grow one
+These are the counts from `SemaLangs.load(<code>)`: concepts, phrases and terms
+are the deck lengths, `basics` is `basics.items.length`, `texts` is
+`texts.texts.length`, `levels` is the CEFR range of items graded in
+`levels.js`, `conversations` is `conv.dialogues.length`, and `audio` is the
+number of entries in the pack's generated manifest. Every pack ships seven or
+eight reading texts and at least one authored conversation; every pack includes
+B1 and B2 texts, and the four full courses also include a C1 text.
+
+The loader still treats a missing part as an empty deck, so a pack can grow one
 piece at a time without crashing the reader or the chat button.
 
 `state.profile.lang` is the active code. Progress is archived per language under
@@ -83,7 +90,7 @@ src/lang/<code>/conv.js         optional
 src/lang/<code>/audio.js        required once audio exists
 ```
 
-### 2. Concepts — 24 starter / 42 flagship items
+### 2. Concepts — 29 in a starter deck (45–47 in Spanish, French and English)
 
 Each entry is
 `{ id, emoji, word, article, cat, sentence }`.
@@ -103,10 +110,10 @@ Each entry is
 Keep `categories` and `relationTypes` identical to the other packs. Translate
 the `edges` id for id so distractors remain meaningful neighbours, and keep
 every edge pointing at a real concept, with no duplicate pairs. Stay consistent
-with the other packs of the same tier: 42 concepts in a flagship deck, 24 in a
-starter deck.
+with the pack you are extending: the current decks hold 29 concepts in each
+starter pack and in Italian, 45 in English, and 47 in Spanish and French.
 
-### 3. Phrases — 40 starter / 138 flagship items
+### 3. Phrases — 40–51 starter / 138–149 flagship items
 
 Each entry is `{ id, emoji, text, sub, cat }`, with `cat: "phrase"`. `text` is
 what is spoken and displayed; `sub` is one line of context in the target
@@ -114,7 +121,7 @@ language. Mirror the Spanish situations exactly, in the register a native
 speaker would actually use. Ids are `ph-…`, ASCII, unique, and must not collide
 with concept ids. Scene emoji are unique within the deck.
 
-### 4. Terms — 8 starter / 28 flagship items
+### 4. Terms — 8 starter / 21–28 flagship items
 
 Each entry is `{ id, text, gloss, schema, frame, contrast }`.
 
@@ -128,10 +135,11 @@ Each entry is `{ id, text, gloss, schema, frame, contrast }`.
 
 ### 5. Glosses — English, for every item
 
-`glosses.js` maps every concept, phrase and term id to a short English gloss.
-It is the "show translation" escape hatch and is only read by that control.
-For an English pack, leave the map empty instead of writing glosses identical to
-the word: the reveal control then disappears, which is the honest behaviour.
+`glosses.js` maps every item id to a short English gloss. It is the "show
+translation" escape hatch the reveal control reads. The English pack ships short
+English definitions rather than translations; a gloss that only repeats the
+word carries nothing, so leave that entry out. A pack with an empty map simply
+has no reveal control.
 
 ### 6. Alphabet and optional parts
 
@@ -194,13 +202,12 @@ network. `--engine auto` uses Piper only when a matching voice is installed.
 
 ```sh
 make check
-python3 tools/make_audio.py --check
-python3 tools/make_audio.py --lang it --check
+make audio-check
 ```
 
 Then check the pack itself:
 
-- 42 concepts, 68 phrases, 12 terms, and a gloss for every item
+- counts match the table in **Current packs**, and a gloss for every item
 - unique concept and phrase ids and emoji, no id collisions between decks
 - every edge resolves, no duplicate pairs
 - each term frame has exactly one `____` and ends a sentence

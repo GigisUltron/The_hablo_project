@@ -42,7 +42,7 @@ Open the printed `http://localhost:…` address rather than `index.html` directl
 4. Press **I'm new** to start at the beginning, or **Test me** to take the entry exam.
 5. The entry exam adapts while you answer: three correct answers in a row move it up a band, a miss steps it back, and a perfect run can open C1. The current band is shown in the counter.
 
-Your first language is added automatically. To add another later, open **Settings → Your languages → Add language**, choose a language, and complete that language's entry exam. Each language keeps its own level, cards, XP, statistics, custom lessons and conversation history.
+Your first language is added automatically. To add another later, open **Settings → Your languages → Add language**, choose a language, and complete that language's entry exam. Each language keeps its own level, cards, reviews and conversation history; XP, coins and the saved custom-lesson list are shared across the profile, and each saved lesson records its language.
 
 Removing a language is deliberate: press the **×** on its card, then confirm. Its local progress for that language is deleted and cannot be undone. The last remaining language cannot be removed.
 
@@ -56,6 +56,8 @@ A lesson mixes:
 - recall of words from earlier lessons
 - production, listening, matching, sentence building and message completion
 - a short end-of-session review for what you missed
+
+With **Settings → Translations** switched off, a lesson still runs the same loop: every new card is taught rather than asked cold, and review cards use meaning-free tasks — build a sentence, complete a message, listen and type, or listen and pick — instead of a translation prompt.
 
 Lessons use spaced repetition. What you miss comes back before the session ends and again when it is due. A missed card offers **Ask coach**, a rules-first explanation built from the correct form, its meaning and your answer; it never asks a model to invent grammar. The end screen's coach note is built from the actual kept and missed cards, not model prose. The optional **one sentence with today's words** box still has **Check sentence**, which asks the local model for a wording suggestion; its output is labelled as a suggestion, guarded, and the 0.5B tier refuses grammar claims rather than pretending. **One more** starts a short pass on real weak or missed items rather than a generic new lesson. **Talk it through** carries the same kept/missed phrases into a conversation mission.
 
@@ -93,7 +95,7 @@ Non-Latin packs open on a script lesson. Each letter is a recall card: the shape
 - the synonym pool respects your placed ceiling; the recall fallback starts near your band
 - the whole set is authored synonym pairs; a small starter pack repeats its pairs to fill the session
 - a missed-word review is one button away at the end
-- statistics persist per language; a session also pays XP and coins
+- vocabulary statistics persist in local state; a session also pays XP and coins
 - answering feeds the SRS, but it does **not** unlock the next path lesson — only a lesson does that
 - skipping a typing card removes it from the queue; it earns no XP, coin, streak or path progress
 - **personal anchors** remain available on the recall fallback for packs without synonym pairs
@@ -104,11 +106,13 @@ Every pack now carries five B1/B2 abstract words — decision, purpose, challeng
 
 ### Reading
 
-Each full course has eight reading texts across A1–B2. Starter courses have seven, including B1 and B2 texts that use the advanced layer. Every text has three multiple-choice questions and an explanation for each wrong option. Questions use the same **select, then Check** interaction as lessons, so a stray tap is not graded. The text screen also has **Listen to text**, which reads the title and body through the same installed voice used by conversation, and **Write me a text**, which asks the local model for a short new text at the learner's level using the personal context. Generated texts get a short cloze comprehension check built from their own sentences; if no model answers, the packed text stays.
+Each full course has eight reading texts, graded A1–C1. Starter courses have seven, graded A1–B2, including B1 and B2 texts that use the advanced layer. Every text has three multiple-choice questions and an explanation for each wrong option. Questions use the same **select, then Check** interaction as lessons, so a stray tap is not graded. The text screen also has **Listen to text**, which reads the title and body through the same installed voice used by conversation, and **Write me a text**, which asks the local model for a short new text at the learner's level using the personal context. Generated texts get a short cloze comprehension check built from their own sentences; if no model answers, the packed text stays.
 
 ### Conversation
 
 **Have a conversation** always works without a model. The local model is the default when one is running; if none answers, the app falls back to its own predictor and the active pack’s authored dialogue. The fallback follows authored turns where they fit, uses recent context, classifies greetings/thanks/yes-no/name/question intents, avoids repeating recent replies and refuses to echo or return runaway text. Even when the model is live, the first turn is an authored target-language opener, so the learner has something concrete to answer instead of an empty box.
+
+When a local model is connected, its reply streams into the conversation as it arrives and the send control becomes **Stop** while the reply is in flight; stopping keeps the text already shown. Leaving the conversation, clearing it, or opening another conversation aborts the same stream, and a stopped reply never falls back to the scripted partner. Prompts are grounded in the active pack: the app picks up to three authored phrases that overlap the learner's last message and passes them to the model as course phrases it may reuse, with an instruction not to invent vocabulary outside the course.
 
 Assistant replies are spoken automatically through the browser’s installed speech voices when audio is on. A local target-language voice is preferred; if the device exposes only another installed voice, that is used as a fallback so the reply is not silent. If the voice list arrives late, the reply is queued until a voice appears. **Settings → Speak replies** turns the automatic voice off without muting card audio.
 
@@ -120,7 +124,7 @@ A **transfer mission** appears above the conversation. It asks you to use two or
 
 The check-in also shows the learner side from the transcript: turns, words, questions and how many selected target phrases were actually used. These are counts, not model praise.
 
-A local model is optional but it is now the only conversation-engine path when present: Settings has no engine chooser. Press **Find local model**; the app probes `http://localhost:8080`, `http://localhost:8081` and `http://localhost:11434`, stores the endpoint and model, and uses the first model that answers. Both llama.cpp's `llama-server` / `llama-cpp-python` and Ollama work. Without one, no conversation leaves the device; the authored fallback runs.
+A local model is optional but it is now the only conversation-engine path when present: Settings has no engine chooser. Press **Find local model**; the app probes `http://localhost:8080`, `http://localhost:8081` and `http://localhost:11434`, stores the endpoint and model, and uses the first model that answers. Both llama.cpp's `llama-server` / `llama-cpp-python` and Ollama work. On this path the reply streams into the conversation, **Stop** aborts the request, and the prompt carries up to three authored phrases from the live pack that the model may reuse but must not replace with invented vocabulary. Without one, no conversation leaves the device; the authored fallback runs.
 
 Settings → Local model also has **Test reply**: it sends one short prompt and shows the actual model reply, or the plain “no model answered” line. This is a real end-to-end check from the same page where the endpoint is configured.
 
@@ -215,9 +219,11 @@ python3 tools/make_audio.py --lang fr --check
 ```sh
 make check                         # syntax gate + full test suite
 node --test tests/                 # tests only
-python3 tools/make_audio.py --check # audio manifest/files
+make audio-check                   # every pack: manifest coverage and WAV contract
 make integration                   # server + content/audio + real 1.5B model when installed
 ```
+
+`make audio-check` runs the checker once per pack code, from `es` to `zh`, and fails if any pack fails. The bare `python3 tools/make_audio.py --check` covers only the default Spanish pack; pass `--lang <code>` to check one other pack.
 
 ## Repository layout
 

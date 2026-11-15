@@ -1,5 +1,8 @@
-# Convenience wrapper. Both targets use only tools you already have.
-.PHONY: serve test check setup-ai ai server integration
+# Convenience wrapper. Targets use only tools you already have.
+.PHONY: serve test check audio-check setup-ai ai server integration
+
+# Every pack, in picker order. A bare make_audio.py --check covers Spanish only.
+AUDIO_PACKS = es fr en it de nl pt ru tr ar hi ja zh
 
 serve:
 	python3 serve.py
@@ -31,3 +34,23 @@ check:
 	python3 -m py_compile serve.py server.py tools/install_ai.py
 	@echo "syntax ok"
 	@$(MAKE) test
+
+# Manifest coverage and the WAV contract for every pack, not only Spanish.
+audio-check:
+	@status=0; \
+	for code in $(AUDIO_PACKS); do \
+		if out=$$(python3 tools/make_audio.py --lang "$$code" --check 2>&1); then \
+			clips=$$(printf '%s\n' "$$out" | sed -n 's/^  clips: \([0-9][0-9]*\).*/\1/p'); \
+			printf 'audio-check %s: ok (%s clips)\n' "$$code" "$${clips:-?}"; \
+		else \
+			printf 'audio-check %s: FAILED\n' "$$code"; \
+			printf '%s\n' "$$out"; \
+			status=1; \
+		fi; \
+	done; \
+	if [ $$status -eq 0 ]; then \
+		printf 'audio-check: all %s packs ok\n' "$(words $(AUDIO_PACKS))"; \
+	else \
+		printf 'audio-check: one or more packs failed\n'; \
+	fi; \
+	exit $$status
