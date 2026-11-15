@@ -103,6 +103,11 @@ var SEMA_GLOSSES = {
   "ph-ru-congratulations": "Congratulations!",
   "ph-ru-family": "How is your family?",
   "ph-ru-arrived-wedding": "I came for the wedding.",
+  "ph-ru-wedding-beautiful": "The wedding is very beautiful.",
+  "ph-ru-congratulate-wedding": "Congratulations on the wedding!",
+  "ph-ru-wedding-when": "When is the wedding?",
+  "ph-ru-cousin-lives": "My cousin lives in Novgorod.",
+  "ph-ru-happy-for-you": "I'm happy for you.",
 };
 
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;

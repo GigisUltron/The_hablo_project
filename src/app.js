@@ -2848,7 +2848,8 @@
       title: tr("wishTitle", "Plan a lesson"),
       note: (switched ? uiName(ACTIVE.code) + " · " : "") +
         tr("wishReady", "Your lesson is ready.") + " " +
-        tr("wishDialect", "Using the standard language; this pack has no town-dialect data yet.")
+        tr("wishDialect", "Using the standard language; this pack has no town-dialect data yet.") + " " +
+        tr("wishMemory", "Recall each phrase before revealing it; review this lesson in three days.")
     };
   }
 
