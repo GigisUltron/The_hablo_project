@@ -27,7 +27,9 @@ test("starter courses show the first five and hide lessons they cannot teach", (
     assert.deepEqual(available, FIRST_FIVE.concat(["c12"]),
       `${code} exposes lessons without real material: ${available.join(", ")}`);
     for (const unit of T.unitList(false).filter((u) => FIRST_FIVE.includes(u.id))) {
-      assert.ok(C.count(unit, phrases(code)) >= 1, `${code}/${unit.id} has no real phrase`);
+      const n = C.count(unit, phrases(code));
+      const min = unit.id === "c4" || unit.id === "c5" ? 2 : 1;
+      assert.ok(n >= min, `${code}/${unit.id} has only ${n} real phrase(s)`);
     }
   }
 });

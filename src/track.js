@@ -32,7 +32,7 @@ var SEMA_TRACK = {
     },
     {
       id: "c4", key: "c4", mode: "words", fields: ["time"],
-      topics: ["airport", "hotel", "money"],
+      topics: ["airport", "hotel", "money", "station"],
       need: 18,
       goal: "Check in, catch a train or flight, and handle money.",
       focus: "I have a reservation · what time · card or cash"
