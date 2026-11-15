@@ -49,6 +49,9 @@ test("every pack meets the reading contract, including one B1 and one B2 text", 
     const ids = new Set();
     for (const text of texts) {
       assert.ok([1, 2, 3, 4].includes(text.level), `${code}/${text.id}: level ${text.level} is out of range`);
+      assert.ok(["A1", "A2", "B1", "B2", "C1"].includes(text.band), `${code}/${text.id}: band ${text.band} is not CEFR`);
+      assert.ok(String(text.title || "").trim().length >= 2, `${code}/${text.id}: no title`);
+      assert.ok(String(text.body || "").trim().length >= 80, `${code}/${text.id}: body too short`);
       assert.equal(ids.has(text.id), false, `${code}/${text.id}: duplicate id`);
       ids.add(text.id);
       assert.equal(text.questions.length, 3, `${code}/${text.id}: expected three questions`);
