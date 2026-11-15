@@ -135,6 +135,12 @@
     return list[Math.floor(Math.random() * list.length)];
   }
 
+  function ensureLanguage(code) {
+    if (!state.profile || !code || !LANGS || !LANGS.has(code)) return;
+    state.profile.languages = state.profile.languages || [];
+    if (state.profile.languages.indexOf(code) === -1) state.profile.languages.push(code);
+  }
+
   function rememberLang(code) {
     if (!state.profile || !code) return;
     var recent = state.profile.recentLangs || [];
@@ -393,6 +399,8 @@
     if (s.profile) {
       s.profile.lang = code;
       s.profile.byLang = s.profile.byLang || {};
+      s.profile.languages = (Array.isArray(s.profile.languages) ? s.profile.languages : []).filter(function (x) { return LANGS.has(x); });
+      if (s.profile.languages.indexOf(code) === -1) s.profile.languages.push(code);
       if (!Array.isArray(s.profile.recentLangs) || !s.profile.recentLangs.length) {
         s.profile.recentLangs = [code];
       }
@@ -540,7 +548,7 @@
   function renderLangPickers() {
     var list = packList();
     var current = (state.profile && state.profile.lang) || (ACTIVE && ACTIVE.code);
-    ["setup-lang", "settings-lang"].forEach(function (id) {
+    ["setup-lang"].forEach(function (id) {
       var sel = $(id);
       if (!sel) return;
       sel.innerHTML = list.map(function (p) {
@@ -622,6 +630,7 @@
     }
 
     seedDeck(state);
+    ensureLanguage(code);
     session = null;
     reader = null;
     writing = null;
@@ -637,7 +646,7 @@
     renderLangPickers();
     updateSetupCopy();
     renderToday();
-    if (currentView === "settings") renderSettingsOptions();
+    if (currentView === "settings") { renderSettingsOptions(); renderLanguageLibrary(); }
     if (currentView === "stats") renderStats();
     /* A deck switch must not leave a half-finished lesson from the old pack on
      * screen. Settings and setup are the only views that belong to the switch. */
@@ -652,7 +661,9 @@
     var ui = (state.profile && state.profile.uiLang) || defaultUiFor(code);
     byLang[code] = bucketOf(state);
     levels[code] = level;
-    state.profile = { level: level, levelByLang: levels, lang: code, byLang: byLang, uiLang: ui };
+    var languages = (state.profile && state.profile.languages) || [];
+    if (languages.indexOf(code) === -1) languages.push(code);
+    state.profile = { level: level, levelByLang: levels, lang: code, byLang: byLang, uiLang: ui, languages: languages };
     save();
   }
 
@@ -895,7 +906,7 @@
       else t.removeAttribute("aria-current");
     });
     if (view === "today" || view === "settings") renderToday();
-    if (view === "settings") renderChatSettings();
+    if (view === "settings") { renderChatSettings(); renderLanguageLibrary(); }
     if (view === "stats") renderStats();
     if (window.history && window.history.replaceState) {
       window.history.replaceState(null, "", "#" + view);
@@ -908,6 +919,38 @@
   /* ---------------------------------------------------------------- today */
 
   /* --------------------------------------------------------------- builder */
+
+  function renderLanguageLibrary() {
+    var box = $("language-list");
+    var select = $("settings-add-lang");
+    var add = $("add-lang-btn");
+    if (!box || !state.profile) return;
+    var languages = (state.profile.languages || []).filter(function (code) { return LANGS.has(code); });
+    if (languages.indexOf(ACTIVE.code) === -1) languages.unshift(ACTIVE.code);
+    box.innerHTML = languages.map(function (code) {
+      var lv = (state.profile.levelByLang && state.profile.levelByLang[code]) || "A1";
+      return '<button class="language-card' + (code === ACTIVE.code ? " is-active" : "") +
+        '" type="button" data-lang-card="' + esc(code) + '">' +
+        '<span class="flag" aria-hidden="true">' + (LANG_FLAGS[code] || "") + "</span>" +
+        '<span class="name">' + esc(uiName(code)) + "</span>" +
+        '<span class="level">' + esc(lv) + "</span></button>";
+    }).join("");
+    Array.prototype.forEach.call(box.querySelectorAll("[data-lang-card]"), function (b) {
+      b.addEventListener("click", function () {
+        if (b.getAttribute("data-lang-card") === ACTIVE.code) return;
+        switchLang(b.getAttribute("data-lang-card"));
+        renderLanguageLibrary();
+      });
+    });
+    if (select) {
+      var available = packList().filter(function (p) { return languages.indexOf(p.code) === -1; });
+      select.innerHTML = available.map(function (p) {
+        return '<option value="' + esc(p.code) + '">' + (LANG_FLAGS[p.code] || "") + " " + esc(uiName(p.code)) + "</option>";
+      }).join("");
+      select.disabled = !available.length;
+    }
+    if (add) add.disabled = !available.length;
+  }
 
   function renderSettingsOptions() {
     function mark(selector, attr, value) {
@@ -2124,7 +2167,7 @@
   /* ------------------------------------------------------------ placement */
 
   var placement = null;
-  var PLACEMENT_TOTAL = 8;
+  var PLACEMENT_TOTAL = 10;
 
   /* Eight questions on a staircase, not a random sample. Two correct answers
    * in a row move the next question up a CEFR band; a miss steps back one.
@@ -2211,6 +2254,9 @@
       state.profile.level = band;
       state.profile.levelByLang = state.profile.levelByLang || {};
       state.profile.levelByLang[ACTIVE.code] = band;
+      ensureLanguage(ACTIVE.code);
+      state.profile.pendingLang = null;
+      state.profile.pendingFrom = null;
     }
     placement = null;
     save();
@@ -4642,8 +4688,9 @@
   $("setup-lang").addEventListener("change", function () {
     if (switchLang(this.value)) toast(uiName(ACTIVE.code) + " · " + tr("done", "loaded"));
   });
-  $("settings-lang").addEventListener("change", function () {
-    if (switchLang(this.value)) toast(uiName(ACTIVE.code) + " · " + tr("done", "loaded"));
+  $("add-lang-btn").addEventListener("click", function () {
+    var sel = $("settings-add-lang");
+    if (sel && sel.value) addLanguageFlow(sel.value);
   });
   $("home-conv").addEventListener("click", startConversation);
   $("home-read").addEventListener("click", startReader);
@@ -4757,6 +4804,16 @@
     }
   }
 
+  function addLanguageFlow(code) {
+    if (!code || !LANGS || !LANGS.has(code) || !ACTIVE) return;
+    if (ACTIVE.code === code) return;
+    state.profile = state.profile || {};
+    state.profile.pendingLang = code;
+    state.profile.pendingFrom = ACTIVE.code;
+    switchLang(code);
+    startPlacement();
+  }
+
   function leaveSession() {
     var lvl = state.profile && state.profile.levelByLang && state.profile.levelByLang[ACTIVE.code];
     askConfirm(
@@ -4765,6 +4822,17 @@
       tr("leave", "Leave"),
       function () {
         session = null;
+        var pending = state.profile && state.profile.pendingLang;
+        var from = state.profile && state.profile.pendingFrom;
+        if (pending) {
+          state.profile.languages = (state.profile.languages || []).filter(function (x) { return x !== pending; });
+          state.profile.pendingLang = null;
+          state.profile.pendingFrom = null;
+          placement = null;
+          if (from && LANGS.has(from)) switchLang(from);
+          show("settings");
+          return;
+        }
         // backing out of the placement returns to the question, not to a lesson
         if ((lvl || (state.profile && state.profile.level)) === "?") {
           placement = null;

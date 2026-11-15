@@ -909,7 +909,7 @@ test("the next lesson names the lesson and Progress mirrors the path", () => {
 
 test("the level is placed by the adaptive test, not by a settings control", () => {
   assert.equal(/data-level/.test(html), false, "a manual level control came back");
-  assert.match(app, /PLACEMENT_TOTAL = 8/, "placement is not bounded");
+  assert.match(app, /PLACEMENT_TOTAL = 10/, "placement is not bounded");
   assert.match(app, /ADAPT\.placementStep/, "placement is not a staircase");
   assert.match(app, /state\.profile\.levelByLang\[ACTIVE\.code\] = band/,
     "the placement result is not stored for the live language");
@@ -957,6 +957,15 @@ test("back steps to the previous task while X exits with confirmation", () => {
   assert.match(app, /var replay = session\.replaying === id;/, "replayed answers still count");
   assert.match(app, /\$\("back-btn"\)\.addEventListener\("click", goBackTask\)/, "back is still an exit");
   assert.match(app, /\$\("quit-btn"\)\.addEventListener\("click", leaveSession\)/, "X no longer asks before exit");
+});
+
+test("settings keeps a language library and adds via entry exam", () => {
+  assert.match(html, /id="language-list"/, "no language library");
+  assert.match(html, /id="add-lang-btn"/, "no add-language control");
+  assert.match(app, /function renderLanguageLibrary/, "library is not rendered");
+  assert.match(app, /function addLanguageFlow/, "no add-language flow");
+  assert.match(app, /startPlacement\(\)/, "adding a language does not start the entry exam");
+  assert.match(app, /languages\.push\(code\)/, "the library never grows");
 });
 
 test("lessons have an explicit back action and confirmation", () => {

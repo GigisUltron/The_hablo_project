@@ -232,9 +232,14 @@
       </div>
       <div class="panel panel-pad">
 
-          <label class="settings-lang"><span data-chrome="deckLang">Language</span>
-            <select id="settings-lang"></select>
-          </label>
+          <div class="language-library">
+            <p class="settings-label" data-i18n="yourLanguages">Your languages</p>
+            <div class="language-list" id="language-list"></div>
+            <div class="add-language">
+              <select id="settings-add-lang" class="settings-add-lang"></select>
+              <button class="btn btn-primary btn-sm" id="add-lang-btn" type="button" data-i18n="addLanguage">Add language</button>
+            </div>
+          </div>
 
           <label class="settings-lang"><span data-chrome="interfaceLang">Interface</span>
             <select id="settings-uilang"></select>
