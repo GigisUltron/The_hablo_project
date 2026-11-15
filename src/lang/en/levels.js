@@ -215,6 +215,11 @@ var SEMA_LEVELS = {
   "ph-en-opinion-agree": "A2",
   "ph-en-small-talk-job": "A2",
   "ph-en-feel-tired": "A2",
+  "ph-en-past-home": "A2",
+  "ph-en-past-market": "A2",
+  "ph-en-weather-rain": "A2",
+  "ph-en-weather-nice": "A2",
+  "ph-en-weather-was": "A2",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_LEVELS;
 if (typeof window !== "undefined") {

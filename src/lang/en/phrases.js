@@ -138,6 +138,11 @@ var SEMA_PHRASES = {
     { id: "ph-en-opinion-agree", emoji: "🤝", text: "I agree.", sub: "I have the same opinion.", cat: "phrase", topic: "opinions" },
     { id: "ph-en-small-talk-job", emoji: "💼", text: "What do you do?", sub: "what is your job?", cat: "phrase", topic: "small-talk" },
     { id: "ph-en-feel-tired", emoji: "😴", text: "I'm tired.", sub: "I need rest.", cat: "phrase", topic: "feelings" },
+    { id: "ph-en-past-home", emoji: "🌦️", text: "I stayed at home yesterday.", sub: "I was at home yesterday.", cat: "phrase", topic: "past" },
+    { id: "ph-en-past-market", emoji: "🌦️", text: "I went to the market yesterday.", sub: "I visited the market yesterday.", cat: "phrase", topic: "past" },
+    { id: "ph-en-weather-rain", emoji: "🌦️", text: "It's raining today.", sub: "rain is falling today", cat: "phrase", topic: "weather" },
+    { id: "ph-en-weather-nice", emoji: "🌦️", text: "The weather is nice today.", sub: "today's weather is pleasant", cat: "phrase", topic: "weather" },
+    { id: "ph-en-weather-was", emoji: "🌦️", text: "What was the weather like?", sub: "how was the weather?", cat: "phrase", topic: "weather" },
   ]
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_PHRASES;

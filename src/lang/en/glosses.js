@@ -217,6 +217,11 @@ var SEMA_GLOSSES = {
   "ph-en-opinion-agree": "I have the same opinion.",
   "ph-en-small-talk-job": "what is your job?",
   "ph-en-feel-tired": "I need rest.",
+  "ph-en-past-home": "I was at home yesterday.",
+  "ph-en-past-market": "I visited the market yesterday.",
+  "ph-en-weather-rain": "rain is falling today",
+  "ph-en-weather-nice": "today's weather is pleasant",
+  "ph-en-weather-was": "how was the weather?",
 };
 if (typeof module !== "undefined" && module.exports) module.exports = SEMA_GLOSSES;
 if (typeof window !== "undefined") {
