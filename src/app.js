@@ -3926,10 +3926,16 @@
 
     $("actions").innerHTML =
       '<button class="btn btn-primary" id="again">' + esc(tr("oneMore", "One more")) + "</button>" +
+      (missed.length ? '<button class="btn btn-ghost btn-sm" id="review-session" type="button">' +
+        esc(tr("review", "Review my mistakes")) + "</button>" : "") +
       '<button class="btn btn-ghost btn-sm" id="back" type="button">' + esc(tr("leave", "done for now")) + "</button>";
 
     $("back").addEventListener("click", function () { session = null; show("today"); });
     $("again").addEventListener("click", function () { startSession(); });
+    var review = $("review-session");
+    if (review) review.addEventListener("click", function () {
+      startSession({ ids: missed, size: missed.length });
+    });
   }
 
   /* What stuck is a plain run of words; what comes back says when. */
