@@ -402,6 +402,25 @@ test("switching decks keeps the cards finished today", () => {
   assert.equal(/state\.daily/.test(reset), false, "a deck switch wipes the daily count");
 });
 
+test("setup cannot be skipped through the tabs or a lesson", () => {
+  assert.match(app, /function needsSetup\(\)/, "no onboarding gate");
+  assert.match(app, /if \(needsSetup\(\) && view !== "setup"\) view = "setup"/,
+    "show() can leave setup");
+  assert.match(app, /if \(needsSetup\(\)\) \{ show\("setup"\); return; \}/,
+    "a lesson can start before setup");
+  const css = fs.readFileSync(path.join(root, "assets", "styles.css"), "utf8");
+  assert.match(css, /#view-setup\.is-active\) \.tabs/, "the tabs stay visible on setup");
+});
+
+test("switching decks clears every in-flight lesson surface", () => {
+  const block = app.slice(app.indexOf("function switchLang"), app.indexOf("function beginProfile"));
+  for (const name of ["session", "reader", "writing", "alphabet", "placement"]) {
+    assert.match(block, new RegExp(name + " = null"), "switchLang leaves " + name + " alive");
+  }
+  assert.match(block, /currentView !== "setup" && currentView !== "settings"\) show\("today"\)/,
+    "a switch can leave a lesson from the old deck on screen");
+});
+
 test("first run can change interface language before choosing a level", () => {
   assert.match(app, /state\.profile\.byLang = state\.profile\.byLang \|\| \{\}/,
     "switchLang assumes byLang exists before onboarding finishes");

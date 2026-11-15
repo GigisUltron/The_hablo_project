@@ -546,6 +546,8 @@
     seedDeck(state);
     session = null;
     reader = null;
+    writing = null;
+    alphabet = null;
     chat = null;
     chatEpoch += 1;
     resetChatClear();
@@ -558,6 +560,9 @@
     renderToday();
     if (currentView === "settings") renderSettingsOptions();
     if (currentView === "stats") renderStats();
+    /* A deck switch must not leave a half-finished lesson from the old pack on
+     * screen. Settings and setup are the only views that belong to the switch. */
+    if (currentView !== "setup" && currentView !== "settings") show("today");
     return true;
   }
 
@@ -566,6 +571,7 @@
     var byLang = (state.profile && state.profile.byLang) || {};
     var levels = (state.profile && state.profile.levelByLang) || {};
     var ui = (state.profile && state.profile.uiLang) || defaultUiFor(code);
+    if (ui === code) ui = defaultUiFor(code);
     byLang[code] = bucketOf(state);
     levels[code] = level;
     state.profile = { level: level, levelByLang: levels, lang: code, byLang: byLang, uiLang: ui };
@@ -786,7 +792,18 @@
   var VIEWS = ["today", "session", "reader", "alphabet", "conv", "setup", "settings", "stats"];
   var currentView = "today";
 
+  /* Setup is a gate, not a suggestion: tabs, deep links and buttons cannot
+   * carry a learner into a lesson before a deck and a level exist. A placement
+   * in flight is the one exception, because it owns the session screen. */
+  function needsSetup() {
+    if (!state || !state.profile) return true;
+    var level = state.profile.levelByLang && state.profile.levelByLang[ACTIVE && ACTIVE.code];
+    if (!level || level === "?") return !placement;
+    return false;
+  }
+
   function show(view) {
+    if (needsSetup() && view !== "setup") view = "setup";
     applyStrings();
     currentView = view;
     VIEWS.forEach(function (v) {
@@ -2623,6 +2640,7 @@
   }
 
   function startSession(opts) {
+    if (needsSetup()) { show("setup"); return; }
     var o = opts || {};
     var now = Date.now();
     /* a locked unit is refused here, not only at the node: a hash, a stale
@@ -3794,7 +3812,11 @@
     session = null;
     // backing out of the placement returns to the question, not to a lesson
     var lvl = state.profile && state.profile.levelByLang && state.profile.levelByLang[ACTIVE.code];
-    if ((lvl || (state.profile && state.profile.level)) === "?") { show("setup"); return; }
+    if ((lvl || (state.profile && state.profile.level)) === "?") {
+      placement = null;
+      show("setup");
+      return;
+    }
     show("today");
   });
   document.addEventListener("keydown", function (ev) {

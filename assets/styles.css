@@ -233,6 +233,8 @@ svg { flex: none; }
 
 .view { display: none; }
 .view.is-active { display: block; animation: fade 0.2s ease-out; }
+/* setup is the only screen before a level exists; do not offer a way around it */
+.app:has(#view-setup.is-active) .tabs { display: none; }
 @keyframes fade { from { opacity: 0; } }
 
 /* ---------------------------------------------------------------- buttons */
