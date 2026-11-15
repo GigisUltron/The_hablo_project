@@ -818,6 +818,13 @@ test("offline chat tracks recent replies for variation", () => {
   assert.match(app, /recent: \(chat\.recentMini/, "recent replies are not passed to the predictor");
 });
 
+test("conversation transfer missions require real use of lesson phrases", () => {
+  assert.match(html, /id="chat-mission"/, "no transfer mission surface");
+  assert.match(app, /function assignMission/, "no mission assignment");
+  assert.match(app, /function missionHit/, "no phrase-use detector");
+  assert.match(app, /checkMission\(text\)/, "mission never checks learner turns");
+});
+
 test("offline mini chat is the default conversation engine", () => {
   assert.match(html, /id="chat-engine"/, "no engine choice");
   assert.match(app, /function chatEngine\(/, "no engine selector");

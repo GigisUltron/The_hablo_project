@@ -2322,3 +2322,26 @@ textarea.type-input { resize: vertical; min-height: 76px; }
   font: inherit;
   font-size: 14px;
 }
+
+
+/* transfer mission: the lesson words must survive contact with conversation */
+.chat-mission {
+  max-width: 720px;
+  margin: 0 auto 10px;
+  padding: 10px 12px;
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  display: grid;
+  gap: 6px;
+}
+.chat-mission .mission-title { font-size: 13px; font-weight: 700; color: var(--text-2); }
+.chat-mission .mission-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chat-mission .mission-chip {
+  padding: 4px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  border: 1px solid var(--border);
+  font-size: 14px;
+}
+.chat-mission .mission-chip.is-used { border-color: var(--good); color: var(--good); text-decoration: line-through; }

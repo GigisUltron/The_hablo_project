@@ -1594,6 +1594,7 @@
     var c = state.chat[code];
     if (!c || typeof c !== "object" || Array.isArray(c)) c = state.chat[code] = { messages: [] };
     if (!Array.isArray(c.messages)) c.messages = [];
+    if (!c.mission) c.mission = null;
     c.messages.forEach(function (m) {
       if (m && !m.id) m.id = newChatId();
     });
@@ -2076,6 +2077,7 @@
     resetChatClear();
     chatCleared = false;
     addUser(text);
+    checkMission(text);
     rememberChatLine(text);
     if (input) input.value = "";
 
@@ -2115,9 +2117,68 @@
     });
   }
 
+  /* Transfer mission: choose words the learner has met and ask them to use
+   * those words in a real exchange. It is retrieval in context, not a quiz. */
+  function assignMission() {
+    if (!chat) return;
+    var now = Date.now();
+    var pool = allIds.filter(function (id) {
+      if (!atLevel(id) || itemOf(id).kind !== "phrase") return false;
+      var card = state.cards[id];
+      return !card || !card.due || card.due <= now || (card.ease || 2.5) < 2.5;
+    });
+    pool.sort(function (a, b) {
+      var ca = state.cards[a] || {};
+      var cb = state.cards[b] || {};
+      return (ca.ease || 2.5) - (cb.ease || 2.5);
+    });
+    if (pool.length < 2) pool = allIds.filter(function (id) { return itemOf(id).kind === "phrase" && atLevel(id); });
+    chat.mission = { ids: pool.slice(0, 3), used: {} };
+  }
+
+  function missionHit(text, item) {
+    var hay = String(text || "").toLowerCase();
+    var target = String(item.text || "").toLowerCase();
+    if (!hay || !target) return false;
+    if (hay.indexOf(target) !== -1) return true;
+    var words = target.split(/[^\p{L}\p{N}]+/u).filter(function (w) { return w.length > 2; });
+    if (!words.length) return false;
+    var hits = 0;
+    words.forEach(function (w) { if (hay.indexOf(w) !== -1) hits += 1; });
+    return hits >= Math.max(1, Math.ceil(words.length / 2));
+  }
+
+  function checkMission(text) {
+    if (!chat || !chat.mission || !chat.mission.ids.length) return;
+    chat.mission.ids.forEach(function (id) {
+      if (!chat.mission.used[id] && missionHit(text, itemOf(id))) chat.mission.used[id] = true;
+    });
+    save();
+    renderMission();
+    var used = chat.mission.ids.filter(function (id) { return chat.mission.used[id]; });
+    if (used.length === chat.mission.ids.length && !chat.mission.done) {
+      chat.mission.done = true;
+      state.xp = (state.xp || 0) + 5;
+      save();
+      toast(tr("missionDone", "Transfer mission complete") + " · +5 XP");
+    }
+  }
+
+  function renderMission() {
+    var el = $("chat-mission");
+    if (!el) return;
+    if (!chat || !chat.mission || !chat.mission.ids.length) { el.hidden = true; return; }
+    el.hidden = false;
+    el.innerHTML = '<p class="mission-title">' + esc(tr("missionTitle", "Use these in the conversation")) + "</p>" +
+      '<div class="mission-chips">' + chat.mission.ids.map(function (id) {
+        return '<span class="mission-chip' + (chat.mission.used[id] ? " is-used" : "") + '">' + esc(itemOf(id).text) + "</span>";
+      }).join("") + "</div>";
+  }
+
   function startConversation() {
     if (!CE) { toast("The chat engine did not load."); return; }
     chat = chatState();
+    if (!chat.mission) assignMission();
     chatCleared = false;
     chatTranslating = {};
     chatEpoch += 1;
@@ -2125,6 +2186,7 @@
     show("conv");
     renderChatHeader();
     renderChat(true);
+    renderMission();
     setChatBusy(false);
     refreshChatEngine();
   }
