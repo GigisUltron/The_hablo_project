@@ -1007,15 +1007,6 @@
     $("stat-mastered").textContent = mastered;
     $("known-bar").style.width = Math.round((known / Math.max(allIds.length, 1)) * 100) + "%";
 
-    var goal = ADAPT ? ADAPT.dailyGoal(state.history) : 8;
-    var today = state.daily && state.daily.date === dayKey(Date.now()) ? state.daily.cards : 0;
-    $("stat-daily").textContent = today;
-    $("stat-goal").textContent = goal;
-    $("goal-bar").style.width = Math.min(100, Math.round((today / Math.max(goal, 1)) * 100)) + "%";
-    $("goal-meter").setAttribute("aria-valuenow", String(today));
-    $("goal-meter").setAttribute("aria-valuemax", String(Math.max(goal, today)));
-    $("daily-goal").classList.toggle("is-met", today >= goal);
-
     var date = new Date().toLocaleDateString(uiLocale(), { weekday: "short", day: "numeric", month: "short" });
     $("today-date").textContent = date + " · " + uiName(ACTIVE.code) + " · " + learnerLevel();
     $("lesson-meta").textContent = tr("aboutMinute", "about 1 min");

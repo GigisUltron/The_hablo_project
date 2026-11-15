@@ -435,8 +435,7 @@ test("the scripted chat does not fall back to a Spanish goodbye", () => {
 });
 
 test("today shows a real daily goal and a per-language level", () => {
-  assert.match(html, /id="stat-daily"/);
-  assert.match(html, /id="goal-meter"/);
+  assert.equal(html.includes('id="goal-meter"'), false, "daily goal bar should be gone");
   assert.match(app, /ADAPT\.bumpDaily/, "the daily counter never advances");
   assert.match(app, /levelByLang/, "the profile has no per-language level");
   assert.match(app, /ADAPT\.levelFor/, "the app never reads the per-language level");
