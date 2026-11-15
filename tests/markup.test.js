@@ -1608,3 +1608,8 @@ test("fill the gap is offered only where a sentence holds a word, and graded exa
   assert.match(app, /ADAPT\.shelf\(learnerLevel\(\)\)/, "reading does not use the five shelves");
   assert.equal(/Math\.min\(4, /g.test(app), false, "the reader still collapses its shelves at four");
 });
+test("keyboard users can skip the tab bar", () => {
+  assert.match(html, /<a class="skip-link" href="#main">Skip to content<\/a>/);
+  assert.match(html, /<main id="main" tabindex="-1">/);
+});
+
