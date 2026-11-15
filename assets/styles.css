@@ -1462,6 +1462,33 @@ textarea.type-input { resize: vertical; min-height: 76px; }
 .reader-card { min-height: 0; }
 .reader-title { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
 .reader-body { font-size: 18px; line-height: 1.6; max-width: 60ch; }
+
+/* A reading word is a handle, not a link: it sits in the sentence, gets a
+ * quiet hover, and announces its result in the fixed line below. */
+.word-tap {
+  display: inline;
+  margin: 0;
+  padding: 0 1px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted var(--text-3);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.word-tap:hover { background: var(--accent-soft); text-decoration-color: var(--accent); }
+.word-tap.is-kept { color: var(--accent); text-decoration-color: var(--accent); }
+.word-tap:active { background: var(--accent); color: var(--on-accent); }
+.reader-word-line {
+  min-height: 22px;
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--text-2);
+}
 .reader-q { font-size: 21px; font-weight: 700; line-height: 1.3; }
 .reader-why { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
 .reader-why li { font-size: 15px; line-height: 1.35; color: var(--text-2); }

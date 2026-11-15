@@ -1560,9 +1560,111 @@
     if (!shelf.length) { toast(tr("noTexts", "No texts in this pack yet.")); return; }
     var read = state.readTexts || [];
     var next = shelf.filter(function (t) { return read.indexOf(t.id) === -1; })[0] || shelf[0];
-    reader = { text: next, qi: 0, correct: 0, misses: [], done: false };
+    reader = { text: next, qi: 0, correct: 0, misses: [], done: false, words: [], lookup: null };
     show("reader");
     renderReaderText();
+  }
+
+  /* Reading is input; every word is a handle into the course. Tapping a word
+   * hears it and, when the pack authored it, keeps it for a one-tap session.
+   * Scripts without spaces (CJK) stay plain prose: one button per character
+   * would be noise, not help. */
+  function readerTappable(body) {
+    return !/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/.test(String(body || ""));
+  }
+
+  function readerWordHTML(body) {
+    var text = String(body || "");
+    if (!readerTappable(text)) return esc(text);
+    var re;
+    try {
+      re = new RegExp("[\\p{L}\\p{M}\\p{N}]+(?:['’\\-][\\p{L}\\p{M}\\p{N}]+)*|[^\\p{L}\\p{M}\\p{N}]+", "gu");
+    } catch (err) {
+      return esc(text);
+    }
+    var parts = text.match(re) || [text];
+    return parts.map(function (part) {
+      if (!/^[\p{L}\p{M}\p{N}]/u.test(part)) return esc(part);
+      /* Only words the pack has authored become controls. Turning every word
+       * into a button would add hundreds of tab stops and make a screen reader
+       * say "button" after each word. */
+      if (!readerWordItem(part)) return esc(part);
+      return '<button type="button" class="word-tap" data-word="' + esc(part) + '">' + esc(part) + "</button>";
+    }).join("");
+  }
+
+  function readerLookup() {
+    if (reader.lookup) return reader.lookup;
+    var map = {};
+    function add(text, id) {
+      var key = S && S.normalize ? S.normalize(text, ACTIVE && ACTIVE.code) : String(text || "").toLowerCase();
+      if (!key || key.indexOf(" ") !== -1) return;
+      if (!map[key]) map[key] = id;
+    }
+    deckIds().forEach(function (id) {
+      var it = itemOf(id);
+      /* Vocabulary only. Mapping grammar basics such as "es" would turn every
+       * common function word into a control and a tab stop; a phrase is
+       * tappable only when it is one word, so it maps as a word does. */
+      if (it.kind !== "word" && !(it.kind === "phrase" && String(it.text).indexOf(" ") === -1)) return;
+      add(it.text, id);
+    });
+    reader.lookup = map;
+    return map;
+  }
+
+  function readerWordItem(word) {
+    var key = S && S.normalize ? S.normalize(word, ACTIVE && ACTIVE.code) : String(word || "").toLowerCase();
+    return key && readerLookup()[key] ? readerLookup()[key] : "";
+  }
+
+  function readerSpeakWord(word, id) {
+    var it = id ? itemOf(id) : null;
+    if (it && audioAvailable() && sayItem(it)) return;
+    if (hasTTS) speak(word);
+  }
+
+  function readerShowWord(word, id) {
+    var line = $("reader-word-line");
+    if (!line) return;
+    if (!id) { line.textContent = String(word || ""); return; }
+    /* translationFor already respects translations off and a non-English UI:
+     * never print an English gloss under another interface language here. */
+    var meaning = translationFor(id);
+    line.textContent = (itemOf(id).text || word) + (meaning ? " · " + meaning : "");
+  }
+
+  function readerPracticeLabel(n) {
+    if (n === 1) return tr("readerPracticeOne", "Practice this word");
+    return tr("readerPractice", "Practice {n} words").replace("{n}", String(n));
+  }
+
+  function updateReaderPractice() {
+    var btn = $("reader-practice");
+    if (!btn || !reader) return;
+    var n = (reader.words || []).length;
+    btn.hidden = !n;
+    if (n) btn.textContent = readerPracticeLabel(n);
+  }
+
+  function startReaderPractice() {
+    if (!reader || !reader.words || !reader.words.length) return;
+    startSession({ ids: reader.words.slice(), size: reader.words.length,
+      title: tr("readerPracticeTitle", "Words from the text") });
+  }
+
+  function readerTapWord(btn) {
+    if (!reader) return;
+    var word = btn.getAttribute("data-word") || btn.textContent || "";
+    var id = readerWordItem(word);
+    if (id) {
+      reader.words = reader.words || [];
+      if (reader.words.indexOf(id) === -1) reader.words.push(id);
+      if (btn.classList) btn.classList.add("is-kept");
+    }
+    readerShowWord(word, id);
+    readerSpeakWord(word, id);
+    updateReaderPractice();
   }
 
   function renderReaderText() {
@@ -1571,10 +1673,18 @@
     $("reader-bar").style.width = t.ai ? "100%" : "8%";
     $("reader-feedback").textContent = "";
     $("reader-feedback").className = "feedback";
+    var tappable = readerTappable(t.body);
+    var hint = (audioAvailable() || hasTTS)
+      ? tr("readerTap", "Tap an underlined word to hear it.")
+      : tr("readerTapMeaning", "Tap an underlined word to see its meaning.");
     $("reader-stage").innerHTML =
       '<p class="prompt">' + esc(tr("read", "Read")) + "</p>" +
       '<h3 class="reader-title">' + esc(t.title) + "</h3>" +
-      '<p class="reader-body">' + esc(t.body) + "</p>";
+      '<p class="reader-body">' + (tappable ? readerWordHTML(t.body) : esc(t.body)) + "</p>" +
+      (tappable
+        ? '<p class="reader-word-line" id="reader-word-line" aria-live="polite">' + esc(hint) + "</p>"
+        : "");
+    registerReaderWords();
     var listen = hasTTS && audioEnabled()
       ? '<button class="btn btn-ghost" id="reader-listen" type="button">' +
         esc(tr("listenText", "Listen to text")) + "</button>"
@@ -1586,7 +1696,11 @@
       ? '<button class="btn btn-primary" id="reader-go" type="button">' +
         esc(tr("questions", "Questions")) + "</button>"
       : "";
-    $("reader-actions").innerHTML = listen + generate + questions;
+    var practice = '<button class="btn btn-ghost btn-sm" id="reader-practice" type="button" hidden></button>';
+    $("reader-actions").innerHTML = listen + generate + practice + questions;
+    var practiceBtn = $("reader-practice");
+    if (practiceBtn) practiceBtn.addEventListener("click", startReaderPractice);
+    updateReaderPractice();
     var listenBtn = $("reader-listen");
     if (listenBtn) listenBtn.addEventListener("click", function () {
       speak(t.title + ". " + t.body, listenBtn);
@@ -1595,6 +1709,12 @@
     if (generateBtn) generateBtn.addEventListener("click", function () { generateReaderText(generateBtn); });
     var go = $("reader-go");
     if (go) go.addEventListener("click", renderReaderQuestion);
+  }
+
+  function registerReaderWords() {
+    Array.prototype.forEach.call($("reader-stage").querySelectorAll(".word-tap"), function (btn) {
+      btn.addEventListener("click", function () { readerTapWord(btn); });
+    });
   }
 
   function generateReaderText(btn) {
@@ -1729,10 +1849,16 @@
     var shelf = readerShelf();
     var next = shelf.filter(function (x) { return state.readTexts.indexOf(x.id) === -1; })[0] || shelf[0];
     var more = next && next.id !== t.id;
-    $("reader-actions").innerHTML =
+    var practice = (reader.words && reader.words.length)
+      ? '<button class="btn btn-ghost btn-sm" id="reader-practice" type="button">' +
+        esc(readerPracticeLabel(reader.words.length)) + "</button>"
+      : "";
+    $("reader-actions").innerHTML = practice +
       '<button class="btn btn-primary" id="reader-again">' +
         esc(more ? tr("nextText", "Next text") : tr("readAgain", "Read it again")) + "</button>" +
       '<button class="btn btn-ghost btn-sm" id="reader-done" type="button">done for now</button>';
+    var practiceBtn = $("reader-practice");
+    if (practiceBtn) practiceBtn.addEventListener("click", startReaderPractice);
     $("reader-again").addEventListener("click", startReader);
     $("reader-done").addEventListener("click", function () { reader = null; show("today"); });
   }

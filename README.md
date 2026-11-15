@@ -108,7 +108,7 @@ Every pack now carries five B1/B2 abstract words — decision, purpose, challeng
 
 ### Reading
 
-Each full course has eight reading texts, graded A1–C1. Starter courses have seven, graded A1–B2, including B1 and B2 texts that use the advanced layer. Every text has three multiple-choice questions and an explanation for each wrong option. Questions use the same **select, then Check** interaction as lessons, so a stray tap is not graded. The text screen also has **Listen to text**, which reads the title and body through the same installed voice used by conversation, and **Write me a text**, which asks the local model for a short new text at the learner's level using the personal context. Generated texts get a short cloze comprehension check built from their own sentences; if no model answers, the packed text stays.
+Each full course has eight reading texts, graded A1–C1. Starter courses have seven, graded A1–B2, including B1 and B2 texts that use the advanced layer. Every text has three multiple-choice questions and an explanation for each wrong option. Every word the course has authored is tappable: it is spoken, its meaning appears when translations are on, and the words touched are offered at the finish as a one-card-per-word practice session. Questions use the same **select, then Check** interaction as lessons, so a stray tap is not graded. The text screen also has **Listen to text**, which reads the title and body through the same installed voice used by conversation, and **Write me a text**, which asks the local model for a short new text at the learner's level using the personal context. Generated texts get a short cloze comprehension check built from their own sentences; if no model answers, the packed text stays.
 
 ### Conversation
 

@@ -39,7 +39,7 @@ function node(id) {
         return out;
       }
       const sel = String(selector);
-      if (!/option|token|match-btn|data-target|data-meaning/.test(sel)) return [];
+      if (!/option|token|match-btn|data-target|data-meaning|word-tap/.test(sel)) return [];
       if (this._optionCache && this._optionCache.html === this._html && this._optionCache.selector === selector) {
         return this._optionCache.nodes;
       }
@@ -52,6 +52,7 @@ function node(id) {
         if (sel.includes("data-target") && parsed["data-target"] == null) return all;
         if (sel.includes("data-meaning") && parsed["data-meaning"] == null) return all;
         if (sel.includes("token") && !/\btoken\b/.test(cls)) return all;
+        if (sel.includes("word-tap") && !/\bword-tap\b/.test(cls)) return all;
         if (sel.includes("option") && !/\boption/.test(cls)) return all;
         const child = node("option-" + out.length);
         child._attrs = parsed;
@@ -316,6 +317,69 @@ test("the real app boots with a profile and opens a roleplay from the Practice r
   const text = registry.get("chat-scene-text");
   assert.equal(scene.hidden, false, "roleplay did not open the scene strip");
   assert.equal(text.textContent, "travel", "roleplay did not use the personal why");
+});
+
+test("a reading word can be heard, kept, and turned into a practice card", () => {
+  const registry = boot(sessionSave());
+  registry.get("read-btn")._l.click();
+  const stage = registry.get("reader-stage");
+  assert.match(stage.innerHTML, /reader-word-line/, "a reading text does not offer word taps");
+  const words = stage.querySelectorAll(".word-tap");
+  assert.ok(words.length >= 2, "the reading body has no authored word controls");
+  assert.equal(words.find((b) => b.getAttribute("data-word") === "mercado"), undefined,
+    "an unauthored word was turned into a control");
+  assert.equal(words.find((b) => b.getAttribute("data-word") === "es"), undefined,
+    "a grammar basic was turned into a reading control");
+  assert.match(stage.innerHTML, /mercado/, "the unauthored word disappeared from the prose");
+
+  const pan = words.find((b) => b.getAttribute("data-word") === "pan");
+  assert.ok(pan, "the pack word pan is missing");
+  pan._l.click();
+  assert.match(registry.get("reader-word-line").textContent, /pan · /,
+    "a known word did not show its meaning");
+  const practice = registry.get("reader-practice");
+  assert.equal(practice.hidden, false, "a known word was not kept for practice");
+  assert.equal(practice.textContent, X.en.readerPracticeOne);
+  practice._l.click();
+  assert.equal(registry.get("counter").textContent, "1/1", "the tapped word did not start a one-card session");
+  assert.match(registry.get("stage").innerHTML, /pan/, "the practice card is not the word that was tapped");
+});
+
+test("words kept while reading are still offered at the finish", () => {
+  const registry = boot(sessionSave());
+  registry.get("read-btn")._l.click();
+  const stage = registry.get("reader-stage");
+  const pan = stage.querySelectorAll(".word-tap").find((b) => b.getAttribute("data-word") === "pan");
+  assert.ok(pan, "the pack word pan is missing");
+  pan._l.click();
+
+  for (let q = 0; q < 3; q += 1) {
+    registry.get("reader-go")._l.click();
+    const options = registry.get("reader-stage").querySelectorAll(".option-word");
+    options[0]._l.click();
+    registry.get("reader-check")._l.click();
+    registry.get("reader-next")._l.click();
+  }
+  assert.match(registry.get("reader-stage").innerHTML, /textFinished|Text finished/);
+  const practice = registry.get("reader-practice");
+  assert.ok(practice && practice.hidden === false, "the finish screen dropped the kept word");
+  assert.equal(practice.textContent, X.en.readerPracticeOne);
+  practice._l.click();
+  assert.equal(registry.get("counter").textContent, "1/1", "the kept word did not survive to a practice card");
+});
+
+test("a script without word spaces stays plain prose", () => {
+  const save = sessionSave({
+    profile: {
+      level: "A1", levelByLang: { zh: "A1" }, lang: "zh", uiLang: "en",
+      byLang: {}, languages: ["zh"], why: "travel"
+    }
+  });
+  const registry = boot(save);
+  registry.get("read-btn")._l.click();
+  assert.equal(registry.get("reader-stage").querySelectorAll(".word-tap").length, 0,
+    "Chinese prose was chopped into per-character buttons");
+  assert.doesNotMatch(registry.get("reader-stage").innerHTML, /reader-word-line/);
 });
 
 test("the alphabet screen reveals a flashcard and opens the all-letters grid", () => {
