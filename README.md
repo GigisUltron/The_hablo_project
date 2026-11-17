@@ -31,5 +31,9 @@ During the hackathon we tested the full loop: writing a situation, getting a gen
 - A "pack" system: download just the language and level you need, so the offline app stays light.
 - More local models, so the chat sounds more natural without ever leaving your computer.
 
+## How to run
+
+From the directory of the project: `make ai` then `python3 serve.py`
+
 ## Sources
 DeepSeek (via DeepSeek Harness), Claude (via Claude Code), and Gemini (via Gemini CLI).
